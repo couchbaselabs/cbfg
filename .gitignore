@@ -1,6 +1,8 @@
 /target
 /classes
 /checkouts
+/out
+cbfg.js
 pom.xml
 pom.xml.asc
 *.jar
