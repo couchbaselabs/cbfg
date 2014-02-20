@@ -1,25 +1,34 @@
 inspirations
 ------------
 
-Visualize and simulate the complex system _before_ you build it.
-
 http://thesecretlivesofdata.com/raft/
 
 https://github.com/couchbaselabs/xdsim
 
 https://github.com/couchbaselabs/cbgm
 
-An interactive visualization & simulator explains better than a static
-spec or document.
+ideas
+-----
+
+Visualize and simulate the complex system _before_ you build it.
+
+An interactive visualization and simulator explains better than a
+static spec or "wall of words" document.
+
+Use higher level abstractions for encoding rules & model...
+
+* DSL's
+* state machines
+* boom
 
 Rules to encode a simulator might be reusable...
 
-* as parts of the final
+* as parts of a final system
 * codegen and multi-platform targets.
 * fuzzer / checker / test-case
 
-ideas
------
+U/I visualization ideas
+-----------------------
 
 U/I to follow (or "star" or "bookmark") a key or value (or
 sub-field/value) and watch it flow through the system.
