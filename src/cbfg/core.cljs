@@ -4,6 +4,23 @@
 
 (enable-console-print!)
 
+(def model-multi-cluster {})
+(def model-cluster {})
+(def model-bucket {})
+(def model-index {})
+
+(def model-partition {})
+
+(def model-node {})
+
+(def model-storage {})
+(def model-write-queue {})
+(def model-read-queue {})
+
+(def model-socket {})
+(def model-send-queue {})
+(def model-recv-queue {})
+
 (def app-state
   (atom {:text "Hello world!"}))
 
