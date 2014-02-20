@@ -4,12 +4,16 @@
 
 (enable-console-print!)
 
-(defn widget [data owner]
+(def app-state
+  (atom {:text "Hello world!"}))
+
+(defn app-ui [app-state owner]
   (reify
     om/IRender
     (render [_]
-      (dom/h1 nil (:text data)))))
+      (dom/div nil
+               (dom/h1 nil (:text app-state))))))
 
-(om/root {:text "Hello world!"}
-         widget
+(om/root app-state
+         app-ui
          (. js/document (getElementById "app")))
