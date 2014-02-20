@@ -12,14 +12,14 @@ ideas
 
 Visualize and simulate the complex system _before_ you build it.
 
-An interactive visualization and simulator explains better than a
-static spec or "wall of words" document.
+An interactive visualization and simulator explains (and convinces)
+better than a static spec or "wall of words" document.
 
 Use higher level abstractions for encoding rules & model...
 
 * DSL's
 * state machines
-* boom
+* boom-like approaches
 
 Rules to encode a simulator might be reusable...
 
