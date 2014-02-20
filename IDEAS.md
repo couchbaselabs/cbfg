@@ -1,3 +1,23 @@
+inspirations
+------------
+
+Visualize and simulate the complex system _before_ you build it.
+
+http://thesecretlivesofdata.com/raft/
+
+https://github.com/couchbaselabs/xdsim
+
+https://github.com/couchbaselabs/cbgm
+
+An interactive visualization & simulator explains better than a static
+spec or document.
+
+Rules to encode a simulator might be reusable...
+
+* as parts of the final
+* codegen and multi-platform targets.
+* fuzzer / checker / test-case
+
 ideas
 -----
 
