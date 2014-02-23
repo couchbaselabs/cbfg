@@ -4,22 +4,73 @@
 
 (enable-console-print!)
 
-(def model-multi-cluster {})
-(def model-cluster {})
-(def model-bucket {})
-(def model-index {})
+;; ------------------------------------------------
 
-(def model-partition {})
+(def bucket-kinds
+  {:memcached {:cap 'cp
+               :allowed-ops [:get :set :del :arith :append]}
+   :couchbase {:cap 'cp
+               :allowed-ops [:get :set :del :arith :append]}
+   :couchdb   {:cap 'ap
+               :allowed-ops [:get :cas-set :cas-del]}})
 
-(def model-node {})
+;; cfg stuff is admininistrator chosen values.
+;; cfg stuff has uuid'ed / version / parent.
 
-(def model-storage {})
-(def model-write-queue {})
-(def model-read-queue {})
+(def cfg-model {:name "name your model cfg"
+                :clusters {}})
+(def cfg-cluster {:parent-model nil
+                  :name "west"})
+(def cfg-bucket {:parent-cluster nil
+                 :name "default"
+                 :kind 'couchbase
+                 :replica-count 0
+                 :num-partitions 0
+                 :per-node-mem-quota 0
+                 :storage-name "default"
+                 :indexes {}}) ; TODO: user/group/auth?
+(def cfg-index {:parent-bucket nil
+                :name "byCity"
+                :path "address.city"
+                :aggregate nil
+                :storage-name "default"}) ; TODO: view?
+(def cfg-node {:parent-cluster nil
+               :name "aaa"
+               :port 0
+               :container "" ; for zone/row/rack/shelf awareness.
+               :usage []
+               :weight 0.0})
+(def map-partitions {})
 
-(def model-socket {})
-(def model-send-queue {})
-(def model-recv-queue {})
+(def node {:cfg-node {}
+           :memory {}
+           :processors 4
+           :storages {}
+           :buckets {}
+           :stats {}})
+(def node-storage {})
+
+(def node-bucket {:cfg-bucket {}
+                  :node-collections {}})
+(def node-collection {:node-partitions {}})
+(def node-partition {})
+
+(def write-queue {})
+(def read-queue {})
+
+(def send-queue {})
+(def recv-queue {})
+
+;; ------------------------------------------------
+
+(def sim {:clock 0
+          :init {}
+          :model {}
+          :choices []
+          :past []
+          :upcoming {}})
+
+;; ------------------------------------------------
 
 (def app-state
   (atom {:text "Hello world!"}))
