@@ -270,3 +270,44 @@ lua
 - sha's of registered, available functions
 - node-local processors vs further away cluster-local processors
 
+a cluster:
+  is configured to contain:
+    a set of 1 or more pool's (identified by name),
+    a set of 1 or more user's (identified by name),
+    a set of 1 or more role's (identified by name),
+    a set of 1 or more server's (identified by host_port);
+  must have:
+    1 pool instance (instance.name is "default");
+    1 user instance (instance.roles includes "admin");
+    1 role instance (instance.name is "admin");
+
+a pool:
+  has configured properties:
+    name;
+  is configured to contain:
+    a set of 0 or more bucket's (identified by name),
+    a set of 0 or more users;
+
+a bucket:
+  has configured properties:
+    name;
+  is configured to contain:
+    a set of 0 or more partitions;
+
+a partition:
+  has assigned properties:
+    id,
+    state,
+
+a server:
+  has a parent cluster;
+  has configured properties:
+    host_port,
+    ram_quota,
+    storage_path;
+
+a ram-quota:
+  is a property of type uint32 of units MB;
+
+a host:
+  is a property of type string;
