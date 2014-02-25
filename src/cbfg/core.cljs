@@ -24,11 +24,12 @@
 (def cfg-bucket {:parent-cluster nil
                  :name "default"
                  :kind 'couchbase
-                 :replica-count 0
                  :num-partitions 0
                  :per-node-mem-quota 0
+                 :indexes {}
                  :storage-name "default"
-                 :indexes {}}) ; TODO: user/group/auth?
+                 :replica-count 0
+                 :replica-rules []}) ; TODO: user/group/auth?
 (def cfg-index {:parent-bucket nil
                 :name "byCity"
                 :path "address.city"
