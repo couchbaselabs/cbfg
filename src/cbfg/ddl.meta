@@ -1,9 +1,9 @@
 DDL definitions
 
   namedObj:
-    uuid
+    uuid (readOnly)
     ver
-    name
+    name (readOnly)
 
   cluster: namedObj
     pool*
@@ -15,8 +15,8 @@ DDL definitions
     acl*
 
   bucket: namedObj collectionConfig
-    bucketType
-    numPartitions
+    bucketType (readOnly)
+    numPartitions (readOnly)
     designDoc*
     indexConfig*
     xdcrConfig*
