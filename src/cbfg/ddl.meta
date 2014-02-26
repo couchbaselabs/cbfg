@@ -1,3 +1,5 @@
+site -> cluster -> pool
+
 DDL definitions
 
   name: nonEmptyString
@@ -13,15 +15,17 @@ DDL definitions
 
   cluster: namedObj
     pool*
-
-  pool: namedObj
-    bucket*
     user*
     group*
     acl*
 
+  pool: namedObj
+    bucket*
+    acl*
+
   bucket: namedObj collectionConfig
     bucketType (readOnly)
+    partitionFunc
     numPartitions (readOnly)
     designDoc*
     indexConfig*
@@ -56,7 +60,7 @@ cluster hierarchy has cascading delete.
 cluster hierarchy has upscading ver propagation.
 
 bucketType:     | memcached | couchbase | strongCP | couchdb | ap
-backend         |           |           | etcd     |         |
+backend         | def-eng   | ep-eng    | etcd     |         |
 subscription    |           |           | y        |         |
 groupMembership |           |           | y        |         |
 replication
