@@ -1,18 +1,12 @@
 miscellaneous model ideas/notes
 -------------------------------
 
-cfg-model vs cfg-actual
-- cluster config change event
-
-eng-model is a model of engine process
-  based on inputs from cfg
-
-eng-actual is instantiated model
-
-lvars
-- vectorClock
-- revisionTree (might be pruned, so maybe not an lvar?)
-- transactionMetaData (might be pruned, so maybe not an lvar?)
+cross cutting
+- stateMachine
+- lvar
+  - vectorClock
+  - revisionTree (might be pruned, so maybe not an lvar?)
+  - transactionMetaData (might be pruned, so maybe not an lvar?)
 
 platform
 - mobile

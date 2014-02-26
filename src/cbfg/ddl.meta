@@ -1,0 +1,50 @@
+DDL definitions
+
+  namedObj:
+    uuid
+    ver
+    name
+
+  cluster: namedObj
+    pool*
+
+  pool: namedObj
+    bucket*
+    user*
+    group*
+    acl*
+
+  bucket: namedObj collectionConfig
+    bucketType
+    numPartitions
+    designDoc*
+    indexConfig*
+    xdcrConfig*
+
+  collectionConfig:
+    perNodeMaxMemory
+    perNodeMaxStorage
+    replicaCount
+    replicaPlacement
+
+  designDoc: namedObj
+    view*
+
+  indexConfig: namedObj collectionConfig
+
+  xdcrConfig: namedObj
+
+  user: namedObj
+    credentials
+
+  group: namedObj
+    userUUID*
+
+  acl: namedObj
+    accessRule
+    userUUID*
+    groupUUID*
+
+cluster hierarchy has changeStream.
+cluster hierarchy has cascading delete.
+cluster hierarchy has upscading ver propagation.
