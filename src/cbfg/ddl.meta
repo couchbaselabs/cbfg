@@ -1,5 +1,11 @@
 DDL definitions
 
+  name: nonEmptyString
+
+  uuid: nonEmptyUUID
+  userUUID: uuid
+  groupUUID: uuid
+
   namedObj:
     uuid (readOnly)
     ver
@@ -48,3 +54,20 @@ DDL definitions
 cluster hierarchy has changeStream.
 cluster hierarchy has cascading delete.
 cluster hierarchy has upscading ver propagation.
+
+bucketType:     | memcached | couchbase | strongCP | couchdb | ap
+backend         |           |           | etcd     |         |
+subscription    |           |           | y        |         |
+groupMembership |           |           | y        |         |
+replication
+xdcr
+persistence
+indexes
+conflictResolution
+
+partitionState
+  master, pending, replica, dead
+
+partitionFunc
+  hashCRC
+  range

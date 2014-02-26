@@ -1,0 +1,161 @@
+
+- statsAggregator
+- partitionMapValidator
+-- detects unbalancedness and not enough replicas
+- partitionMapPlanner
+- partitionMapScheduler
+-- max scanners per node
+-- max movers per pair of nodes
+- partitionMapMover
+- n2nr
+-- ongoing streams
+-- takeover streams
+- xdcr
+- dmlEngine
+-- n1ql
+-- hashJoiner
+-- mapper
+- backIndex
+- indexMaintainer
+- index
+- view
+- fullText
+- backup
+- directFileCopier
+- autoFailOverer
+- doctor
+-- heartBeat
+-- nodeHealth
+- healthChecker
+- integrations
+-- hadoop
+-- elasticSearch
+
+each service...
+- short label
+- needs storage?
+-- ephemeral storage
+-- permanent storage
+- needs partitionMap
+-- reads partitionMap
+-- writes partitionMap
+- limits  (per cluster, per node,  per bucket, per partition)...
+-- memory
+-- storage
+-- processors
+
+neoUser
+- a "system user or conductor", which is super-priviledged?
+-- not meant for end-user usage
+-- used by the system to force changes on nodes
+-- without needing special networking pathways
+-- and should always work even if user deletes/changes any other admin users
+
+node: namedObj
+- uuid (the one thing a node needs to know on startup, along with cfg server)
+- parent/containment path (rack/zone)
+- usage (kv only? index and index.fullText only?)
+- weight
+- memory
+- addrBindings
+- numProcessors
+- directory+
+-- logical data volumes (leverage more spindles)
+- maxConns
+- maxChannels
+- maxInflightRequestsPerChannel
+
+partitionMap
+
+engineProcess
+  conn*
+  ePool*
+    eBucket*
+      eColl*
+        ePartition*
+          partitionId
+          rangeStartInclusive (bottom)
+          rangeEndExclusive (top)
+          state: master, replica, dead
+          readiness: warming, cooling, running, stopped
+  storage
+    scanner*
+    snapshot*
+      snapshotScanner*
+  volume*
+    type: ephemeral, permanent
+    kind: ssd, hdd
+    fsVolume* (directory)
+  task*
+    storageScanner
+       (current num and max num of these per node, per volume;
+        state: working/running vs stopped)
+      compactor / expirer / tombstonePurger
+      backFiller
+    memScanner
+      evictor, expirer
+    inPlaceBackUpper / directFileCopier (after compaction)
+  stream*
+    replicaStream, changeStream, persister
+  memAllocator
+
+conn
+  channel*
+
+channel
+  authedUser
+  inflightRequest*
+
+inflightRequest
+  startAtHRTime
+  endAtHRTime
+  nextInFlightRequest
+  prevInflightRequest
+  opaqueId
+  op
+  requestHeader*
+  requestChunk*
+    start processing even before all request chunks are received
+
+(need to handle "stats" or other open requests with multiple responses)
+
+item
+- partitionId
+- key
+- revId
+- cas?
+- flags
+- expiration
+- valueDataType
+- valueCompression
+-- in-memory data compression
+- value
+- childItems (same partitionId as parent)
+-- appMetaData (will this work?)
+-- flexMetaData
+-- txMetaData
+-- revisionTree (will this work?)
+-- attachments
+-- items
+
+proposed leveldb layout...
+  cust-0001:m            (metaData: revId, cas, flags, expiration,
+                          dataType, compression)
+  cust-0001:v            (value)
+  cust-0001/_at/01:m     (attachment metaData)
+  cust-0001/_at/01:v     (attachment value)
+  cust-0001/_fm:m        (flexMetaData metaData)
+  cust-0001/_fm:v        (flexMetaData value)
+  cust-0001/_rt:m        (revTree metaData)
+  cust-0001/_rt:v        (revTree value)
+  cust-0001/_tx:m        (transaction metaData)
+  cust-0001/_tx:v        (transaction metaData)
+  cust-0001/<subKey>:m
+  cust-0001/<subKey>:v
+  cust-0001/campaign-001:m
+  cust-0001/campaign-001:v
+  cust-0001/campaign-002:m
+  cust-0001/campaign-002:v
+  cust-0001/campaign-002/response-000001:m
+  cust-0001/campaign-002/response-000001:v
+

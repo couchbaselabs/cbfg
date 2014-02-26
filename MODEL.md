@@ -1,100 +1,8 @@
 miscellaneous model ideas/notes
 -------------------------------
 
-cross cutting
-- stateMachine
-- lvar
-  - vectorClock
-  - revisionTree (might be pruned, so maybe not an lvar?)
-  - transactionMetaData (might be pruned, so maybe not an lvar?)
-
-platform
-- mobile
--- android
--- ios
--- javascript/sqlite
-- server
--- linux
---- docker
--- osx
--- solaris
--- windows
--- javascript/nodejs
-
-services (all pluggable)
-- stats
--- stats aggregator
-- partition map validator
-  ("you're currently unbalanced; don't have enough nodes for # of replicas")
-- partition map planner
--- max movers per pair of nodes
-- partition map plan scheduler
-- partition map move executor
--- ongoing takeover streams
-- intraClusterReplicator (ongoing stream manager)
--- regular streams
--- takeover streams
-- xdcr
-- n1ql
--- distributed n1ql execution engines (hash join, mappers, etc)
-- storedProcs
-- primaryIndex (kv)
-- secondaryIndex
--- backIndex
--- 2i
--- view
---- view aggregates might not work with LSM/leveldb?  use rocksdb merge?
--- fullText
-- integrations
--- hadoop
--- elasticSearch
-- backup
-- direct file copier
-- autoFailOver
-- encrypt/decrypt
-- authManager
-- nodeHealth
--- nodeHeartBeat
--- nodeDoctor
-
-each service...
-- short label
-- needs storage?
--- ephemeral storage
--- permanent storage
-- needs partitionMap
--- reads partitionMap
--- writes partitionMap
-- limits  (per cluster, per node,  per bucket, per partition)...
--- memory
--- storage
--- processors
-
-node
-- uuid (the one thing a node needs to know on startup, along with cfg server)
-- parent / containment (rack / zone)
-- usage (kv only? index and index.fullText only?)
-- memory
-- processors
-- storage
--- logical data volumes (leverage more spindles)
-
-collection
-- primaryIndex
-- secondaryIndex
-
-auth
-- user
--- a "system user or conductor", which is super-priviledged?
---- not meant for end-user usage
---- used by the system to force changes on nodes
---- without needing special networking pathways
---- and should always work even if user deletes/changes any other admin users
-- group
-- ACL's
-
-cross cutting
-- versioning / mvcc
+- view
+- view aggregates might not work with LSM/leveldb?  use rocksdb merge?
 
 internals
 - queue
@@ -107,67 +15,6 @@ internals
 -- storage
 -- config
 
-storage
-- warming / running / cooling / stopped
-
-drive
-- type
--- permanent
--- ephemeral (ec2 local drive)
-
-storageServices
-- (current num and max num of these per node, per drive; state: working/running vs stopped)
-- scanners
--- backFiller
---- state: backFilling
-- drainers
-- compactor (isa scanner & isa drainer?)
--- forceCompactNow (during rebalance)
-- inPlaceBackuper
-
-drive
-- type (ssd, hdd)
-
-protobuf's and clojure
-
-item
-- partitionId
-- key
-- revId / cas?
-- flags
-- expiration
-- valueDataType
-- valueCompression
--- in-memory data compression
-- value
-- childItems (same partitionId as parent)
--- appMetaData (will this work?)
--- flexMetaData
--- txMetaData
--- revisionTree (will this work?)
--- attachments
--- items
-
-proposed leveldb layout...
-  cust-0001:m            (metaData: revId, cas, flags, expiration, dataType, compression)
-  cust-0001:v            (value)
-  cust-0001/_at/01:m     (attachment metaData)
-  cust-0001/_at/01:v     (attachment value)
-  cust-0001/_fm:m        (flexMetaData metaData)
-  cust-0001/_fm:v        (flexMetaData value)
-  cust-0001/_rt:m        (revTree metaData)
-  cust-0001/_rt:v        (revTree value)
-  cust-0001/_tx:m        (transaction metaData)
-  cust-0001/_tx:v        (transaction metaData)
-  cust-0001/<subKey>:m
-  cust-0001/<subKey>:v
-  cust-0001/campaign-001:m
-  cust-0001/campaign-001:v
-  cust-0001/campaign-002:m
-  cust-0001/campaign-002:v
-  cust-0001/campaign-002/response-000001:m
-  cust-0001/campaign-002/response-000001:v
-
 itemOperation
 - headers
 - op
@@ -176,15 +23,7 @@ itemOperation
 cluster / site
   pool
     bucket
-     type
-       memcached
-       couchbase (cp)
-       couchdbap (ap)
-       couchdb (ap), edge / mobile
-       etcd (strong-cp)
-         subscription
-         group membership
-         etcd
+     bucketType
      primaryIndex collection
        partition
          partitionState
@@ -252,6 +91,19 @@ ops          | cluster | bucket | partition
 - pillInject |         |        | tx, writeConcern
 - logInject  | y       | y      | y
 - fence      |         |        | y
+- compactNow |         |        | y
+- exec(task) |         |        | y
+- pause(task)
+- resume(task)
+- splitPartition
+- mergePartition
+- set/getPartitionConfig (including range)
+- set/getPartitionState
+- set/getFilter
+- set/getErrorExtra(CCCP)
+- passOnwardsToReplicaX
+- features
+- stats
 
 writeConcern
 - N < R + W
@@ -492,3 +344,24 @@ thread
 storage error cases
 - checksum
 - storage inaccessible
+
+cross cutting
+- stateMachine
+- lvar
+  - vectorClock
+  - revisionTree (might be pruned, so maybe not an lvar?)
+  - transactionMetaData (might be pruned, so maybe not an lvar?)
+
+platform
+- mobile
+-- android
+-- ios
+-- javascript/sqlite
+- server
+-- linux
+--- docker
+-- osx
+-- solaris
+-- windows
+-- javascript/nodejs
+
