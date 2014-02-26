@@ -83,6 +83,7 @@ node
 - memory
 - processors
 - storage
+-- logical data volumes (leverage more spindles)
 
 collection
 - primaryIndex
@@ -90,6 +91,11 @@ collection
 
 auth
 - user
+-- a "system user or conductor", which is super-priviledged?
+--- not meant for end-user usage
+--- used by the system to force changes on nodes
+--- without needing special networking pathways
+--- and should always work even if user deletes/changes any other admin users
 - group
 - ACL's
 
@@ -128,6 +134,8 @@ storageServices
 drive
 - type (ssd, hdd)
 
+protobuf's and clojure
+
 item
 - partitionId
 - key
@@ -136,6 +144,7 @@ item
 - expiration
 - valueDataType
 - valueCompression
+-- in-memory data compression
 - value
 - childItems (same partitionId as parent)
 -- appMetaData (will this work?)
@@ -179,6 +188,9 @@ cluster / site
        couchdbap (ap)
        couchdb (ap), edge / mobile
        etcd (strong-cp)
+         subscription
+         group membership
+         etcd
      primaryIndex collection
        partition
          partitionState
@@ -190,17 +202,25 @@ cluster / site
          items
          changes
          failOverLog
-         mailBox
+         mailBox (ACID message queue)
          ephemeral
            subscribers (with filters (keyOnly, matchKeyExpr, matchValueExpr))
+           partition assignment to processor (mem quota)
+           partition assignment to storage (storage quota)
      secondaryIndex collection
        partition
+     by the way
+       some buckets are special system buckets
+         system catalog bucket (read-only?)
+         stats bucket (read-only?)
   auth
 
-highConsistencyCluster
-- subscription
-- group membership
-- etcd
+storage / dir
+- quota
+- allowed file types
+- allowed partition types
+- allowed collection types
+- priority by usage type
 
 proxy
 - syncGW
@@ -239,6 +259,8 @@ ops          | cluster | bucket | partition
 - logInject  | y       | y      | y
 - fence      |         |        | y
 
+writeConcern
+- N < R + W
 
 errors
 - not my partition
@@ -265,12 +287,12 @@ rebalance
 - do rest of partition takeover
 - index (view) compaction (not concurrent with partition moves)
 
-lua
+script building blocks / lua
 - lua contexts
 - sha's of registered, available functions
 - node-local processors vs further away cluster-local processors
 
-a cluster:
+a cluster (a.k.a site):
   is configured to contain:
     a set of 1 or more pool's (identified by name),
     a set of 1 or more user's (identified by name),
@@ -281,6 +303,12 @@ a cluster:
     1 user instance (instance.roles includes "admin");
     1 role instance (instance.name is "admin");
 
+design-docs and other config
+- stored in a special partition 0xffffffff?
+-- so that they're replicated, backed-up, scan'able,
+   UPR/TAP'able without any special machinery.
+
+------------------------------------
 a pool:
   has configured properties:
     name;
@@ -311,3 +339,162 @@ a ram-quota:
 
 a host:
   is a property of type string;
+
+---------------------------
+multiple partitions in one file
+- for better batching
+- still logically separate, though
+- add partitionId as key prefix
+-- perhaps also add one more level of indirection to allow for fast delete-and-recreate
+-- true deletion during compaction
+
+---------------------------
+rocksdb
+
+pros
+- merge operator
+- online backup
+- lots of operational features
+
+cons
+- memory mgmt control
+- managing values as 4KB chunks
+
+----------------------
+workload generator
+- input
+-- workload ops mixes
+-- collection capabilitiies
+-- cluster config (multicluster)
+
+boom
+  {join [x y z]
+   where (> x.b y.b)
+   select [x.a z.a z.b]
+   into [w w2 w3]}
+
+-------------------------------
+partition / collection properties
+- CAP (cp vs ap)
+- partitioning funcs
+- range / scan / iteration support
+- has values
+- ops
+-- get
+-- set
+-- delete
+-- merge
+--- append/prepend
+--- union
+-- add
+-- replace
+-- arith
+- cas
+- revId
+- attachments
+- eviction policy
+- expiration / TTL
+- compaction policy
+- changesStream
+- upstream source
+-- for indexing
+-- for replication
+- state
+- range config
+- xdcr'able
+- index'able
+- auth
+- subItems
+- revision tree
+- flags
+- dataType
+- compression
+- tx
+-- NBtA proposed changes
+
+rebalance
+- partitions to nodes (must have)
+- partitions to processors (nice to have, or just rebalance (or swap rebalance) to new or same node)
+- partitions to storages (nice to have, or just rebalance (or swap rebalance) to new or same node)
+
+transactions
+- locking (lease) / lock table?
+
+item ephemeral
+- dirty
+-- not persisted (persistenceConcern)
+-- not replicated (replicationConcern)
+- cached
+
+headers
+- controls processing?
+- quiet / verbose / fenced
+- compression
+- dataType
+- txId
+- channel
+- writeConcern
+- uncompressed value size (for stats)
+- checksum
+- partitionId
+
+subItems
+- modifying subItem does not change parent
+-- unless a mset (changing parent and child in one ACID set)
+-- beware that replication keeps the atomicity
+- cascading deletes
+- used for
+-- transactions
+-- attachments
+-- revisionTrees
+-- subItems
+-- flexMetaData
+
+follow several key/values/revID/transactions through the system
+- write dedupe
+- replica dedupe
+- read dedupe
+-- snapshot reads
+
+show the compare/contrast of one model and config and setup and fork versus another
+
+node
+- startTime
+- currTime
+- upTime is calculated by tool
+- aggregates calculated elsewhere?
+- speed in/out and current queue lengths tracked by node
+
+pill injection
+- respond only when persisted
+- respond only when replicated
+- respond only when indexed
+- but, don't do real update?
+- or, do real update in scratch area
+
+admin chosen input          | app/end-user chosen input       | runtime/ephemeral
+------------------------------------------------------------------------------------------------
+"DDL"                       | "DML"                           |
+CRUD for cfg / def / ddoc   | CRUD for item ops / n1ql / exec | "eng"
+add/remove node, rebalance  |                                 |
+                            | ops stats                       | eng stats (queue lengths, drain rates)
+                            |                                 | startTime / upTime / % fragmentation
+
+max partition id
+- 16 bits?
+
+indexDB key layout...
+- hash  partitionId | key . subKey (m|v)
+- range partitionId | key . subKey (m|v)
+- index usage - partitionId | emitKey . docId
+- changeStream - partitionId | seqNum | key . subKey
+
+thread
+- conn affinity
+- partition affinity
+- partition slice affinity (concurrent hashmap)
+- NUMA affinity?
+
+storage error cases
+- checksum
+- storage inaccessible
