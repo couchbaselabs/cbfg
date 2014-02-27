@@ -1,0 +1,1 @@
+This storage.spec file covers storage concerns.

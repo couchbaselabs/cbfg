@@ -1,3 +1,5 @@
+This edl.spec file ("engine definition language") covers engine
+implementation including internal queues, stats, error conditions.
 
 - statsAggregator
 - partitionMapValidator

@@ -1,3 +1,5 @@
+This dml.spec file covers logical items and operations.
+
 itemOperation
 - headers
 - op

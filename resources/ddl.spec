@@ -1,3 +1,6 @@
+This ddl.spec file covers logical cluster configuration including
+pools, buckets, indexes, users, collections, partitions, xdcr.
+
 site -> cluster -> pool
 
 DDL definitions
