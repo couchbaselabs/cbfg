@@ -55,17 +55,25 @@ ops          | cluster | bucket | partition
 writeConcern
 - N < R + W
 
-errors
-- not my partition
--- gives cccp opaque?
-- not my range
--- gives cccp opaque?
-- temp OOM
--- gives queue in/out speeds and lengths?
-- not caught up (index scan)
--- gives queue in/out speeds and lengths?
-- not cached (getCached)
--- gives queue in/out speeds and lengths?
+  errorResponseBody.errorCode
+  - not my partition
+    - extraBody includes cccpOpaque & engineVelocity
+  - not my range
+    - extraBody includes cccpOpaque & engineVelocity
+  - temp OOM
+    - extraBody includes engineVelocity
+  - not caught up (e.g., index scan)
+    - extraBody includes engineVelocity
+  - not cached (getCached)
+    - extraBody includes engineVelocity
+
+  engineVelocity
+  - queue in/out speeds and lengths
+  -- basically, enough info so that client can calculate when it should retry
+  --- and with some random client-side politeness jitter
+
+  cccpOpaque probably defined in cdl.spec
+  - this is the "fast forward map" of where the client should look
 
 subItems
 - modifying subItem does not change parent
@@ -79,16 +87,6 @@ subItems
 -- subItems
 -- flexMetaData
 
-headers
-- controls processing?
-- quiet / verbose / fenced
-- compression
-- dataType
-- txId
-- channel
-- writeConcern
-- uncompressed value size (for stats)
-- checksum
-- partitionId
-
 RYOW - read your own writes
+
+asynchronous vs synchronous XDCR

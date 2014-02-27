@@ -5,16 +5,10 @@ site -> cluster -> pool
 
 DDL definitions
 
-  name: nonEmptyString
-
-  uuid: nonEmptyUUID
-  userUUID: uuid
-  groupUUID: uuid
-
   namedObj:
     uuid (readOnly)
-    ver
-    name (readOnly)
+    ver  (uint64IncrementLVar)
+    name (readOnly, uniqueInParentContainer)
 
   cluster: namedObj
     pool*
@@ -58,9 +52,15 @@ DDL definitions
     userUUID*
     groupUUID*
 
+  name: string [a-zA-Z0-9][a-zA-Z0-9_-]*
+
+  uuid: nonEmptyUUID
+  userUUID: uuid
+  groupUUID: uuid
+
 cluster hierarchy has changeStream.
 cluster hierarchy has cascading delete.
-cluster hierarchy has upscading ver propagation.
+cluster hierarchy has upwards ver propagation.
 
 bucketType:     | memcached | couchbase | strongCP | couchdb | ap
 backend         | def-eng   | ep-eng    | etcd     |         |
