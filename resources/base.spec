@@ -22,3 +22,14 @@ queue
 
 checksum
 
+internals
+- queue
+-- send queue
+-- recv queue
+-- write queue
+-- read queue
+- snapshotable
+-- iterator
+-- storage
+-- config
+

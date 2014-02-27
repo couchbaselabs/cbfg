@@ -75,3 +75,7 @@ partitionState
 partitionFunc
   hashCRC
   range
+
+max partition id
+- 16 bits?
+
