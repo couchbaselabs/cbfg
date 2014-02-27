@@ -1,4 +1,5 @@
-This dml.spec file covers logical items and operations.
+This dml.spec file covers logical items and operations, including
+consistency/availability (CAP) concerns.
 
 itemOperation
 - headers
@@ -90,3 +91,4 @@ headers
 - checksum
 - partitionId
 
+RYOW - read your own writes

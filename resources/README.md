@@ -1,4 +1,5 @@
-Overview of the various *.spec files...
+Overview of the various *.spec files, where they might
+be read and unerstood in this order...
 
 ddl.spec
 --------
@@ -34,3 +35,7 @@ storage.spec
 
 Covers storage concerns.
 
+base.spec
+---------
+
+Covers some shared, base concepts and types.
