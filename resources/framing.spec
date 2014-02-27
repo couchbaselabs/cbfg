@@ -8,9 +8,10 @@ the "client".
   - request vs response first byte
   - messageFlags (uint8)
     - oneWay (never a response)
-      vs quiet (perhaps one or more error responses)
+      vs quiet (perhaps zero or 1 errorResponse)
+      vs responseExpected
       vs responsesExpected
-    - fenced vs last
+    - fencedMessage vs lastMessage vs neither
   - opCode
   - opaqueId (uint64)
   - channelId (string)
@@ -43,3 +44,22 @@ the "client".
   - UNKNOWN_OPCODE
   - UNSUPPORTED_OPCODE
   - TOO_MANY_CHANNELS
+
+channel
+  channelId
+  authedUser (default: _anonymous)
+  inflightMessage*
+
+inflightMessage
+  startAtHRTime
+  endAtHRTime
+  nextMessage
+  prevMessage
+  opaqueId
+  op
+  requestHeader*
+  requestChunk* (lazy?)
+    start processing even before all request chunks are received
+
+(need to handle "stats" or other open requests with multiple responses)
+

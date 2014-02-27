@@ -82,3 +82,68 @@ partitionFunc
 max partition id
 - 16 bits?
 
+system user ("_system")
+- a "system user or conductor", which is super-priviledged
+-- not meant for end-user usage
+-- used by the system to force changes on nodes
+-- without needing special case networking pathways
+-- and should always work even if user deletes/changes any other admin users
+-- only the system knows _system credentials
+
+some buckets are special system buckets
+  system catalog bucket (read-only?)
+  stats bucket (read-only?)
+
+design-docs and other config
+- might be stored in a special, highly replicated system collection?
+-- or special system bucket?
+-- so that they are replicated, backed-up, scanable,
+   UPR/TAP-able without any special machinery.
+
+-------------------------------
+collection properties
+- CAP (cp vs ap)
+- partitioning funcs
+- range / scan / iteration support
+- has values
+- ops
+-- get
+-- set
+-- delete
+-- merge
+--- append/prepend
+--- union
+-- add
+-- replace
+-- arith
+- cas
+- revId
+- attachments
+- eviction policy
+- expiration / TTL
+- compaction policy
+- changesStream
+- upstream source
+-- for indexing
+-- for replication
+- state
+- range config
+- xdcr'able
+- index'able
+- auth
+- subItems
+- revision tree
+- flags
+- dataType
+- compression
+- tx
+-- NBtA proposed changes
+
+cluster / pool constructor
+- pool: default
+-- bucket: default
+-- acl: ALL _system
+-- acl: ALL default
+- user: default
+- user: _system
+- user: _anonymous

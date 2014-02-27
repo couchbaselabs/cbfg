@@ -90,3 +90,23 @@ subItems
 RYOW - read your own writes
 
 asynchronous vs synchronous XDCR
+
+item
+- partitionId
+- key
+- revId
+- cas?
+- flags
+- expiration
+- valueDataType
+- valueCompression
+-- in-memory data compression
+- value
+- childItems (same partitionId as parent)
+-- appMetaData (will this work?)
+-- flexMetaData
+-- txMetaData
+-- revisionTree (will this work?)
+-- attachments
+-- items
+
