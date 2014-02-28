@@ -30,6 +30,11 @@ node: namedObj
 
 partitionMap
 
+partitionConfig
+  partitionState
+    master, pending, replica, dead
+  range config
+
 clusterChangeRequest
 - add/remove node
 - maintenance mode
@@ -49,4 +54,8 @@ rebalance
 -- (nice to have, or just rebalance (or swap rebalance) to new or same node)
 - partitions to storages
 -- (nice to have, or just rebalance (or swap rebalance) to new or same node)
+- NUMA
+-- cheap, first approach may be allowing machine to run >1 node
 
+some new feature / operation allowed only when all nodes
+have reached minimal version

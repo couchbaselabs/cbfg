@@ -160,3 +160,48 @@ ePersistedPartition
 
 eMemoryCollection
 ePersistedCollection
+
+scenarios
+- os/memory swap
+- node slowness
+- storage slowness
+- restart a datacenter
+- restart a cluster
+- restart a node
+- restart a process
+- restart a network hop
+
+writeBatch
+- max num items
+- max num bytes
+- max time
+
+dedupe
+- max dirty age
+- max dedup count
+
+on incomingReq as r
+   P = myPartitions.get(r.partitionId)
+
+lojoin [incomingReqs, join [myPartitions, allowsOpsByPartitionState]
+                        on partitionState]
+    on [partitionId, reqNum]
+ split on partitionUUID is not null
+       into myPartitionRequests else notMyPartitionRequests
+
+on new request{Req, Node, OpCode, ...}
+  check knownOpCode(OpCode)
+  check implementedOpCode(OpCode)
+  U = check knownUser
+  if op in bucketAdminOpCodes
+    check bucketAdminAllowed(OpCode)
+    handleBucketAdminOpCode(Req, Node)
+    return
+  B = check knownBucket
+  check bucketAllowed(OpCode)
+  // No more auth checking needed after this.
+  if op in partitionAdminOpCodes
+    handlePartitionAdminOpCode(Req, Node, B)
+    return
+  P = check knownPartition
+  handlePartitionOpCode(Req, Node, B, P)

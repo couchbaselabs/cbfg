@@ -52,6 +52,11 @@ ops          | cluster | bucket | partition
 - features
 - stats
 
+requests to not affect cache if possible
+- e.g., replication streams
+- backfill on master
+- changes injest on replica
+
 writeConcern
 - N < R + W
 
@@ -86,6 +91,7 @@ subItems
 -- revisionTrees
 -- subItems
 -- flexMetaData
+- upward ver propagation
 
 RYOW - read your own writes
 

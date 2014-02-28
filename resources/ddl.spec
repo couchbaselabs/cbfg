@@ -22,6 +22,7 @@ DDL definitions
 
   bucket: namedObj collectionConfig
     bucketType (readOnly)
+    - CAP (cp vs ap)
     partitionFunc
     numPartitions (readOnly)
     designDoc*
@@ -29,8 +30,8 @@ DDL definitions
     xdcrConfig*
 
   collectionConfig:
-    perNodeMaxMemory
-    perNodeMaxStorage
+    perNodeMemoryQuota
+    perNodeStorageQuota
     replicaCount
     replicaPlacement
 
@@ -71,9 +72,17 @@ xdcr
 persistence
 indexes
 conflictResolution
-
-partitionState
-  master, pending, replica, dead
+compactionPolicy
+ops
+- get
+- set
+- delete
+- merge
+-- append/prepend
+-- union
+- add
+- replace
+- arith
 
 partitionFunc
   hashCRC
@@ -101,43 +110,31 @@ design-docs and other config
    UPR/TAP-able without any special machinery.
 
 -------------------------------
+collectionType | changesStream | subItems | tx | mvcc | indexable
+primary        | y             | y        | y  | y    | y
+backIndex      | y             | n        | n  | y    | n
+index          | n             | n        | n  | y    | n
+
 collection properties
-- CAP (cp vs ap)
 - partitioning funcs
 - range / scan / iteration support
 - has values
-- ops
--- get
--- set
--- delete
--- merge
---- append/prepend
---- union
--- add
--- replace
--- arith
 - cas
 - revId
-- attachments
-- eviction policy
-- expiration / TTL
-- compaction policy
+- subItem-able
+-- revisionTrees
+-- attachments
+-- tx
+--- NBtA proposed changes
 - changesStream
 - upstream source
+-- for user/app
 -- for indexing
 -- for replication
-- state
-- range config
-- xdcr'able
-- index'able
-- auth
-- subItems
-- revision tree
+- xdcr-able
 - flags
-- dataType
-- compression
-- tx
--- NBtA proposed changes
+- allowedDataTypes
+- validtor*
 
 cluster / pool constructor
 - pool: default
@@ -147,3 +144,9 @@ cluster / pool constructor
 - user: default
 - user: _system
 - user: _anonymous
+
+callbacks
+- pre/post-eviction callbacks
+- pre/post-expiration callbacks
+- pre/post-compaction callbacks
+
