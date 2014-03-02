@@ -189,14 +189,15 @@ lojoin [incomingReqs, join [myPartitions, allowsOpsByPartitionState]
  split on partitionUUID is not null
        into myPartitionRequests else notMyPartitionRequests
 
-on new request{Req, Node, OpCode, ...}
-  check knownOpCode(OpCode)
-  check implementedOpCode(OpCode)
-  U = check knownUser
+onMessageReceived{Channel, Msg, ...}
+  Req = check isRequest(Msg)
+  OpCode = check knownImplementedOpCode(Req)
+  U = check knownUser(Channel, Req)
+  if op in channelAdminOpCodes
+     return handleChannelAdmin(Channel, Req)
   if op in bucketAdminOpCodes
-    check bucketAdminAllowed(OpCode)
-    handleBucketAdminOpCode(Req, Node)
-    return
+    check bucketAdminAllowed(Req, U)
+    return handleBucketAdmin(Channel, Req)
   B = check knownBucket
   check bucketAllowed(OpCode)
   // No more auth checking needed after this.
