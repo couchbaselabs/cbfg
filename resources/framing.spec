@@ -54,8 +54,17 @@ channel
     when too many msgs
     maxChannelMsgs
     maxChannelBytes
+    a channel with too many msgs
+      sends back error msg so that client can retry?
+      (or, alternative answer, should it just block the entire conn?)
   fenced
     waiting for fenced reply so no out-of-order replies allowed
+
+conn
+  do we need these?
+    maxInflightMsgs
+    maxInflightBytes
+    should these send back error?  or block the entire conn?
 
 inflightMessage
   startAtHRTime
