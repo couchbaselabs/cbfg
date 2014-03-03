@@ -47,8 +47,15 @@ the "client".
 
 channel
   channelId
+  channelPriority
   authedUser (default: _anonymous)
   inflightMessage*
+  pausedInputProcessing
+    when too many msgs
+    maxChannelMsgs
+    maxChannelBytes
+  fenced
+    waiting for fenced reply so no out-of-order replies allowed
 
 inflightMessage
   startAtHRTime
@@ -63,3 +70,10 @@ inflightMessage
 
 (need to handle "stats" or other open requests with multiple responses)
 
+how to handle flow control?
+  e.g., scan / changes-stream iteration
+  but, receiver is slow
+  idea: occasionally send receiver a ack-request
+    receiver answers (perhaps on another channel) with ack-responses
+    consider another (dedicated) channel as first channel
+      might be paused with too many msgs

@@ -211,3 +211,46 @@ onMessageReceived{Msg}
   Partition = must knownAllowedPartition(Req, User)
 
   return handlePartitionReq(Req, User, Bucket, Collection, Partition)
+
+ops
+- getCached
+- get
+- set
+- del
+- merge
+- scan
+- changes
+- def
+- eval
+- mget
+- mset
+- mdel
+- ddl
+- conductor
+- pillInject
+- logInject
+- compactNow
+- exec(task)
+- pause(task)
+- resume(task)
+- splitPartition
+- mergePartition
+- set/getPartitionConfig (including range)
+- set/getPartitionState
+- set/getFilter
+- set/getErrorExtra(CCCP)
+- passOnwardsToReplicaX
+
+partitionStorageAPI
+       level(cacheOnly?)
+- adminCmds (config, create, delete, validate, list,
+             compact, purge, stats, pause/resume,
+             get/set ephemeral memo)
+- get
+- getMulti
+- set
+- del
+- scan
+- merge
+- writeBatch
+- registerForChanges

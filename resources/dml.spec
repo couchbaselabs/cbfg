@@ -51,6 +51,7 @@ ops          | cluster | bucket | partition
 - passOnwardsToReplicaX
 - features
 - stats
+- purgeTombstones
 
 requests to not affect cache if possible
 - e.g., replication streams
