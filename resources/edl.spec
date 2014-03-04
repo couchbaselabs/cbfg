@@ -212,6 +212,11 @@ onMessageReceived{Msg}
 
   return handlePartitionReq(Req, User, Bucket, Collection, Partition)
 
+handling higher level admin changes
+- easy answer: lock (global?)
+- setup new datastructures / immutable
+- CAS-like swap
+
 ops
 - getCached
 - get
@@ -254,3 +259,22 @@ partitionStorageAPI
 - merge
 - writeBatch
 - registerForChanges
+
+rebalance controls number of backfills to not overload node
+
+consistent indexes during rebalance
+- looks for backfill-done messages before starting
+  next backfill on another vbucket
+- and also waits for indexes to be done before completing a vbucket move
+-- by forcing a checkpoint on source node
+-- and waiting until checkpoint is done on target node
+-- and wait for indexes to catchup on target node
+-- before starting actual vbucket-takeover dance
+
+chain replication
+- A -> B -> C
+- if server A fails over to server X, how does server C learn
+  about the failOver news, where there are new takeOver logs
+  and rollback in server B that need to propagated to server C.
+
+filtered replication streams

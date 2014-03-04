@@ -1,8 +1,11 @@
 This framing.spec file covers network protocol framing.
 
-The protocol is symmetric, where requests and responses have similar
-framing.  And, a "server" can initiate an out-of-the-blue message to
-the "client".
+The protocol is asymmetric.  Although requests and responses have
+similar header and body framing, there is a clear distinction between
+server and client sides of a connection.  A server cannot send a
+message to a client "out of the blue".  Instead, responses (if any,
+and there might be more than one response message to a request) must
+be due to an earlier client request.
 
   message
   - request vs response first byte
@@ -48,6 +51,9 @@ the "client".
 channel
   channelId
   channelPriority
+    - affects which messages are processed first
+    - and downstream tasks should inherit channel priority
+      - example: high priority backfill or changes stream
   authedUser (default: _anonymous)
   inflightMessage*
   pausedInputProcessing
@@ -86,3 +92,17 @@ how to handle flow control?
     receiver answers (perhaps on another channel) with ack-responses
     consider another (dedicated) channel as first channel
       might be paused with too many msgs
+
+what if a conn closes?
+- need to have engineer internals stop any in-flight request processing.
+
+what if a channel closes?
+- need to have engineer internals stop any in-flight request processing.
+- a channel close is also implicitly fenced
+-- so, there will not be any new responses on that channel
+   after the channel-close is processed.
+
+should there be explicit channel open?
+
+what if channel is immediately reopened?
+- no problem, the semantics are clear with the fenced channel-close.

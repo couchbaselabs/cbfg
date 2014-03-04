@@ -121,3 +121,15 @@ input
 operational
 
 keep in mind hot-loading / hot-reloading code
+
+----------------------------------------
+stuff to look at / learn
+
+- clojure.test
+- hiccup ~ html DSL
+- clojure slurp API
+- clojure.java.io
+-- io/resource API
+- engelberge/instaparse for clojure
+- total programing
+- idris
