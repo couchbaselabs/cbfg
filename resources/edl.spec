@@ -154,6 +154,15 @@ transactions
 -- lock per eBucket
 
 tombstone purge
+- tombstone purging based on time
+- allow UPR clients to "lease" their high-watermark of
+  tombstone-purgable seq-num.
+- if tombstone purger got ahead of UPR client that went
+  away for a long time, that UPR client needs to start
+  from seq num 0 to avoid missing deletions
+- highwatermark registrations need to be replicated.
+- tombstone purger on replica should not move
+  faster than tombstone purger on master.
 
 eMemoryPartition
 ePersistedPartition
@@ -265,10 +274,13 @@ rebalance controls number of backfills to not overload node
 consistent indexes during rebalance
 - looks for backfill-done messages before starting
   next backfill on another vbucket
-- and also waits for indexes to be done before completing a vbucket move
+- and also waits for indexes to be done before starting a real vbucket takeover
 -- by forcing a checkpoint on source node
--- and waiting until checkpoint is done on target node
--- and wait for indexes to catchup on target node
+-- and waiting until checkpoint persisted on target node
+-- pause indexing on source node
+-- force another checkpoint on source node
+-- and waiting until 2nd checkpoint persisted on target node
+-- and wait for indexes to catchup to forced checkpoint on target node
 -- before starting actual vbucket-takeover dance
 
 chain replication
