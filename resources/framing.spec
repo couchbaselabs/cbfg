@@ -41,6 +41,8 @@ be due to an earlier client request.
   - NOOP
   - CLOSE_CHANNEL
   - VERSION (also returns capabilities)
+  - HEARTBEAT_WANTED (or header flag?)
+  - HEARTBEAT
 
   errorCode (uint16)
   - UNEXPECTED

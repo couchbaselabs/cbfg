@@ -271,17 +271,18 @@ partitionStorageAPI
 
 filtered replication streams
 
-how is backFill handled?
+how is backFill handled? / flow control?
 - with slow acks due to slow consumer?
 - request for changesStream or scan comes in.
 - request registered on partitionStorage
   - callback places data on reply channel
   - reply channel consumed by sender
-  - sender send()s N messages before injecting / sending
-    a READY_FOR_MORE response
-  - client eventually sends a READY quiet request or any other
-    request on the original channel
-    which allows sender to keep going on that channel
+  - if sender send()s N messages or X bytes, and no new requests
+    have come into the conn and channel in the meantime,
+    the sender will inject / send() a HEARTBEAT_WANTED response (or flag)
+  - client eventually sends a HEARTBEAT quiet request or any other
+    request on the original conn and channel
+    which allows sender to keep going with more responses
   - if reply channel is full, then scan() pauses until
     reply channel has more space
   - if reply channel is too full for too long (timeout)
