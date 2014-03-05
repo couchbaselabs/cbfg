@@ -1,6 +1,6 @@
 This ddl.spec file covers logical cluster configuration concepts.
 
-mainConcepts:
+containerConcepts:
 
   cluster
     pool
@@ -18,9 +18,9 @@ mainConcepts:
 definitions:
 
   namedObj:
-    uuid (readOnly)
-    ver  (uint64IncrementOnly)
-    name (readOnly, uniqueInParentContainer)
+    - uuid (readOnly)
+    - ver  (uint64IncrementOnly)
+    - name (readOnly, uniqueInParentContainer)
     subClasses: [
        cluster, pool, bucket,
        indexCfg, designDoc, xdcrCfg,
@@ -28,24 +28,17 @@ definitions:
     ]
 
   bucket: collectionCfg
-    bucketType (readOnly)
+    - bucketType (readOnly)
     - CAP (cp vs ap)
-    partitionFunc
-    numPartitions (readOnly)
-    designDoc*
-    indexConfig*
-    xdcrConfig*
+    - partitionFunc
+    - numPartitions (readOnly)
 
   collectionCfg:
-    perNodeMemoryQuota
-    perNodeStorageQuota
-    replicaCount
-    replicaPlacement
-
-  designDoc: collectionCfg
-    view*
-
-  indexCfg: collectionCfg
+    - perNodeMemoryQuota
+    - perNodeStorageQuota
+    - replicaCount
+    - replicaPlacement
+    subClasses: [ designDoc, indexCfg ]
 
   user:
     credentials
@@ -61,8 +54,7 @@ definitions:
   name: string [a-zA-Z0-9][a-zA-Z0-9_-]*
 
   uuid: nonEmptyUUID
-  userUUID: uuid
-  groupUUID: uuid
+    subClasses: [ userUUID, groupUUID ]
 
 cluster hierarchy has changeStream.
 cluster hierarchy has cascading delete.
