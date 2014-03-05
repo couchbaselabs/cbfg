@@ -1,6 +1,6 @@
 This base.spec file covers some shared, base types and concepts.
 
-stateMechine
+stateMachine
 
 lvar
 - vectorClock

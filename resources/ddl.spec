@@ -1,26 +1,33 @@
-This ddl.spec file covers logical cluster configuration including
-pools, buckets, indexes, users, collections, partitions, xdcr.
+This ddl.spec file covers logical cluster configuration concepts.
 
-site -> cluster -> pool
+mainConcepts:
 
-DDL definitions
+  cluster
+    pool
+      bucket
+        indexCfg
+        designDoc
+          view
+        xdcrCfg
+        acl
+      acl
+    user
+    group
+    acl
+
+definitions:
 
   namedObj:
     uuid (readOnly)
-    ver  (uint64IncrementLVar)
+    ver  (uint64IncrementOnly)
     name (readOnly, uniqueInParentContainer)
+    subClasses: [
+       cluster, pool, bucket,
+       indexCfg, designDoc, xdcrCfg,
+       user, group, acl
+    ]
 
-  cluster: namedObj
-    pool*
-    user*
-    group*
-    acl*
-
-  pool: namedObj
-    bucket*
-    acl*
-
-  bucket: namedObj collectionConfig
+  bucket: collectionCfg
     bucketType (readOnly)
     - CAP (cp vs ap)
     partitionFunc
@@ -29,26 +36,24 @@ DDL definitions
     indexConfig*
     xdcrConfig*
 
-  collectionConfig:
+  collectionCfg:
     perNodeMemoryQuota
     perNodeStorageQuota
     replicaCount
     replicaPlacement
 
-  designDoc: namedObj
+  designDoc: collectionCfg
     view*
 
-  indexConfig: namedObj collectionConfig
+  indexCfg: collectionCfg
 
-  xdcrConfig: namedObj
-
-  user: namedObj
+  user:
     credentials
 
-  group: namedObj
+  group:
     userUUID*
 
-  acl: namedObj
+  acl:
     accessRule
     userUUID*
     groupUUID*
@@ -150,3 +155,6 @@ callbacks
 - pre/post-expiration callbacks
 - pre/post-compaction callbacks
 
+capped collections
+- used as cache
+- drops LRU data items

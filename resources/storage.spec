@@ -109,3 +109,43 @@ high-multitenancy and file I/O quiesce-ing?
 -- e.g., replica partitions vs active/pending partitions
 -- when replica switched to active, kvStore cache config is changed
 -- e.g., replica kvStore(s) are close-able / quiescable
+
+kvStoreMgr
+  getCached
+  asyncGets(..., callback)
+  asyncScan(..., callback)
+  asyncMutations(..., callback)
+  asyncChangeStream(..., callback)
+
+  usage sketch
+    for msg in range msgChannel
+       switch msg.opCode
+         case GET
+           r, err = kvStoreMgr.getCached(bucket, collection,
+                                         msg.partitionId, msg.key)
+           if err == nil
+             msgChannel.enqueueResponse(msg, r, true /* done */)
+           else if err == EWOULDBLOCK
+             check err = kvStoreMgr.asyncGet(bucket, collection,
+                                             msg.partitionId, msg.key)
+               func(r, err) {
+                 msgChannel, enqueueResponse(msg, r, r.isLast())
+               })
+         case SET
+           check err = kvStoreMgr.asyncMutations(bucket, collection,
+                                                 msg.partitionId,
+                                                 [[msg.key, msg.val]])
+             func(r, err) {
+               msgChannel, enqueueResponse(msg, r, r.isLast())
+             })
+       if msg.fenced
+         msg.waitUntilDone()
+
+  kvStoreMgr thread
+    for batch in requestBatches
+      kvStore = batch.kvStore
+      for req in batch.sortByKey()
+        kvStore.perform(req)
+        how to coallesce gets and scans and mutations?
+        how to handle kvStore admin/meta CRUD?
+          (list / create / delete kvStore)
