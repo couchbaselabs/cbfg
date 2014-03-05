@@ -106,3 +106,18 @@ should there be explicit channel open?
 
 what if channel is immediately reopened?
 - no problem, the semantics are clear with the fenced channel-close.
+
+requests & responses / green stack
+- responses might out of order
+- up to client to re-sequence the responses, such as by using opaqueIds.
+
+proxy-ability
+- requests have an optional opaqueId
+- proxy keeps a opaqueId(client) <-> opaqueId(proxy) map
+- proxy might run out of opaqueIds? (opaqueIds need to be big enough)
+- fence request (or request flag) to make sure all responses are
+  on the wire before handling more requests.
+-- if proxy uses fence, it will block up a connection
+-- answer: level of indirection via channels
+--- allow for optional channelId in request "header"
+

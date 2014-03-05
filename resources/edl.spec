@@ -57,7 +57,7 @@ engineProcess
         ePartition*
           item*
           change*
-          failOverLog
+          takeOverLog
           partitionId
           rangeStartInclusive (bottom)
           rangeLimitExclusive (top)
@@ -269,24 +269,20 @@ partitionStorageAPI
 - writeBatch
 - registerForChanges
 
-rebalance controls number of backfills to not overload node
-
-consistent indexes during rebalance
-- looks for backfill-done messages before starting
-  next backfill on another vbucket
-- and also waits for indexes to be done before starting a real vbucket takeover
--- by forcing a checkpoint on source node
--- and waiting until checkpoint persisted on target node
--- pause indexing on source node
--- force another checkpoint on source node
--- and waiting until 2nd checkpoint persisted on target node
--- and wait for indexes to catchup to forced checkpoint on target node
--- before starting actual vbucket-takeover dance
-
-chain replication
-- A -> B -> C
-- if server A fails over to server X, how does server C learn
-  about the failOver news, where there are new takeOver logs
-  and rollback in server B that need to propagated to server C.
-
 filtered replication streams
+
+how is backFill handled?
+- with slow acks due to slow consumer?
+- request for changesStream or scan comes in.
+- request registered on partitionStorage
+  - callback places data on reply channel
+  - reply channel consumed by sender
+  - sender send()s N messages before injecting / sending
+    a READY_FOR_MORE response
+  - client eventually sends a READY quiet request or any other
+    request on the original channel
+    which allows sender to keep going on that channel
+  - if reply channel is full, then scan() pauses until
+    reply channel has more space
+  - if reply channel is too full for too long (timeout)
+    then scan is stopped and reply channel gets an error msgs

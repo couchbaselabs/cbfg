@@ -59,3 +59,24 @@ rebalance
 
 some new feature / operation allowed only when all nodes
 have reached minimal version
+
+rebalance controls number of backfills to not overload node
+
+consistent indexes during rebalance
+- looks for backfill-done messages before starting
+  next backfill on another vbucket
+- and also waits for indexes to be done before starting a real vbucket takeover
+-- by forcing a checkpoint on source node
+-- and waiting until checkpoint persisted on target node
+-- pause indexing on source node
+-- force another checkpoint on source node
+-- and waiting until 2nd checkpoint persisted on target node
+-- and wait for indexes to catchup to forced checkpoint on target node
+-- before starting actual vbucket-takeover dance
+
+chain replication
+- A -> B -> C
+- if server A fails over to server X, how does server C learn
+  about the failOver news, where there are new takeOver logs
+  and rollback in server B that need to propagated to server C.
+

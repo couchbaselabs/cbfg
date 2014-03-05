@@ -6,20 +6,6 @@ itemOperation
 - op
 - item
 
-requests & responses / green stack
-- responses might out of order
-- up to client to re-sequence the responses, such as by using opaqueId's.
-
-proxy'ability
-- requests have an optional a opaqueId
-- proxy keeps a opaqueId(client) <-> opaqueId(proxy) map
-- proxy might run out of opaqueId's? (opaqueId's need to be big enough)
-- fence request (or request flag) to make sure all responses are
-  on the wire before handling more requests.
--- if proxy uses fence, it will block up a connection
--- answer: level of indirection via channels
---- allow for optional channelId in request "header"
-
 ops          | cluster | bucket | partition
 - getCached  |         | item   | item
 - get        |         | item   | item, tx
@@ -44,7 +30,7 @@ ops          | cluster | bucket | partition
 - resume(task)
 - splitPartition
 - mergePartition
-- set/getPartitionConfig (including range)
+- set/getPartitionConfig (including range startInclusive/limitExclusive)
 - set/getPartitionState
 - set/getFilter
 - set/getErrorExtra(CCCP)
@@ -52,14 +38,21 @@ ops          | cluster | bucket | partition
 - features
 - stats
 - purgeTombstones
+- partitionMetaData
+  - takeOverLog
+- partitionMailBox
+- partitionEphemeralBlackBoard
+  - locks
 
 requests to not affect cache if possible
 - e.g., replication streams
 - backfill on master
 - changes injest on replica
+- maybe put this in request header?
 
 writeConcern
 - N < R + W
+- synchronous vs asynchronous XDCR
 
   errorResponseBody.errorCode
   - not my partition
@@ -95,8 +88,6 @@ subItems
 - upward ver propagation
 
 RYOW - read your own writes
-
-asynchronous vs synchronous XDCR
 
 item
 - partitionId
