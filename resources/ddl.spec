@@ -17,16 +17,6 @@ containerConcepts:
 
 definitions:
 
-  namedObj:
-    - uuid (readOnly)
-    - ver  (uint64IncrementOnly)
-    - name (readOnly, uniqueInParentContainer)
-    subClasses: [
-       cluster, pool, bucket,
-       indexCfg, designDoc, xdcrCfg,
-       user, group, acl
-    ]
-
   bucket: collectionCfg
     - bucketType (readOnly)
     - CAP (cp vs ap)
@@ -51,10 +41,8 @@ definitions:
     userUUID*
     groupUUID*
 
-  name: string [a-zA-Z0-9][a-zA-Z0-9_-]*
-
-  uuid: nonEmptyUUID
-    subClasses: [ userUUID, groupUUID ]
+  userUUID: uuid
+  groupUUID: uuid
 
 cluster hierarchy has changeStream.
 cluster hierarchy has cascading delete.

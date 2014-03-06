@@ -35,3 +35,11 @@ internals
 -- storage
 -- config
 
+  base:
+    - uuid (readOnly)
+    - ver  (uint64IncrementOnly)
+    - name (readOnly, uniqueInParentContainer)
+
+  name: string [a-zA-Z0-9][a-zA-Z0-9_-]*
+
+  uuid: nonEmptyUUID
