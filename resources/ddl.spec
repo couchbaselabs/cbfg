@@ -1,34 +1,44 @@
 This ddl.spec file covers logical cluster configuration concepts.
 
-containerConcepts:
+  depends:
+    - base
 
-  cluster
-    pool
-      bucket
-        indexCfg
-        designDoc
-          view
-        xdcrCfg
-        acl
-      acl
-    user
-    group
-    acl
+The main "containment" hierarchy is...
 
-definitions:
+  hierarchy:
+    - cluster
+      - pool
+        - bucket
+          - indexCfg
+          - designDoc
+            - view
+          - xdcrCfg
+      - user
+      - group
 
-  bucket: collectionCfg
+Definitions...
+
+  cluster: acled
+
+  pool: acled nodeQuotaed
+
+  bucket: acled nodeQuotaed replicated
     - bucketType (readOnly)
-    - CAP (cp vs ap)
+    - CAP (cp vs ap) ?
     - partitionFunc
     - numPartitions (readOnly)
+    - capped, cache, lru ?
 
-  collectionCfg:
+  nodeQuotaed:
     - perNodeMemoryQuota
     - perNodeStorageQuota
+
+  replicated:
     - replicaCount
     - replicaPlacement
-    subClasses: [ designDoc, indexCfg ]
+
+  designDoc: replicated
+  indexCfg: replicated
 
   user:
     credentials
@@ -40,6 +50,9 @@ definitions:
     accessRule
     userUUID*
     groupUUID*
+
+  acled:
+    acl*
 
   userUUID: uuid
   groupUUID: uuid

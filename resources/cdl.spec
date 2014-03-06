@@ -1,66 +1,71 @@
 This cdl.spec file ("cluster definition language") covers mapping of
-logical resources to nodes, including rebalance, failover, add/remove
-nodes, swap rebalancing, rolling upgrades, simple & smart add-back.
+logical resources to nodes.
 
-Clients/applications would need to know a subset of these concepts,
-including the partition mapping to nodes.
+  depends:
+    - base, ddl
 
-node
-- state: known, wanted, unwanted
+Key concepts include...
 
-wanted nodes should have active partition maps
+* node
+* resourceMap, partitionMap
+* rebalance, failover, addNode, removeNode
+* swapRebalance, addBack, smartAddBack
+* onlineUpgrade, rollingUpgrade
 
-old partition mappings should be kept for a bit (for swap-rebalance,
+Definitions...
+
+  node:
+    - uuid      // Node needs to remember/self-assign its UUID on startup.
+    - container // Path for shelf/rack/row/zone awareness.
+    - nodeState
+      * known
+      * wanted  // Should have active partitions and/or resources assigned.
+      * unwanted
+    - usage     // e.g., kv only, index only, stats ony?
+    - weight
+    - addrPortBinding*
+    - memoryQuota
+    - numProcessors
+    - storageQuota
+    - storageLocation*
+    - maxConns
+    - maxChannels
+    - maxChannelsPerConn
+    - maxInflightPerChannel
+
+Node addr:port might change over time / is ephemeral?
+
+  nodeState:
+
+Old partition mappings should be kept for a bit (for swap-rebalance,
 smart add-back).
 
-node: namedObj
-- uuid (the one thing a node needs to know on startup, along with cfg server)
-- parent/containment path (rack/zone)
-- usage (kv only? index and index.fullText only?)
-- host / port
-- weight
-- memoryQuota
-- addrBindings
-- numProcessors
-- directory+
--- logical data volumes (leverage more spindles)
-- maxConns
-- maxChannels
-- maxInflightRequestsPerChannel
+  partitionMap:
 
-partitionMap
+  partitionCfg:
+    - partitionState
+      * master, pending, replica, dead
+    - rangeStartInclusive
+    - rangeLimitExclusive
 
-partitionConfig
-  partitionState
-    master, pending, replica, dead
-  range config
+  clusterChangeRequest:
+    - requestor
+    - reason/description
+    * addNode
+      - addBack (smart, stable addBack?)
+    * removeNode
+      - maintenanceMode
+    * swapRebalance // Probably computed.
+    * failOver
+    * onlineUpgrade
 
-clusterChangeRequest
-- add/remove node
-- maintenance mode
-- add back
-- swap rebalance
-- failover
+More ideas...
 
-rebalance
-- build partition replica on future master
-- ensure indexes are built on future master (concurrently)
-- do rest of partition takeover
-- index (view) compaction (not concurrent with partition moves)
-
-rebalance
-- partitions to nodes (must have)
-- partitions to processors
--- (nice to have, or just rebalance (or swap rebalance) to new or same node)
-- partitions to storages
--- (nice to have, or just rebalance (or swap rebalance) to new or same node)
-- NUMA
--- cheap, first approach may be allowing machine to run >1 node
-
-some new feature / operation allowed only when all nodes
-have reached minimal version
-
-rebalance controls number of backfills to not overload node
+  partitionMoveSteps:
+    * build partition replica on future master
+    * ensure indexes are built on future master (concurrently)
+    * do rest of partition takeover
+    * index (view) compaction (not concurrent with partition moves)
 
 consistent indexes during rebalance
 - looks for backfill-done messages before starting
@@ -74,9 +79,19 @@ consistent indexes during rebalance
 -- and wait for indexes to catchup to forced checkpoint on target node
 -- before starting actual vbucket-takeover dance
 
+Partition moves need to have limited number of backfills to not
+overload node and storageLocation I/O.
+
+Some new feature / operation allowed only when all nodes have reached
+the same minimal version.
+
+Rebalance is usually about assigning partitions to nodes (must have).
+But, perhaps can also cover assigning partitions to processors?
+e.g. NUMA.  And, to storageLocations?  The first, cheap approach to
+this is to allow more than 1 engine to run on a node.
+
 chain replication
 - A -> B -> C
 - if server A fails over to server X, how does server C learn
   about the failOver news, where there are new takeOver logs
   and rollback in server B that need to propagated to server C.
-
