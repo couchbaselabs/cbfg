@@ -71,7 +71,7 @@ propagation, etc.
   bucketTypeDef:   | memcached | couchbase | strongcp | couchdb | ap
     - backend      | def-eng   | ep-eng    | etcd     |         |
     - changeStream |           |           | y        |         |
-    - groupMembership |           |           | y        |         |
+    - groupMembership |        |           | y        |         |
     - replication
     - xdcr
     - persistence
@@ -79,15 +79,15 @@ propagation, etc.
     - conflictResolution
     - compactionPolicy
     - ops
-    - - get
-    - - set
-    - - delete
-    - - merge
-    - -- append/prepend
-    - -- union
-    - - add
-    - - replace
-    - - arith
+      - get
+      - set
+      - delete
+      - merge
+        - append/prepend
+        - union
+        - add
+        - replace
+        - arith
 
   partitionFunc:
     * hashCRC

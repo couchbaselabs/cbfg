@@ -289,7 +289,7 @@ how is backFill handled? / flow control?
     then scan is stopped and reply channel gets an error msgs
 
 callbacks / ephemeral, as they need to contact "outside" systems?
-- or change data, enqueue more records in other buckets?
+- or change data, enqueue more mutations in other buckets?
 - pre/post-eviction callbacks
 - pre/post-expiration callbacks
 - pre/post-compaction callbacks
