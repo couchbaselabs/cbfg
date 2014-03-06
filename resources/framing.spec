@@ -4,8 +4,8 @@ The protocol is asymmetric.  Although requests and responses have
 similar header and body framing, there is a clear distinction between
 server and client sides of a connection.  A server cannot send a
 message to a client "out of the blue".  Instead, responses (if any,
-and there might be more than one response message to a request) must
-be due to an earlier client request.
+and there might be more than one response message to a request
+message) must be due to an earlier, corresponding client request.
 
   message
   - request vs response first byte
@@ -19,12 +19,16 @@ be due to an earlier client request.
   - opaqueId (uint64)
   - channelId (string)
   - header*
-  - body
+  - body*
 
   header
-  - covers application specific metadata about the op or chunk
+  - covers application specific metadata about processing the message
+  - header information is (logically) not persisted
   - compression
   - dataType
+  - request timeout
+  - want CCCP
+  - proceed only if caught up to X seqId
   - txId
   - writeConcern
   - uncompressed value size (for stats)
@@ -39,6 +43,7 @@ be due to an earlier client request.
   opCode (uint8)
   - QUIT
   - NOOP
+  - AUTH_CHANNEL
   - CLOSE_CHANNEL
   - VERSION (also returns capabilities)
   - HEARTBEAT_WANTED (or header flag?)
@@ -49,6 +54,7 @@ be due to an earlier client request.
   - UNKNOWN_OPCODE
   - UNSUPPORTED_OPCODE
   - TOO_MANY_CHANNELS
+  - AUTH_CHANNEL_FAILED
 
 channel
   channelId

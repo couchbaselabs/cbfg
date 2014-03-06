@@ -1,30 +1,37 @@
 This dml.spec file covers logical items and operations, including
 consistency/availability (CAP) concerns.
 
-itemOperation
-- headers
-- op
-- item
+  clusterOps:
+    * ddl bucket/user/group/auth CRUD
+    * node CRUD
+      * orchestrator rebalance, autoFailOver
+      * log
+    - these have writeConcern, tx?
+
+  bucketOps
+    * ddl index/auth CRUD
+      * xdcrCfg
+    * mergedRangeScan
+    * compact
+    * log
 
 ops          | cluster | bucket | partition
-- getCached  |         | item   | item
-- get        |         | item   | item, tx
-- set        |         | item   | item, tx, writeConcern
-- del        |         | item   | item, tx, writeConcern
-- merge      |         | item   | items, tx, writeConcern
-- scan       |         | items  | items, tx
-- changes    |         | y      |
+- getCached  |         |        | item
+- get        |         |        | item, tx
+- set        |         |        | item, tx, writeConcern
+- del        |         |        | item, tx, writeConcern
+- merge      |         |        | items, tx, writeConcern
+- scan       |         |        | items, tx
+- changeStream |       |        | y
 - def        |         | y      | tx, writeConcern
 - eval       |         | y      | tx, writeConcern
 - mget       |         |        | itemHierarchy, tx
 - mset       |         |        | itemHierarchy, tx, writeConcern
 - mdel       |         |        | itemHierarchy, tx, writeConcern, cascadingDelete
-- ddl        | y       | y      | tx, writeConcern
-- conductor  | y       | y      |
 - pillInject |         |        | tx, writeConcern
 - logInject  | y       | y      | y
 - fence      |         |        | y
-- compactNow |         |        | y
+- compactNow |         | y      | y
 - exec(task) |         |        | y
 - pause(task)
 - resume(task)
@@ -48,37 +55,41 @@ requests to not affect cache if possible
 - e.g., replication streams
 - backfill on master
 - changes injest on replica
-- maybe put this in request header?
+- maybe put this hint into request header?
 
 writeConcern
 - N < R + W
 - synchronous vs asynchronous XDCR
+- maybe put this hint into request header?
 
-  errorResponseBody.errorCode
-  - not my partition
-    - extraBody includes cccpOpaque & engineVelocity
-  - not my range
-    - extraBody includes cccpOpaque & engineVelocity
-  - temp OOM
-    - extraBody includes engineVelocity
-  - not caught up (e.g., index scan)
-    - extraBody includes engineVelocity
-  - not cached (getCached)
-    - extraBody includes engineVelocity
+  errorResponseBody.errorCode:
+    * NOT_MY_PARTITION
+      - extraBody includes cccpOpaque & engineVelocity
+    * NOT_MY_RANGE
+      - extraBody includes cccpOpaque & engineVelocity
+    * TEMP_OOM_
+     - extraBody includes engineVelocity
+    * NOT_CAUGHT_UP (e.g., index scan)
+      - extraBody includes engineVelocity
+    * EWOULDBLOCK (e.g., getCached)
+      - extraBody includes engineVelocity
 
-  engineVelocity
-  - queue in/out speeds and lengths
-  -- basically, enough info so that client can calculate when it should retry
-  --- and with some random client-side politeness jitter
+  engineVelocity:
+    - queue in/out speeds and lengths
+      // Basically, enough info so that client can calculate
+      // when it should retry, and ideally with some random
+      // client-side politeness jitter.
 
-  cccpOpaque probably defined in cdl.spec
-  - this is the "fast forward map" of where the client should look
+  cccpOpaque;
+    // Probably defined in cdl.spec.
+    // This is the "fast forward map" of where the client should
+    // look for the partition or resource.
 
 subItems
 - modifying subItem does not change parent
 -- unless a mset (changing parent and child in one ACID set)
 -- beware that replication keeps the atomicity
-- cascading deletes
+- cascading deletes (always)
 - used for
 -- transactions
 -- attachments
@@ -86,8 +97,12 @@ subItems
 -- subItems
 -- flexMetaData
 - upward ver propagation
+-- is this optional?
 
-RYOW - read your own writes
+QYOW - query your own writes
+- header area for "at least" up to X seqId.
+- NOT_CAUGHT_UP
+- writeConcern
 
 item
 - partitionId
