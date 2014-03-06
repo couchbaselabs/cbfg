@@ -15,15 +15,18 @@ Key concepts include...
 Definitions...
 
   node:
-    - uuid      // Node needs to remember/self-assign its UUID on startup.
-    - container // Path for shelf/rack/row/zone awareness.
+    - uuid       // Node needs to remember/self-assign its UUID on startup.
+    - addrPort*  // A node should try to get its main ports early,
+                 // otherwise fail to start.
+    - cfgServer* // Should try to contact cfgServer early.
+    - cfgToken
+    - container  // Path for shelf/rack/row/zone awareness.
     - nodeState
       * known
-      * wanted  // Should have active partitions and/or resources assigned.
+      * wanted   // Should have active partitions and/or resources assigned.
       * unwanted
-    - usage     // e.g., kv only, index only, stats ony?
+    - usage      // e.g., kv only, index only, stats ony?
     - weight
-    - addrPortBinding*
     - memoryQuota
     - numProcessors
     - storageQuota

@@ -22,7 +22,7 @@ Definitions...
 
   pool: acled nodeQuotaed
 
-  bucket: acled nodeQuotaed replicated
+  bucket: acled nodeQuotaed replicated collection
     - bucketType (readOnly)
     - CAP (cp vs ap) ?
     - partitionFunc
@@ -37,8 +37,8 @@ Definitions...
     - replicaCount
     - replicaPlacement
 
-  designDoc: replicated
-  indexCfg: replicated
+  designDoc: acled nodeQuotaed replicated collection
+  indexCfg: acled nodeQuotaed replicated collection
 
   user:
     credentials
@@ -57,37 +57,46 @@ Definitions...
   userUUID: uuid
   groupUUID: uuid
 
-cluster hierarchy has changeStream.
-cluster hierarchy has cascading delete.
-cluster hierarchy has upwards ver propagation.
+A cluster configuration hierarchy is stored in a special system
+bucket, so it will have changeStream, cascading delete, upwards ver
+propagation, etc.
 
-bucketType:     | memcached | couchbase | strongCP | couchdb | ap
-backend         | def-eng   | ep-eng    | etcd     |         |
-subscription    |           |           | y        |         |
-groupMembership |           |           | y        |         |
-replication
-xdcr
-persistence
-indexes
-conflictResolution
-compactionPolicy
-ops
-- get
-- set
-- delete
-- merge
--- append/prepend
--- union
-- add
-- replace
-- arith
+  bucketType:
+    * memcached
+    * couchbase
+    * strongcp
+    * couchdb
+    * ap
 
-partitionFunc
-  hashCRC
-  range
+  bucketTypeDef:   | memcached | couchbase | strongcp | couchdb | ap
+    - backend      | def-eng   | ep-eng    | etcd     |         |
+    - changeStream |           |           | y        |         |
+    - groupMembership |           |           | y        |         |
+    - replication
+    - xdcr
+    - persistence
+    - indexes
+    - conflictResolution
+    - compactionPolicy
+    - ops
+    - - get
+    - - set
+    - - delete
+    - - merge
+    - -- append/prepend
+    - -- union
+    - - add
+    - - replace
+    - - arith
+
+  partitionFunc:
+    * hashCRC
+    * range
 
 max partition id
 - 16 bits?
+- 24 bits?
+- or just a string
 
 system user ("_system")
 - a "system user or conductor", which is super-priviledged
@@ -98,55 +107,48 @@ system user ("_system")
 -- only the system knows _system credentials
 
 some buckets are special system buckets
-  system catalog bucket (read-only?)
-  stats bucket (read-only?)
+- system catalog bucket (read-only?)
+- system stats bucket (read-only?)
+- so that they are replicated, backed-up, scanable, UPR/TAP-able
+- without any special machinery.
 
-design-docs and other config
-- might be stored in a special, highly replicated system collection?
--- or special system bucket?
--- so that they are replicated, backed-up, scanable,
-   UPR/TAP-able without any special machinery.
+  collectionType: | changeStream | subItem | tx | mvcc | indexable
+  * primary       | y            | y       | y  | y    | y
+  * backIndex     | y            | n       | n  | y    | n
+  * index         | n            | n       | n  | y    | n
 
--------------------------------
-collectionType | changesStream | subItems | tx | mvcc | indexable
-primary        | y             | y        | y  | y    | y
-backIndex      | y             | n        | n  | y    | n
-index          | n             | n        | n  | y    | n
+  collectionType:
+    - partitionFunc
+    - supports
+    -- range
+    -- value
+    -- cas
+    -- revId
+    -- subItem
+    -- revisionTree
+    -- attachment
+    -- tx
+    --- NBTA proposed changes
+    -- changeStream
+    -- flags
+    -- expiration
+    -- LRU / capped
+    - usedFor
+      * app
+      * indexing
+      * replication
+      * system
+    - allowedDataType*
+    - validtor*
 
-collection properties
-- partitioning funcs
-- range / scan / iteration support
-- has values
-- cas
-- revId
-- subItem-able
--- revisionTrees
--- attachments
--- tx
---- NBtA proposed changes
-- changesStream
-- upstream source
--- for user/app
--- for indexing
--- for replication
-- xdcr-able
-- flags
-- allowedDataTypes
-- validtor*
-
-cluster / pool constructor
-- pool: default
--- bucket: default
--- acl: ALL _system
--- acl: ALL default
-- user: default
-- user: _system
-- user: _anonymous
-
-callbacks
-- pre/post-eviction callbacks
-- pre/post-expiration callbacks
-- pre/post-compaction callbacks
+  firstTimeSetup:
+    - pool(default)
+      - bucket(default)
+    - user: default
+    - user: _system
+    - user: _anonymous
+    - acl: ALL _system
+    - acl: ALL default
 
 capped collections
 - used as cache

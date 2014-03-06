@@ -287,3 +287,10 @@ how is backFill handled? / flow control?
     reply channel has more space
   - if reply channel is too full for too long (timeout)
     then scan is stopped and reply channel gets an error msgs
+
+callbacks / ephemeral, as they need to contact "outside" systems?
+- or change data, enqueue more records in other buckets?
+- pre/post-eviction callbacks
+- pre/post-expiration callbacks
+- pre/post-compaction callbacks
+
