@@ -294,3 +294,30 @@ callbacks / ephemeral, as they need to contact "outside" systems?
 - pre/post-expiration callbacks
 - pre/post-compaction callbacks
 
+partitionStorage
+  def scan(...)
+    scanRequestQueue.push(self)
+
+  def scanWorker(...)
+    for scanRequest in range scanRequestQueue:
+      err := nil
+      for item := range kvs.scan(...)
+        err = scanRequest.callbackAnotherItem(item, restartToken)
+        if err != nil
+          break
+      if err != EWOULDBLOCK
+        scanRequest.done(err)
+
+networkScanRequest(partitionStorage)
+
+  def callbackAnotherItem(item, restartToken)
+    m := msg(item, ...)
+    err := channel.enqueue(m)
+    if err := EWOULDBLOCK
+      err := channel.enqueueAsyncOrTimeout(func(...) {
+        channel.enqueue(m, ...)
+        partitionStorage.scan(..., restartToken)
+      }, func(...) {
+        scanRequest.done(TIMEOUT);
+      })
+      return eWouldBlock
