@@ -136,13 +136,14 @@ by not handled.
 beware: too many inflight requests in a single channel might block up
 the entire conn.
 
-issue: DEADLOCK avoidance -- secneario: if server sends a RUALIVE
-but the channel or the conn is full with other requests already.
+issue: DEADLOCK avoidance -- sceneario: if server sends a RUALIVE
+but the channel or the conn is full with other requests already...
 - solution: for channel full case, client should use a new channel
-  for every scan (or request that may have lots of response msgs)
-  so the channel is never full and can be open for IAMALIVE pings.
+  for every big, slow scan (or request that may have lots of response
+  msgs) so the channel is never full and can be open for IAMALIVE pings.
 - solution: for conn full case, timeouts on server side...
-  ERR_RUALIVE_TIMEOUT.
+  ERR_RUALIVE_TIMEOUT (and conn was paused due to full-ness).
+  - eventually, the client needs to open more than one conn.
 
 Client sends a bunch of requests (r0...r6),
 where r2 and r5 are fenced.  And, pX is partial "still going"
