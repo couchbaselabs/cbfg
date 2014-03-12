@@ -7,6 +7,11 @@
 
 (print cbfg.ddl/hi)
 
+(defn foo [a b]
+  (+ a b))
+
+(. js/console (log "Hello world!" (foo 1 2)))
+
 ;; ------------------------------------------------
 
 (def bucket-kinds
