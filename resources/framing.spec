@@ -10,7 +10,7 @@ message) must be due to an earlier, corresponding client request.
   message
   - request vs response first byte
   - messageFlags (uint8)
-    - oneWay (never a response)
+    - oneWay (never a response (such as for ALIVE / TICK msgs))
       vs quiet (perhaps zero or 1 errorResponse)
       vs responseExpected
       vs responsesExpected
@@ -148,9 +148,9 @@ but the channel or the conn is full with other requests already...
 Client sends a bunch of requests (r0...r6), where r2 and r5 are
 fenced.  And, pX is partial "still going" response.  And, dX is the
 final response "done" message for a request.  Time-steps go downwards.
-The caret (^) denotes which request has started async processing.
-The double-bar (||) means a request has started async processing,
-but more input request processing is paused.
+The caret (^) denotes which request has started async processing.  The
+double-bar (||) means we have paused moving the caret rightwards, so
+input request processing is paused.
 
   r0 r1 r2 r3 r4 r5 r6
         f        f
