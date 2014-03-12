@@ -145,24 +145,28 @@ but the channel or the conn is full with other requests already...
   ERR_RUALIVE_TIMEOUT (and conn was paused due to full-ness).
   - eventually, the client needs to open more than one conn.
 
-Client sends a bunch of requests (r0...r6),
-where r2 and r5 are fenced.  And, pX is partial "still going"
-response.  And, dX is the final response "done" message for a request.
+Client sends a bunch of requests (r0...r6), where r2 and r5 are
+fenced.  And, pX is partial "still going" response.  And, dX is the
+final response "done" message for a request.  Time-steps go downwards.
+The caret (^) denotes which request has started async processing.
+The double-bar (||) means a request has started async processing,
+but more input request processing is paused.
 
   r0 r1 r2 r3 r4 r5 r6
         f        f
+  -----------------------------------------------
   ^                    (++inflight == 1)
      ^                 (++inflight == 2)
      p1                (send)
-        ^^             (++inflight == 3 (2 unfenced + 1 fenced), and...)
-                       (pause input processing)
+        ^              (++inflight == 3 (2 unfenced + 1 fenced), and...)
+        ||             (pause input processing)
      p1                (send)
      d1                (send, --inflight == 2)
-        d2             (hold, --inflight == 1)
+        d2-hold        (hold d2 result, --inflight == 1)
   p0                   (send)
   d0                   (send, --inflight == 0, so...)
-        >>             (now can send d2 and move onwards to r3, so...)
-                       (unpause input processing)
+        d2-send        (now can send d2 and move onwards to r3, so...)
+        >>             (unpause input processing)
            ^           (++inflight == 1)
               ^        (++inflight == 2)
 
