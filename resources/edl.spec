@@ -321,3 +321,55 @@ networkScanRequest(partitionStorage)
         scanRequest.done(TIMEOUT);
       })
       return eWouldBlock
+
+
+with Req.Channel.stats
+  tot_in = 0
+  tot_in_unquiet = 0
+  tot_out = 0
+  tot_out_done = 0
+
+handlePartitionReq(Req, User, Bucket, Collection, Partition):
+
+  go {
+    for {
+      msg = handle
+      msg, err = conn.recv_msg() {
+      check !err
+      check msg.type == MSG_REQ
+
+      req, err = req_from_msg(msg)
+      check !err
+
+      tot_in++
+      tot_in_unquiet++ if !req.quiet
+      c, err = msg_channel(channel)
+      if err
+        tot_err_msg_channel++
+        conn.close()
+        return
+
+      opsTable[req.opcode].Exec(msg_channel(channel), req)
+      wait{tot_in_unquiet > tot_out_done + MAX_CHANNEL_INFLIGHT}
+    }
+  }
+
+  for {
+    msgs = channel.outgoing.GetAll() {
+    tot_out += msgs.length
+    tot_out_done += msgs.count_if{ _.done == true }
+    err = send(encode(msgs))
+    if err
+      channel.close()
+      return err
+    notify()
+  }
+
+opsTable[SCAN] = func(channel, req) {
+  partition[req.partitionId].scanAsync(
+    scanParams(req),
+    func(item, err) {
+    }
+  )
+}
+
