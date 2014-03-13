@@ -23,33 +23,34 @@
   (let [in-channel (chan 100)
         out-channel (chan)]
     (go-loop
-        [inflight #{}         ; chans of requests currently being processed.
-         fenced nil           ; chan of last, inflight "fenced" request.
-         fenced-res nil]      ; last received result from last fenced request.
-      (let [i (vec (if fenced ; if we're fenced, ignore in-channel and just
-                     inflight ; focus on completing the current inflight requests.
-                     (conj inflight in-channel)))
-            [v ch] (if (empty? i) ; empty when in-channel has been closed.
+        [inflights #{}         ; chans of requests currently being processed.
+         fenced nil            ; chan of last, inflight "fenced" request.
+         fenced-res nil]       ; last received result from last fenced request.
+      (let [i (vec (if fenced  ; if we're fenced, ignore in-channel and just
+                     inflights ; focus on completing the current inflight requests.
+                     (conj inflights in-channel)))
+            [v ch] (if (empty? i) ; empty when in-channel is closed and no inflights.
                      [nil nil]
                      (alts! i))]
         (cond
          (= nil v ch) (close! out-channel)
          (= ch in-channel) (if (nil? v)
-                             (recur inflight out-channel nil)
-                             (recur (conj inflight ((:rq v)))
-                                    (if (:fence v) ch nil)
-                                    nil))
-         (= v nil) (let [new-inflight (disj inflight ch)] ; an inflight request is done.
-                     (if (empty? new-inflight)
+                             (recur inflights out-channel nil)
+                             (let [new-inflight ((:rq v))]
+                               (recur (conj inflights new-inflight)
+                                      (if (:fence v) new-inflight nil)
+                                      nil)))
+         (= v nil) (let [new-inflights (disj inflights ch)] ; an inflight request is done.
+                     (if (empty? new-inflights)
                        (do (when fenced-res               ; all inflight requests are done, so we can now
                              (>! out-channel fenced-res)) ; send the fenced-res that we've been holding up.
-                           (recur new-inflight nil nil))
-                       (recur new-inflight fenced fenced-res)))
+                           (recur new-inflights nil nil))
+                       (recur new-inflights fenced fenced-res)))
          (= ch fenced) (do (when fenced-res
                              (>! out-channel fenced-res)) ; send off any previous fenced-res
-                           (recur inflight fenced v))     ; so that we can save v as fenced-res.
+                           (recur inflights fenced v))     ; so that we can save v as fenced-res.
          :else (do (>! out-channel v)
-                   (recur inflight fenced fenced-res)))))
+                   (recur inflights fenced fenced-res)))))
     {:in in-channel
      :out out-channel}))
 
@@ -60,7 +61,7 @@
    {:rq #(add-two 9 1000)}
    {:rq #(add-two 9 1000)}
    {:rq #(range-to 0 5 500)}
-   {:rq #(range-to 6 10 1000) :fence true}
+   {:rq #(range-to 6 10 100) :fence true}
    {:rq #(add-two 30 1000)}
    ])
 
