@@ -60,14 +60,14 @@
                               (if (:fence v) new-inflight nil)
                               nil)))
       (= v nil) (let [new-inflights (disj inflights ch)] ; an inflight request is done.
-                  (if (empty? new-inflights)
-                    (do (when fenced-res                 ; all inflight requests are done, so we can
-                          (aput out-ch fenced-res))      ; send the fenced-res that we've been keeping.
+                  (if (empty? new-inflights)             ; if inflight requests are all done,
+                    (do (when fenced-res                 ; finally send the fenced-res that
+                          (aput out-ch fenced-res))      ; we have been holding onto.
                         (recur new-inflights nil nil))
                     (recur new-inflights fenced fenced-res)))
       (= ch fenced) (do (when fenced-res
-                          (aput out-ch fenced-res))      ; send off any previous fenced-res so
-                        (recur inflights fenced v))      ; we can keep v as our latest fenced-res.
+                          (aput out-ch fenced-res))      ; send any previous fenced-res so
+                        (recur inflights fenced v))      ; we can hold v as last fenced-res.
       :else (do (aput out-ch v)
                 (recur inflights fenced fenced-res))))))
 
