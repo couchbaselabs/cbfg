@@ -39,17 +39,15 @@
                              (recur (conj inflight ((:rq v)))
                                     (if (:fence v) ch nil)
                                     nil))
-         ; at this point, ch must be an inflight chan.
-         ; next, see if that inflight chan is done.
-         (= v nil) (let [new-inflight (disj inflight ch)]
+         (= v nil) (let [new-inflight (disj inflight ch)] ; an inflight request is done.
                      (if (empty? new-inflight)
-                       (do (when fenced-res
-                             (>! out-channel fenced-res))
+                       (do (when fenced-res               ; all inflight requests are done, so we can now
+                             (>! out-channel fenced-res)) ; send the fenced-res that we've been holding up.
                            (recur new-inflight nil nil))
                        (recur new-inflight fenced fenced-res)))
          (= ch fenced) (do (when fenced-res
-                             (>! out-channel fenced-res))
-                           (recur inflight fenced v))
+                             (>! out-channel fenced-res)) ; send off any previous fenced-res
+                           (recur inflight fenced v))     ; so that we can save v as fenced-res.
          :else (do (>! out-channel v)
                    (recur inflight fenced fenced-res)))))
     {:in in-channel
