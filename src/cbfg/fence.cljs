@@ -2,7 +2,7 @@
   (:require-macros [cljs.core.async.macros :refer [go]]
                    [cbfg.ago :refer [ago ago-loop aput atake]])
   (:require [cljs.core.async
-             :refer [chan close! <!! timeout
+             :refer [chan close! <! timeout
                      onto-chan]]))
 
 ;; Explaining out-of-order replies and fencing with a diagram.  Client
@@ -82,7 +82,7 @@
   (let [c (chan)]
     (ago nil
          (doseq [n (range s e)]
-           (atake (timeout delay))
+           (<! (timeout delay))
            (aput c n))
          (close! c))
     c))
@@ -104,10 +104,10 @@
                                  "FAIL")
                                test))
               [["test with 2 max-inflights"
-                (<! (test-helper 100 1 2 reqs))
+                (atake (test-helper 100 1 2 reqs))
                 '(6 3 12 40 41 42 43 44 11 11 6 7 0 8 1 2 3 4 9 32)]
                ["test with 200 max-inflights"
-                (<! (test-helper 100 1 200 reqs))
+                (atake (test-helper 100 1 200 reqs))
                 '(6 3 12 40 41 42 43 44 6 7 0 8 11 11 1 2 3 4 9 32)]]))))
 
 (defn test-helper [in-ch-size
@@ -118,7 +118,7 @@
         out (chan out-ch-size)
         fdp (make-fenced-pump nil in out max-inflight)
         gch (ago-loop nil [acc nil]
-              (let [result (<! out)]
+              (let [result (atake out)]
                 (if result
                   (do (println "Output result: " result)
                       (recur (conj acc result)))
