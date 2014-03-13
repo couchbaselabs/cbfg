@@ -1,14 +1,23 @@
 (ns cbfg.ago
     (:require [cljs.core.async.macros :refer [go go-loop]]))
 
-(defmacro ago [ainfo & body]
+(defmacro ago [aenv-info & body]
   `(go ~@body))
 
-(defmacro ago-loop [ainfo bindings & body]
+(defmacro ago-loop [aenv-info bindings & body]
   `(go (loop ~bindings ~@body)))
 
-(defmacro aput [ch msg]
+(defmacro aput [aenv ch msg]
   `(cljs.core.async/>! ~ch ~msg))
 
-(defmacro atake [ch]
+(defmacro atake [aenv ch]
   `(cljs.core.async/<! ~ch))
+
+(defmacro achan [aenv]
+  `(cljs.core.async/chan))
+
+(defmacro achan-buf [aenv buf-or-size]
+  `(cljs.core.async/chan ~buf-or-size))
+
+(defmacro aclose [aenv ch]
+  `(cljs.core.async/close! ~ch))

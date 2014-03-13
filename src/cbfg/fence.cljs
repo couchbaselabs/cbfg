@@ -1,6 +1,8 @@
 (ns cbfg.fence
   (:require-macros [cljs.core.async.macros :refer [go]]
-                   [cbfg.ago :refer [ago ago-loop aput atake]])
+                   [cbfg.ago :refer [achan achan-buf aclose
+                                     ago ago-loop
+                                     aput atake]])
   (:require [cljs.core.async
              :refer [chan close! <! timeout
                      onto-chan]]))
@@ -52,7 +54,7 @@
                   [nil nil]
                   (alts! i))]
      (cond
-      (= nil v ch) (close! out-ch)
+      (= nil v ch) (aclose nil out-ch)
       (= ch in-ch) (if (nil? v)
                      (recur inflights out-ch nil)
                      (let [new-inflight ((:rq v))]
@@ -62,13 +64,13 @@
       (= v nil) (let [new-inflights (disj inflights ch)] ; an inflight request is done.
                   (if (empty? new-inflights)             ; if inflight requests are all done,
                     (do (when fenced-res                 ; finally send the fenced-res that
-                          (aput out-ch fenced-res))      ; we have been holding onto.
+                          (aput nil out-ch fenced-res))  ; we have been holding onto.
                         (recur new-inflights nil nil))
                     (recur new-inflights fenced fenced-res)))
       (= ch fenced) (do (when fenced-res
-                          (aput out-ch fenced-res))      ; send any previous fenced-res so
+                          (aput nil out-ch fenced-res))  ; send any previous fenced-res so
                         (recur inflights fenced v))      ; we can hold v as last fenced-res.
-      :else (do (aput out-ch v)
+      :else (do (aput nil out-ch v)
                 (recur inflights fenced fenced-res))))))
 
 ;; ------------------------------------------------------------
@@ -79,12 +81,12 @@
        (+ x 2)))
 
 (defn range-to [s e delay]
-  (let [c (chan)]
+  (let [c (achan nil)]
     (ago nil
          (doseq [n (range s e)]
            (<! (timeout delay))
-           (aput c n))
-         (close! c))
+           (aput nil c n))
+         (aclose nil c))
     c))
 
 (defn test []
@@ -104,21 +106,21 @@
                                  "FAIL")
                                test))
               [["test with 2 max-inflights"
-                (atake (test-helper 100 1 2 reqs))
+                (atake nil (test-helper 100 1 2 reqs))
                 '(6 3 12 40 41 42 43 44 11 11 6 7 0 8 1 2 3 4 9 32)]
                ["test with 200 max-inflights"
-                (atake (test-helper 100 1 200 reqs))
+                (atake nil (test-helper 100 1 200 reqs))
                 '(6 3 12 40 41 42 43 44 6 7 0 8 11 11 1 2 3 4 9 32)]]))))
 
 (defn test-helper [in-ch-size
                    out-ch-size
                    max-inflight
                    in-msgs]
-  (let [in (chan in-ch-size)
-        out (chan out-ch-size)
+  (let [in (achan-buf nil in-ch-size)
+        out (achan-buf nil out-ch-size)
         fdp (make-fenced-pump nil in out max-inflight)
         gch (ago-loop nil [acc nil]
-              (let [result (atake out)]
+              (let [result (atake nil out)]
                 (if result
                   (do (println "Output result: " result)
                       (recur (conj acc result)))
