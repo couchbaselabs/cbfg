@@ -53,22 +53,35 @@
      (close! c))
     c))
 
-(def test-requests
-  [{:rq #(add-two 1 2000)}
-   {:rq #(add-two 4 1000)}
-   {:rq #(add-two 10 500) :fence true}
-   {:rq #(range-to 40 45 100) :fence true}
-   {:rq #(add-two 9 1000)}
-   {:rq #(add-two 9 1000)}
-   {:rq #(range-to 0 5 500)}
-   {:rq #(range-to 6 10 100) :fence true}
-   {:rq #(add-two 30 1000)}
-   ])
+(defn test []
+  (let [reqs [{:rq #(add-two 1 200)}
+              {:rq #(add-two 4 100)}
+              {:rq #(add-two 10 50) :fence true}
+              {:rq #(range-to 40 45 10) :fence true}
+              {:rq #(add-two 9 100)}
+              {:rq #(add-two 9 100)}
+              {:rq #(range-to 0 5 50)}
+              {:rq #(range-to 6 10 10) :fence true}
+              {:rq #(add-two 30 100)}]]
+    (go (map (fn [test] (cons (if (= (nth test 1)
+                                     (nth test 2))
+                                "pass"
+                                "FAIL")
+                              test))
+             [["test with 2 max-inflights"
+               (<! (test-helper 100 1 2 reqs))
+               '(6 3 12 40 41 42 43 44 11 11 6 7 0 8 1 2 3 4 9 32)]
+              ["test with 200 max-inflights"
+               (<! (test-helper 100 1 200 reqs))
+               '(6 3 12 40 41 42 43 44 6 7 0 8 11 11 1 2 3 4 9 32)]]))))
 
-(defn test-rq-processor []
-  (let [in (chan 100)
-        out (chan)
-        fdp (make-fenced-dispatcher in out 2)
+(defn test-helper [in-ch-size
+                   out-ch-size
+                   max-inflight
+                   in-msgs]
+  (let [in (chan in-ch-size)
+        out (chan out-ch-size)
+        fdp (make-fenced-dispatcher in out max-inflight)
         gch (go-loop [acc nil]
               (let [result (<! out)]
                 (if result
@@ -76,5 +89,5 @@
                       (recur (conj acc result)))
                   (do (println "Output channel closed")
                       (reverse acc)))))]
-    (onto-chan in test-requests)
+    (onto-chan in in-msgs)
     gch))

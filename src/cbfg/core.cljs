@@ -3,11 +3,12 @@
 
 (ns cbfg.core
   (:require-macros [cljs.core.async.macros :refer [go]])
-  (:require cbfg.ddl
-            cbfg.fence
+  (:require [clojure.string :as string]
+            [cljs.core.async :refer [<! put! chan]]
             [goog.dom :as dom]
             [goog.events :as events]
-            [cljs.core.async :refer [<! put! chan]]))
+            cbfg.ddl
+            cbfg.fence))
 
 (enable-console-print!)
 
@@ -23,7 +24,7 @@
         (<! clicks)
         (set! (.-innerHTML (dom/getElement "output"))
               (user-input))
-        (println (<! (cbfg.fence/test-rq-processor))))))
+        (println (string/join "\n" (<! (cbfg.fence/test)))))))
 
 (defn user-input []
   (.-value (dom/getElement "input")))
