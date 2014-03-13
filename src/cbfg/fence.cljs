@@ -1,8 +1,7 @@
 (ns cbfg.fence
-  (:require-macros [cljs.core.async.macros
-                    :refer [go go-loop]])
-  (:require [cljs.core.async
-             :refer [close! <! >! <!! >!! chan timeout onto-chan]]))
+  (:require-macros [cljs.core.async.macros :refer [go go-loop]]
+                   [cbfg.aenv :refer [ago-loop]])
+  (:require [cljs.core.async :refer [close! <! >! <!! >!! chan timeout onto-chan]]))
 
 ;; Explaining out-of-order replies and fencing with a diagram.  Client
 ;; sends a bunch of requests (r0...r6), where r2 and r5 are fenced
@@ -37,37 +36,38 @@
 ;; request format
 ;; {:rq function-to-call :fence true-or-false}
 
-(defn make-fenced-dispatcher [in-ch out-ch max-inflights]
-  (go-loop
-      [inflights #{}            ; chans of requests currently being processed.
-       fenced nil               ; chan of last, inflight "fenced" request.
-       fenced-res nil]          ; last received result from last fenced request.
-    (let [i (vec (if (or fenced ; if we're fenced or too many inflight requests,
-                         (>= (count inflights) max-inflights))
-                   inflights    ; then ignore in-ch & finish existing inflight requests.
-                   (conj inflights in-ch)))
-          [v ch] (if (empty? i) ; empty when in-ch is closed and no inflights.
-                   [nil nil]
-                   (alts! i))]
-      (cond
-       (= nil v ch) (close! out-ch)
-       (= ch in-ch) (if (nil? v)
-                      (recur inflights out-ch nil)
-                      (let [new-inflight ((:rq v))]
-                        (recur (conj inflights new-inflight)
-                               (if (:fence v) new-inflight nil)
-                               nil)))
-       (= v nil) (let [new-inflights (disj inflights ch)] ; an inflight request is done.
-                   (if (empty? new-inflights)
-                     (do (when fenced-res                 ; all inflight requests are done, so we can
-                           (>! out-ch fenced-res))        ; send the fenced-res that we've been keeping.
-                         (recur new-inflights nil nil))
-                     (recur new-inflights fenced fenced-res)))
-       (= ch fenced) (do (when fenced-res
-                           (>! out-ch fenced-res))        ; send off any previous fenced-res so
-                         (recur inflights fenced v))      ; we can keep v as our latest fenced-res.
-       :else (do (>! out-ch v)
-                 (recur inflights fenced fenced-res))))))
+(defn make-fenced-pump [aenv in-ch out-ch max-inflights]
+  (ago-loop
+   [aenv "fenced-pump"]
+   [inflights #{}            ; chans of requests currently being processed.
+    fenced nil               ; chan of last, inflight "fenced" request.
+    fenced-res nil]          ; last received result from last fenced request.
+   (let [i (vec (if (or fenced ; if we're fenced or too many inflight requests,
+                        (>= (count inflights) max-inflights))
+                  inflights    ; then ignore in-ch & finish existing inflight requests.
+                  (conj inflights in-ch)))
+         [v ch] (if (empty? i) ; empty when in-ch is closed and no inflights.
+                  [nil nil]
+                  (alts! i))]
+     (cond
+      (= nil v ch) (close! out-ch)
+      (= ch in-ch) (if (nil? v)
+                     (recur inflights out-ch nil)
+                     (let [new-inflight ((:rq v))]
+                       (recur (conj inflights new-inflight)
+                              (if (:fence v) new-inflight nil)
+                              nil)))
+      (= v nil) (let [new-inflights (disj inflights ch)] ; an inflight request is done.
+                  (if (empty? new-inflights)
+                    (do (when fenced-res                 ; all inflight requests are done, so we can
+                          (>! out-ch fenced-res))        ; send the fenced-res that we've been keeping.
+                        (recur new-inflights nil nil))
+                    (recur new-inflights fenced fenced-res)))
+      (= ch fenced) (do (when fenced-res
+                          (>! out-ch fenced-res))        ; send off any previous fenced-res so
+                        (recur inflights fenced v))      ; we can keep v as our latest fenced-res.
+      :else (do (>! out-ch v)
+                (recur inflights fenced fenced-res))))))
 
 ;; ------------------------------------------------------------
 
@@ -111,7 +111,7 @@
                    in-msgs]
   (let [in (chan in-ch-size)
         out (chan out-ch-size)
-        fdp (make-fenced-dispatcher in out max-inflight)
+        fdp (make-fenced-pump nil in out max-inflight)
         gch (go-loop [acc nil]
               (let [result (<! out)]
                 (if result
