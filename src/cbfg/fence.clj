@@ -13,41 +13,47 @@
      (doseq [n (range s e)]
        (<! (timeout delay))
        (>! c n))
-     (close! c))))
+     (close! c))
+    c))
 
 ;; request format
 ;; {:rq function-to-call :fence true-or-false}
 
 (defn make-rq-processor []
-  (let [input-channel (chan 100)
-        output-channel (chan)]
+  (let [in-channel (chan 100)
+        out-channel (chan)]
     (go-loop
-     [receiving #{}
-      fenced-on nil
-      fenced-value nil]
-     (let [ports (vec receiving)
-           ports (if fenced-on ports (conj ports input-channel))
-           [v ch] (if-not (empty? ports) (alts! ports) [nil nil])]
-       (cond
-        (= nil v ch) (close! output-channel)
-        (= ch input-channel) (if (nil? v)
-                               (recur receiving output-channel nil)
-                               (recur (conj receiving ((:rq v)))
-                                      (if (:fence v) ch nil)
-                                      nil))
-        (= v nil) (let [new-receiving (disj receiving ch)]
-                    (if (empty? new-receiving)
-                      (do (if fenced-value
-                            (>! output-channel fenced-value))
-                          (recur new-receiving nil nil))
-                      (recur new-receiving fenced-on fenced-value)))
-        (= ch fenced-on) (do (if fenced-value
-                               (>! output-channel fenced-value))
-                             (recur receiving fenced-on v))
-        :else (do (>! output-channel v)
-                  (recur receiving fenced-on fenced-value)))))
-    {:in input-channel
-     :out output-channel}))
+        [inflight #{}         ; chans of requests currently being processed.
+         fenced nil           ; chan of last, inflight "fenced" request.
+         fenced-res nil]      ; last received result from last fenced request.
+      (let [i (vec (if fenced ; if we're fenced, ignore in-channel and just
+                     inflight ; focus on completing the current inflight requests.
+                     (conj inflight in-channel)))
+            [v ch] (if (empty? i) ; empty when in-channel has been closed.
+                     [nil nil]
+                     (alts! i))]
+        (cond
+         (= nil v ch) (close! out-channel)
+         (= ch in-channel) (if (nil? v)
+                             (recur inflight out-channel nil)
+                             (recur (conj inflight ((:rq v)))
+                                    (if (:fence v) ch nil)
+                                    nil))
+         ; at this point, ch must be an inflight chan.
+         ; next, see if that inflight chan is done.
+         (= v nil) (let [new-inflight (disj inflight ch)]
+                     (if (empty? new-inflight)
+                       (do (when fenced-res
+                             (>! out-channel fenced-res))
+                           (recur new-inflight nil nil))
+                       (recur new-inflight fenced fenced-res)))
+         (= ch fenced) (do (when fenced-res
+                             (>! out-channel fenced-res))
+                           (recur inflight fenced v))
+         :else (do (>! out-channel v)
+                   (recur inflight fenced fenced-res)))))
+    {:in in-channel
+     :out out-channel}))
 
 (def test-requests
   [{:rq #(add-two 1 3000)}
