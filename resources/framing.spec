@@ -162,6 +162,7 @@ input request processing is paused.
         ||             (pause input processing)
      p1                (send)
      d1                (send, --inflight == 2)
+        p2             (send)
         d2-hold        (hold d2 result, --inflight == 1)
   p0                   (send)
   d0                   (send, --inflight == 0, so...)
@@ -170,4 +171,26 @@ input request processing is paused.
            ^           (++inflight == 1)
               ^        (++inflight == 2)
 
+  $ lein repl
+  nREPL server started on port 51044 on host 127.0.0.1
+  REPL-y 0.3.0
+  Clojure 1.5.1
+    Docs: (doc function-name-here)
+          (find-doc "part-of-name-here")
+  Source: (source function-name-here)
+ Javadoc: (javadoc java-object-or-class-here)
+    Exit: Control+D or (exit) or (quit)
+ Results: Stored in vars *1, *2, *3, an exception in *e
+  user=> (require 'cbfg.fence)
+  nil
+  user=> (in-ns 'cbfg.fence)
+  #<Namespace cbfg.fence>
+  cbfg.fence=> (test-rq-processor)
+  nil
+  cbfg.fence=> Got result:  6
+  Got result:  3
+  Got result:  12
+  Got result:  11
+  Got result:  11
+  Got result:  11
 
