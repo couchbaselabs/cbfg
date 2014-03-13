@@ -55,9 +55,10 @@
      :out out-channel}))
 
 (def test-requests
-  [{:rq #(add-two 1 3000)}
+  [{:rq #(add-two 1 2000)}
    {:rq #(add-two 4 1000)}
-   {:rq #(add-two 10 6000) :fence true}
+   {:rq #(add-two 10 500) :fence true}
+   {:rq #(range-to 40 45 100) :fence true}
    {:rq #(add-two 9 1000)}
    {:rq #(add-two 9 1000)}
    {:rq #(range-to 0 5 500)}
