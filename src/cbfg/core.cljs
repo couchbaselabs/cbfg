@@ -22,7 +22,8 @@
   (go (while true
         (<! clicks)
         (set! (.-innerHTML (dom/getElement "output"))
-              (user-input)))))
+              (user-input))
+        (println (<! (cbfg.fence/test-rq-processor))))))
 
 (defn user-input []
   (.-value (dom/getElement "input")))

@@ -71,12 +71,12 @@
 
 (defn test-rq-processor []
   (let [{:keys [in out]} (make-rq-processor 2)
-        done (go-loop [] (let [result (<! out)]
-                  (when result
-                    (println "Got result: " result)
-                    (recur))))]
+        gch (go-loop [acc nil]
+              (let [result (<! out)]
+                (if result
+                  (do (println "Output result: " result)
+                      (recur (conj acc result)))
+                  (do (println "Output channel closed")
+                      (reverse acc)))))]
     (onto-chan in test-requests)
-    (<!! done)
-    (println "Output channel closed")))
-
-
+    gch))
