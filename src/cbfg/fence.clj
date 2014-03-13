@@ -19,15 +19,16 @@
 ;; request format
 ;; {:rq function-to-call :fence true-or-false}
 
-(defn make-rq-processor []
+(defn make-rq-processor [max-inflights]
   (let [in-channel (chan 100)
         out-channel (chan)]
     (go-loop
-        [inflights #{}         ; chans of requests currently being processed.
-         fenced nil            ; chan of last, inflight "fenced" request.
-         fenced-res nil]       ; last received result from last fenced request.
-      (let [i (vec (if fenced  ; if we're fenced, ignore in-channel and just
-                     inflights ; focus on completing the current inflight requests.
+        [inflights #{}            ; chans of requests currently being processed.
+         fenced nil               ; chan of last, inflight "fenced" request.
+         fenced-res nil]          ; last received result from last fenced request.
+      (let [i (vec (if (or fenced ; if we're fenced or too many inflight requests,
+                           (>= (count inflights) max-inflights))
+                     inflights    ; then ignore in-channel & finish existing inflight requests.
                      (conj inflights in-channel)))
             [v ch] (if (empty? i) ; empty when in-channel is closed and no inflights.
                      [nil nil]
@@ -67,7 +68,7 @@
    ])
 
 (defn test-rq-processor []
-  (let [{:keys [in out]} (make-rq-processor)
+  (let [{:keys [in out]} (make-rq-processor 2)
         done (go-loop [] (let [result (<! out)]
                   (when result
                     (println "Got result: " result)
