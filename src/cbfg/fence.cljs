@@ -21,41 +21,37 @@
 ;; request format
 ;; {:rq function-to-call :fence true-or-false}
 
-(defn make-rq-processor [max-inflights]
-  (let [in-channel (chan 100)
-        out-channel (chan)]
-    (go-loop
-        [inflights #{}            ; chans of requests currently being processed.
-         fenced nil               ; chan of last, inflight "fenced" request.
-         fenced-res nil]          ; last received result from last fenced request.
-      (let [i (vec (if (or fenced ; if we're fenced or too many inflight requests,
-                           (>= (count inflights) max-inflights))
-                     inflights    ; then ignore in-channel & finish existing inflight requests.
-                     (conj inflights in-channel)))
-            [v ch] (if (empty? i) ; empty when in-channel is closed and no inflights.
-                     [nil nil]
-                     (alts! i))]
-        (cond
-         (= nil v ch) (close! out-channel)
-         (= ch in-channel) (if (nil? v)
-                             (recur inflights out-channel nil)
-                             (let [new-inflight ((:rq v))]
-                               (recur (conj inflights new-inflight)
-                                      (if (:fence v) new-inflight nil)
-                                      nil)))
-         (= v nil) (let [new-inflights (disj inflights ch)] ; an inflight request is done.
-                     (if (empty? new-inflights)
-                       (do (when fenced-res                 ; all inflight requests are done, so we can
-                             (>! out-channel fenced-res))   ; send the fenced-res that we've been keeping.
-                           (recur new-inflights nil nil))
-                       (recur new-inflights fenced fenced-res)))
-         (= ch fenced) (do (when fenced-res
-                             (>! out-channel fenced-res))   ; send off any previous fenced-res so
-                           (recur inflights fenced v))      ; we can keep v as fenced-res.
-         :else (do (>! out-channel v)
-                   (recur inflights fenced fenced-res)))))
-    {:in in-channel
-     :out out-channel}))
+(defn make-fenced-dispatcher [in-channel out-channel max-inflights]
+  (go-loop
+      [inflights #{}            ; chans of requests currently being processed.
+       fenced nil               ; chan of last, inflight "fenced" request.
+       fenced-res nil]          ; last received result from last fenced request.
+    (let [i (vec (if (or fenced ; if we're fenced or too many inflight requests,
+                         (>= (count inflights) max-inflights))
+                   inflights    ; then ignore in-channel & finish existing inflight requests.
+                   (conj inflights in-channel)))
+          [v ch] (if (empty? i) ; empty when in-channel is closed and no inflights.
+                   [nil nil]
+                   (alts! i))]
+      (cond
+       (= nil v ch) (close! out-channel)
+       (= ch in-channel) (if (nil? v)
+                           (recur inflights out-channel nil)
+                           (let [new-inflight ((:rq v))]
+                             (recur (conj inflights new-inflight)
+                                    (if (:fence v) new-inflight nil)
+                                    nil)))
+       (= v nil) (let [new-inflights (disj inflights ch)] ; an inflight request is done.
+                   (if (empty? new-inflights)
+                     (do (when fenced-res                 ; all inflight requests are done, so we can
+                           (>! out-channel fenced-res))   ; send the fenced-res that we've been keeping.
+                         (recur new-inflights nil nil))
+                     (recur new-inflights fenced fenced-res)))
+       (= ch fenced) (do (when fenced-res
+                           (>! out-channel fenced-res))   ; send off any previous fenced-res so
+                         (recur inflights fenced v))      ; we can keep v as fenced-res.
+       :else (do (>! out-channel v)
+                 (recur inflights fenced fenced-res))))))
 
 (def test-requests
   [{:rq #(add-two 1 2000)}
@@ -70,7 +66,9 @@
    ])
 
 (defn test-rq-processor []
-  (let [{:keys [in out]} (make-rq-processor 2)
+  (let [in (chan 100)
+        out (chan)
+        fdp (make-fenced-dispatcher in out 2)
         gch (go-loop [acc nil]
               (let [result (<! out)]
                 (if result
