@@ -72,17 +72,15 @@
 ;; ------------------------------------------------------------
 
 (defn add-two [x delay]
-  (go
-   (<! (timeout delay))
-   (+ x 2)))
+  (go (<! (timeout delay))
+      (+ x 2)))
 
 (defn range-to [s e delay]
   (let [c (chan)]
-    (go
-     (doseq [n (range s e)]
-       (<! (timeout delay))
-       (>! c n))
-     (close! c))
+    (go (doseq [n (range s e)]
+          (<! (timeout delay))
+          (>! c n))
+        (close! c))
     c))
 
 (defn test []
