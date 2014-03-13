@@ -1,6 +1,6 @@
 (ns cbfg.fence
-  (:require-macros [cljs.core.async.macros :refer [go go-loop]]
-                   [cbfg.aenv :refer [ago-loop]])
+  (:require-macros [cljs.core.async.macros :refer [go]]
+                   [cbfg.aenv :refer [ago ago-loop]])
   (:require [cljs.core.async :refer [close! <! >! <!! >!! chan timeout onto-chan]]))
 
 ;; Explaining out-of-order replies and fencing with a diagram.  Client
@@ -39,9 +39,9 @@
 (defn make-fenced-pump [aenv in-ch out-ch max-inflights]
   (ago-loop
    [aenv "fenced-pump"]
-   [inflights #{}            ; chans of requests currently being processed.
-    fenced nil               ; chan of last, inflight "fenced" request.
-    fenced-res nil]          ; last received result from last fenced request.
+   [inflights #{}              ; chans of requests currently being processed.
+    fenced nil                 ; chan of last, inflight "fenced" request.
+    fenced-res nil]            ; last received result from last fenced request.
    (let [i (vec (if (or fenced ; if we're fenced or too many inflight requests,
                         (>= (count inflights) max-inflights))
                   inflights    ; then ignore in-ch & finish existing inflight requests.
@@ -72,15 +72,17 @@
 ;; ------------------------------------------------------------
 
 (defn add-two [x delay]
-  (go (<! (timeout delay))
-      (+ x 2)))
+  (ago nil
+       (<! (timeout delay))
+       (+ x 2)))
 
 (defn range-to [s e delay]
   (let [c (chan)]
-    (go (doseq [n (range s e)]
-          (<! (timeout delay))
-          (>! c n))
-        (close! c))
+    (ago nil
+         (doseq [n (range s e)]
+           (<! (timeout delay))
+           (>! c n))
+         (close! c))
     c))
 
 (defn test []
@@ -93,17 +95,18 @@
               {:rq #(range-to 0 5 50)}
               {:rq #(range-to 6 10 10) :fence true}
               {:rq #(add-two 30 100)}]]
-    (go (map (fn [test] (cons (if (= (nth test 1)
-                                     (nth test 2))
-                                "pass"
-                                "FAIL")
-                              test))
-             [["test with 2 max-inflights"
-               (<! (test-helper 100 1 2 reqs))
-               '(6 3 12 40 41 42 43 44 11 11 6 7 0 8 1 2 3 4 9 32)]
-              ["test with 200 max-inflights"
-               (<! (test-helper 100 1 200 reqs))
-               '(6 3 12 40 41 42 43 44 6 7 0 8 11 11 1 2 3 4 9 32)]]))))
+    (ago nil
+         (map (fn [test] (cons (if (= (nth test 1)
+                                      (nth test 2))
+                                 "pass"
+                                 "FAIL")
+                               test))
+              [["test with 2 max-inflights"
+                (<! (test-helper 100 1 2 reqs))
+                '(6 3 12 40 41 42 43 44 11 11 6 7 0 8 1 2 3 4 9 32)]
+               ["test with 200 max-inflights"
+                (<! (test-helper 100 1 200 reqs))
+                '(6 3 12 40 41 42 43 44 6 7 0 8 11 11 1 2 3 4 9 32)]]))))
 
 (defn test-helper [in-ch-size
                    out-ch-size
@@ -112,7 +115,7 @@
   (let [in (chan in-ch-size)
         out (chan out-ch-size)
         fdp (make-fenced-pump nil in out max-inflight)
-        gch (go-loop [acc nil]
+        gch (ago-loop nil [acc nil]
               (let [result (<! out)]
                 (if result
                   (do (println "Output result: " result)
