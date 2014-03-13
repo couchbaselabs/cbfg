@@ -35,19 +35,17 @@
                                (recur (conj receiving ((:rq v)))
                                       (if (:fence v) ch nil)
                                       nil))
-        :else (if (= v nil)
-                (let [new-receiving (disj receiving ch)]
-                  (if (empty? new-receiving)
-                    (do (if fenced-value
-                          (>! output-channel fenced-value))
-                        (recur new-receiving nil nil))
-                    (recur new-receiving fenced-on fenced-value)))
-               (if (= ch fenced-on)
-                 (do (if fenced-value
-                       (>! output-channel fenced-value))
-                     (recur receiving fenced-on v))
-                 (do (>! output-channel v)
-                     (recur receiving fenced-on fenced-value)))))))
+        (= v nil) (let [new-receiving (disj receiving ch)]
+                    (if (empty? new-receiving)
+                      (do (if fenced-value
+                            (>! output-channel fenced-value))
+                          (recur new-receiving nil nil))
+                      (recur new-receiving fenced-on fenced-value)))
+        (= ch fenced-on) (do (if fenced-value
+                               (>! output-channel fenced-value))
+                             (recur receiving fenced-on v))
+        :else (do (>! output-channel v)
+                  (recur receiving fenced-on fenced-value)))))
     {:in input-channel
      :out output-channel}))
 
