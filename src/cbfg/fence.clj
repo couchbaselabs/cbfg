@@ -7,6 +7,14 @@
    (<! (timeout delay))
    (+ x 2)))
 
+(defn range-to [s e delay]
+  (let [c (chan)]
+    (go
+     (doseq [n (range s e)]
+       (<! (timeout delay))
+       (>! c n))
+     (close! c))))
+
 ;; request format
 ;; {:rq function-to-call :fence true-or-false}
 
@@ -49,7 +57,9 @@
    {:rq #(add-two 10 6000) :fence true}
    {:rq #(add-two 9 1000)}
    {:rq #(add-two 9 1000)}
-   {:rq #(add-two 9 1000)}
+   {:rq #(range-to 0 5 500)}
+   {:rq #(range-to 6 10 1000) :fence true}
+   {:rq #(add-two 30 1000)}
    ])
 
 (defn test-rq-processor []
