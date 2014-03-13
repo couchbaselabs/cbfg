@@ -29,7 +29,7 @@
            ports (if fenced-on ports (conj ports input-channel))
            [v ch] (if-not (empty? ports) (alts! ports) [nil nil])]
        (cond
-        (= nil v ch) (close! output-channel)    
+        (= nil v ch) (close! output-channel)
         (= ch input-channel) (if (nil? v)
                                (recur receiving output-channel nil)
                                (recur (conj receiving ((:rq v)))
@@ -71,5 +71,5 @@
     (onto-chan in test-requests)
     (<!! done)
     (println "Output channel closed")))
-   
+
 
