@@ -42,13 +42,13 @@
                                       nil)))
          (= v nil) (let [new-inflights (disj inflights ch)] ; an inflight request is done.
                      (if (empty? new-inflights)
-                       (do (when fenced-res               ; all inflight requests are done, so we can now
-                             (>! out-channel fenced-res)) ; send the fenced-res that we've been holding up.
+                       (do (when fenced-res                 ; all inflight requests are done, so we can
+                             (>! out-channel fenced-res))   ; send the fenced-res that we've been keeping.
                            (recur new-inflights nil nil))
                        (recur new-inflights fenced fenced-res)))
          (= ch fenced) (do (when fenced-res
-                             (>! out-channel fenced-res)) ; send off any previous fenced-res
-                           (recur inflights fenced v))     ; so that we can save v as fenced-res.
+                             (>! out-channel fenced-res))   ; send off any previous fenced-res so
+                           (recur inflights fenced v))      ; we can keep v as fenced-res.
          :else (do (>! out-channel v)
                    (recur inflights fenced fenced-res)))))
     {:in in-channel
