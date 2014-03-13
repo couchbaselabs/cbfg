@@ -1,8 +1,8 @@
 (ns cbfg.fence
   (:require-macros [cljs.core.async.macros :refer [go]]
-                   [cbfg.ago :refer [ago ago-loop asend]])
+                   [cbfg.ago :refer [ago ago-loop aput atake]])
   (:require [cljs.core.async
-             :refer [chan close! <! >! <!! >!! timeout
+             :refer [chan close! <!! timeout
                      onto-chan]]))
 
 ;; Explaining out-of-order replies and fencing with a diagram.  Client
@@ -62,13 +62,13 @@
       (= v nil) (let [new-inflights (disj inflights ch)] ; an inflight request is done.
                   (if (empty? new-inflights)
                     (do (when fenced-res                 ; all inflight requests are done, so we can
-                          (asend nil out-ch fenced-res)) ; send the fenced-res that we've been keeping.
+                          (aput out-ch fenced-res))      ; send the fenced-res that we've been keeping.
                         (recur new-inflights nil nil))
                     (recur new-inflights fenced fenced-res)))
       (= ch fenced) (do (when fenced-res
-                          (asend nil out-ch fenced-res)) ; send off any previous fenced-res so
+                          (aput out-ch fenced-res))      ; send off any previous fenced-res so
                         (recur inflights fenced v))      ; we can keep v as our latest fenced-res.
-      :else (do (>! out-ch v)
+      :else (do (aput out-ch v)
                 (recur inflights fenced fenced-res))))))
 
 ;; ------------------------------------------------------------
@@ -82,8 +82,8 @@
   (let [c (chan)]
     (ago nil
          (doseq [n (range s e)]
-           (<! (timeout delay))
-           (>! c n))
+           (atake (timeout delay))
+           (aput c n))
          (close! c))
     c))
 

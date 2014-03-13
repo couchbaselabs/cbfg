@@ -7,5 +7,8 @@
 (defmacro ago-loop [ainfo bindings & body]
   `(go (loop ~bindings ~@body)))
 
-(defmacro asend [aenv ch msg]
+(defmacro aput [ch msg]
   `(cljs.core.async/>! ~ch ~msg))
+
+(defmacro atake [ch]
+  `(cljs.core.async/<! ~ch))
