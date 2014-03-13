@@ -4,20 +4,6 @@
   (:require [cljs.core.async
              :refer [close! <! >! <!! >!! chan timeout onto-chan]]))
 
-(defn add-two [x delay]
-  (go
-   (<! (timeout delay))
-   (+ x 2)))
-
-(defn range-to [s e delay]
-  (let [c (chan)]
-    (go
-     (doseq [n (range s e)]
-       (<! (timeout delay))
-       (>! c n))
-     (close! c))
-    c))
-
 ;; request format
 ;; {:rq function-to-call :fence true-or-false}
 
@@ -52,6 +38,20 @@
                          (recur inflights fenced v))      ; we can keep v as fenced-res.
        :else (do (>! out-channel v)
                  (recur inflights fenced fenced-res))))))
+
+(defn add-two [x delay]
+  (go
+   (<! (timeout delay))
+   (+ x 2)))
+
+(defn range-to [s e delay]
+  (let [c (chan)]
+    (go
+     (doseq [n (range s e)]
+       (<! (timeout delay))
+       (>! c n))
+     (close! c))
+    c))
 
 (def test-requests
   [{:rq #(add-two 1 2000)}
