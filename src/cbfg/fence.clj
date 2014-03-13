@@ -1,5 +1,6 @@
 (ns cbfg.fence
-  (:require [clojure.core.async :refer [go go-loop >! <! >!! <!! chan timeout]]))
+  (:require [clojure.core.async :refer [go go-loop close! >! <! >!! <!! chan timeout
+                                        onto-chan]]))
 
 (defn add-two [x delay]
   (go
@@ -16,26 +17,29 @@
      [receiving #{}
       fenced-on nil
       fenced-value nil]
-     (let [[v ch] (alts! (vec (into receiving
-                                    (if fenced-on
-                                      []
-                                      [input-channel]))))]
+     (let [ports (vec receiving)
+           ports (if fenced-on ports (conj ports input-channel))
+           [v ch] (if-not (empty? ports) (alts! ports) [nil nil])]
        (cond
-        (= ch input-channel) (recur (conj receiving ((:rq v)))
-                                    (if (:fence v) v nil)
-                                    nil)
-        :else (cond
-               (= v nil) (let [new-receiving (disj receiving ch)]
-                           (if (empty? new-receiving)
-                             (do (if fenced-value (>! output-channel fenced-value))
-                                 (recur new-receiving nil nil))
-                             (recur new-receiving fenced-on fenced-value)))
-               :else (cond
-                      (= ch fenced-on) (do (if fenced-value
-                                             (>! output-channel fenced-value))
-                                           (recur receiving fenced-on v))
-                      :else (do (>! output-channel v)
-                                (recur receiving fenced-on fenced-value)))))))
+        (= nil v ch) (close! output-channel)    
+        (= ch input-channel) (if (nil? v)
+                               (recur receiving output-channel nil)
+                               (recur (conj receiving ((:rq v)))
+                                      (if (:fence v) ch nil)
+                                      nil))
+        :else (if (= v nil)
+                (let [new-receiving (disj receiving ch)]
+                  (if (empty? new-receiving)
+                    (do (if fenced-value
+                          (>! output-channel fenced-value))
+                        (recur new-receiving nil nil))
+                    (recur new-receiving fenced-on fenced-value)))
+               (if (= ch fenced-on)
+                 (do (if fenced-value
+                       (>! output-channel fenced-value))
+                     (recur receiving fenced-on v))
+                 (do (>! output-channel v)
+                     (recur receiving fenced-on fenced-value)))))))
     {:in input-channel
      :out output-channel}))
 
@@ -49,11 +53,13 @@
    ])
 
 (defn test-rq-processor []
-  (let [{:keys [in out]} (make-rq-processor)]
-    (go-loop [] (let [result (<! out)]
+  (let [{:keys [in out]} (make-rq-processor)
+        done (go-loop [] (let [result (<! out)]
                   (when result
                     (println "Got result: " result)
-                    (recur))))
-    (doseq [rq test-requests]
-      (>!! in rq))))
+                    (recur))))]
+    (onto-chan in test-requests)
+    (<!! done)
+    (println "Output channel closed")))
+   
 
