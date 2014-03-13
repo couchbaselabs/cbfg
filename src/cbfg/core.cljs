@@ -1,4 +1,4 @@
-;; browser and UI-related stuff goes in this file.
+;; Browser and UI-related stuff goes in this file.
 ;; generic stuff should go elsewhere.
 
 (ns cbfg.core

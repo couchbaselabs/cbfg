@@ -65,7 +65,7 @@
                      (recur new-inflights fenced fenced-res)))
        (= ch fenced) (do (when fenced-res
                            (>! out-channel fenced-res))   ; send off any previous fenced-res so
-                         (recur inflights fenced v))      ; we can keep v as fenced-res.
+                         (recur inflights fenced v))      ; we can keep v as our latest fenced-res.
        :else (do (>! out-channel v)
                  (recur inflights fenced fenced-res))))))
 
