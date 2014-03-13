@@ -4,6 +4,36 @@
   (:require [cljs.core.async
              :refer [close! <! >! <!! >!! chan timeout onto-chan]]))
 
+;; Explaining out-of-order replies and fencing with a diagram.  Client
+;; sends a bunch of requests (r0...r6), where r2 and r5 are fenced
+;; ("F").  "pX" means a partial "still going / non-final" response
+;; message.  "dX" means a final response "done" message for a request.
+;; Time-steps go downwards.  The caret (^) denotes which request has
+;; started async or inflight processing.  The double-bar (||) means we
+;; have paused moving the caret rightwards, so input request
+;; processing is paused (in-channel is ignored).
+;;
+;;   r0 r1 r2 r3 r4 r5 r6
+;;         F        F
+;;   -----------------------------------------------
+;;   ^                    (++inflight == 1)
+;;      ^                 (++inflight == 2)
+;;      p1                (send)
+;;         ^              (++inflight == 3 (2 unfenced + 1 fenced), and...)
+;;         ||             (pause input processing)
+;;      p1                (send)
+;;      d1                (send, --inflight == 2)
+;;         p2             (send)
+;;         d2-hold        (hold d2 result, --inflight == 1)
+;;   p0                   (send)
+;;   d0                   (send, --inflight == 0, so...)
+;;         d2-send        (now can send d2 and move onwards to r3, so...)
+;;         >>             (unpause input processing)
+;;            ^           (++inflight == 1)
+;;               ^        (++inflight == 2)
+
+;; ------------------------------------------------------------
+
 ;; request format
 ;; {:rq function-to-call :fence true-or-false}
 
@@ -38,6 +68,8 @@
                          (recur inflights fenced v))      ; we can keep v as fenced-res.
        :else (do (>! out-channel v)
                  (recur inflights fenced fenced-res))))))
+
+;; ------------------------------------------------------------
 
 (defn add-two [x delay]
   (go
