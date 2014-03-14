@@ -2,7 +2,8 @@
 ;; generic stuff should go elsewhere.
 
 (ns cbfg.core
-  (:require-macros [cljs.core.async.macros :refer [go]])
+  (:require-macros [cljs.core.async.macros :refer [go]]
+                   [cbfg.ago :refer [ago]])
   (:require [clojure.string :as string]
             [cljs.core.async :refer [<! put! chan]]
             [goog.dom :as dom]
@@ -23,11 +24,12 @@
     out))
 
 (let [clicks (listen (dom/getElement "go") "click")]
-  (go (while true
-        (<! clicks)
-        (set! (.-innerHTML (dom/getElement "output"))
-              (user-input))
-        (println (string/join "\n" (<! (cbfg.fence/test)))))))
+  (ago world nil
+       (while true
+         (<! clicks)
+         (set! (.-innerHTML (dom/getElement "output"))
+               (user-input))
+         (println (string/join "\n" (atake world (cbfg.fence/test)))))))
 
 ;; ------------------------------------------------
 
