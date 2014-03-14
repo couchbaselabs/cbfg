@@ -2,15 +2,18 @@
   (:require [cljs.core.async.macros :refer [go]]))
 
 (defmacro ago [child-actx-binding-name actx & body]
-  `(let [~child-actx-binding-name [~actx '~child-actx-binding-name (gensym)]]
+  `(let [~child-actx-binding-name (conj ~actx
+                                        ['~child-actx-binding-name (gensym)])]
      (go ~@body)))
 
 (defmacro ago-loop [child-actx-binding-name actx bindings & body]
   `(ago ~child-actx-binding-name ~actx (loop ~bindings ~@body)))
 
 (defmacro achan [actx]
-  `(do (println "achan" ~actx)
-       (cljs.core.async/chan)))
+  `(let [ch# (cljs.core.async/chan)]
+     (println "achan" ~actx ch#)
+     (swap! (:chs (first ~actx)) assoc ch# [])
+     ch#))
 
 (defmacro achan-buf [actx buf-or-size]
   `(do (println "achan-buf" ~actx ~buf-or-size)

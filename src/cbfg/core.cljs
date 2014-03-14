@@ -5,7 +5,7 @@
   (:require-macros [cljs.core.async.macros :refer [go go-loop]]
                    [cbfg.ago :refer [ago atake]])
   (:require [clojure.string :as string]
-            [cljs.core.async :refer [<! put! chan]]
+            [cljs.core.async :refer [<! >! put! chan timeout]]
             [goog.dom :as dom]
             [goog.events :as events]
             cbfg.ddl
@@ -30,7 +30,7 @@
 
 (let [clicks (listen (dom/getElement "go") "click")
       ticks (chan)
-      w {:ticks ticks}]
+      w [{:ticks ticks :chs (atom {})}]]
   (go-loop [t 0]
     (<! (timeout @tick-speed))
     (>! ticks t)
@@ -40,7 +40,7 @@
          (<! clicks)
          (set! (.-innerHTML (dom/getElement "output"))
                (user-input))
-         (println (string/join "\n" (atake world (cbfg.fence/test)))))))
+         (println (string/join "\n" (atake world (cbfg.fence/test world)))))))
 
 ;; ------------------------------------------------
 

@@ -52,7 +52,7 @@
       (= nil v ch) (aclose fenced-pump out-ch)
       (= ch in-ch) (if (nil? v)
                      (recur inflights out-ch nil)
-                     (let [new-inflight ((:rq v))]
+                     (let [new-inflight ((:rq v) actx)]
                        (recur (conj inflights new-inflight)
                               (if (:fence v) new-inflight nil)
                               nil)))
@@ -72,51 +72,52 @@
 
 ;; ------------------------------------------------------------
 
-(defn add-two [x delay]
-  (ago test_add-two nil
+(defn add-two [actx x delay]
+  (ago test_add-two actx
        (<! (timeout delay))
        (+ x 2)))
 
-(defn range-to [s e delay]
-  (let [c (achan nil)]
-    (ago test_range-to nil
+(defn range-to [actx s e delay]
+  (let [c (achan actx)]
+    (ago test_range-to actx
          (doseq [n (range s e)]
            (<! (timeout delay))
            (aput test_range-to c n))
          (aclose test_range-to c))
     c))
 
-(defn test []
-  (let [reqs [{:rq #(add-two 1 200)}
-              {:rq #(add-two 4 100)}
-              {:rq #(add-two 10 50) :fence true}
-              {:rq #(range-to 40 45 10) :fence true}
-              {:rq #(add-two 9 100)}
-              {:rq #(add-two 9 100)}
-              {:rq #(range-to 0 5 50)}
-              {:rq #(range-to 6 10 10) :fence true}
-              {:rq #(add-two 30 100)}]]
-    (ago test nil
+(defn test [actx]
+  (let [reqs [{:rq #(add-two % 1 200)}
+              {:rq #(add-two % 4 100)}
+              {:rq #(add-two % 10 50) :fence true}
+              {:rq #(range-to % 40 45 10) :fence true}
+              {:rq #(add-two % 9 100)}
+              {:rq #(add-two % 9 100)}
+              {:rq #(range-to % 0 5 50)}
+              {:rq #(range-to % 6 10 10) :fence true}
+              {:rq #(add-two % 30 100)}]]
+    (ago test actx
          (map (fn [test] (cons (if (= (nth test 1)
                                       (nth test 2))
                                  "pass"
                                  "FAIL")
                                test))
               [["test with 2 max-inflights"
-                (atake test (test-helper 100 1 2 reqs))
+                (atake test (test-helper actx 100 1 2 reqs))
                 '(6 3 12 40 41 42 43 44 11 11 6 7 0 8 1 2 3 4 9 32)]
                ["test with 200 max-inflights"
-                (atake test (test-helper 100 1 200 reqs))
+                (atake test (test-helper actx 100 1 200 reqs))
                 '(6 3 12 40 41 42 43 44 6 7 0 8 11 11 1 2 3 4 9 32)]]))))
 
-(defn test-helper [in-ch-size
+(defn test-helper [actx
+                   in-ch-size
                    out-ch-size
                    max-inflight
                    in-msgs]
-  (let [in (achan-buf nil in-ch-size)
-        out (achan-buf nil out-ch-size)
-        fdp (make-fenced-pump nil in out max-inflight)
-        gch (ago-loop test_helper nil [acc nil]
+  (let [in (achan-buf actx in-ch-size)
+        out (achan-buf actx out-ch-size)
+        fdp (make-fenced-pump actx in out max-inflight)
+        gch (ago-loop test_helper actx [acc nil]
               (let [result (atake test_helper out)]
                 (if result
                   (do (println "Output result: " result)
