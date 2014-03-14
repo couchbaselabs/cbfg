@@ -39,11 +39,11 @@
       (>! tick-ch t)
       (set-el-innerHTML "tot-ticks" t)
       (recur (inc t)))
-    (ago world w
+    (ago w-actx w
          (while true
-           (<! clicks)
+           (.log js/console (<! clicks))
            (set-el-innerHTML "output" (get-el-value "input"))
-           (let [res (string/join "\n" (atake world (cbfg.fence/test world)))]
+           (let [res (string/join "\n" (atake w-actx (cbfg.fence/test w-actx)))]
              (set-el-innerHTML "output" (str "<pre>" res "</pre>"))
              (println res))))
     tick-delay))
