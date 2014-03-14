@@ -112,7 +112,7 @@
               {:rq #(add-two % 9 400)}
               {:rq #(add-two % 9 400)}
               {:rq #(range-to % 0 2 100)}
-              {:rq #(range-to % 6 10 10) :fence true}
+              {:rq #(range-to % 6 10 5) :fence true}
               {:rq #(add-two % 30 100)}]]
     (ago test actx
          (map (fn [test] (cons (if (= (nth test 1)

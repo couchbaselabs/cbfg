@@ -26,19 +26,20 @@
     (events/listen el type (fn [e] (put! out e)))
     out))
 
-(defn init [init-tick-delay]
+(defn init [init-event-delay]
   (let [clicks (listen (dom/getElement "go") "click")
-        tick-delay (atom init-tick-delay)
-        tick-ch (chan)
+        event-delay (atom init-event-delay)
+        event-ch (chan)
         w [{:last-id (atom 0)
-            :tick-ch tick-ch :tot-ticks 0
+            :event-ch event-ch
             :chs (atom {}) :tot-chs 0}]]
     (go-loop [t 0]
-      (let [tdv @tick-delay]
+      (let [tdv @event-delay]
         (when (> tdv 0)
           (<! (timeout tdv))))
-      (>! tick-ch t)
-      (set-el-innerHTML "tot-ticks" t)
+      (let [event [t (<! event-ch)]]
+        (println event)
+        (set-el-innerHTML "event" event))
       (recur (inc t)))
     (ago w-actx w
          (while true
@@ -47,12 +48,12 @@
            (let [res (string/join "\n" (atake w-actx (cbfg.fence/test w-actx)))]
              (set-el-innerHTML "output" (str "<pre>" res "</pre>"))
              (println res))))
-    tick-delay))
+    event-delay))
 
-(def tick-delay (init 0))
+(def event-delay (init 0))
 
-(defn change-tick-delay [d]
-  (reset! tick-delay d))
+(defn change-event-delay [d]
+  (reset! event-delay d))
 
 ;; ------------------------------------------------
 
