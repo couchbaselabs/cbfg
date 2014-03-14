@@ -33,14 +33,14 @@
         w [{:last-id (atom 0)
             :event-ch event-ch
             :chs (atom {}) :tot-chs 0}]]
-    (go-loop [t 0]
+    (go-loop [num-events 0]
       (let [tdv @event-delay]
         (when (> tdv 0)
           (<! (timeout tdv))))
-      (let [event [t (<! event-ch)]]
-        (println event)
-        (set-el-innerHTML "event" event))
-      (recur (inc t)))
+      (let [event (<! event-ch)]
+        (println num-events event)
+        (set-el-innerHTML "event" [num-events event]))
+      (recur (inc num-events)))
     (ago w-actx w
          (while true
            (.log js/console (<! clicks))
