@@ -15,8 +15,11 @@
 
 (println cbfg.ddl/hi)
 
-(defn user-input []
-  (.-value (dom/getElement "input")))
+(defn get-el-value [elId]
+  (.-value (dom/getElement elId)))
+
+(defn set-el-innerHTML [elId v]
+  (set! (.-innerHTML (dom/getElement elId)) v))
 
 (defn listen [el type]
   (let [out (chan)]
@@ -32,13 +35,15 @@
     (go-loop [t 0]
       (<! (timeout @tick-delay))
       (>! tick-ch t)
+      (set-el-innerHTML "tot-ticks" t)
       (recur (inc t)))
     (ago world w
          (while true
            (<! clicks)
-           (set! (.-innerHTML (dom/getElement "output"))
-                 (user-input))
-           (println (string/join "\n" (atake world (cbfg.fence/test world))))))
+           (set-el-innerHTML "output" (get-el-value "input"))
+           (let [res (string/join "\n" (atake world (cbfg.fence/test world)))]
+             (set-el-innerHTML "output" (str "<pre>" res "</pre>"))
+             (println res))))
     tick-delay))
 
 (def tick-delay (init))
