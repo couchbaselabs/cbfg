@@ -15,19 +15,18 @@
   `(ago ~child-actx-binding-name ~actx (loop ~bindings ~@body)))
 
 (defmacro achan [actx]
+  `(achan-buf ~actx 0))
+
+(defmacro achan-buf [actx buf-or-size]
   `(let [ch# (cljs.core.async/chan)
          w# (actx-top ~actx)]
-     (println "achan" ~actx ch#)
+     (println "achan-buf" ~actx ~buf-or-size ch#)
      (swap! (:tot-chs w#) inc)
      (swap! (:chs w#) assoc ch# [])
      ch#))
 
-(defmacro achan-buf [actx buf-or-size]
-  `(do (println "achan-buf" ~actx ~buf-or-size)
-       (cljs.core.async/chan ~buf-or-size)))
-
 (defmacro aclose [actx ch]
-  `(do (println "aclose" ~actx)
+  `(do (cljs.core.async/>! (:event-ch (actx-top ~actx)) ["aclose" ~actx ~ch])
        (cljs.core.async/close! ~ch)))
 
 (defmacro atake [actx ch]
