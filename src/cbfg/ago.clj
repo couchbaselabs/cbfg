@@ -14,7 +14,7 @@
 
 (defmacro achan-buf [actx buf-or-size]
   `(do (println "achan-buf" ~actx ~buf-or-size)
-       (cljs.core.async/chan ~buf-or-size))
+       (cljs.core.async/chan ~buf-or-size)))
 
 (defmacro aclose [actx ch]
   `(do (println "aclose" ~actx)
@@ -27,4 +27,3 @@
 (defmacro aput [actx ch msg]
   `(do (println "aput" ~actx)
        (cljs.core.async/>! ~ch ~msg)))
-

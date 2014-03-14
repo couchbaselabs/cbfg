@@ -1,11 +1,7 @@
 (ns cbfg.fence
-  (:require-macros [cljs.core.async.macros :refer [go]]
-                   [cbfg.ago :refer [achan achan-buf aclose
-                                     ago ago-loop
-                                     aput atake]])
-  (:require [cljs.core.async
-             :refer [chan close! <! timeout
-                     onto-chan]]))
+  (:require-macros [cbfg.ago :refer [achan achan-buf aclose
+                                     ago ago-loop aput atake]])
+  (:require [cljs.core.async :refer [<! timeout onto-chan]]))
 
 ;; Explaining out-of-order replies and fencing with a diagram.  Client
 ;; sends a bunch of requests (r0...r4), where r2 is fenced (F).  "pX"
@@ -53,7 +49,7 @@
                   [nil nil]
                   (alts! i))]
      (cond
-      (= nil v ch) (aclose nil out-ch)
+      (= nil v ch) (aclose fenced-pump out-ch)
       (= ch in-ch) (if (nil? v)
                      (recur inflights out-ch nil)
                      (let [new-inflight ((:rq v))]
@@ -120,8 +116,8 @@
   (let [in (achan-buf nil in-ch-size)
         out (achan-buf nil out-ch-size)
         fdp (make-fenced-pump nil in out max-inflight)
-        gch (ago-loop test-help nil [acc nil]
-              (let [result (atake test-help out)]
+        gch (ago-loop test-helper nil [acc nil]
+              (let [result (atake test-helper out)]
                 (if result
                   (do (println "Output result: " result)
                       (recur (conj acc result)))

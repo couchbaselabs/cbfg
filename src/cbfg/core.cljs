@@ -14,6 +14,9 @@
 
 (println cbfg.ddl/hi)
 
+(defn user-input []
+  (.-value (dom/getElement "input")))
+
 (defn listen [el type]
   (let [out (chan)]
     (events/listen el type (fn [e] (put! out e)))
@@ -25,9 +28,6 @@
         (set! (.-innerHTML (dom/getElement "output"))
               (user-input))
         (println (string/join "\n" (<! (cbfg.fence/test)))))))
-
-(defn user-input []
-  (.-value (dom/getElement "input")))
 
 ;; ------------------------------------------------
 
