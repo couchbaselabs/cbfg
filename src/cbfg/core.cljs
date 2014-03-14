@@ -23,26 +23,28 @@
     (events/listen el type (fn [e] (put! out e)))
     out))
 
-(def tick-speed (atom 1000))
+(defn init []
+  (let [clicks (listen (dom/getElement "go") "click")
+        tick-delay (atom 1000)
+        tick-ch (chan)
+        w [{:tick-ch tick-ch :tot-ticks 0
+            :chs (atom {}) :tot-chs 0}]]
+    (go-loop [t 0]
+      (<! (timeout @tick-delay))
+      (>! tick-ch t)
+      (recur (inc t)))
+    (ago world w
+         (while true
+           (<! clicks)
+           (set! (.-innerHTML (dom/getElement "output"))
+                 (user-input))
+           (println (string/join "\n" (atake world (cbfg.fence/test world))))))
+    tick-delay))
 
-(defn change-tick-speed [s]
-  (reset! tick-speed s))
+(def tick-delay (init))
 
-(let [clicks (listen (dom/getElement "go") "click")
-      ticks (chan)
-      w [{:ticks ticks
-          :chs (atom {})
-          :tot-chs 0}]]
-  (go-loop [t 0]
-    (<! (timeout @tick-speed))
-    (>! ticks t)
-    (recur (inc t)))
-  (ago world w
-       (while true
-         (<! clicks)
-         (set! (.-innerHTML (dom/getElement "output"))
-               (user-input))
-         (println (string/join "\n" (atake world (cbfg.fence/test world)))))))
+(defn change-tick-delay [d]
+  (reset! tick-delay d))
 
 ;; ------------------------------------------------
 
