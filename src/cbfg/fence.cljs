@@ -40,9 +40,8 @@
 ;; request format
 ;; {:rq function-to-call :fence true-or-false}
 
-(defn make-fenced-pump [aenv in-ch out-ch max-inflights]
-  (ago-loop
-   [aenv "fenced-pump"]
+(defn make-fenced-pump [actx in-ch out-ch max-inflights]
+  (ago-loop fenced-pump actx
    [inflights #{}              ; chans of requests currently being processed.
     fenced nil                 ; chan of last, inflight "fenced" request.
     fenced-res nil]            ; last received result from last fenced request.
@@ -64,29 +63,31 @@
       (= v nil) (let [new-inflights (disj inflights ch)] ; an inflight request is done.
                   (if (empty? new-inflights)             ; if inflight requests are all done,
                     (do (when fenced-res                 ; finally send the fenced-res that
-                          (aput nil out-ch fenced-res))  ; we have been holding onto.
+                          (aput fenced-pump              ; we have been holding onto.
+                                out-ch fenced-res))
                         (recur new-inflights nil nil))
                     (recur new-inflights fenced fenced-res)))
       (= ch fenced) (do (when fenced-res
-                          (aput nil out-ch fenced-res))  ; send any previous fenced-res so
-                        (recur inflights fenced v))      ; we can hold v as last fenced-res.
-      :else (do (aput nil out-ch v)
+                          (aput fenced-pump              ; send any previous fenced-res so
+                                out-ch fenced-res))      ; we can hold v as last fenced-res.
+                        (recur inflights fenced v))
+      :else (do (aput fenced-pump out-ch v)
                 (recur inflights fenced fenced-res))))))
 
 ;; ------------------------------------------------------------
 
 (defn add-two [x delay]
-  (ago nil
+  (ago add-two nil
        (<! (timeout delay))
        (+ x 2)))
 
 (defn range-to [s e delay]
   (let [c (achan nil)]
-    (ago nil
+    (ago range-to nil
          (doseq [n (range s e)]
            (<! (timeout delay))
-           (aput nil c n))
-         (aclose nil c))
+           (aput range-to c n))
+         (aclose range-to c))
     c))
 
 (defn test []
@@ -99,17 +100,17 @@
               {:rq #(range-to 0 5 50)}
               {:rq #(range-to 6 10 10) :fence true}
               {:rq #(add-two 30 100)}]]
-    (ago nil
+    (ago test nil
          (map (fn [test] (cons (if (= (nth test 1)
                                       (nth test 2))
                                  "pass"
                                  "FAIL")
                                test))
               [["test with 2 max-inflights"
-                (atake nil (test-helper 100 1 2 reqs))
+                (atake test (test-helper 100 1 2 reqs))
                 '(6 3 12 40 41 42 43 44 11 11 6 7 0 8 1 2 3 4 9 32)]
                ["test with 200 max-inflights"
-                (atake nil (test-helper 100 1 200 reqs))
+                (atake test (test-helper 100 1 200 reqs))
                 '(6 3 12 40 41 42 43 44 6 7 0 8 11 11 1 2 3 4 9 32)]]))))
 
 (defn test-helper [in-ch-size
@@ -119,8 +120,8 @@
   (let [in (achan-buf nil in-ch-size)
         out (achan-buf nil out-ch-size)
         fdp (make-fenced-pump nil in out max-inflight)
-        gch (ago-loop nil [acc nil]
-              (let [result (atake nil out)]
+        gch (ago-loop test-help nil [acc nil]
+              (let [result (atake test-help out)]
                 (if result
                   (do (println "Output result: " result)
                       (recur (conj acc result)))
