@@ -109,9 +109,9 @@
               {:rq #(add-two % 4 100)}
               {:rq #(add-two % 10 50) :fence true}
               {:rq #(range-to % 40 45 10) :fence true}
-              {:rq #(add-two % 9 100)}
-              {:rq #(add-two % 9 100)}
-              {:rq #(range-to % 0 5 50)}
+              {:rq #(add-two % 9 400)}
+              {:rq #(add-two % 9 400)}
+              {:rq #(range-to % 0 2 100)}
               {:rq #(range-to % 6 10 10) :fence true}
               {:rq #(add-two % 30 100)}]]
     (ago test actx
@@ -122,7 +122,7 @@
                                test))
               [["test with 2 max-inflights"
                 (atake test (test-helper actx 100 1 2 reqs))
-                '(6 3 12 40 41 42 43 44 11 11 6 7 0 8 1 2 3 4 9 32)]
+                '(6 3 12 40 41 42 43 44 11 11 6 7 8 0 1 9 32)]
                ["test with 200 max-inflights"
                 (atake test (test-helper actx 100 1 200 reqs))
-                '(6 3 12 40 41 42 43 44 6 7 0 8 11 11 1 2 3 4 9 32)]]))))
+                '(6 3 12 40 41 42 43 44 6 7 8 0 1 11 11 9 32)]]))))

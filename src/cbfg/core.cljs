@@ -26,14 +26,16 @@
     (events/listen el type (fn [e] (put! out e)))
     out))
 
-(defn init []
+(defn init [init-tick-delay]
   (let [clicks (listen (dom/getElement "go") "click")
-        tick-delay (atom 1000)
+        tick-delay (atom init-tick-delay)
         tick-ch (chan)
         w [{:tick-ch tick-ch :tot-ticks 0
             :chs (atom {}) :tot-chs 0}]]
     (go-loop [t 0]
-      (<! (timeout @tick-delay))
+      (let [tick-delay @tick-delay]
+        (when (> tick-delay 0)
+          (<! (timeout @tick-delay))))
       (>! tick-ch t)
       (set-el-innerHTML "tot-ticks" t)
       (recur (inc t)))
@@ -46,7 +48,7 @@
              (println res))))
     tick-delay))
 
-(def tick-delay (init))
+(def tick-delay (init 0))
 
 (defn change-tick-delay [d]
   (reset! tick-delay d))

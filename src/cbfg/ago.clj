@@ -29,9 +29,9 @@
        (cljs.core.async/close! ~ch)))
 
 (defmacro atake [actx ch]
-  `(do (println "atake" ~actx)
+  `(do (println (cljs.core.async/<! (:tick-ch (actx-top ~actx))) "atake" ~actx ~ch)
        (cljs.core.async/<! ~ch)))
 
 (defmacro aput [actx ch msg]
-  `(do (println "aput" ~actx)
+  `(do (println (cljs.core.async/<! (:tick-ch (actx-top ~actx))) "aput" ~actx ~msg)
        (cljs.core.async/>! ~ch ~msg)))
