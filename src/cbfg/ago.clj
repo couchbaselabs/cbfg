@@ -4,13 +4,15 @@
 (defmacro actx-top [actx]
   `(first ~actx))
 
+(defmacro actx-event [actx event]
+  (cljs.core.async/>! (:event-ch (actx-top ~actx)) ~event))
+
 (defmacro ago [child-actx-binding-name actx & body]
   `(let [w# (actx-top ~actx)
          ago-id# (swap! (:last-id w#) inc)
          ~child-actx-binding-name (conj ~actx
                                         ['~child-actx-binding-name ago-id#])]
-     (go (cljs.core.async/>! (:event-ch (actx-top ~actx))
-                             ["ago" ~child-actx-binding-name])
+     (go (actx-event ~actx ["ago" ~child-actx-binding-name])
          ~@body)))
 
 (defmacro ago-loop [child-actx-binding-name actx bindings & body]
@@ -30,18 +32,18 @@
 
 (defmacro aclose [actx ch]
   `(let [w# (actx-top ~actx)]
-     (cljs.core.async/>! (:event-ch w#) ["aclose" ~actx ~ch])
+     (actx-event ~actx ["aclose" ~actx ~ch])
      (swap! (:chs w#) dissoc ch#)
      (cljs.core.async/close! ~ch)))
 
 (defmacro atake [actx ch]
-  `(do (cljs.core.async/>! (:event-ch (actx-top ~actx)) ["atake" ~actx ~ch])
+  `(do (actx-event ~actx ["atake" ~actx ~ch])
        (cljs.core.async/<! ~ch)))
 
 (defmacro aput [actx ch msg]
-  `(do (cljs.core.async/>! (:event-ch (actx-top ~actx)) ["aput" ~actx ~msg])
+  `(do (actx-event ~actx ["aput" ~actx ~msg])
        (cljs.core.async/>! ~ch ~msg)))
 
 (defmacro aalts [actx chs]
-  `(do (cljs.core.async/>! (:event-ch (actx-top ~actx)) ["aalts" ~actx ~chs])
+  `(do (actx-event ~actx ["aalts" ~actx ~chs])
        (cljs.core.async/alts! ~chs)))
