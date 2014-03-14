@@ -8,16 +8,16 @@
                      onto-chan]]))
 
 ;; Explaining out-of-order replies and fencing with a diagram.  Client
-;; sends a bunch of requests (r0...r6), where r2 and r5 are fenced
-;; ("F").  "pX" means a partial "still going / non-final" response
-;; message.  "dX" means a final response "done" message for a request.
-;; Time-steps go downwards.  The caret (^) denotes which request has
-;; started async or inflight processing.  The double-bar (||) means we
-;; have paused moving the caret rightwards, so input request
-;; processing is paused (in-channel is ignored).
+;; sends a bunch of requests (r0...r4), where r2 is fenced (F).  "pX"
+;; denotes a partial "still going / non-final" response message.  "dX"
+;; denotes a final response "done" message for a request.  Time-steps
+;; go downwards.  The caret (^) denotes which request has started
+;; async or inflight processing.  The double-bar (||) means we have
+;; paused moving the caret rightwards, so input request processing is
+;; paused (in-channel is ignored).
 ;;
-;;   r0 r1 r2 r3 r4 r5 r6
-;;         F        F
+;;   r0 r1 r2 r3 r4
+;;         F
 ;;   -----------------------------------------------
 ;;   ^                    (++inflight == 1)
 ;;      ^                 (++inflight == 2)
