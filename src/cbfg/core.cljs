@@ -30,7 +30,8 @@
   (let [clicks (listen (dom/getElement "go") "click")
         tick-delay (atom init-tick-delay)
         tick-ch (chan)
-        w [{:tick-ch tick-ch :tot-ticks 0
+        w [{:last-id (atom 0)
+            :tick-ch tick-ch :tot-ticks 0
             :chs (atom {}) :tot-chs 0}]]
     (go-loop [t 0]
       (let [tdv @tick-delay]

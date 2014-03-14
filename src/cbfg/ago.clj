@@ -5,8 +5,10 @@
   `(first ~actx))
 
 (defmacro ago [child-actx-binding-name actx & body]
-  `(let [~child-actx-binding-name (conj ~actx
-                                        ['~child-actx-binding-name (gensym)])]
+  `(let [w# (actx-top ~actx)
+         ago-id# (swap! (:last-id w#) inc)
+         ~child-actx-binding-name (conj ~actx
+                                        ['~child-actx-binding-name ago-id#])]
      (go ~@body)))
 
 (defmacro ago-loop [child-actx-binding-name actx bindings & body]
