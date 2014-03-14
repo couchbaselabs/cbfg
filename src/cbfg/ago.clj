@@ -37,3 +37,6 @@
 (defmacro aput [actx ch msg]
   `(do (println (cljs.core.async/<! (:tick-ch (actx-top ~actx))) "aput" ~actx ~msg)
        (cljs.core.async/>! ~ch ~msg)))
+
+(defmacro aalts [actx chs]
+  `(cljs.core.async/alts! ~chs))

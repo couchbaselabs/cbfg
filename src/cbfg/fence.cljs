@@ -1,5 +1,5 @@
 (ns cbfg.fence
-  (:require-macros [cbfg.ago :refer [achan achan-buf aclose
+  (:require-macros [cbfg.ago :refer [achan achan-buf aclose aalts
                                      ago ago-loop aput atake]])
   (:require [cljs.core.async :refer [<! timeout onto-chan]]))
 
@@ -47,7 +47,7 @@
                   (conj inflights in-ch)))
          [v ch] (if (empty? i) ; empty when in-ch is closed and no inflights.
                   [nil nil]
-                  (alts! i))]
+                  (aalts fenced-pump i))]
      (cond
       (= nil v ch) (aclose fenced-pump out-ch)
       (= ch in-ch) (if (nil? v)
