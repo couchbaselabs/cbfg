@@ -30,7 +30,9 @@
 
 (let [clicks (listen (dom/getElement "go") "click")
       ticks (chan)
-      w [{:ticks ticks :chs (atom {})}]]
+      w [{:ticks ticks
+          :chs (atom {})
+          :tot-chs 0}]]
   (go-loop [t 0]
     (<! (timeout @tick-speed))
     (>! ticks t)

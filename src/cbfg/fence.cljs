@@ -86,6 +86,24 @@
          (aclose test_range-to c))
     c))
 
+(defn test-helper [actx
+                   in-ch-size
+                   out-ch-size
+                   max-inflight
+                   in-msgs]
+  (let [in (achan-buf actx in-ch-size)
+        out (achan-buf actx out-ch-size)
+        fdp (make-fenced-pump actx in out max-inflight)
+        gch (ago-loop test_helper actx [acc nil]
+              (let [result (atake test_helper out)]
+                (if result
+                  (do (println "Output result: " result)
+                      (recur (conj acc result)))
+                  (do (println "Output channel closed")
+                      (reverse acc)))))]
+    (onto-chan in in-msgs)
+    gch))
+
 (defn test [actx]
   (let [reqs [{:rq #(add-two % 1 200)}
               {:rq #(add-two % 4 100)}
@@ -108,21 +126,3 @@
                ["test with 200 max-inflights"
                 (atake test (test-helper actx 100 1 200 reqs))
                 '(6 3 12 40 41 42 43 44 6 7 0 8 11 11 1 2 3 4 9 32)]]))))
-
-(defn test-helper [actx
-                   in-ch-size
-                   out-ch-size
-                   max-inflight
-                   in-msgs]
-  (let [in (achan-buf actx in-ch-size)
-        out (achan-buf actx out-ch-size)
-        fdp (make-fenced-pump actx in out max-inflight)
-        gch (ago-loop test_helper actx [acc nil]
-              (let [result (atake test_helper out)]
-                (if result
-                  (do (println "Output result: " result)
-                      (recur (conj acc result)))
-                  (do (println "Output channel closed")
-                      (reverse acc)))))]
-    (onto-chan in in-msgs)
-    gch))
