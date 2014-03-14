@@ -33,9 +33,9 @@
         w [{:tick-ch tick-ch :tot-ticks 0
             :chs (atom {}) :tot-chs 0}]]
     (go-loop [t 0]
-      (let [tick-delay @tick-delay]
-        (when (> tick-delay 0)
-          (<! (timeout @tick-delay))))
+      (let [tdv @tick-delay]
+        (when (> tdv 0)
+          (<! (timeout tdv))))
       (>! tick-ch t)
       (set-el-innerHTML "tot-ticks" t)
       (recur (inc t)))
