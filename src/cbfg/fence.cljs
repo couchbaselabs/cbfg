@@ -73,17 +73,17 @@
 ;; ------------------------------------------------------------
 
 (defn add-two [x delay]
-  (ago add-two nil
+  (ago test_add-two nil
        (<! (timeout delay))
        (+ x 2)))
 
 (defn range-to [s e delay]
   (let [c (achan nil)]
-    (ago range-to nil
+    (ago test_range-to nil
          (doseq [n (range s e)]
            (<! (timeout delay))
-           (aput range-to c n))
-         (aclose range-to c))
+           (aput test_range-to c n))
+         (aclose test_range-to c))
     c))
 
 (defn test []
@@ -116,8 +116,8 @@
   (let [in (achan-buf nil in-ch-size)
         out (achan-buf nil out-ch-size)
         fdp (make-fenced-pump nil in out max-inflight)
-        gch (ago-loop test-helper nil [acc nil]
-              (let [result (atake test-helper out)]
+        gch (ago-loop test_helper nil [acc nil]
+              (let [result (atake test_helper out)]
                 (if result
                   (do (println "Output result: " result)
                       (recur (conj acc result)))
