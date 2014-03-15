@@ -18,6 +18,8 @@
 
 (println cbfg.ddl/hi)
 
+;; ------------------------------------------------
+
 (defn get-el-value [elId]
   (.-value (gdom/getElement elId)))
 
@@ -29,7 +31,9 @@
     (gevents/listen el type (fn [e] (put! out e)))
     out))
 
-(defn init [init-event-delay]
+;; ------------------------------------------------
+
+(defn test-init [init-event-delay]
   (let [clicks (listen (gdom/getElement "go") "click")
         event-delay (atom init-event-delay)
         event-ch (chan)
@@ -53,10 +57,10 @@
              (println "output" res))))
     event-delay))
 
-(def event-delay (init 0))
+(def test-event-delay (test-init 0))
 
-(defn change-event-delay [d]
-  (reset! event-delay d))
+(defn change-test-event-delay [d]
+  (reset! test-event-delay d))
 
 ;; ------------------------------------------------
 
