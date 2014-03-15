@@ -5,15 +5,17 @@
   `(first ~actx))
 
 (defmacro actx-event [actx event]
-  (cljs.core.async/>! (:event-ch (actx-top ~actx)) ~event))
+  `(cljs.core.async/>! (:event-ch (actx-top ~actx)) ~event))
 
 (defmacro ago [child-actx-binding-name actx & body]
   `(let [w# (actx-top ~actx)
          ago-id# (swap! (:last-id w#) inc)
          ~child-actx-binding-name (conj ~actx
                                         ['~child-actx-binding-name ago-id#])]
-     (go (actx-event ~actx ["ago" ~child-actx-binding-name])
-         ~@body)))
+     (go (actx-event ~actx [:beg "ago" ~child-actx-binding-name])
+         (let [result# (do ~@body)]
+           (actx-event ~actx [:end "ago" ~child-actx-binding-name result#])
+           result#))))
 
 (defmacro ago-loop [child-actx-binding-name actx bindings & body]
   `(ago ~child-actx-binding-name ~actx (loop ~bindings ~@body)))
@@ -33,7 +35,7 @@
 (defmacro aclose [actx ch]
   `(let [w# (actx-top ~actx)]
      (actx-event ~actx ["aclose" ~actx ~ch])
-     (swap! (:chs w#) dissoc ch#)
+     (swap! (:chs w#) dissoc ~ch)
      (cljs.core.async/close! ~ch)))
 
 (defmacro atake [actx ch]

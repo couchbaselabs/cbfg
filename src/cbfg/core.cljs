@@ -47,7 +47,7 @@
            (set-el-innerHTML "output" (get-el-value "input"))
            (let [res (string/join "\n" (atake w-actx (cbfg.fence/test w-actx)))]
              (set-el-innerHTML "output" (str "<pre>" res "</pre>"))
-             (println res))))
+             (println "output" res))))
     event-delay))
 
 (def event-delay (init 0))
