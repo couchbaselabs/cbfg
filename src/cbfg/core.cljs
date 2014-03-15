@@ -32,7 +32,7 @@
         event-ch (chan)
         w [{:last-id (atom 0)
             :event-ch event-ch
-            :chs (atom {}) :tot-chs 0}]]
+            :chs (atom {}) :tot-chs (atom 0)}]]
     (go-loop [num-events 0]
       (let [tdv @event-delay]
         (when (> tdv 0)
@@ -54,13 +54,3 @@
 
 (defn change-event-delay [d]
   (reset! event-delay d))
-
-;; ------------------------------------------------
-
-(def sim {:clock 0
-          :init {}
-          :model {}
-          :choices []
-          :past []
-          :upcoming {}})
-
