@@ -3,16 +3,16 @@
 
 (ns cbfg.core
   (:require-macros [cljs.core.async.macros :refer [go go-loop]]
-                   [cbfg.ago :refer [ago atake]])
+                   [cbfg.ago :refer [ago ago-loop achan-buf aput atake]])
   (:require [clojure.string :as string]
-            [cljs.core.async :refer [<! >! put! chan timeout]]
+            [cljs.core.async :refer [<! >! put! chan timeout merge]]
             [goog.dom :as gdom]
             [goog.events :as gevents]
             [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
             [sablono.core :as html :refer [html] :include-macros true]
             cbfg.ddl
-            cbfg.fence))
+            [cbfg.fence :refer [make-fenced-pump]]))
 
 (enable-console-print!)
 
@@ -34,7 +34,7 @@
 ;; ------------------------------------------------
 
 (defn test-init [init-event-delay]
-  (let [clicks (listen (gdom/getElement "go") "click")
+  (let [clicks (listen (gdom/getElement "test") "click")
         event-delay (atom init-event-delay)
         event-ch (chan)
         w [{:last-id (atom 0)
@@ -64,16 +64,59 @@
 
 ;; ------------------------------------------------
 
-(def app-state
-  (atom {:text "Hello world!"}))
+(defn example-add [actx x y delay]
+  (ago example-add actx
+       (<! (timeout delay))
+       (+ x y)))
 
-(defn app-ui [app-state owner]
-  (reify
-    om/IRender
-    (render [_]
-      (dom/div nil
-               (dom/h1 nil (:text app-state))))))
+(defn example-sub [actx x y delay]
+  (ago example-sub actx
+       (<! (timeout delay))
+       (- x y)))
 
-(om/root app-state
-         app-ui
-         (. js/document (getElementById "app")))
+(def cmd-handlers {"add" (fn []
+                           (let [x (get-el-value "x")
+                                 y (get-el-value "y")
+                                 delay (get-el-value "delay")]
+                             {:rq #(example-add % x y delay)})),
+                   "sub" (fn []
+                           (let [x (get-el-value "x")
+                                 y (get-el-value "y")
+                                 delay (get-el-value "delay")]
+                             {:rq #(example-sub % x y delay)}))})
+
+(defn vis-init []
+  (let [cmds (merge [(listen (gdom/getElement "add") "click")
+                     (listen (gdom/getElement "sub") "click")])
+        max-inflight (atom 10)
+        event-delay (atom 0)
+        event-ch (chan)
+        w [{:last-id (atom 0)
+            :event-ch event-ch
+            :chs (atom {})
+            :tot-chs (atom 0)}]]
+    (go-loop [num-events 0]
+      (let [tdv @event-delay]
+        (when (> tdv 0)
+          (<! (timeout tdv))))
+      (let [event (<! event-ch)]
+        (println num-events event)
+        (set-el-innerHTML "event" [num-events event])
+        (set-el-innerHTML "vis"
+                          (str "<circle cx='" (mod num-events 500) "' cy='100' r='10' stroke='black' stroke-width='3' fill='red'/>")))
+      (recur (inc num-events)))
+    (ago w-actx w
+         (let [in (achan-buf w-actx 100)
+               out (achan-buf w-actx 1)
+               fdp (make-fenced-pump w-actx in out @max-inflight)
+               gch (ago-loop main-out w-actx [acc nil]
+                             (let [result (atake main-out out)]
+                               (set-el-innerHTML "output" (str "<pre>" result "</pre>"))
+                               (recur (conj acc result))))]
+           (ago-loop main-in w-actx []
+                     (let [cmd (.-id (.-target (<! cmds)))
+                           cmd-handler ((get cmd-handlers cmd))]
+                       (aput main-in in cmd-handler)
+                       (recur)))))))
+
+(vis-init)
