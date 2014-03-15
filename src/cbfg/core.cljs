@@ -8,6 +8,9 @@
             [cljs.core.async :refer [<! >! put! chan timeout]]
             [goog.dom :as gdom]
             [goog.events :as gevents]
+            [om.core :as om :include-macros true]
+            [om.dom :as dom :include-macros true]
+            [sablono.core :as html :refer [html] :include-macros true]
             cbfg.ddl
             cbfg.fence))
 
