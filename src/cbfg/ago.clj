@@ -34,18 +34,26 @@
 
 (defmacro aclose [actx ch]
   `(let [w# (actx-top ~actx)]
-     (actx-event ~actx ["aclose" ~actx ~ch])
+     (actx-event ~actx [:beg "aclose" ~actx ~ch])
      (swap! (:chs w#) dissoc ~ch)
-     (cljs.core.async/close! ~ch)))
+     (let [result# (cljs.core.async/close! ~ch)]
+       (actx-event ~actx [:end "aclose" ~actx ~ch result#])
+       result#)))
 
 (defmacro atake [actx ch]
-  `(do (actx-event ~actx ["atake" ~actx ~ch])
-       (cljs.core.async/<! ~ch)))
+  `(do (actx-event ~actx [:beg "atake" ~actx ~ch])
+       (let [result# (cljs.core.async/<! ~ch)]
+         (actx-event ~actx [:end "atake" ~actx ~ch result#])
+         result#)))
 
 (defmacro aput [actx ch msg]
-  `(do (actx-event ~actx ["aput" ~actx ~msg])
-       (cljs.core.async/>! ~ch ~msg)))
+  `(do (actx-event ~actx [:beg "aput" ~actx ~msg])
+       (let [result# (cljs.core.async/>! ~ch ~msg)]
+         (actx-event ~actx [:end "aput" ~actx ~msg result#])
+         result#)))
 
 (defmacro aalts [actx chs]
-  `(do (actx-event ~actx ["aalts" ~actx ~chs])
-       (cljs.core.async/alts! ~chs)))
+  `(do (actx-event ~actx [:beg "aalts" ~actx ~chs])
+       (let [result# (cljs.core.async/alts! ~chs)]
+         (actx-event ~actx [:end "aalts" ~actx ~chs result#])
+         result#)))
