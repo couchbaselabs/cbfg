@@ -75,15 +75,17 @@
        (- x y)))
 
 (def cmd-handlers {"add" (fn []
-                           (let [x (get-el-value "x")
-                                 y (get-el-value "y")
-                                 delay (get-el-value "delay")]
-                             {:rq #(example-add % x y delay)})),
+                           (let [x (js/parseInt (get-el-value "x"))
+                                 y (js/parseInt (get-el-value "y"))
+                                 fence (get-el-value "fence")
+                                 delay (js/parseInt (get-el-value "delay"))]
+                             {:rq #(example-add % x y delay) :fence (= fence "1")})),
                    "sub" (fn []
-                           (let [x (get-el-value "x")
-                                 y (get-el-value "y")
-                                 delay (get-el-value "delay")]
-                             {:rq #(example-sub % x y delay)}))})
+                           (let [x (js/parseInt (get-el-value "x"))
+                                 y (js/parseInt (get-el-value "y"))
+                                 fence (get-el-value "fence")
+                                 delay (js/parseInt (get-el-value "delay"))]
+                             {:rq #(example-sub % x y delay) :fence (= fence "1")}))})
 
 (defn vis-init []
   (let [cmds (merge [(listen (gdom/getElement "add") "click")
