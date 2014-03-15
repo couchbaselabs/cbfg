@@ -6,8 +6,8 @@
                    [cbfg.ago :refer [ago atake]])
   (:require [clojure.string :as string]
             [cljs.core.async :refer [<! >! put! chan timeout]]
-            [goog.dom :as dom]
-            [goog.events :as events]
+            [goog.dom :as gdom]
+            [goog.events :as gevents]
             cbfg.ddl
             cbfg.fence))
 
@@ -16,18 +16,18 @@
 (println cbfg.ddl/hi)
 
 (defn get-el-value [elId]
-  (.-value (dom/getElement elId)))
+  (.-value (gdom/getElement elId)))
 
 (defn set-el-innerHTML [elId v]
-  (set! (.-innerHTML (dom/getElement elId)) v))
+  (set! (.-innerHTML (gdom/getElement elId)) v))
 
 (defn listen [el type]
   (let [out (chan)]
-    (events/listen el type (fn [e] (put! out e)))
+    (gevents/listen el type (fn [e] (put! out e)))
     out))
 
 (defn init [init-event-delay]
-  (let [clicks (listen (dom/getElement "go") "click")
+  (let [clicks (listen (gdom/getElement "go") "click")
         event-delay (atom init-event-delay)
         event-ch (chan)
         w [{:last-id (atom 0)
