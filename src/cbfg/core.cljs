@@ -30,14 +30,14 @@
   (let [out (chan)]
     (gevents/listen el type (fn [e] (put! out e)))
     out))
-
 ;; ------------------------------------------------
 
 (defn test-init [init-event-delay]
   (let [clicks (listen (gdom/getElement "test") "click")
         event-delay (atom init-event-delay)
         event-ch (chan)
-        w [{:last-id (atom 0)
+        last-id (atom 0)
+        w [{:gen-id #(swap! last-id inc)
             :event-ch event-ch}]]
     (go-loop [num-events 0]
       (let [tdv @event-delay]
@@ -92,7 +92,8 @@
         max-inflight (atom 10)
         event-delay (atom 0)
         event-ch (chan)
-        w [{:last-id (atom 0)
+        last-id (atom 0)
+        w [{:gen-id #(swap! last-id inc)
             :event-ch event-ch
             :chs (atom {})
             :tot-chs (atom 0)}]]
