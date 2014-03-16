@@ -28,14 +28,11 @@
          w# (actx-top ~actx)]
      (println "achan-buf"
               ~actx ~buf-or-size ch#) ; No event since might be outside go block.
-     (swap! (:tot-chs w#) inc)
-     (swap! (:chs w#) assoc ch# [])
      ch#))
 
 (defmacro aclose [actx ch]
   `(let [w# (actx-top ~actx)]
      (actx-event ~actx [:beg "aclose" ~actx ~ch])
-     (swap! (:chs w#) dissoc ~ch)
      (let [result# (cljs.core.async/close! ~ch)]
        (actx-event ~actx [:end "aclose" ~actx ~ch result#])
        result#)))

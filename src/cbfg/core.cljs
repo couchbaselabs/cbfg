@@ -38,8 +38,7 @@
         event-delay (atom init-event-delay)
         event-ch (chan)
         w [{:last-id (atom 0)
-            :event-ch event-ch
-            :chs (atom {}) :tot-chs (atom 0)}]]
+            :event-ch event-ch}]]
     (go-loop [num-events 0]
       (let [tdv @event-delay]
         (when (> tdv 0)
