@@ -94,16 +94,14 @@
         event-ch (chan)
         last-id (atom 0)
         w [{:gen-id #(swap! last-id inc)
-            :event-ch event-ch
-            :chs (atom {})
-            :tot-chs (atom 0)}]]
+            :event-ch event-ch}]]
     (go-loop [num-events 0]
       (let [tdv @event-delay]
         (when (> tdv 0)
           (<! (timeout tdv))))
       (let [event (<! event-ch)]
         (println num-events event)
-        (set-el-innerHTML "event" [num-events event])
+        (set-el-innerHTML "event" [num-events (rest event)])
         (set-el-innerHTML "vis"
                           (str "<circle cx='" (mod num-events 500) "' cy='100' r='10' stroke='black' stroke-width='3' fill='red'/>")))
       (recur (inc num-events)))
