@@ -15,21 +15,22 @@
 ;;   r0 r1 r2 r3 r4
 ;;         F
 ;;   -----------------------------------------------
-;;   ^                    (++inflight == 1)
-;;      ^                 (++inflight == 2)
-;;      p1                (send)
-;;         ^              (++inflight == 3 (2 unfenced + 1 fenced), and...)
-;;         ||             (pause input processing)
-;;      p1                (send)
-;;      d1                (send, --inflight == 2)
-;;         p2             (send)
-;;         d2-hold        (hold d2 result, --inflight == 1)
-;;   p0                   (send)
-;;   d0                   (send, --inflight == 0, so...)
-;;         d2-send        (now can send d2 and move onwards to r3, so...)
-;;         >>             (unpause input processing)
-;;            ^           (++inflight == 1)
-;;               ^        (++inflight == 2)
+;;                        ; inflight == 0
+;;   ^                    ; ++inflight == 1
+;;      ^                 ; ++inflight == 2
+;;      p1                ; send p1 result
+;;         ^              ; ++inflight == 3, and...
+;;         ||             ; pause input processing
+;;      p1                ; send p1 result
+;;      d1                ; send d1, --inflight == 2
+;;         p2             ; send p2 result
+;;         d2-hold        ; hold d2 result, --inflight == 1
+;;   p0                   ; send p0 result
+;;   d0                   ; send d0, --inflight == 0, so...
+;;         d2-send        ; can now send the held d2, and...
+;;         >>             ; unpause input processing
+;;            ^           ; ++inflight == 1
+;;               ^        ; ++inflight == 2
 
 ;; ------------------------------------------------------------
 
