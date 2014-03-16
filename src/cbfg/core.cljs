@@ -103,7 +103,9 @@
         (println num-events event)
         (set-el-innerHTML "event" [num-events (rest event)])
         (set-el-innerHTML "vis"
-                          (str "<circle cx='" (mod num-events 500) "' cy='100' r='10' stroke='black' stroke-width='3' fill='red'/>")))
+                          (str "<circle cx='"
+                               (mod num-events 500)
+                               "' cy='100' r='10' stroke='black' stroke-width='3' fill='red'/>")))
       (recur (inc num-events)))
     (ago w-actx w
          (let [in (achan-buf w-actx 100)
