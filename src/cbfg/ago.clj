@@ -8,8 +8,7 @@
   `(cljs.core.async/>! (:event-ch (actx-top ~actx)) ~event))
 
 (defmacro ago [child-actx-binding-name actx & body]
-  `(let [w# (actx-top ~actx)
-         ago-id# (swap! (:last-id w#) inc)
+  `(let [ago-id# (swap! (:last-id (actx-top ~actx)) inc)
          ~child-actx-binding-name (conj ~actx
                                         ['~child-actx-binding-name ago-id#])]
      (go (actx-event ~actx [:beg "ago" ~child-actx-binding-name])
