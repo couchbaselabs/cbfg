@@ -3,7 +3,7 @@
 
 (ns cbfg.core
   (:require-macros [cljs.core.async.macros :refer [go go-loop]]
-                   [cbfg.ago :refer [ago ago-loop achan-buf aput atake]])
+                   [cbfg.ago :refer [ago ago-loop achan-buf aclose aput atake]])
   (:require [clojure.string :as string]
             [cljs.core.async :refer [<! >! put! chan timeout merge]]
             [goog.dom :as gdom]
@@ -64,28 +64,32 @@
 
 ;; ------------------------------------------------
 
-(defn example-add [actx x y delay]
+(defn example-add [actx out-ch x y delay]
   (ago example-add actx
        (<! (timeout delay))
-       (+ x y)))
+       (aput example-add out-ch (+ x y))
+       (aclose example-add out-ch))
+  out-ch)
 
-(defn example-sub [actx x y delay]
+(defn example-sub [actx out-ch x y delay]
   (ago example-sub actx
        (<! (timeout delay))
-       (- x y)))
+       (aput example-sub out-ch (- x y))
+       (aclose example-sub out-ch))
+  out-ch)
 
-(def cmd-handlers {"add" (fn []
+(def cmd-handlers {"add" (fn [out-ch]
                            (let [x (js/parseInt (get-el-value "x"))
                                  y (js/parseInt (get-el-value "y"))
                                  fence (get-el-value "fence")
                                  delay (js/parseInt (get-el-value "delay"))]
-                             {:rq #(example-add % x y delay) :fence (= fence "1")})),
-                   "sub" (fn []
+                             {:rq #(example-add % out-ch x y delay) :fence (= fence "1")})),
+                   "sub" (fn [out-ch]
                            (let [x (js/parseInt (get-el-value "x"))
                                  y (js/parseInt (get-el-value "y"))
                                  fence (get-el-value "fence")
                                  delay (js/parseInt (get-el-value "delay"))]
-                             {:rq #(example-sub % x y delay) :fence (= fence "1")}))})
+                             {:rq #(example-sub % out-ch x y delay) :fence (= fence "1")}))})
 
 (defn vis-init []
   (let [cmds (merge [(listen (gdom/getElement "add") "click")
@@ -117,8 +121,8 @@
                                (recur (conj acc result))))]
            (ago-loop main-in w-actx []
                      (let [cmd (.-id (.-target (<! cmds)))
-                           cmd-handler ((get cmd-handlers cmd))]
-                       (aput main-in in cmd-handler)
+                           cmd-doer ((get cmd-handlers cmd) (achan-buf main-in 1))]
+                       (aput main-in in cmd-doer)
                        (recur)))))))
 
 (vis-init)
