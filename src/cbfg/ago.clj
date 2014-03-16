@@ -24,18 +24,16 @@
   `(achan-buf ~actx 0))
 
 (defmacro achan-buf [actx buf-or-size]
-  `(let [ch# (cljs.core.async/chan)
-         w# (actx-top ~actx)]
+  `(let [ch# (cljs.core.async/chan)]
      (println "achan-buf"
               ~actx ~buf-or-size ch#) ; No event since might be outside go block.
      ch#))
 
 (defmacro aclose [actx ch]
-  `(let [w# (actx-top ~actx)]
-     (actx-event ~actx [:beg "aclose" ~actx ~ch])
-     (let [result# (cljs.core.async/close! ~ch)]
-       (actx-event ~actx [:end "aclose" ~actx ~ch result#])
-       result#)))
+  `(do (actx-event ~actx [:beg "aclose" ~actx ~ch])
+       (let [result# (cljs.core.async/close! ~ch)]
+         (actx-event ~actx [:end "aclose" ~actx ~ch result#])
+         result#)))
 
 (defmacro atake [actx ch]
   `(do (actx-event ~actx [:beg "atake" ~actx ~ch])
