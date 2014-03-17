@@ -79,12 +79,23 @@
 
 (defn vis-html [vis actx]
   (if actx
-    ["<div>" (string/join ":" (last actx))
-     "<ul>"
-     (map (fn [kv] ["<li>" (vis-html vis (first kv)) "</li>"])
-          (get-in vis [:actxs actx :children]))
-     "</ul>"
-     "</div>"]
+    (let [d (get-in vis [:actxs actx])
+          children (:children d)
+          want-chs (:want-chs d)]
+      ["<div>" (string/join ":" (last actx))
+       "<ul>"
+       (if (not-empty children)
+         ["<li>children...<ul>"
+          (map (fn [kv] ["<li>" (vis-html vis (first kv)) "</li>"]) children)
+          "</li></ul>"]
+         [])
+       (if (not-empty want-chs)
+         ["<li>waiting...<ul>"
+          (map (fn [kv] ["<li>" (second kv) "</li>"]) want-chs)
+          "</li></ul>"]
+         [])
+       "</ul>"
+       "</div>"])
     "no actx"))
 
 (defn vis-init [cmds cmd-handlers]
