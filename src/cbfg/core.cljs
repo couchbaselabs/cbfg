@@ -69,8 +69,9 @@
              (swap! vis #(assoc-in % [:actxs actx :wait-chs ch] :take))
              (vis-add-ch vis ch)))
     :end (fn [vis actx args]
-           (let [[ch result] args]
-             (swap! vis #(dissoc-in % [:actxs actx :wait-chs ch]))))}
+           (let [[ch msg] args]
+             (swap! vis #(dissoc-in % [:actxs actx :wait-chs ch]))
+             (swap! vis #(dissoc-in % [:chs ch :msgs msg]))))}
    "aput"
    {:beg (fn [vis actx args]
            (let [[ch msg] args]
