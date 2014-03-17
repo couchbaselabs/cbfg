@@ -60,14 +60,24 @@
    "atake"
    {:beg (fn [vis actx args]
            (let [[ch] args]
-             (swap! vis #(assoc-in % [:actxs actx :wait-chs ch] :take))))
+             (swap! vis #(assoc-in % [:actxs actx :wait-chs ch] :take))
+             (swap! vis #(update-in % [:chs ch]
+                                    (fn [v]
+                                      (if (nil? v)
+                                        {:id ((:gen-id @vis)) :msgs {}}
+                                        (assoc-in v [:msgs msg] true)))))))
     :end (fn [vis actx args]
            (let [[ch result] args]
              (swap! vis #(dissoc-in % [:actxs actx :wait-chs ch]))))}
    "aput"
    {:beg (fn [vis actx args]
            (let [[ch msg] args]
-             (swap! vis #(assoc-in % [:actxs actx :wait-chs ch] :put))))
+             (swap! vis #(assoc-in % [:actxs actx :wait-chs ch] :put))
+             (swap! vis #(update-in % [:chs ch]
+                                    (fn [v]
+                                      (if (nil? v)
+                                        {:id ((:gen-id @vis)) :msgs {msg true}}
+                                        (assoc-in v [:msgs msg] true)))))))
     :end (fn [vis actx args]
            (let [[ch msg result] args]
              (swap! vis #(dissoc-in % [:actxs actx :wait-chs ch]))))}
@@ -96,7 +106,10 @@
       ["<div>" (string/join ":" (last actx))
        (if (not-empty wait-chs)
          [" -- waiting: ("
-          (map (fn [kv] [(second kv) ", "]) wait-chs)
+          (map (fn [kv]
+                 (let [[ch wait-kind] kv]
+                   [(:id (get (:chs vis) ch)) wait-kind ", "]))
+               wait-chs)
           ")"]
          [])
        "<ul>"
@@ -109,15 +122,17 @@
     "no actx"))
 
 (defn vis-init [cmds cmd-handlers]
-  (let [vis (atom {:actxs {} ; {actx -> {:children {}, :wait-chs {}}}.
-                   :chs {}}) ; {ch -> [ msgs... ]}.
-        max-inflight (atom 10)
+  (let [max-inflight (atom 10)
         event-delay (atom 0)
         event-ch (chan)
         last-id (atom 0)
+        gen-id #(swap! last-id inc)
+        w [{:gen-id gen-id
+            :event-ch event-ch}]
         root-actx (atom nil)
-        w [{:gen-id #(swap! last-id inc)
-            :event-ch event-ch}]]
+        vis (atom {:actxs {} ; {actx -> {:children {}, :wait-chs {}}}.
+                   :chs {}   ; {ch -> {:id (gen-id), :msgs {}}}.
+                   :gen-id gen-id})]
     (go-loop [num-events 0]
       (let [tdv @event-delay]
         (when (> tdv 0)
