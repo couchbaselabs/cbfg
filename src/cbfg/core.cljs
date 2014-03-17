@@ -44,12 +44,12 @@
   {"ago"
    {:beg (fn [vis actx args]
            (let [[child-actx] args]
-             (swap! vis #(assoc-in % (concat [:actxs] (rest child-actx))
+             (swap! vis #(assoc-in % (concat [:hier] (rest child-actx))
                                    {:children {} :want-chs {}}))
              (swap! vis #(assoc-in % [:want-chs child-actx] {}))))
     :end (fn [vis actx args]
            (let [[child-actx result] args]
-             (swap! vis #(dissoc-in % (concat [:actxs] (rest child-actx))))
+             (swap! vis #(dissoc-in % (concat [:hier] (rest child-actx))))
              (swap! vis #(dissoc-in % [:want-chs child-actx]))))}
    "aclose"
    {:beg (fn [vis actx args]
@@ -77,7 +77,8 @@
            (let [[chs result] args] 2))}})
 
 (defn vis-init [cmds cmd-handlers]
-  (let [vis (atom {:actxs {} :want-chs {}})
+  (let [vis (atom {:hier {}       ; [actx -> {child-actx-map}], recursive.
+                   :want-chs {}}) ; [actx -> [ch -> (:take|:put)]].
         max-inflight (atom 10)
         event-delay (atom 0)
         event-ch (chan)
