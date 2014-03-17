@@ -33,38 +33,6 @@
 
 ;; ------------------------------------------------
 
-(defn test-init [init-event-delay]
-  (let [clicks (listen (gdom/getElement "test") "click")
-        event-delay (atom init-event-delay)
-        event-ch (chan)
-        last-id (atom 0)
-        w [{:gen-id #(swap! last-id inc)
-            :event-ch event-ch}]]
-    (go-loop [num-events 0]
-      (let [tdv @event-delay]
-        (when (> tdv 0)
-          (<! (timeout tdv))))
-      (let [event (<! event-ch)]
-        (println num-events event)
-        (set-el-innerHTML "event" [num-events event]))
-      (recur (inc num-events)))
-    (ago w-actx w
-         (while true
-           (.log js/console (<! clicks))
-           (set-el-innerHTML "output" (get-el-value "input"))
-           (let [res (string/join "\n"
-                                  (atake w-actx (cbfg.fence/test w-actx)))]
-             (set-el-innerHTML "output" (str "<pre>" res "</pre>"))
-             (println "output" res))))
-    event-delay))
-
-(def test-event-delay (test-init 0))
-
-(defn change-test-event-delay [d]
-  (reset! test-event-delay d))
-
-;; ------------------------------------------------
-
 (def vis-event-handlers
   {"ago"
    {:beg (fn [vis actx args]
@@ -119,8 +87,7 @@
                fdp (make-fenced-pump w-actx in out @max-inflight)
                gch (ago-loop main-out w-actx [acc nil]
                              (let [result (atake main-out out)]
-                               (set-el-innerHTML "output"
-                                                 (str "<pre>" result "</pre>"))
+                               (set-el-innerHTML "output" result)
                                (recur (conj acc result))))]
            (ago-loop main-in w-actx [num-cmds 0]
                      (let [cmd (<! cmds)
@@ -141,18 +108,22 @@
        (- x y)))
 
 (def example-cmd-handlers
-  {"add" (fn [cmd]
-           {:rq #(example-add % (:x cmd) (:y cmd) (:delay cmd))
-            :fence (= (:fence cmd) "1")})
-   "sub" (fn [cmd]
-           {:rq #(example-sub % (:x cmd) (:y cmd) (:delay cmd))
-            :fence (= (:fence cmd) "1")})})
+  {"add"
+   (fn [cmd] {:rq #(example-add % (:x cmd) (:y cmd) (:delay cmd))
+              :fence (:fence cmd)})
+   "sub"
+   (fn [cmd] {:rq #(example-sub % (:x cmd) (:y cmd) (:delay cmd))
+              :fence (:fence cmd)})
+   "test"
+   (fn [cmd] {:rq #(cbfg.fence/test %)
+              :fence (:fence cmd)})})
 
 (vis-init (map< (fn [id] {:op (.-id (.-target id))
                           :x (js/parseInt (get-el-value "x"))
                           :y (js/parseInt (get-el-value "y"))
-                          :fence (get-el-value "fence")
+                          :fence (= (get-el-value "fence") "1")
                           :delay (js/parseInt (get-el-value "delay"))})
                 (merge [(listen (gdom/getElement "add") "click")
-                        (listen (gdom/getElement "sub") "click")]))
+                        (listen (gdom/getElement "sub") "click")
+                        (listen (gdom/getElement "test") "click")]))
           example-cmd-handlers)
