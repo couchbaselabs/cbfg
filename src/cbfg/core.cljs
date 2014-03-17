@@ -98,7 +98,7 @@
     :end (fn [vis actx args]
            (let [[chs result] args] 2))}})
 
-(defn vis-html [vis actx]
+(defn vis-html-actx [vis actx]
   (if actx
     (let [d (get-in vis [:actxs actx])
           children (:children d)
@@ -115,11 +115,19 @@
        "<ul>"
        (if (not-empty children)
          ["<li>children...<ul>"
-          (map (fn [kv] ["<li>" (vis-html vis (first kv)) "</li>"]) children)
+          (map (fn [kv] ["<li>" (vis-html-actx vis (first kv)) "</li>"])
+               children)
           "</li></ul>"]
          [])
        "</div>"])
     "no actx"))
+
+(defn vis-html-chs [vis]
+  ["<div>channels...<ul>"
+   (map (fn [ch-info]
+          ["<li>" (:id ch-info) ": " (:msgs ch-info) "</li>"])
+        (vals (:chs vis)))
+   "</ul></div>"])
 
 (defn vis-init [cmds cmd-handlers]
   (let [max-inflight (atom 10)
@@ -145,7 +153,8 @@
         (vis-event-handler vis actx args)
         (set-el-innerHTML "vis-html"
                           (apply str
-                                 (flatten (vis-html @vis @root-actx))))
+                                 (flatten [(vis-html-actx @vis @root-actx)
+                                           (vis-html-chs @vis)])))
         (set-el-innerHTML "vis"
                           (str "<circle cx='"
                                (mod num-events 500)
