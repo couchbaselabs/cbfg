@@ -52,7 +52,8 @@
          (while true
            (.log js/console (<! clicks))
            (set-el-innerHTML "output" (get-el-value "input"))
-           (let [res (string/join "\n" (atake w-actx (cbfg.fence/test w-actx)))]
+           (let [res (string/join "\n"
+                                  (atake w-actx (cbfg.fence/test w-actx)))]
              (set-el-innerHTML "output" (str "<pre>" res "</pre>"))
              (println "output" res))))
     event-delay))
@@ -108,7 +109,9 @@
         (set-el-innerHTML "vis"
                           (str "<circle cx='"
                                (mod num-events 500)
-                               "' cy='100' r='10' stroke='black' stroke-width='3' fill='red'/>")))
+                               "' cy='100' r='10'"
+                               " stroke='black' stroke-width='3'"
+                               " fill='red'/>")))
       (recur (inc num-events)))
     (ago w-actx w
          (let [in (achan-buf w-actx 100)
@@ -116,7 +119,8 @@
                fdp (make-fenced-pump w-actx in out @max-inflight)
                gch (ago-loop main-out w-actx [acc nil]
                              (let [result (atake main-out out)]
-                               (set-el-innerHTML "output" (str "<pre>" result "</pre>"))
+                               (set-el-innerHTML "output"
+                                                 (str "<pre>" result "</pre>"))
                                (recur (conj acc result))))]
            (ago-loop main-in w-actx [num-cmds 0]
                      (let [cmd (<! cmds)
