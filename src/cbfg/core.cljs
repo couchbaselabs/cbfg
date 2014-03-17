@@ -95,7 +95,7 @@
           wait-chs (:wait-chs d)]
       ["<div>" (string/join ":" (last actx))
        (if (not-empty wait-chs)
-         ["(waiting: "
+         [" -- waiting: ("
           (map (fn [kv] [(second kv) ", "]) wait-chs)
           ")"]
          [])
