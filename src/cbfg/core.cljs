@@ -51,13 +51,15 @@
   {"ago"
    {:beg (fn [vis actx args]
            (let [[child-actx] args]
-             (swap! vis #(assoc-in % [:actxs child-actx]
-                                   {:children {} :wait-chs {}}))
-             (swap! vis #(assoc-in % [:actxs actx :children child-actx] true))))
+             (swap! vis #(-> %
+                             (assoc-in [:actxs child-actx]
+                                       {:children {} :wait-chs {}})
+                             (assoc-in [:actxs actx :children child-actx] true)))))
     :end (fn [vis actx args]
            (let [[child-actx result] args]
-             (swap! vis #(dissoc-in % [:actxs child-actx]))
-             (swap! vis #(dissoc-in % [:actxs actx :children child-actx]))))}
+             (swap! vis #(-> %
+                             (dissoc-in [:actxs child-actx])
+                             (dissoc-in [:actxs actx :children child-actx])))))}
    "aclose"
    {:beg (fn [vis actx args]
            (let [[ch] args] 1))
