@@ -78,13 +78,14 @@
            (let [[chs result] args] 2))}})
 
 (defn vis-html [vis actx]
-  (let [d (get-in vis [:actxs actx])]
-    (conj "<div>" (last actx)
-          "<ul>"
-          (map #(conj "<li>" (vis-html vis %) "</li>")
-               (:children d))
-          "</ul>"
-          "</div>")))
+  (if actx
+    ["<div>" (rest actx)
+     "<ul>"
+     (map (fn [child-actx] ["<li>" (vis-html vis child-actx) "</li>"])
+          (sort (keys (get-in vis [:actxs actx :children]))))
+     "</ul>"
+     "</div>"]
+    "no actx"))
 
 (defn vis-init [cmds cmd-handlers]
   (let [vis (atom {:actxs {}}) ; [actx -> {:children {}, :want-chs {}}].
@@ -92,6 +93,7 @@
         event-delay (atom 0)
         event-ch (chan)
         last-id (atom 0)
+        root-actx (atom nil)
         w [{:gen-id #(swap! last-id inc)
             :event-ch event-ch}]]
     (go-loop [num-events 0]
@@ -102,8 +104,9 @@
             [verb step & args] event
             vis-event-handler (get (get vis-event-handlers verb) step)]
         (vis-event-handler vis actx args)
-        (set-el-innerHTML "event" [num-events @vis])
-        (set-el-innerHTML "vis-html" "hello")
+        (set-el-innerHTML "vis-html"
+                          (apply str
+                                 (flatten (vis-html @vis @root-actx))))
         (set-el-innerHTML "vis"
                           (str "<circle cx='"
                                (mod num-events 500)
@@ -112,6 +115,7 @@
                                " fill='red'/>")))
       (recur (inc num-events)))
     (ago w-actx w
+         (reset! root-actx w-actx)
          (let [in (achan-buf w-actx 100)
                out (achan-buf w-actx 1)
                fdp (make-fenced-pump w-actx in out @max-inflight)
