@@ -45,7 +45,7 @@
    {:beg (fn [vis actx args]
            (let [[child-actx] args]
              (swap! vis #(assoc-in % [:actxs child-actx]
-                                   {:children {} :want-chs {}}))
+                                   {:children {} :wait-chs {}}))
              (swap! vis #(assoc-in % [:actxs actx :children child-actx]
                                    true))))
     :end (fn [vis actx args]
@@ -60,17 +60,17 @@
    "atake"
    {:beg (fn [vis actx args]
            (let [[ch] args]
-             (swap! vis #(assoc-in % [:actxs actx :want-chs ch] :take))))
+             (swap! vis #(assoc-in % [:actxs actx :wait-chs ch] :take))))
     :end (fn [vis actx args]
            (let [[ch result] args]
-             (swap! vis #(dissoc-in % [:actxs actx :want-chs ch]))))}
+             (swap! vis #(dissoc-in % [:actxs actx :wait-chs ch]))))}
    "aput"
    {:beg (fn [vis actx args]
            (let [[ch msg] args]
-             (swap! vis #(assoc-in % [:actxs actx :want-chs ch] :put))))
+             (swap! vis #(assoc-in % [:actxs actx :wait-chs ch] :put))))
     :end (fn [vis actx args]
            (let [[ch msg result] args]
-             (swap! vis #(dissoc-in % [:actxs actx :want-chs ch]))))}
+             (swap! vis #(dissoc-in % [:actxs actx :wait-chs ch]))))}
    "aalts"
    {:beg (fn [vis actx args]
            (let [[chs] args] 1))
@@ -81,7 +81,7 @@
   (if actx
     (let [d (get-in vis [:actxs actx])
           children (:children d)
-          want-chs (:want-chs d)]
+          wait-chs (:wait-chs d)]
       ["<div>" (string/join ":" (last actx))
        "<ul>"
        (if (not-empty children)
@@ -89,9 +89,9 @@
           (map (fn [kv] ["<li>" (vis-html vis (first kv)) "</li>"]) children)
           "</li></ul>"]
          [])
-       (if (not-empty want-chs)
+       (if (not-empty wait-chs)
          ["<li>waiting...<ul>"
-          (map (fn [kv] ["<li>" (second kv) "</li>"]) want-chs)
+          (map (fn [kv] ["<li>" (second kv) "</li>"]) wait-chs)
           "</li></ul>"]
          [])
        "</ul>"
@@ -99,7 +99,7 @@
     "no actx"))
 
 (defn vis-init [cmds cmd-handlers]
-  (let [vis (atom {:actxs {}}) ; [actx -> {:children {}, :want-chs {}}].
+  (let [vis (atom {:actxs {}}) ; [actx -> {:children {}, :wait-chs {}}].
         max-inflight (atom 10)
         event-delay (atom 0)
         event-ch (chan)
