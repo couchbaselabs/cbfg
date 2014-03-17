@@ -91,35 +91,8 @@
     :end (fn [vis actx args]
            (let [[chs result] args] 2))}})
 
-;; ------------------------------------------------
-
-(defn example-add [actx x y delay]
-  (ago example-add actx
-       (<! (timeout delay))
-       (+ x y)))
-
-(defn example-sub [actx x y delay]
-  (ago example-sub actx
-       (<! (timeout delay))
-       (- x y)))
-
-(def cmd-handlers {"add" (fn []
-                           (let [x (js/parseInt (get-el-value "x"))
-                                 y (js/parseInt (get-el-value "y"))
-                                 fence (get-el-value "fence")
-                                 delay (js/parseInt (get-el-value "delay"))]
-                             {:rq #(example-add % x y delay) :fence (= fence "1")})),
-                   "sub" (fn []
-                           (let [x (js/parseInt (get-el-value "x"))
-                                 y (js/parseInt (get-el-value "y"))
-                                 fence (get-el-value "fence")
-                                 delay (js/parseInt (get-el-value "delay"))]
-                             {:rq #(example-sub % x y delay) :fence (= fence "1")}))})
-
-(defn vis-init []
-  (let [cmds (merge [(listen (gdom/getElement "add") "click")
-                     (listen (gdom/getElement "sub") "click")])
-        max-inflight (atom 10)
+(defn vis-init [cmds cmd-handlers]
+  (let [max-inflight (atom 10)
         event-delay (atom 0)
         event-ch (chan)
         last-id (atom 0)
@@ -151,4 +124,31 @@
                        (aput main-in in cmd-handler)
                        (recur)))))))
 
-(vis-init)
+;; ------------------------------------------------
+
+(defn example-add [actx x y delay]
+  (ago example-add actx
+       (<! (timeout delay))
+       (+ x y)))
+
+(defn example-sub [actx x y delay]
+  (ago example-sub actx
+       (<! (timeout delay))
+       (- x y)))
+
+(def cmd-handlers {"add" (fn []
+                           (let [x (js/parseInt (get-el-value "x"))
+                                 y (js/parseInt (get-el-value "y"))
+                                 fence (get-el-value "fence")
+                                 delay (js/parseInt (get-el-value "delay"))]
+                             {:rq #(example-add % x y delay) :fence (= fence "1")})),
+                   "sub" (fn []
+                           (let [x (js/parseInt (get-el-value "x"))
+                                 y (js/parseInt (get-el-value "y"))
+                                 fence (get-el-value "fence")
+                                 delay (js/parseInt (get-el-value "delay"))]
+                             {:rq #(example-sub % x y delay) :fence (= fence "1")}))})
+
+(vis-init (merge [(listen (gdom/getElement "add") "click")
+                  (listen (gdom/getElement "sub") "click")])
+          cmd-handlers)
