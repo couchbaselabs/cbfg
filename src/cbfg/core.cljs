@@ -79,10 +79,10 @@
 
 (defn vis-html [vis actx]
   (if actx
-    ["<div>" (rest actx)
+    ["<div>" (last actx)
      "<ul>"
-     (map (fn [child-actx] ["<li>" (vis-html vis child-actx) "</li>"])
-          (sort (keys (get-in vis [:actxs actx :children]))))
+     (map (fn [kv] ["<li>" (vis-html vis (first kv)) "</li>"])
+          (get-in vis [:actxs actx :children]))
      "</ul>"
      "</div>"]
     "no actx"))

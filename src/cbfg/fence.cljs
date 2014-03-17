@@ -53,7 +53,7 @@
       (= nil v ch) (aclose fenced-pump out-ch)
       (= ch in-ch) (if (nil? v)
                      (recur inflights out-ch nil)
-                     (let [new-inflight ((:rq v) actx)]
+                     (let [new-inflight ((:rq v) fenced-pump)]
                        (recur (conj inflights new-inflight)
                               (if (:fence v) new-inflight nil)
                               nil)))
