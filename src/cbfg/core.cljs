@@ -30,6 +30,7 @@
   (let [out (chan)]
     (gevents/listen el type (fn [e] (put! out e)))
     out))
+
 ;; ------------------------------------------------
 
 (defn test-init [init-event-delay]
