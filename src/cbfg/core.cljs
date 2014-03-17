@@ -100,9 +100,9 @@
       (let [tdv @event-delay]
         (when (> tdv 0)
           (<! (timeout tdv))))
-      (let [event (<! event-ch)]
-        (println num-events (rest event))
-        (set-el-innerHTML "event" [num-events (rest event)])
+      (let [[actx event] (<! event-ch)]
+        (println num-events event)
+        (set-el-innerHTML "event" [num-events event])
         (set-el-innerHTML "vis"
                           (str "<circle cx='"
                                (mod num-events 500)
