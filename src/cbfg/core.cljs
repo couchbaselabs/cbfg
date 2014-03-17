@@ -73,7 +73,18 @@
              (swap! vis #(dissoc-in % [:actxs actx :wait-chs ch]))))}
    "aalts"
    {:beg (fn [vis actx args]
-           (let [[chs] args] 1))
+           (let [[chs] args
+                 actions (map #(if (seq? %)
+                                 [(first %) :put]
+                                 [% :take])
+                              chs)]
+             (swap! vis #(update-in % [:acts actx :wait-chs]
+                                    (fn [wait-chs]
+                                      (reduce (fn [acc v]
+                                                (assoc acc
+                                                  (first v) (second v)))
+                                              wait-chs
+                                              actions))))))
     :end (fn [vis actx args]
            (let [[chs result] args] 2))}})
 
