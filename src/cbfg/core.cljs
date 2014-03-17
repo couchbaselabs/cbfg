@@ -61,7 +61,8 @@
            (let [[chs result] args] 2))}})
 
 (defn vis-init [cmds cmd-handlers]
-  (let [max-inflight (atom 10)
+  (let [vis {}
+        max-inflight (atom 10)
         event-delay (atom 0)
         event-ch (chan)
         last-id (atom 0)
@@ -71,8 +72,10 @@
       (let [tdv @event-delay]
         (when (> tdv 0)
           (<! (timeout tdv))))
-      (let [[actx event] (<! event-ch)]
-        (println num-events event)
+      (let [[actx event] (<! event-ch)
+            [verb step & args] event
+            vis-event-handler (get (get vis-event-handlers verb) step)]
+        (println num-events event (vis-event-handler vis actx args) args)
         (set-el-innerHTML "event" [num-events event])
         (set-el-innerHTML "vis"
                           (str "<circle cx='"
