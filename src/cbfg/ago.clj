@@ -1,8 +1,9 @@
+;; Wrappers around core.async that track parent-child relationships
+;; and provide events.  Useful for building things like visualizations
+;; and simulations.
+
 (ns cbfg.ago
   (:require [cljs.core.async.macros :refer [go]]))
-
-;; CLJS-friendly wrappers around core.async that provide events, so
-;; that users can build things like visualizations / simulations.
 
 (defmacro actx-top [actx]
   `(first ~actx))
