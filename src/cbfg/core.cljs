@@ -109,7 +109,8 @@
     "no actx"))
 
 (defn vis-init [cmds cmd-handlers]
-  (let [vis (atom {:actxs {}}) ; [actx -> {:children {}, :wait-chs {}}].
+  (let [vis (atom {:actxs {} ; {actx -> {:children {}, :wait-chs {}}}.
+                   :chs {}}) ; {ch -> [ msgs... ]}.
         max-inflight (atom 10)
         event-delay (atom 0)
         event-ch (chan)

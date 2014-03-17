@@ -1,6 +1,9 @@
 (ns cbfg.ago
   (:require [cljs.core.async.macros :refer [go]]))
 
+;; CLJS-friendly wrappers around core.async that provide events, so
+;; that users can build things like visualizations / simulations.
+
 (defmacro actx-top [actx]
   `(first ~actx))
 
