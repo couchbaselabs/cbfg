@@ -8,9 +8,6 @@
             [cljs.core.async :refer [<! >! put! chan timeout merge map<]]
             [goog.dom :as gdom]
             [goog.events :as gevents]
-            [om.core :as om :include-macros true]
-            [om.dom :as dom :include-macros true]
-            [sablono.core :as html :refer [html] :include-macros true]
             cbfg.ddl
             [cbfg.fence :refer [make-fenced-pump]]))
 
@@ -61,7 +58,7 @@
            (let [[chs result] args] 2))}})
 
 (defn vis-init [cmds cmd-handlers]
-  (let [vis {}
+  (let [vis (atom {:actxs {} :chs {}})
         max-inflight (atom 10)
         event-delay (atom 0)
         event-ch (chan)
