@@ -64,31 +64,31 @@
 
 ;; ------------------------------------------------
 
-(def v-event-handlers
+(def vis-event-handlers
   {"ago"
-   {:beg (fn [v actx args]
+   {:beg (fn [vis actx args]
            (let [[child-actx] args] 1))
-    :end (fn [v actx args]
+    :end (fn [vis actx args]
            (let [[child-actx result] args] 2))}
    "aclose"
-   {:beg (fn [v actx args]
+   {:beg (fn [vis actx args]
            (let [[ch] args] 1))
-    :end (fn [v actx args]
+    :end (fn [vis actx args]
            (let [[ch result] args] 2))}
    "atake"
-   {:beg (fn [v actx args]
+   {:beg (fn [vis actx args]
            (let [[ch] args] 1))
-    :end (fn [v actx args]
+    :end (fn [vis actx args]
            (let [[ch result] args] 2))}
    "aput"
-   {:beg (fn [v actx args]
+   {:beg (fn [vis actx args]
            (let [[ch msg] args] 1))
-    :end (fn [v actx args]
+    :end (fn [vis actx args]
            (let [[ch msg result] args] 2))}
    "aalts"
-   {:beg (fn [v actx args]
+   {:beg (fn [vis actx args]
            (let [[chs] args] 1))
-    :end (fn [v actx args]
+    :end (fn [vis actx args]
            (let [[chs result] args] 2))}})
 
 ;; ------------------------------------------------
