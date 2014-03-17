@@ -28,14 +28,27 @@
     (gevents/listen el type (fn [e] (put! out e)))
     out))
 
+(defn dissoc-in [m [k & ks :as keys]]
+  (if ks
+    (if-let [next-map (get m k)]
+      (let [new-map (dissoc-in next-map ks)]
+        (if (seq new-map)
+          (assoc m k new-map)
+          (dissoc m k)))
+      m)
+    (dissoc m k)))
+
 ;; ------------------------------------------------
 
 (def vis-event-handlers
   {"ago"
    {:beg (fn [vis actx args]
-           (let [[child-actx] args] 1))
+           (let [[child-actx] args]
+             (swap! vis #(assoc-in % [:actxs child-actx]
+                                   {:parent actx :want-chs {}}))))
     :end (fn [vis actx args]
-           (let [[child-actx result] args] 2))}
+           (let [[child-actx result] args]
+             (swap! vis #(dissoc-in % [:actxs child-actx]))))}
    "aclose"
    {:beg (fn [vis actx args]
            (let [[ch] args] 1))
@@ -43,14 +56,18 @@
            (let [[ch result] args] 2))}
    "atake"
    {:beg (fn [vis actx args]
-           (let [[ch] args] 1))
+           (let [[ch] args]
+             (swap! vis #(assoc-in % [:actxs actx :want-chs ch] :take))))
     :end (fn [vis actx args]
-           (let [[ch result] args] 2))}
+           (let [[ch result] args]
+             (swap! vis #(dissoc-in % [:actxs actx :want-chs ch]))))}
    "aput"
    {:beg (fn [vis actx args]
-           (let [[ch msg] args] 1))
+           (let [[ch msg] args]
+             (swap! vis #(assoc-in % [:actxs actx :want-chs ch] :put))))
     :end (fn [vis actx args]
-           (let [[ch msg result] args] 2))}
+           (let [[ch msg result] args]
+             (swap! vis #(dissoc-in % [:actxs actx :want-chs ch]))))}
    "aalts"
    {:beg (fn [vis actx args]
            (let [[chs] args] 1))
