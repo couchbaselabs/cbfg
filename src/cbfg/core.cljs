@@ -5,7 +5,7 @@
   (:require-macros [cljs.core.async.macros :refer [go go-loop]]
                    [cbfg.ago :refer [ago ago-loop achan-buf aput atake]])
   (:require [clojure.string :as string]
-            [cljs.core.async :refer [<! >! put! chan timeout merge]]
+            [cljs.core.async :refer [<! >! put! chan timeout merge map<]]
             [goog.dom :as gdom]
             [goog.events :as gevents]
             [om.core :as om :include-macros true]
@@ -118,11 +118,11 @@
                              (let [result (atake main-out out)]
                                (set-el-innerHTML "output" (str "<pre>" result "</pre>"))
                                (recur (conj acc result))))]
-           (ago-loop main-in w-actx []
-                     (let [cmd (.-id (.-target (<! cmds)))
-                           cmd-handler ((get cmd-handlers cmd))]
+           (ago-loop main-in w-actx [num-cmds 0]
+                     (let [cmd (<! cmds)
+                           cmd-handler ((get cmd-handlers (:op cmd)) cmd)]
                        (aput main-in in cmd-handler)
-                       (recur)))))))
+                       (recur (inc num-cmds))))))))
 
 ;; ------------------------------------------------
 
@@ -136,19 +136,19 @@
        (<! (timeout delay))
        (- x y)))
 
-(def cmd-handlers {"add" (fn []
-                           (let [x (js/parseInt (get-el-value "x"))
-                                 y (js/parseInt (get-el-value "y"))
-                                 fence (get-el-value "fence")
-                                 delay (js/parseInt (get-el-value "delay"))]
-                             {:rq #(example-add % x y delay) :fence (= fence "1")})),
-                   "sub" (fn []
-                           (let [x (js/parseInt (get-el-value "x"))
-                                 y (js/parseInt (get-el-value "y"))
-                                 fence (get-el-value "fence")
-                                 delay (js/parseInt (get-el-value "delay"))]
-                             {:rq #(example-sub % x y delay) :fence (= fence "1")}))})
+(def example-cmd-handlers
+  {"add" (fn [cmd]
+           {:rq #(example-add % (:x cmd) (:y cmd) (:delay cmd))
+            :fence (= (:fence cmd) "1")})
+   "sub" (fn [cmd]
+           {:rq #(example-sub % (:x cmd) (:y cmd) (:delay cmd))
+            :fence (= (:fence cmd) "1")})})
 
-(vis-init (merge [(listen (gdom/getElement "add") "click")
-                  (listen (gdom/getElement "sub") "click")])
-          cmd-handlers)
+(vis-init (map< (fn [id] {:op (.-id (.-target id))
+                          :x (js/parseInt (get-el-value "x"))
+                          :y (js/parseInt (get-el-value "y"))
+                          :fence (get-el-value "fence")
+                          :delay (js/parseInt (get-el-value "delay"))})
+                (merge [(listen (gdom/getElement "add") "click")
+                        (listen (gdom/getElement "sub") "click")]))
+          example-cmd-handlers)
