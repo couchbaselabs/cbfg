@@ -73,7 +73,9 @@
     :end (fn [vis actx args]
            (let [[ch msg] args]
              (swap! vis #(dissoc-in % [:actxs actx :wait-chs ch]))
-             (swap! vis #(dissoc-in % [:chs ch :msgs msg]))))}
+             (swap! vis #(dissoc-in % [:chs ch :msgs msg]))
+             (when (nil? msg)
+               (swap! vis #(dissoc-in % [:chs ch])))))}
    "aput"
    {:beg (fn [vis actx args]
            (let [[ch msg] args]
@@ -85,11 +87,11 @@
              (swap! vis #(dissoc-in % [:actxs actx :wait-chs ch]))))}
    "aalts"
    {:beg (fn [vis actx args]
-           (let [[chs] args
+           (let [[ch-bindings] args
                  actions (map #(if (seq? %)
                                  [(first %) :put]
                                  [% :take])
-                              chs)]
+                              ch-bindings)]
              (swap! vis #(update-in % [:acts actx :wait-chs]
                                     (fn [wait-chs]
                                       (reduce (fn [acc v]
@@ -98,7 +100,14 @@
                                               wait-chs
                                               actions))))))
     :end (fn [vis actx args]
-           (let [[chs result] args] 2))}})
+           (let [[ch-bindings result] args
+                 chs (map #(if (seq? %) (first %) %) ch-bindings)
+                 [result-ch result-msg] result]
+             (doseq [ch chs]
+               (swap! vis #(dissoc-in % [:actxs actx :wait-chs ch])))
+             (swap! vis #(dissoc-in % [:chs result-ch :msgs result-msg]))
+             (when (nil? result-msg)
+               (swap! vis #(dissoc-in % [:chs result-ch])))))}})
 
 (defn vis-html-actx [vis actx]
   (if actx
