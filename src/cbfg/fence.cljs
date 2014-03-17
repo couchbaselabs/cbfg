@@ -73,12 +73,12 @@
 
 ;; ------------------------------------------------------------
 
-(defn add-two [actx x delay]
+(defn test-add-two [actx x delay]
   (ago test-add-two actx
        (<! (timeout delay))
        (+ x 2)))
 
-(defn range-to [actx s e delay]
+(defn test-range-to [actx s e delay]
   (let [c (achan actx)]
     (ago test-range-to actx
          (doseq [n (range s e)]
@@ -106,15 +106,15 @@
     gch))
 
 (defn test [actx]
-  (let [reqs [{:rq #(add-two % 1 200)}
-              {:rq #(add-two % 4 100)}
-              {:rq #(add-two % 10 50) :fence true}
-              {:rq #(range-to % 40 45 10) :fence true}
-              {:rq #(add-two % 9 400)}
-              {:rq #(add-two % 9 400)}
-              {:rq #(range-to % 0 2 100)}
-              {:rq #(range-to % 6 10 5) :fence true}
-              {:rq #(add-two % 30 100)}]]
+  (let [reqs [{:rq #(test-add-two % 1 200)}
+              {:rq #(test-add-two % 4 100)}
+              {:rq #(test-add-two % 10 50) :fence true}
+              {:rq #(test-range-to % 40 45 10) :fence true}
+              {:rq #(test-add-two % 9 400)}
+              {:rq #(test-add-two % 9 400)}
+              {:rq #(test-range-to % 0 2 100)}
+              {:rq #(test-range-to % 6 10 5) :fence true}
+              {:rq #(test-add-two % 30 100)}]]
     (ago test actx ; TODO - revisit timing wobbles.
          (map (fn [test] (cons (if (= (sort (nth test 1))
                                       (sort (nth test 2)))
