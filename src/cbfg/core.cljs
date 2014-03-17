@@ -94,18 +94,17 @@
           children (:children d)
           wait-chs (:wait-chs d)]
       ["<div>" (string/join ":" (last actx))
+       (if (not-empty wait-chs)
+         ["(waiting: "
+          (map (fn [kv] [(second kv) ", "]) wait-chs)
+          ")"]
+         [])
        "<ul>"
        (if (not-empty children)
          ["<li>children...<ul>"
           (map (fn [kv] ["<li>" (vis-html vis (first kv)) "</li>"]) children)
           "</li></ul>"]
          [])
-       (if (not-empty wait-chs)
-         ["<li>waiting...<ul>"
-          (map (fn [kv] ["<li>" (second kv) "</li>"]) wait-chs)
-          "</li></ul>"]
-         [])
-       "</ul>"
        "</div>"])
     "no actx"))
 
