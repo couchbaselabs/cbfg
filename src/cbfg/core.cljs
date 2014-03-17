@@ -44,11 +44,13 @@
   {"ago"
    {:beg (fn [vis actx args]
            (let [[child-actx] args]
-             (swap! vis #(assoc-in % [:actxs child-actx]
-                                   {:parent actx :want-chs {}}))))
+             (swap! vis #(assoc-in % (concat [:actxs] (rest child-actx))
+                                   {:children {} :want-chs {}}))
+             (swap! vis #(assoc-in % [:want-chs child-actx] {}))))
     :end (fn [vis actx args]
            (let [[child-actx result] args]
-             (swap! vis #(dissoc-in % [:actxs child-actx]))))}
+             (swap! vis #(dissoc-in % (concat [:actxs] (rest child-actx))))
+             (swap! vis #(dissoc-in % [:want-chs child-actx]))))}
    "aclose"
    {:beg (fn [vis actx args]
            (let [[ch] args] 1))
@@ -57,17 +59,17 @@
    "atake"
    {:beg (fn [vis actx args]
            (let [[ch] args]
-             (swap! vis #(assoc-in % [:actxs actx :want-chs ch] :take))))
+             (swap! vis #(assoc-in % [:want-chs actx ch] :take))))
     :end (fn [vis actx args]
            (let [[ch result] args]
-             (swap! vis #(dissoc-in % [:actxs actx :want-chs ch]))))}
+             (swap! vis #(dissoc-in % [:want-chs actx ch]))))}
    "aput"
    {:beg (fn [vis actx args]
            (let [[ch msg] args]
-             (swap! vis #(assoc-in % [:actxs actx :want-chs ch] :put))))
+             (swap! vis #(assoc-in % [:want-chs actx ch] :put))))
     :end (fn [vis actx args]
            (let [[ch msg result] args]
-             (swap! vis #(dissoc-in % [:actxs actx :want-chs ch]))))}
+             (swap! vis #(dissoc-in % [:want-chs actx ch]))))}
    "aalts"
    {:beg (fn [vis actx args]
            (let [[chs] args] 1))
@@ -75,7 +77,7 @@
            (let [[chs result] args] 2))}})
 
 (defn vis-init [cmds cmd-handlers]
-  (let [vis (atom {:actxs {} :chs {}})
+  (let [vis (atom {:actxs {} :want-chs {}})
         max-inflight (atom 10)
         event-delay (atom 0)
         event-ch (chan)
@@ -89,8 +91,8 @@
       (let [[actx event] (<! event-ch)
             [verb step & args] event
             vis-event-handler (get (get vis-event-handlers verb) step)]
-        (println num-events event (vis-event-handler vis actx args) args)
-        (set-el-innerHTML "event" [num-events event])
+        (vis-event-handler vis actx args)
+        (set-el-innerHTML "event" [num-events @vis])
         (set-el-innerHTML "vis"
                           (str "<circle cx='"
                                (mod num-events 500)
