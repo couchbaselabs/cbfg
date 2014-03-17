@@ -79,7 +79,7 @@
 
 (defn vis-html [vis actx]
   (if actx
-    ["<div>" (last actx)
+    ["<div>" (string/join ":" (last actx))
      "<ul>"
      (map (fn [kv] ["<li>" (vis-html vis (first kv)) "</li>"])
           (get-in vis [:actxs actx :children]))
