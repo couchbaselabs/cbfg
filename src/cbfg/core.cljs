@@ -44,13 +44,14 @@
   {"ago"
    {:beg (fn [vis actx args]
            (let [[child-actx] args]
-             (swap! vis #(assoc-in % (concat [:hier] (rest child-actx))
+             (swap! vis #(assoc-in % [:actxs child-actx]
                                    {:children {} :want-chs {}}))
-             (swap! vis #(assoc-in % [:want-chs child-actx] {}))))
+             (swap! vis #(assoc-in % [:actxs actx :children child-actx]
+                                   true))))
     :end (fn [vis actx args]
            (let [[child-actx result] args]
-             (swap! vis #(dissoc-in % (concat [:hier] (rest child-actx))))
-             (swap! vis #(dissoc-in % [:want-chs child-actx]))))}
+             (swap! vis #(dissoc-in % [:actxs child-actx]))
+             (swap! vis #(dissoc-in % [:actxs actx :children child-actx]))))}
    "aclose"
    {:beg (fn [vis actx args]
            (let [[ch] args] 1))
@@ -59,26 +60,34 @@
    "atake"
    {:beg (fn [vis actx args]
            (let [[ch] args]
-             (swap! vis #(assoc-in % [:want-chs actx ch] :take))))
+             (swap! vis #(assoc-in % [:actxs actx :want-chs ch] :take))))
     :end (fn [vis actx args]
            (let [[ch result] args]
-             (swap! vis #(dissoc-in % [:want-chs actx ch]))))}
+             (swap! vis #(dissoc-in % [:actxs actx :want-chs ch]))))}
    "aput"
    {:beg (fn [vis actx args]
            (let [[ch msg] args]
-             (swap! vis #(assoc-in % [:want-chs actx ch] :put))))
+             (swap! vis #(assoc-in % [:actxs actx :want-chs ch] :put))))
     :end (fn [vis actx args]
            (let [[ch msg result] args]
-             (swap! vis #(dissoc-in % [:want-chs actx ch]))))}
+             (swap! vis #(dissoc-in % [:actxs actx :want-chs ch]))))}
    "aalts"
    {:beg (fn [vis actx args]
            (let [[chs] args] 1))
     :end (fn [vis actx args]
            (let [[chs result] args] 2))}})
 
+(defn vis-html [vis actx]
+  (let [d (get-in vis [:actxs actx])]
+    (conj "<div>" (last actx)
+          "<ul>"
+          (map #(conj "<li>" (vis-html vis %) "</li>")
+               (:children d))
+          "</ul>"
+          "</div>")))
+
 (defn vis-init [cmds cmd-handlers]
-  (let [vis (atom {:hier {}       ; [actx -> {child-actx-map}], recursive.
-                   :want-chs {}}) ; [actx -> [ch -> (:take|:put)]].
+  (let [vis (atom {:actxs {}}) ; [actx -> {:children {}, :want-chs {}}].
         max-inflight (atom 10)
         event-delay (atom 0)
         event-ch (chan)
@@ -94,6 +103,7 @@
             vis-event-handler (get (get vis-event-handlers verb) step)]
         (vis-event-handler vis actx args)
         (set-el-innerHTML "event" [num-events @vis])
+        (set-el-innerHTML "vis-html" "hello")
         (set-el-innerHTML "vis"
                           (str "<circle cx='"
                                (mod num-events 500)
