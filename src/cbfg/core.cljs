@@ -40,14 +40,20 @@
 
 ;; ------------------------------------------------
 
+(defn vis-add-ch [vis ch]
+  (swap! vis #(update-in % [:chs ch]
+                           (fn [v]
+                             (if (nil? v)
+                               {:id ((:gen-id @vis)) :msgs {}}
+                               v)))))
+
 (def vis-event-handlers
   {"ago"
    {:beg (fn [vis actx args]
            (let [[child-actx] args]
              (swap! vis #(assoc-in % [:actxs child-actx]
                                    {:children {} :wait-chs {}}))
-             (swap! vis #(assoc-in % [:actxs actx :children child-actx]
-                                   true))))
+             (swap! vis #(assoc-in % [:actxs actx :children child-actx] true))))
     :end (fn [vis actx args]
            (let [[child-actx result] args]
              (swap! vis #(dissoc-in % [:actxs child-actx]))
@@ -61,11 +67,7 @@
    {:beg (fn [vis actx args]
            (let [[ch] args]
              (swap! vis #(assoc-in % [:actxs actx :wait-chs ch] :take))
-             (swap! vis #(update-in % [:chs ch]
-                                    (fn [v]
-                                      (if (nil? v)
-                                        {:id ((:gen-id @vis)) :msgs {}}
-                                        (assoc-in v [:msgs msg] true)))))))
+             (vis-add-ch vis ch)))
     :end (fn [vis actx args]
            (let [[ch result] args]
              (swap! vis #(dissoc-in % [:actxs actx :wait-chs ch]))))}
@@ -73,11 +75,8 @@
    {:beg (fn [vis actx args]
            (let [[ch msg] args]
              (swap! vis #(assoc-in % [:actxs actx :wait-chs ch] :put))
-             (swap! vis #(update-in % [:chs ch]
-                                    (fn [v]
-                                      (if (nil? v)
-                                        {:id ((:gen-id @vis)) :msgs {msg true}}
-                                        (assoc-in v [:msgs msg] true)))))))
+             (vis-add-ch vis ch)
+             (swap! vis #(assoc-in % [:chs ch :msgs msg] true))))
     :end (fn [vis actx args]
            (let [[ch msg result] args]
              (swap! vis #(dissoc-in % [:actxs actx :wait-chs ch]))))}
@@ -130,8 +129,10 @@
         w [{:gen-id gen-id
             :event-ch event-ch}]
         root-actx (atom nil)
-        vis (atom {:actxs {} ; {actx -> {:children {}, :wait-chs {}}}.
-                   :chs {}   ; {ch -> {:id (gen-id), :msgs {}}}.
+        vis (atom {:actxs {} ; {actx -> {:children {child-actx -> true},
+                             ;           :wait-chs {ch -> (:take|:put)}}}.
+                   :chs {}   ; {ch -> {:id (gen-id),
+                             ;         :msgs {msg -> true}}}.
                    :gen-id gen-id})]
     (go-loop [num-events 0]
       (let [tdv @event-delay]
