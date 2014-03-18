@@ -87,22 +87,19 @@
     :end (fn [vis actx args]
            (let [[ch msg result] args]
              (swap! vis #(dissoc-in % [:actxs actx :wait-chs ch]))
-             ; TODO: Should we cleanup ch here with close detection?
-             ; (when-not result ; The ch is closed.
-             ;   (swap! vis #(dissoc-in % [:chs ch])))
+             ; NOTE: Normally we should cleanup ch when nil result
+             ; but looks like CLJS async returns wrong result from >!.
              ))}
    "aalts"
    {:beg (fn [vis actx args]
            (let [[ch-bindings] args
-                 actions (map #(if (seq? %)
-                                 [(first %) :put]
-                                 [% :take])
+                 ; The actions will be [[ch :take] [ch :put] ...].
+                 actions (map #(if (seq? %) [(first %) :put] [% :take])
                               ch-bindings)]
-             (swap! vis #(update-in % [:acts actx :wait-chs]
-                                    (fn [wait-chs]
+             (swap! vis #(update-in % [:actxs actx :wait-chs]
+                                    (fn [wait-chs] ; Update wait-chs with actions.
                                       (reduce (fn [acc v]
-                                                (assoc acc
-                                                  (first v) (second v)))
+                                                (assoc acc (first v) (second v)))
                                               wait-chs
                                               actions))))))
     :end (fn [vis actx args]
@@ -112,7 +109,7 @@
              (doseq [ch chs]
                (swap! vis #(dissoc-in % [:actxs actx :wait-chs ch])))
              (swap! vis #(dissoc-in % [:chs result-ch :msgs result-msg]))
-             (when (nil? result-msg)
+             (when (nil? result-msg) ; The ch is closed.
                (swap! vis #(dissoc-in % [:chs result-ch])))))}})
 
 (defn vis-html-actx [vis actx]
