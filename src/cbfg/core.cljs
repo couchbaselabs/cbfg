@@ -61,32 +61,36 @@
                              (dissoc-in [:actxs actx :children child-actx])))))}
    "aclose"
    {:beg (fn [vis actx args]
-           (let [[ch] args] 1))
+           (let [[ch] args] nil))
     :end (fn [vis actx args]
-           (let [[ch result] args] 2))}
+           (let [[ch result] args] nil))}
    "atake"
    {:beg (fn [vis actx args]
            (let [[ch] args]
              (swap! vis #(-> %
-                             (vis-add-ch ch)
-                             (assoc-in [:actxs actx :wait-chs ch] :take)))))
+                             (assoc-in [:actxs actx :wait-chs ch] :take)
+                             (vis-add-ch ch)))))
     :end (fn [vis actx args]
            (let [[ch msg] args]
              (swap! vis #(-> %
                              (dissoc-in [:actxs actx :wait-chs ch])
                              (dissoc-in [:chs ch :msgs msg])))
-             (when (nil? msg)
+             (when (nil? msg) ; The ch is closed.
                (swap! vis #(dissoc-in % [:chs ch])))))}
    "aput"
    {:beg (fn [vis actx args]
            (let [[ch msg] args]
              (swap! vis #(-> %
-                             (vis-add-ch ch)
                              (assoc-in [:actxs actx :wait-chs ch] :put)
+                             (vis-add-ch ch)
                              (assoc-in [:chs ch :msgs msg] true)))))
     :end (fn [vis actx args]
            (let [[ch msg result] args]
-             (swap! vis #(dissoc-in % [:actxs actx :wait-chs ch]))))}
+             (swap! vis #(dissoc-in % [:actxs actx :wait-chs ch]))
+             ; TODO: Should we cleanup ch here with close detection?
+             ; (when-not result ; The ch is closed.
+             ;   (swap! vis #(dissoc-in % [:chs ch])))
+             ))}
    "aalts"
    {:beg (fn [vis actx args]
            (let [[ch-bindings] args
