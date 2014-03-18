@@ -118,26 +118,34 @@
 
 ;; ------------------------------------------------
 
-(defn vis-html-actx [vis actx]
+(defn vis-html-actx [vis actx actx-ch-ch-infos]
   (if actx
-    (let [d (get-in vis [:actxs actx])
-          children (:children d)
-          wait-chs (:wait-chs d)]
+    (let [chs (:chs vis)
+          actx-info (get-in vis [:actxs actx])
+          children (:children actx-info)
+          wait-chs (:wait-chs actx-info)]
       ["<div>" (last actx)
        (if (not-empty wait-chs)
          [" -- waiting: ("
           (map (fn [kv]
                  (let [[ch wait-kind] kv]
-                   [(:id (get (:chs vis) ch)) wait-kind ", "]))
+                   [(:id (get chs ch)) wait-kind ", "]))
                wait-chs)
           ")"]
          [])
        (if (not-empty children)
          ["<ul>"
-          (map (fn [kv] ["<li>" (vis-html-actx vis (first kv)) "</li>"])
+          (map (fn [child-actx-bool] ["<li>"
+                                      (vis-html-actx vis (first child-actx-bool)
+                                                     actx-ch-ch-infos)
+                                      "</li>"])
                children)
           "</ul>"]
          [])
+       "<ul>"
+       (map (fn [ch-ch-info] ["<li>" (:id (second ch-ch-info)) "</li>"])
+            (get actx-ch-ch-infos actx))
+       "</ul>"
        "</div>"])
     "no actx"))
 
@@ -193,7 +201,9 @@
         (vis-event-handler vis actx args)
         (set-el-innerHTML "vis-html"
                           (apply str
-                                 (flatten [(vis-html-actx @vis @root-actx)
+                                 (flatten [(vis-html-actx @vis @root-actx
+                                                          (group-by #(:first-taker-actx (second %))
+                                                                    (:chs @vis)))
                                            "<hr/>"
                                            (vis-html-chs @vis)])))
         (set-el-innerHTML "vis"
