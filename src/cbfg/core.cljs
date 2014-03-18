@@ -113,7 +113,7 @@
     (let [d (get-in vis [:actxs actx])
           children (:children d)
           wait-chs (:wait-chs d)]
-      ["<div>" (string/join ":" (last actx))
+      ["<div>" (last actx)
        (if (not-empty wait-chs)
          [" -- waiting: ("
           (map (fn [kv]
