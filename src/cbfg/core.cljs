@@ -182,10 +182,8 @@
                                       (put! step-ch true))}]
     (go-loop [run-control-events (merge (map #(listen (gdom/getElement %) "click")
                                              (keys run-controls)))]
-      (let [id (.-id (.-target (<! run-control-events)))]
-        (println "pressed " id)
-        ((get run-controls id))
-        (recur run-control-events)))
+      ((get run-controls (.-id (.-target (<! run-control-events)))))
+      (recur run-control-events))
     (go-loop [num-events 0]
       (let [ed @event-delay]
         (when (> ed 0)
