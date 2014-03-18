@@ -155,10 +155,12 @@
 
 ;; ------------------------------------------------
 
+
 (defn vis-init [cmds cmd-handlers]
   (let [max-inflight (atom 10)
         event-delay (atom 0)
         event-ch (chan)
+        step-ch (chan)
         last-id (atom 0)
         gen-id #(swap! last-id inc)
         w [{:gen-id gen-id
@@ -169,11 +171,27 @@
                    :chs {}   ; {ch -> {:id (gen-id),
                              ;         :msgs {msg -> true}
                              ;         :first-taker-actx actx-or-nil}}.
-                   :gen-id gen-id})]
+                   :gen-id gen-id})
+        run-controls {"run"      #(do (when (< @event-delay 0) (put! step-ch true))
+                                      (reset! event-delay 0))
+                      "run-slow" #(do (when (< @event-delay 0) (put! step-ch true))
+                                      (reset! event-delay
+                                              (js/parseInt (get-el-value "run-slowness"))))
+                      "pause"    #(reset! event-delay -1)
+                      "step"     #(do (reset! event-delay -1)
+                                      (put! step-ch true))}]
+    (go-loop [run-control-events (merge (map #(listen (gdom/getElement %) "click")
+                                             (keys run-controls)))]
+      (let [id (.-id (.-target (<! run-control-events)))]
+        (println "pressed " id)
+        ((get run-controls id))
+        (recur run-control-events)))
     (go-loop [num-events 0]
-      (let [tdv @event-delay]
-        (when (> tdv 0)
-          (<! (timeout tdv))))
+      (let [ed @event-delay]
+        (when (> ed 0)
+          (<! (timeout ed)))
+        (when (< ed 0)
+          (<! step-ch)))
       (let [[actx event] (<! event-ch)
             [verb step & args] event
             vis-event-handler (get (get vis-event-handlers verb) step)]
@@ -228,7 +246,7 @@
    (fn [cmd] {:rq #(cbfg.fence/test %)
               :fence (:fence cmd)})})
 
-(vis-init (map< (fn [id] {:op (.-id (.-target id))
+(vis-init (map< (fn [ev] {:op (.-id (.-target ev))
                           :x (js/parseInt (get-el-value "x"))
                           :y (js/parseInt (get-el-value "y"))
                           :delay (js/parseInt (get-el-value "delay"))
