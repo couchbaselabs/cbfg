@@ -99,6 +99,13 @@
                  ; The actions will be [[ch :take] [ch :put] ...].
                  actions (map #(if (seq? %) [(first %) :put] [% :take])
                               ch-bindings)]
+             (doseq [action actions]
+               (swap! vis #(vis-add-ch % (first action)))
+               (swap! vis #(if (= (second action) :take)
+                             (update-in % [:chs (first action) :first-taker-actx]
+                                        (fn [fta]
+                                          (if fta fta actx)))
+                             %)))
              (swap! vis #(update-in % [:actxs actx :wait-chs]
                                     (fn [wait-chs] ; Update wait-chs with actions.
                                       (reduce (fn [acc v]
