@@ -185,11 +185,8 @@
       ((get run-controls (.-id (.-target (<! run-control-ch)))))
       (recur run-control-ch))
     (go-loop [num-events 0]
-      (let [ed @event-delay]
-        (when (> ed 0)
-          (<! (timeout ed)))
-        (when (< ed 0)
-          (<! step-ch)))
+      (when (> @event-delay 0) (<! (timeout @event-delay)))
+      (when (< @event-delay 0) (<! step-ch))
       (let [[actx event] (<! event-ch)
             [verb step & args] event
             vis-event-handler (get (get vis-event-handlers verb) step)]
