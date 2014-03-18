@@ -99,8 +99,7 @@
    {:beg (fn [vis actx args]
            (let [[ch-bindings] args
                  ; The ch-actions will be [[ch :take] [ch :put] ...].
-                 ch-actions (map #(if (seq? %) [(first %) :put] [% :take])
-                                 ch-bindings)]
+                 ch-actions (map #(if (seq? %) [(first %) :put] [% :take]) ch-bindings)]
              (doseq [ch-action ch-actions]
                (swap! vis #(-> %
                                (vis-add-ch (first ch-action)
@@ -116,6 +115,8 @@
              (swap! vis #(dissoc-in % [:chs result-ch :msgs result-msg]))
              (when (nil? result-msg) ; The ch is closed.
                (swap! vis #(dissoc-in % [:chs result-ch])))))}})
+
+;; ------------------------------------------------
 
 (defn vis-html-actx [vis actx]
   (if actx
@@ -151,6 +152,8 @@
            "</li>"])
         (vals (:chs vis)))
    "</ul></div>"])
+
+;; ------------------------------------------------
 
 (defn vis-init [cmds cmd-handlers]
   (let [max-inflight (atom 10)
