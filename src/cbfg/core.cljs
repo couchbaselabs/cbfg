@@ -42,10 +42,9 @@
 
 (defn vis-add-ch [vis ch]
   (swap! vis #(update-in % [:chs ch]
-                           (fn [v]
-                             (if (nil? v)
-                               {:id ((:gen-id @vis)) :msgs {}}
-                               v)))))
+                         (fn [v] (if (nil? v)
+                                   {:id ((:gen-id @vis)) :msgs {}}
+                                   v)))))
 
 (def vis-event-handlers
   {"ago"
