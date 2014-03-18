@@ -126,12 +126,11 @@
                wait-chs)
           ")"]
          [])
-       "<ul>"
        (if (not-empty children)
-         ["<li>children...<ul>"
+         ["<ul><li>children...<ul>"
           (map (fn [kv] ["<li>" (vis-html-actx vis (first kv)) "</li>"])
                children)
-          "</li></ul>"]
+          "</ul></li></ul>"]
          [])
        "</div>"])
     "no actx"))
@@ -168,6 +167,7 @@
         (set-el-innerHTML "vis-html"
                           (apply str
                                  (flatten [(vis-html-actx @vis @root-actx)
+                                           "<hr/>"
                                            (vis-html-chs @vis)])))
         (set-el-innerHTML "vis"
                           (str "<circle cx='"
