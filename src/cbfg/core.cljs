@@ -195,17 +195,17 @@
     (ago w-actx w
          (reset! root-actx w-actx)
          (let [in (achan-buf w-actx 100)
-               out (achan-buf w-actx 1)
-               fdp (make-fenced-pump w-actx in out @max-inflight)
-               gch (ago-loop main-out w-actx [acc nil]
-                             (let [result (atake main-out out)]
-                               (set-el-innerHTML "output" result)
-                               (recur (conj acc result))))]
+               out (achan-buf w-actx 1)]
            (ago-loop main-in w-actx [num-cmds 0]
                      (let [cmd (<! cmds)
                            cmd-handler ((get cmd-handlers (:op cmd)) cmd)]
                        (aput main-in in cmd-handler)
-                       (recur (inc num-cmds))))))))
+                       (recur (inc num-cmds))))
+           (ago-loop main-out w-actx [acc nil]
+                     (let [result (atake main-out out)]
+                       (set-el-innerHTML "output" result)
+                       (recur (conj acc result))))
+           (make-fenced-pump w-actx in out @max-inflight)))))
 
 ;; ------------------------------------------------
 
