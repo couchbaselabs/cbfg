@@ -95,8 +95,8 @@
   (let [in (achan-buf actx in-ch-size)
         out (achan-buf actx out-ch-size)
         fdp (make-fenced-pump actx in out max-inflight)
-        gch (ago-loop test-helper actx [acc nil]
-              (let [result (atake test-helper out)]
+        gch (ago-loop test-out actx [acc nil]
+              (let [result (atake test-out out)]
                 (if result
                   (do (println "Output result: " result)
                       (recur (conj acc result)))
@@ -116,14 +116,14 @@
               {:rq #(test-range-to % 6 10 5) :fence true}
               {:rq #(test-add-two % 30 100)}]]
     (ago test actx ; TODO - revisit timing wobbles.
-         (map (fn [test] (cons (if (= (sort (nth test 1))
-                                      (sort (nth test 2)))
-                                 "pass"
-                                 "FAIL")
-                               test))
+         (map #(cons (if (= (sort (nth % 1))
+                            (sort (nth % 2)))
+                       "pass"
+                       "FAIL")
+                     %)
               [["test with 2 max-inflights"
-                (atake test (test-helper actx 100 1 2 reqs))
+                (atake test (test-helper test 100 1 2 reqs))
                 '(6 3 12 40 41 42 43 44 11 11 6 7 8 0 1 9 32)]
                ["test with 200 max-inflights"
-                (atake test (test-helper actx 100 1 200 reqs))
+                (atake test (test-helper test 100 1 200 reqs))
                 '(6 3 12 40 41 42 43 44 6 7 8 0 1 11 11 9 32)]]))))
