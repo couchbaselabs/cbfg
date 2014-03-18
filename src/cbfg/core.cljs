@@ -87,13 +87,14 @@
            (let [[ch msg] args]
              (swap! vis #(-> %
                              (assoc-in [:actxs actx :wait-chs ch] :put)
-                             (vis-add-ch ch nil)
-                             (assoc-in [:chs ch :msgs msg] true)))))
+                             (vis-add-ch ch nil)))))
     :end (fn [vis actx args]
            (let [[ch msg result] args]
-             (swap! vis #(dissoc-in % [:actxs actx :wait-chs ch]))
-             ; NOTE: Normally we should cleanup ch when nil result
-             ; but looks like CLJS async returns wrong result from >!.
+             (swap! vis #(-> %
+                             (assoc-in [:chs ch :msgs msg] true)
+                             (dissoc-in [:actxs actx :wait-chs ch])))
+             ; NOTE: Normally we should cleanup ch when nil result but
+             ; looks like CLJS async always incorrectly returns nil from >!.
              ))}
    "aalts"
    {:beg (fn [vis actx args]
