@@ -40,11 +40,16 @@
 
 ;; ------------------------------------------------
 
-(defn vis-add-ch [vis ch]
-  (update-in vis [:chs ch]
-             (fn [v] (if (nil? v)
-                       {:id ((:gen-id vis)) :msgs {} :first-taker-actx nil}
-                       v))))
+(defn vis-add-ch [vis ch first-taker-actx]
+  (-> vis
+      (update-in [:chs ch]
+                 #(if (nil? %)
+                    {:id ((:gen-id vis))
+                     :msgs {}
+                     :first-taker-actx first-taker-actx}
+                    %))
+      (update-in [:chs ch :first-taker-actx]
+                 #(if % % first-taker-actx))))
 
 (def vis-event-handlers
   {"ago"
@@ -69,10 +74,7 @@
            (let [[ch] args]
              (swap! vis #(-> %
                              (assoc-in [:actxs actx :wait-chs ch] :take)
-                             (vis-add-ch ch)
-                             (update-in [:chs ch :first-taker-actx]
-                                        (fn [fta]
-                                          (if fta fta actx)))))))
+                             (vis-add-ch ch actx)))))
     :end (fn [vis actx args]
            (let [[ch msg] args]
              (swap! vis #(-> %
@@ -85,7 +87,7 @@
            (let [[ch msg] args]
              (swap! vis #(-> %
                              (assoc-in [:actxs actx :wait-chs ch] :put)
-                             (vis-add-ch ch)
+                             (vis-add-ch ch nil)
                              (assoc-in [:chs ch :msgs msg] true)))))
     :end (fn [vis actx args]
            (let [[ch msg result] args]
@@ -96,22 +98,15 @@
    "aalts"
    {:beg (fn [vis actx args]
            (let [[ch-bindings] args
-                 ; The actions will be [[ch :take] [ch :put] ...].
-                 actions (map #(if (seq? %) [(first %) :put] [% :take])
-                              ch-bindings)]
-             (doseq [action actions]
-               (swap! vis #(vis-add-ch % (first action)))
-               (swap! vis #(if (= (second action) :take)
-                             (update-in % [:chs (first action) :first-taker-actx]
-                                        (fn [fta]
-                                          (if fta fta actx)))
-                             %)))
-             (swap! vis #(update-in % [:actxs actx :wait-chs]
-                                    (fn [wait-chs] ; Update wait-chs with actions.
-                                      (reduce (fn [acc v]
-                                                (assoc acc (first v) (second v)))
-                                              wait-chs
-                                              actions))))))
+                 ; The ch-actions will be [[ch :take] [ch :put] ...].
+                 ch-actions (map #(if (seq? %) [(first %) :put] [% :take])
+                                 ch-bindings)]
+             (doseq [ch-action ch-actions]
+               (swap! vis #(-> %
+                               (vis-add-ch (first ch-action)
+                                           (if (= (second ch-action) :take) actx nil))
+                               (assoc-in [:actxs actx :wait-chs (first ch-action)]
+                                         (second ch-action)))))))
     :end (fn [vis actx args]
            (let [[ch-bindings result] args
                  chs (map #(if (seq? %) (first %) %) ch-bindings)
