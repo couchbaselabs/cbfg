@@ -41,10 +41,10 @@
 ;; ------------------------------------------------
 
 (defn vis-add-ch [vis ch]
-  (swap! vis #(update-in % [:chs ch]
-                         (fn [v] (if (nil? v)
-                                   {:id ((:gen-id @vis)) :msgs {}}
-                                   v)))))
+  (update-in vis [:chs ch]
+             (fn [v] (if (nil? v)
+                       {:id ((:gen-id vis)) :msgs {}}
+                       v))))
 
 (def vis-event-handlers
   {"ago"
@@ -67,20 +67,23 @@
    "atake"
    {:beg (fn [vis actx args]
            (let [[ch] args]
-             (swap! vis #(assoc-in % [:actxs actx :wait-chs ch] :take))
-             (vis-add-ch vis ch)))
+             (swap! vis #(-> %
+                             (vis-add-ch ch)
+                             (assoc-in [:actxs actx :wait-chs ch] :take)))))
     :end (fn [vis actx args]
            (let [[ch msg] args]
-             (swap! vis #(dissoc-in % [:actxs actx :wait-chs ch]))
-             (swap! vis #(dissoc-in % [:chs ch :msgs msg]))
+             (swap! vis #(-> %
+                             (dissoc-in [:actxs actx :wait-chs ch])
+                             (dissoc-in [:chs ch :msgs msg])))
              (when (nil? msg)
                (swap! vis #(dissoc-in % [:chs ch])))))}
    "aput"
    {:beg (fn [vis actx args]
            (let [[ch msg] args]
-             (swap! vis #(assoc-in % [:actxs actx :wait-chs ch] :put))
-             (vis-add-ch vis ch)
-             (swap! vis #(assoc-in % [:chs ch :msgs msg] true))))
+             (swap! vis #(-> %
+                             (vis-add-ch ch)
+                             (assoc-in [:actxs actx :wait-chs ch] :put)
+                             (assoc-in [:chs ch :msgs msg] true)))))
     :end (fn [vis actx args]
            (let [[ch msg result] args]
              (swap! vis #(dissoc-in % [:actxs actx :wait-chs ch]))))}
