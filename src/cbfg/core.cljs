@@ -43,7 +43,7 @@
 (defn vis-add-ch [vis ch]
   (update-in vis [:chs ch]
              (fn [v] (if (nil? v)
-                       {:id ((:gen-id vis)) :msgs {}}
+                       {:id ((:gen-id vis)) :msgs {} :first-taker-actx nil}
                        v))))
 
 (def vis-event-handlers
@@ -69,7 +69,10 @@
            (let [[ch] args]
              (swap! vis #(-> %
                              (assoc-in [:actxs actx :wait-chs ch] :take)
-                             (vis-add-ch ch)))))
+                             (vis-add-ch ch)
+                             (update-in [:chs ch :first-taker-actx]
+                                        (fn [fta]
+                                          (if fta fta actx)))))))
     :end (fn [vis actx args]
            (let [[ch msg] args]
              (swap! vis #(-> %
@@ -154,7 +157,8 @@
         vis (atom {:actxs {} ; {actx -> {:children {child-actx -> true},
                              ;           :wait-chs {ch -> (:take|:put)}}}.
                    :chs {}   ; {ch -> {:id (gen-id),
-                             ;         :msgs {msg -> true}}}.
+                             ;         :msgs {msg -> true}
+                             ;         :first-taker-actx actx-or-nil}}.
                    :gen-id gen-id})]
     (go-loop [num-events 0]
       (let [tdv @event-delay]
