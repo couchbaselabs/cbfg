@@ -180,10 +180,10 @@
                       "pause"    #(reset! event-delay -1)
                       "step"     #(do (reset! event-delay -1)
                                       (put! step-ch true))}]
-    (go-loop [run-control-events (merge (map #(listen (gdom/getElement %) "click")
-                                             (keys run-controls)))]
-      ((get run-controls (.-id (.-target (<! run-control-events)))))
-      (recur run-control-events))
+    (go-loop [run-control-ch (merge (map #(listen (gdom/getElement %) "click")
+                                         (keys run-controls)))]
+      ((get run-controls (.-id (.-target (<! run-control-ch)))))
+      (recur run-control-ch))
     (go-loop [num-events 0]
       (let [ed @event-delay]
         (when (> ed 0)
