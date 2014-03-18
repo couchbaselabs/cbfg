@@ -122,8 +122,14 @@
                        "FAIL")
                      %)
               [["test with 2 max-inflights"
-                (atake test (test-helper test 100 1 2 reqs))
+                (let [ch (test-helper test 100 1 2 reqs)
+                      res (atake test ch)]
+                  (atake test ch)
+                  res)
                 '(6 3 12 40 41 42 43 44 11 11 6 7 8 0 1 9 32)]
                ["test with 200 max-inflights"
-                (atake test (test-helper test 100 1 200 reqs))
+                (let [ch (test-helper test 100 1 200 reqs)
+                      res (atake test ch)]
+                  (atake test ch)
+                  res)
                 '(6 3 12 40 41 42 43 44 6 7 8 0 1 11 11 9 32)]]))))
