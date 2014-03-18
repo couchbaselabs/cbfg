@@ -141,7 +141,12 @@
 (defn vis-html-chs [vis]
   ["<div>channels...<ul>"
    (map (fn [ch-info]
-          ["<li>" (:id ch-info) ": " (:msgs ch-info) "</li>"])
+          ["<li>"
+           (:id ch-info) ": " (:msgs ch-info)
+           (if-let [fta (:first-taker-actx ch-info)]
+             [" --&gt; " (last fta)]
+             "")
+           "</li>"])
         (vals (:chs vis)))
    "</ul></div>"])
 
