@@ -105,7 +105,7 @@
     :end (fn [vis actx args]
            (let [[ch-bindings result] args
                  chs (map #(if (seq? %) (first %) %) ch-bindings)
-                 [result-ch result-msg] result]
+                 [result-msg result-ch] result]
              (doseq [ch chs]
                (swap! vis #(dissoc-in % [:actxs actx :wait-chs ch])))
              (swap! vis #(dissoc-in % [:chs result-ch :msgs result-msg]))
