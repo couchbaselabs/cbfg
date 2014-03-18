@@ -137,10 +137,10 @@
           ")"]
          [])
        (if (not-empty children)
-         ["<ul><li>children...<ul>"
+         ["<ul>"
           (map (fn [kv] ["<li>" (vis-html-actx vis (first kv)) "</li>"])
                children)
-          "</ul></li></ul>"]
+          "</ul>"]
          [])
        "</div>"])
     "no actx"))
