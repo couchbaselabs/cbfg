@@ -124,7 +124,7 @@
           actx-info (get-in vis [:actxs actx])
           children (:children actx-info)
           wait-chs (:wait-chs actx-info)]
-      ["<div>" (last actx)
+      ["<div class='actx'>" (last actx)
        (if (not-empty wait-chs)
          [" -- waiting: ("
           (map (fn [kv]
@@ -133,6 +133,14 @@
                wait-chs)
           ")"]
          [])
+       "<div class='ch'>"
+       "  <ul>"
+       (map (fn [ch-ch-info]
+              (let [ch-info (second ch-ch-info)]
+                ["<li>" (:id ch-info) ": " (:msgs ch-info) "</li>"]))
+            (get actx-ch-ch-infos actx))
+       "  </ul>"
+       "</div>"
        (if (not-empty children)
          ["<ul>"
           (map (fn [child-actx-bool] ["<li>"
@@ -142,24 +150,8 @@
                children)
           "</ul>"]
          [])
-       "<ul>"
-       (map (fn [ch-ch-info] ["<li>" (:id (second ch-ch-info)) "</li>"])
-            (get actx-ch-ch-infos actx))
-       "</ul>"
        "</div>"])
     "no actx"))
-
-(defn vis-html-chs [vis]
-  ["<div>channels...<ul>"
-   (map (fn [ch-info]
-          ["<li>"
-           (:id ch-info) ": " (:msgs ch-info)
-           (if-let [fta (:first-taker-actx ch-info)]
-             [" --&gt; " (last fta)]
-             "")
-           "</li>"])
-        (vals (:chs vis)))
-   "</ul></div>"])
 
 ;; ------------------------------------------------
 
@@ -203,9 +195,7 @@
                           (apply str
                                  (flatten [(vis-html-actx @vis @root-actx
                                                           (group-by #(:first-taker-actx (second %))
-                                                                    (:chs @vis)))
-                                           "<hr/>"
-                                           (vis-html-chs @vis)])))
+                                                                    (:chs @vis)))])))
         (set-el-innerHTML "vis"
                           (str "<circle cx='"
                                (mod num-events 500)
