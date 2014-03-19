@@ -126,9 +126,7 @@
                (swap! vis #(dissoc-in % [:chs result-ch :msgs result-msg]))
                (when (nil? result-msg) ; The ch is closed.
                  (swap! vis #(dissoc-in % [:chs result-ch])))
-               (when (some #(and (not (seq? %))
-                                 (= result-ch %))
-                           ch-bindings)
+               (when (some #(= % result-ch) ch-bindings)
                  [[:msg-move result-msg :ch result-ch :actx actx]])))}})
 
 ;; ------------------------------------------------
