@@ -158,17 +158,24 @@
        [])
      "</div>"]))
 
-(defn vis-svg-actx [vis actx positions actx-ch-ch-infos]
-  (let [actx-id (last actx)
-        actx-info (get-in vis [:actxs actx])
-        children (:children actx-info)
-        wait-chs (:wait-chs actx-info)
-        chs (:chs vis)]
-    ["<circle cx='"
-     (mod ((:last-id vis)) 500)
-     "' cy='100' r='10'"
-     " stroke='black' stroke-width='3'"
-     " fill='red'/>"]))
+(defn vis-svg-actxs [vis positions]
+  (map (fn [actx-actx-info]
+         (let [[actx actx-info] actx-actx-info
+               actx-id (last actx)
+               actx-position (+ 1 (get positions actx-id))
+               wait-chs (:wait-chs actx-info)
+               chs (:chs vis)
+               line-height 24]
+           (map (fn [kv]
+                  (let [[ch wait-kind] kv
+                        ch-info (get chs ch)
+                        ch-id (:id ch-info)
+                        ch-position (+ 1 (get positions ch-id))]
+                    ["<line x1='400' y1='" (* actx-position line-height)
+                          "' x2='500' y2='" (* ch-position line-height)
+                          "' stroke='#666' stroke-width='1'/>"]))
+                wait-chs)))
+       (:actxs vis)))
 
 ;; ------------------------------------------------
 
@@ -214,8 +221,7 @@
                             (apply str (flatten (vis-html-actx @vis @root-actx positions
                                                                actx-ch-ch-infos))))
           (set-el-innerHTML "vis-svg"
-                            (apply str (flatten (vis-svg-actx @vis @root-actx @positions
-                                                              actx-ch-ch-infos))))
+                            (apply str (flatten (vis-svg-actxs @vis @positions))))
           (set-el-innerHTML "event"
                             (str num-events ": " (last actx) " " verb " " step " " args))))
       (recur (inc num-events)))
