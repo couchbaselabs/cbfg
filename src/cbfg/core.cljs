@@ -134,7 +134,7 @@
 ;; ------------------------------------------------
 
 (defn assign-position [positions id]
-  (swap! positions #(update-in % [id] (fn [v] (if v v (count @positions))))))
+  (swap! positions #(update-in % [id] (fn [v] (if v v (count %))))))
 
 ;; ------------------------------------------------
 
