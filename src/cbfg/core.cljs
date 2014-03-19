@@ -104,18 +104,18 @@
    {:before (fn [vis actx args]
               (let [[ch-bindings] args
                     ; The ch-actions will be [[ch :take] [ch :put] ...].
-                    ch-actions (map #(if (seq? %) [(first %) :put] [% :take])
+                    ch-actions (map #(if (seq? %) [(first %) :put (second %)] [% :take])
                                     ch-bindings)]
                 (apply concat
                        (mapv (fn [ch-action]
-                               (let [[ch action] ch-action]
+                               (let [[ch action & msgv] ch-action]
                                  (swap! vis #(-> %
                                                  (vis-add-ch ch
                                                              (when (= action :take) actx))
                                                  (assoc-in [:actxs actx :wait-chs ch]
                                                            action)))
                                  (when (= action :put)
-                                   [[:msg-move msg :actx actx :ch ch]])))
+                                   [[:msg-move (first msgv) :actx actx :ch ch]])))
                              ch-actions))))
     :after (fn [vis actx args]
              (let [[ch-bindings result] args
@@ -126,15 +126,15 @@
                (swap! vis #(dissoc-in % [:chs result-ch :msgs result-msg]))
                (when (nil? result-msg) ; The ch is closed.
                  (swap! vis #(dissoc-in % [:chs result-ch])))
-               (when (some #(and (not (seq? ch-binding))
-                                 (= result-ch ch-binding))
+               (when (some #(and (not (seq? %))
+                                 (= result-ch %))
                            ch-bindings)
                  [[:msg-move result-msg :ch result-ch :actx actx]])))}})
 
 ;; ------------------------------------------------
 
 (defn assign-position [positions id]
-  (swap! positions #(update-in % [id] (fn [v] (if v v (count %))))))
+  (swap! positions #(merge {id (count %)} %)))
 
 ;; ------------------------------------------------
 
