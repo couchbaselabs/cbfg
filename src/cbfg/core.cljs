@@ -216,7 +216,8 @@
           (set-el-innerHTML "vis-svg"
                             (apply str (flatten (vis-svg-actx @vis @root-actx @positions
                                                               actx-ch-ch-infos))))
-          (set-el-innerHTML "event" (str (last actx) " " verb " " step " " args))))
+          (set-el-innerHTML "event"
+                            (str num-events ": " (last actx) " " verb " " step " " args))))
       (recur (inc num-events)))
     (ago w-actx w
          (reset! root-actx w-actx)
