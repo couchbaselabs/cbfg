@@ -129,13 +129,12 @@
         children (:children actx-info)
         wait-chs (:wait-chs actx-info)
         chs (:chs vis)]
-    (assign-position positions (last actx))
-    ["<div id='actx-" (last actx) "' class='actx'>" (last actx)
+    (assign-position positions actx-id)
+    ["<div id='actx-" actx-id "' class='actx'>" actx-id
      (if (not-empty wait-chs)
        [" -- waiting: ("
-        (map (fn [kv]
-               (let [[ch wait-kind] kv]
-                 [(:id (get chs ch)) wait-kind ", "]))
+        (map (fn [kv] (let [[ch wait-kind] kv]
+                        [(:id (get chs ch)) wait-kind ", "]))
              wait-chs)
         ")"]
        [])
@@ -160,10 +159,11 @@
      "</div>"]))
 
 (defn vis-svg-actx [vis actx positions actx-ch-ch-infos]
-  (let [chs (:chs vis)
+  (let [actx-id (last actx)
         actx-info (get-in vis [:actxs actx])
         children (:children actx-info)
-        wait-chs (:wait-chs actx-info)]
+        wait-chs (:wait-chs actx-info)
+        chs (:chs vis)]
     ["<circle cx='"
      (mod ((:last-id vis)) 500)
      "' cy='100' r='10'"
