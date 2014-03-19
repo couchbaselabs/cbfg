@@ -132,6 +132,9 @@
 ;; ------------------------------------------------
 
 (defn assign-position [positions id]
+  ; NOTE: merge doesn't work as expected in CLJS.
+  ; (swap! positions #(merge {id (count %)} %))
+  ; (swap! positions (fn [x] (merge {id (count x)} x)))
   (swap! positions #(update-in % [id] (fn [v] (if v v (count %))))))
 
 ;; ------------------------------------------------
