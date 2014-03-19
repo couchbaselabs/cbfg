@@ -132,7 +132,7 @@
 ;; ------------------------------------------------
 
 (defn assign-position [positions id]
-  (swap! positions #(merge {id (count %)} %)))
+  (swap! positions #(update-in % [id] (fn [v] (if v v (count %))))))
 
 ;; ------------------------------------------------
 
@@ -153,20 +153,20 @@
        [])
      "<div class='chs'>"
      "  <ul>"
-     (map (fn [ch-ch-info]
-            (let [ch-info (second ch-ch-info)
-                  ch-id (:id ch-info)]
-              (assign-position positions ch-id)
-              ["<li id='ch-" ch-id "'>" ch-id ": " (:msgs ch-info) "</li>"]))
-          (get actx-ch-ch-infos actx))
+     (mapv (fn [ch-ch-info]
+             (let [ch-info (second ch-ch-info)
+                   ch-id (:id ch-info)]
+               (assign-position positions ch-id)
+               ["<li id='ch-" ch-id "'>" ch-id ": " (:msgs ch-info) "</li>"]))
+           (get actx-ch-ch-infos actx))
      "  </ul>"
      "</div>"
      (if (not-empty children)
-       ["<ul>" (map (fn [child-actx-bool]
-                      ["<li>" (vis-html-actx vis (first child-actx-bool)
-                                             positions actx-ch-ch-infos)
-                       "</li>"])
-                    children)
+       ["<ul>" (mapv (fn [child-actx-bool]
+                       ["<li>" (vis-html-actx vis (first child-actx-bool)
+                                              positions actx-ch-ch-infos)
+                        "</li>"])
+                     children)
         "</ul>"]
        [])
      "</div>"]))
@@ -180,30 +180,30 @@
    " orient='auto'>"
    " <path d='M 0 0 L 10 5 L 0 10 z'/>"
    "</defs>"
-   (map (fn [actx-actx-info]
-          (let [[actx actx-info] actx-actx-info
-                actx-id (last actx)
-                actx-position (+ 0.5 (get positions actx-id))
-                wait-chs (:wait-chs actx-info)
-                chs (:chs vis)
-                line-height 21
-                stroke-width 1]
-            (map (fn [kv]
-                   (let [[ch wait-kind] kv
-                         ch-info (get chs ch)
-                         ch-id (:id ch-info)
-                         ch-position (+ 0.5 (get positions ch-id))]
-                     (if (= :put wait-kind)
-                       ["<line x1='500' y1='" (* actx-position line-height)
-                        "' x2='600' y2='" (* ch-position line-height)
-                        "' stroke='green' stroke-width='" stroke-width
-                        "' marker-end='url(#triangle)'/>"]
-                       ["<line x1='600' y1='" (* ch-position line-height)
-                        "' x2='500' y2='" (* actx-position line-height)
-                        "' stroke='red' stroke-width='" stroke-width
-                        "' marker-end='url(#triangle)'/>"])))
-                 wait-chs)))
-        (:actxs vis))])
+   (mapv (fn [actx-actx-info]
+           (let [[actx actx-info] actx-actx-info
+                 actx-id (last actx)
+                 actx-position (+ 0.5 (get positions actx-id))
+                 wait-chs (:wait-chs actx-info)
+                 chs (:chs vis)
+                 line-height 21
+                 stroke-width 1]
+             (mapv (fn [kv]
+                     (let [[ch wait-kind] kv
+                           ch-info (get chs ch)
+                           ch-id (:id ch-info)
+                           ch-position (+ 0.5 (get positions ch-id))]
+                       (if (= :put wait-kind)
+                         ["<line x1='500' y1='" (* actx-position line-height)
+                          "' x2='600' y2='" (* ch-position line-height)
+                          "' stroke='green' stroke-width='" stroke-width
+                          "' marker-end='url(#triangle)'/>"]
+                         ["<line x1='600' y1='" (* ch-position line-height)
+                          "' x2='500' y2='" (* actx-position line-height)
+                          "' stroke='red' stroke-width='" stroke-width
+                          "' marker-end='url(#triangle)'/>"])))
+                   wait-chs)))
+         (:actxs vis))])
 
 ;; ------------------------------------------------
 
