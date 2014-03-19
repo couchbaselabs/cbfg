@@ -190,18 +190,18 @@
                 actx-position (+ 0.5 (get positions actx-id))
                 wait-chs (:wait-chs actx-info)
                 chs (:chs vis)
-                line-height 20]
+                line-height 21]
             (map (fn [kv]
                    (let [[ch wait-kind] kv
                          ch-info (get chs ch)
                          ch-id (:id ch-info)
                          ch-position (+ 0.5 (get positions ch-id))]
                      (if (= :put wait-kind)
-                       ["<line x1='400' y1='" (* actx-position line-height)
-                        "' x2='500' y2='" (* ch-position line-height)
+                       ["<line x1='500' y1='" (* actx-position line-height)
+                        "' x2='600' y2='" (* ch-position line-height)
                         "' stroke='green' stroke-width='1' marker-end='url(#triangle)'/>"]
-                       ["<line x1='500' y1='" (* ch-position line-height)
-                        "' x2='400' y2='" (* actx-position line-height)
+                       ["<line x1='600' y1='" (* ch-position line-height)
+                        "' x2='500' y2='" (* actx-position line-height)
                         "' stroke='red' stroke-width='1' marker-end='url(#triangle)'/>"])))
                  wait-chs)))
         (:actxs vis))])
