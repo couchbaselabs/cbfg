@@ -163,7 +163,7 @@
    "<marker id='triangle'"
    " viewBox='0 0 10 10' refX='0' refY='5'"
    " markerUnits='strokeWidth'"
-   " markerWidth='4' markerHeight='3'"
+   " markerWidth='8' markerHeight='6'"
    " orient='auto'>"
    " <path d='M 0 0 L 10 5 L 0 10 z'/>"
    "</defs>"
@@ -182,10 +182,10 @@
                      (if (= :put wait-kind)
                        ["<line x1='400' y1='" (* actx-position line-height)
                         "' x2='500' y2='" (* ch-position line-height)
-                        "' stroke='green' stroke-width='1' marker-start='url(#triangle)'/>"]
+                        "' stroke='green' stroke-width='1' marker-end='url(#triangle)'/>"]
                        ["<line x1='500' y1='" (* ch-position line-height)
                         "' x2='400' y2='" (* actx-position line-height)
-                        "' stroke='red' stroke-width='1' marker-start='url(#triangle)'/>"])))
+                        "' stroke='red' stroke-width='1' marker-end='url(#triangle)'/>"])))
                  wait-chs)))
         (:actxs vis))])
 
