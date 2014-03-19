@@ -123,7 +123,7 @@
         actx-info (get-in vis [:actxs actx])
         children (:children actx-info)
         wait-chs (:wait-chs actx-info)]
-    ["<div class='actx'>" (last actx)
+    ["<div id='actx-" (last actx) "' class='actx'>" (last actx)
      (if (not-empty wait-chs)
        [" -- waiting: ("
         (map (fn [kv]
@@ -132,11 +132,12 @@
              wait-chs)
         ")"]
        [])
-     "<div class='ch'>"
+     "<div class='chs'>"
      "  <ul>"
      (map (fn [ch-ch-info]
-            (let [ch-info (second ch-ch-info)]
-              ["<li>" (:id ch-info) ": " (:msgs ch-info) "</li>"]))
+            (let [ch-info (second ch-ch-info)
+                  ch-id (:id ch-info)]
+              ["<li id='ch-" ch-id "'>" ch-id ": " (:msgs ch-info) "</li>"]))
           (get actx-ch-ch-infos actx))
      "  </ul>"
      "</div>"
@@ -151,11 +152,15 @@
      "</div>"]))
 
 (defn vis-svg-actx [vis actx actx-ch-ch-infos]
-  ["<circle cx='"
-   (mod ((:last-id vis)) 500)
-   "' cy='100' r='10'"
-   " stroke='black' stroke-width='3'"
-   " fill='red'/>"])
+  (let [chs (:chs vis)
+        actx-info (get-in vis [:actxs actx])
+        children (:children actx-info)
+        wait-chs (:wait-chs actx-info)]
+    ["<circle cx='"
+     (mod ((:last-id vis)) 500)
+     "' cy='100' r='10'"
+     " stroke='black' stroke-width='3'"
+     " fill='red'/>"]))
 
 ;; ------------------------------------------------
 
