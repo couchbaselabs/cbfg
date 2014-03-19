@@ -175,7 +175,7 @@
        [])
      "</div>"]))
 
-(defn vis-svg-actxs [vis positions]
+(defn vis-svg-actxs [vis positions delta]
   ["<defs>"
    "<marker id='triangle'"
    " viewBox='0 0 10 10' refX='0' refY='5'"
@@ -190,7 +190,8 @@
                 actx-position (+ 0.5 (get positions actx-id))
                 wait-chs (:wait-chs actx-info)
                 chs (:chs vis)
-                line-height 21]
+                line-height 21
+                stroke-width 1]
             (map (fn [kv]
                    (let [[ch wait-kind] kv
                          ch-info (get chs ch)
@@ -199,10 +200,12 @@
                      (if (= :put wait-kind)
                        ["<line x1='500' y1='" (* actx-position line-height)
                         "' x2='600' y2='" (* ch-position line-height)
-                        "' stroke='green' stroke-width='1' marker-end='url(#triangle)'/>"]
+                        "' stroke='green' stroke-width='" stroke-width
+                        "' marker-end='url(#triangle)'/>"]
                        ["<line x1='600' y1='" (* ch-position line-height)
                         "' x2='500' y2='" (* actx-position line-height)
-                        "' stroke='red' stroke-width='1' marker-end='url(#triangle)'/>"])))
+                        "' stroke='red' stroke-width='" stroke-width
+                        "' marker-end='url(#triangle)'/>"])))
                  wait-chs)))
         (:actxs vis))])
 
@@ -243,17 +246,17 @@
       (let [[actx event] (<! event-ch)
             [verb step & args] event
             vis-event-handler (get (get vis-event-handlers verb) step)
-            positions (atom {})]
-        (vis-event-handler vis actx args)
-        (let [actx-ch-ch-infos (group-by #(:first-taker-actx (second %)) (:chs @vis))]
-          (set-el-innerHTML "vis-html"
-                            (apply str (flatten (vis-html-actx @vis @root-actx positions
-                                                               actx-ch-ch-infos))))
-          (set-el-innerHTML "vis-svg"
-                            (apply str (flatten (vis-svg-actxs @vis @positions))))
-          (set-el-innerHTML "event"
-                            (str num-events ": " (last actx) " " verb " " step " " args))))
-      (recur (inc num-events)))
+            positions (atom {})
+            delta (vis-event-handler vis actx args)
+            actx-ch-ch-infos (group-by #(:first-taker-actx (second %)) (:chs @vis))]
+        (set-el-innerHTML "vis-html"
+                          (apply str (flatten (vis-html-actx @vis @root-actx positions
+                                                             actx-ch-ch-infos))))
+        (set-el-innerHTML "vis-svg"
+                          (apply str (flatten (vis-svg-actxs @vis @positions delta))))
+        (set-el-innerHTML "event"
+                          (str num-events ": " (last actx) " " verb " " step " " args))
+        (recur (inc num-events))))
     (ago w-actx w
          (reset! root-actx w-actx)
          (let [in (achan-buf w-actx 100)
