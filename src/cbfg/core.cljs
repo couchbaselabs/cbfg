@@ -170,15 +170,15 @@
    (map (fn [actx-actx-info]
           (let [[actx actx-info] actx-actx-info
                 actx-id (last actx)
-                actx-position (+ 1 (get positions actx-id))
+                actx-position (+ 0.5 (get positions actx-id))
                 wait-chs (:wait-chs actx-info)
                 chs (:chs vis)
-                line-height 24]
+                line-height 20]
             (map (fn [kv]
                    (let [[ch wait-kind] kv
                          ch-info (get chs ch)
                          ch-id (:id ch-info)
-                         ch-position (+ 1 (get positions ch-id))]
+                         ch-position (+ 0.5 (get positions ch-id))]
                      (if (= :put wait-kind)
                        ["<line x1='400' y1='" (* actx-position line-height)
                         "' x2='500' y2='" (* ch-position line-height)
