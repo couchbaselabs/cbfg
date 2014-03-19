@@ -119,39 +119,36 @@
 ;; ------------------------------------------------
 
 (defn vis-html-actx [vis actx actx-ch-ch-infos]
-  (if actx
-    (let [chs (:chs vis)
-          actx-info (get-in vis [:actxs actx])
-          children (:children actx-info)
-          wait-chs (:wait-chs actx-info)]
-      ["<div class='actx'>" (last actx)
-       (if (not-empty wait-chs)
-         [" -- waiting: ("
-          (map (fn [kv]
-                 (let [[ch wait-kind] kv]
-                   [(:id (get chs ch)) wait-kind ", "]))
-               wait-chs)
-          ")"]
-         [])
-       "<div class='ch'>"
-       "  <ul>"
-       (map (fn [ch-ch-info]
-              (let [ch-info (second ch-ch-info)]
-                ["<li>" (:id ch-info) ": " (:msgs ch-info) "</li>"]))
-            (get actx-ch-ch-infos actx))
-       "  </ul>"
-       "</div>"
-       (if (not-empty children)
-         ["<ul>"
-          (map (fn [child-actx-bool] ["<li>"
-                                      (vis-html-actx vis (first child-actx-bool)
-                                                     actx-ch-ch-infos)
-                                      "</li>"])
-               children)
-          "</ul>"]
-         [])
-       "</div>"])
-    "no actx"))
+  (let [chs (:chs vis)
+        actx-info (get-in vis [:actxs actx])
+        children (:children actx-info)
+        wait-chs (:wait-chs actx-info)]
+    ["<div class='actx'>" (last actx)
+     (if (not-empty wait-chs)
+       [" -- waiting: ("
+        (map (fn [kv]
+               (let [[ch wait-kind] kv]
+                 [(:id (get chs ch)) wait-kind ", "]))
+             wait-chs)
+        ")"]
+       [])
+     "<div class='ch'>"
+     "  <ul>"
+     (map (fn [ch-ch-info]
+            (let [ch-info (second ch-ch-info)]
+              ["<li>" (:id ch-info) ": " (:msgs ch-info) "</li>"]))
+          (get actx-ch-ch-infos actx))
+     "  </ul>"
+     "</div>"
+     (if (not-empty children)
+       ["<ul>" (map (fn [child-actx-bool]
+                      ["<li>" (vis-html-actx vis (first child-actx-bool)
+                                             actx-ch-ch-infos)
+                       "</li>"])
+                    children)
+        "</ul>"]
+       [])
+     "</div>"]))
 
 (defn vis-svg-actx [vis actx actx-ch-ch-infos]
   ["<circle cx='"
