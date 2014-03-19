@@ -191,7 +191,6 @@
       (let [[actx event] (<! event-ch)
             [verb step & args] event
             vis-event-handler (get (get vis-event-handlers verb) step)]
-        (set-el-innerHTML "event" (str (last actx) " " verb " " step " " args))
         (vis-event-handler vis actx args)
         (set-el-innerHTML "vis-html"
                           (apply str
@@ -203,7 +202,8 @@
                                (mod num-events 500)
                                "' cy='100' r='10'"
                                " stroke='black' stroke-width='3'"
-                               " fill='red'/>")))
+                               " fill='red'/>"))
+        (set-el-innerHTML "event" (str (last actx) " " verb " " step " " args)))
       (recur (inc num-events)))
     (ago w-actx w
          (reset! root-actx w-actx)
