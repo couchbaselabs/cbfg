@@ -197,7 +197,7 @@
                                  (flatten [(vis-html-actx @vis @root-actx
                                                           (group-by #(:first-taker-actx (second %))
                                                                     (:chs @vis)))])))
-        (set-el-innerHTML "vis"
+        (set-el-innerHTML "vis-svg"
                           (str "<circle cx='"
                                (mod num-events 500)
                                "' cy='100' r='10'"
