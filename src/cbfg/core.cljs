@@ -153,8 +153,14 @@
        "</div>"])
     "no actx"))
 
-;; ------------------------------------------------
+(defn vis-svg-actx [vis actx actx-ch-ch-infos]
+  ["<circle cx='"
+   (mod ((:last-id vis)) 500)
+   "' cy='100' r='10'"
+   " stroke='black' stroke-width='3'"
+   " fill='red'/>"])
 
+;; ------------------------------------------------
 
 (defn vis-init [cmds cmd-handlers]
   (let [max-inflight (atom 10)
@@ -171,7 +177,8 @@
                    :chs {}   ; {ch -> {:id (gen-id),
                              ;         :msgs {msg -> true}
                              ;         :first-taker-actx actx-or-nil}}.
-                   :gen-id gen-id})
+                   :gen-id gen-id
+                   :last-id (fn [] @last-id)})
         run-controls {"run"      #(do (when (< @event-delay 0) (put! step-ch true))
                                       (reset! event-delay 0))
                       "run-slow" #(do (when (< @event-delay 0) (put! step-ch true))
@@ -191,18 +198,14 @@
             [verb step & args] event
             vis-event-handler (get (get vis-event-handlers verb) step)]
         (vis-event-handler vis actx args)
-        (set-el-innerHTML "vis-html"
-                          (apply str
-                                 (flatten [(vis-html-actx @vis @root-actx
-                                                          (group-by #(:first-taker-actx (second %))
-                                                                    (:chs @vis)))])))
-        (set-el-innerHTML "vis-svg"
-                          (str "<circle cx='"
-                               (mod num-events 500)
-                               "' cy='100' r='10'"
-                               " stroke='black' stroke-width='3'"
-                               " fill='red'/>"))
-        (set-el-innerHTML "event" (str (last actx) " " verb " " step " " args)))
+        (let [actx-ch-ch-infos (group-by #(:first-taker-actx (second %)) (:chs @vis))]
+          (set-el-innerHTML "vis-html"
+                            (apply str (flatten (vis-html-actx @vis @root-actx
+                                                               actx-ch-ch-infos))))
+          (set-el-innerHTML "vis-svg"
+                            (apply str (flatten (vis-svg-actx @vis @root-actx
+                                                              actx-ch-ch-infos))))
+          (set-el-innerHTML "event" (str (last actx) " " verb " " step " " args))))
       (recur (inc num-events)))
     (ago w-actx w
          (reset! root-actx w-actx)
