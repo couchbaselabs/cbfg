@@ -57,12 +57,14 @@
              (swap! vis #(-> %
                              (assoc-in [:actxs child-actx]
                                        {:children {} :wait-chs {}})
-                             (assoc-in [:actxs actx :children child-actx] true)))))
+                             (assoc-in [:actxs actx :children child-actx] true)))
+             [[:actx-appear child-actx]]))
     :end (fn [vis actx args]
            (let [[child-actx result] args]
              (swap! vis #(-> %
                              (dissoc-in [:actxs child-actx])
-                             (dissoc-in [:actxs actx :children child-actx])))))}
+                             (dissoc-in [:actxs actx :children child-actx])))
+             [[:actx-disappear child-actx]]))}
    "aclose"
    {:beg (fn [vis actx args]
            (let [[ch] args] nil))
@@ -73,39 +75,44 @@
            (let [[ch] args]
              (swap! vis #(-> %
                              (assoc-in [:actxs actx :wait-chs ch] :take)
-                             (vis-add-ch ch actx)))))
+                             (vis-add-ch ch actx)))
+             nil))
     :end (fn [vis actx args]
            (let [[ch msg] args]
              (swap! vis #(-> %
                              (dissoc-in [:actxs actx :wait-chs ch])
                              (dissoc-in [:chs ch :msgs msg])))
              (when (nil? msg) ; The ch is closed.
-               (swap! vis #(dissoc-in % [:chs ch])))))}
+               (swap! vis #(dissoc-in % [:chs ch])))
+             [[:msg-move msg :ch ch :actx actx]]))}
    "aput"
    {:beg (fn [vis actx args]
            (let [[ch msg] args]
              (swap! vis #(-> %
                              (assoc-in [:actxs actx :wait-chs ch] :put)
                              (vis-add-ch ch nil)
-                             (assoc-in [:chs ch :msgs msg] true)))))
+                             (assoc-in [:chs ch :msgs msg] true)))
+             [[:msg-move msg :actx actx :ch ch]]))
     :end (fn [vis actx args]
            (let [[ch msg result] args]
              (swap! vis #(-> %
                              (dissoc-in [:actxs actx :wait-chs ch])))
              ; NOTE: Normally we should cleanup ch when nil result but
              ; looks like CLJS async always incorrectly returns nil from >!.
-             ))}
+             nil))}
    "aalts"
    {:beg (fn [vis actx args]
            (let [[ch-bindings] args
                  ; The ch-actions will be [[ch :take] [ch :put] ...].
                  ch-actions (map #(if (seq? %) [(first %) :put] [% :take]) ch-bindings)]
-             (doseq [ch-action ch-actions]
-               (swap! vis #(-> %
-                               (vis-add-ch (first ch-action)
-                                           (if (= (second ch-action) :take) actx nil))
-                               (assoc-in [:actxs actx :wait-chs (first ch-action)]
-                                         (second ch-action)))))))
+             (apply concat ; NOTE: mapcat doesn't seem to work.
+                    (map (fn [ch-action]
+                           (let [[ch action] ch-action]
+                             (swap! vis #(-> %
+                                             (vis-add-ch ch (if (= action :take) actx nil))
+                                             (assoc-in [:actxs actx :wait-chs ch] action)))
+                             (when (= action :put) [[:msg-move msg :actx actx :ch ch]])))
+                         ch-actions))))
     :end (fn [vis actx args]
            (let [[ch-bindings result] args
                  chs (map #(if (seq? %) (first %) %) ch-bindings)
@@ -114,7 +121,8 @@
                (swap! vis #(dissoc-in % [:actxs actx :wait-chs ch])))
              (swap! vis #(dissoc-in % [:chs result-ch :msgs result-msg]))
              (when (nil? result-msg) ; The ch is closed.
-               (swap! vis #(dissoc-in % [:chs result-ch])))))}})
+               (swap! vis #(dissoc-in % [:chs result-ch])))
+             nil))}})
 
 ;; ------------------------------------------------
 
