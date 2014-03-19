@@ -106,17 +106,17 @@
                     ; The ch-actions will be [[ch :take] [ch :put] ...].
                     ch-actions (map #(if (seq? %) [(first %) :put] [% :take])
                                     ch-bindings)]
-                (apply concat ; NOTE: mapcat doesn't seem to work.
-                       (map (fn [ch-action]
-                              (let [[ch action] ch-action]
-                                (swap! vis #(-> %
-                                                (vis-add-ch ch
-                                                            (when (= action :take) actx))
-                                                (assoc-in [:actxs actx :wait-chs ch]
-                                                          action)))
-                                (when (= action :put)
-                                  [[:msg-move msg :actx actx :ch ch]])))
-                            ch-actions))))
+                (apply concat
+                       (mapv (fn [ch-action]
+                               (let [[ch action] ch-action]
+                                 (swap! vis #(-> %
+                                                 (vis-add-ch ch
+                                                             (when (= action :take) actx))
+                                                 (assoc-in [:actxs actx :wait-chs ch]
+                                                           action)))
+                                 (when (= action :put)
+                                   [[:msg-move msg :actx actx :ch ch]])))
+                             ch-actions))))
     :after (fn [vis actx args]
              (let [[ch-bindings result] args
                    chs (map #(if (seq? %) (first %) %) ch-bindings)
