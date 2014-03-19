@@ -118,11 +118,18 @@
 
 ;; ------------------------------------------------
 
-(defn vis-html-actx [vis actx actx-ch-ch-infos]
-  (let [chs (:chs vis)
+(defn assign-position [positions id]
+  (swap! positions #(update-in % [id] (fn [v] (if v v (count @positions))))))
+
+;; ------------------------------------------------
+
+(defn vis-html-actx [vis actx positions actx-ch-ch-infos]
+  (let [actx-id (last actx)
         actx-info (get-in vis [:actxs actx])
         children (:children actx-info)
-        wait-chs (:wait-chs actx-info)]
+        wait-chs (:wait-chs actx-info)
+        chs (:chs vis)]
+    (assign-position positions (last actx))
     ["<div id='actx-" (last actx) "' class='actx'>" (last actx)
      (if (not-empty wait-chs)
        [" -- waiting: ("
@@ -137,6 +144,7 @@
      (map (fn [ch-ch-info]
             (let [ch-info (second ch-ch-info)
                   ch-id (:id ch-info)]
+              (assign-position positions ch-id)
               ["<li id='ch-" ch-id "'>" ch-id ": " (:msgs ch-info) "</li>"]))
           (get actx-ch-ch-infos actx))
      "  </ul>"
@@ -144,14 +152,14 @@
      (if (not-empty children)
        ["<ul>" (map (fn [child-actx-bool]
                       ["<li>" (vis-html-actx vis (first child-actx-bool)
-                                             actx-ch-ch-infos)
+                                             positions actx-ch-ch-infos)
                        "</li>"])
                     children)
         "</ul>"]
        [])
      "</div>"]))
 
-(defn vis-svg-actx [vis actx actx-ch-ch-infos]
+(defn vis-svg-actx [vis actx positions actx-ch-ch-infos]
   (let [chs (:chs vis)
         actx-info (get-in vis [:actxs actx])
         children (:children actx-info)
@@ -198,14 +206,15 @@
       (when (< @event-delay 0) (<! step-ch))
       (let [[actx event] (<! event-ch)
             [verb step & args] event
-            vis-event-handler (get (get vis-event-handlers verb) step)]
+            vis-event-handler (get (get vis-event-handlers verb) step)
+            positions (atom {})]
         (vis-event-handler vis actx args)
         (let [actx-ch-ch-infos (group-by #(:first-taker-actx (second %)) (:chs @vis))]
           (set-el-innerHTML "vis-html"
-                            (apply str (flatten (vis-html-actx @vis @root-actx
+                            (apply str (flatten (vis-html-actx @vis @root-actx positions
                                                                actx-ch-ch-infos))))
           (set-el-innerHTML "vis-svg"
-                            (apply str (flatten (vis-svg-actx @vis @root-actx
+                            (apply str (flatten (vis-svg-actx @vis @root-actx @positions
                                                               actx-ch-ch-infos))))
           (set-el-innerHTML "event" (str (last actx) " " verb " " step " " args))))
       (recur (inc num-events)))
