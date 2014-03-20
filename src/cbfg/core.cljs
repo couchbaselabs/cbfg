@@ -204,12 +204,16 @@
      (mapv (fn [delta]
              (when (get chs (:ch delta))
                (case (:delta delta)
-                 :put ["<line x1='500' y1='" (actx-y (:actx delta))
-                       "' x2='600' y2='" (ch-y (:ch delta))
-                       "' stroke='green' stroke-width='2' marker-end='url(#triangle)'/>"]
-                 :take ["<line x1='600' y1='" (ch-y (:ch delta))
-                        "' x2='500' y2='" (actx-y (:actx delta))
-                        "' stroke='red' stroke-width='2' marker-end='url(#triangle)'/>"]
+                 :put ["<g transform='translate(500," (actx-y (:actx delta)) ")'>"
+                       "<line class='delta' x1='0' y1='0' x2='100' y2='"
+                       (- (ch-y (:ch delta)) (actx-y (:actx delta)))
+                       "' stroke='green' stroke-width='1' marker-end='url(#triangle)'/>"
+                       "</g>"]
+                 :take ["<g transform='translate(600," (ch-y (:ch delta)) ")'>"
+                        "<line class='delta' x1='0' y1='0' x2='-100' y2='"
+                        (- (actx-y (:actx delta)) (ch-y (:ch delta)))
+                        "' stroke='red' stroke-width='1' marker-end='url(#triangle)'/>"
+                        "</g>"]
                  :actx-new nil
                  :actx-remove nil
                  nil)))
