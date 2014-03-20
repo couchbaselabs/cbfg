@@ -261,24 +261,20 @@
                                          (keys run-controls)))]
       ((get run-controls (.-id (.-target (<! run-control-ch)))))
       (recur run-control-ch))
-    (go-loop [num-events 0]
+    (go-loop [num-events 0 vis-last nil vis-last-positions nil]
       (when (> @event-delay 0) (<! (timeout @event-delay)))
       (when (< @event-delay 0) (<! step-ch))
       (let [[actx event] (<! event-ch)
             [verb step & args] event
-            vis-last @vis
             vis-positions (atom {})
             vis-event-handler (get (get vis-event-handlers verb) step)
             deltas (vis-event-handler vis actx args)
             actx-ch-ch-infos (group-by #(:first-taker-actx (second %)) (:chs @vis))]
         (set-el-innerHTML "event"
                           (str num-events ": " (last actx) " " verb " " step " " args))
-        (when (and (not (zero? @event-delay)) (not-empty deltas))
-          (set-el-innerHTML "vis-html"
-                            (apply str (flatten (vis-html-actx vis-last @root-actx vis-positions
-                                                               actx-ch-ch-infos))))
+        (when (and (not (zero? @event-delay)) (not-empty deltas) vis-last vis-last-positions)
           (set-el-innerHTML "vis-svg"
-                            (apply str (flatten (vis-svg-actxs vis-last @vis-positions deltas))))
+                            (apply str (flatten (vis-svg-actxs vis-last vis-last-positions deltas))))
           (when (> @event-delay 0) (<! (timeout @event-delay)))
           (when (< @event-delay 0) (<! step-ch)))
         (set-el-innerHTML "vis-html"
@@ -286,7 +282,7 @@
                                                              actx-ch-ch-infos))))
         (set-el-innerHTML "vis-svg"
                           (apply str (flatten (vis-svg-actxs @vis @vis-positions nil))))
-        (recur (inc num-events))))
+        (recur (inc num-events) @vis @vis-positions)))
     (ago world w
          (reset! root-actx world)
          (let [in (achan-buf world 100)
