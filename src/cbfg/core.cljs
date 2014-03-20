@@ -287,20 +287,20 @@
         (set-el-innerHTML "vis-svg"
                           (apply str (flatten (vis-svg-actxs @vis @vis-positions nil))))
         (recur (inc num-events))))
-    (ago w-actx w
-         (reset! root-actx w-actx)
-         (let [in (achan-buf w-actx 100)
-               out (achan-buf w-actx 0)]
-           (ago-loop main-in w-actx [num-ins 0]
+    (ago world w
+         (reset! root-actx world)
+         (let [in (achan-buf world 100)
+               out (achan-buf world 0)]
+           (ago-loop main-in world [num-ins 0]
                      (let [cmd (<! cmds)
                            cmd-handler ((get cmd-handlers (:op cmd)) cmd)]
                        (aput main-in in cmd-handler)
                        (recur (inc num-ins))))
-           (ago-loop main-out w-actx [num-outs 0]
+           (ago-loop main-out world [num-outs 0]
                      (let [result (atake main-out out)]
                        (set-el-innerHTML "output" result)
                        (recur (inc num-outs))))
-           (make-fenced-pump w-actx in out @max-inflight)))))
+           (make-fenced-pump world in out @max-inflight)))))
 
 ;; ------------------------------------------------
 
