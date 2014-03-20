@@ -58,13 +58,13 @@
                                 (assoc-in [:actxs child-actx]
                                           {:children {} :wait-chs {}})
                                 (assoc-in [:actxs actx :children child-actx] true)))
-                [[:actx-appear child-actx]]))
+                [{:detla :actx-appear :actx child-actx}]))
     :after (fn [vis actx args]
              (let [[child-actx result] args]
                (swap! vis #(-> %
                                (dissoc-in [:actxs child-actx])
                                (dissoc-in [:actxs actx :children child-actx])))
-               [[:actx-disappear child-actx]]))}
+               [{:delta :actx-disappear :actx child-actx}]))}
    "aclose"
    {:before (fn [vis actx args]
               (let [[ch] args] nil))
@@ -84,7 +84,7 @@
                                (dissoc-in [:chs ch :msgs msg])))
                (when (nil? msg) ; The ch is closed.
                  (swap! vis #(dissoc-in % [:chs ch])))
-               [[:msg-move msg :ch ch :actx actx]]))}
+               [{:delta :take :msg msg :ch ch :actx actx}]))}
    "aput"
    {:before (fn [vis actx args]
               (let [[ch msg] args]
@@ -92,7 +92,7 @@
                                 (assoc-in [:actxs actx :wait-chs ch] :put)
                                 (vis-add-ch ch nil)
                                 (assoc-in [:chs ch :msgs msg] true)))
-                [[:msg-move msg :actx actx :ch ch]]))
+                [{:delta :put :msg msg :actx actx :ch ch}]))
     :after (fn [vis actx args]
              (let [[ch msg result] args]
                (swap! vis #(-> %
@@ -115,7 +115,7 @@
                                                  (assoc-in [:actxs actx :wait-chs ch]
                                                            action)))
                                  (when (= action :put)
-                                   [[:msg-move (first msgv) :actx actx :ch ch]])))
+                                   [{:delta :put :msg (first msgv) :actx actx :ch ch}])))
                              ch-actions))))
     :after (fn [vis actx args]
              (let [[ch-bindings result] args
@@ -127,7 +127,7 @@
                (when (nil? result-msg) ; The ch is closed.
                  (swap! vis #(dissoc-in % [:chs result-ch])))
                (when (some #(= % result-ch) ch-bindings)
-                 [[:msg-move result-msg :ch result-ch :actx actx]])))}})
+                 [{:delta :take :msg result-msg :ch result-ch :actx actx}])))}})
 
 ;; ------------------------------------------------
 
@@ -174,7 +174,7 @@
        [])
      "</div>"]))
 
-(defn vis-svg-actxs [vis positions delta]
+(defn vis-svg-actxs [vis positions deltas]
   ["<defs>"
    "<marker id='triangle'"
    " viewBox='0 0 10 10' refX='0' refY='5'"
@@ -189,13 +189,17 @@
                  actx-position (+ 0.5 (get positions actx-id))
                  wait-chs (:wait-chs actx-info)
                  chs (:chs vis)
-                 line-height 21
-                 stroke-width 1]
+                 line-height 21]
              (mapv (fn [kv]
                      (let [[ch wait-kind] kv
                            ch-info (get chs ch)
                            ch-id (:id ch-info)
-                           ch-position (+ 0.5 (get positions ch-id))]
+                           ch-position (+ 0.5 (get positions ch-id))
+                           stroke-width (if (some #(and (= (:delta %) wait-kind)
+                                                        (= (:actx %) actx)
+                                                        (= (:ch %) ch)) deltas)
+                                          1.5
+                                          1)]
                        (if (= :put wait-kind)
                          ["<line x1='500' y1='" (* actx-position line-height)
                           "' x2='600' y2='" (* ch-position line-height)
@@ -246,13 +250,13 @@
             [verb step & args] event
             vis-event-handler (get (get vis-event-handlers verb) step)
             positions (atom {})
-            delta (vis-event-handler vis actx args)
+            deltas (vis-event-handler vis actx args)
             actx-ch-ch-infos (group-by #(:first-taker-actx (second %)) (:chs @vis))]
         (set-el-innerHTML "vis-html"
                           (apply str (flatten (vis-html-actx @vis @root-actx positions
                                                              actx-ch-ch-infos))))
         (set-el-innerHTML "vis-svg"
-                          (apply str (flatten (vis-svg-actxs @vis @positions delta))))
+                          (apply str (flatten (vis-svg-actxs @vis @positions deltas))))
         (set-el-innerHTML "event"
                           (str num-events ": " (last actx) " " verb " " step " " args))
         (recur (inc num-events))))
