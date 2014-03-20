@@ -213,19 +213,20 @@
                        ["<g transform='translate(600," (ch-y (:ch delta)) ")'>"
                         "<line class='delta' x1='0' y1='0' x2='-100' y2='"
                         (- (actx-y (:actx delta)) (ch-y (:ch delta)))
-                        "' stroke='green' stroke-width='1' marker-end='url(#triangle)'/>"
+                        "' stroke='" (if (:msg delta) "green" "black")
+                        "' stroke-width='1' marker-end='url(#triangle)'/>"
                         "</g>"])
                :actx-start (when (> (actx-y (:child-actx delta)) line-height)
                              ["<g transform='translate(30," (actx-y (:actx delta)) ")'>"
-                              "<line class='delta' x1='0' y1='0' x2='50' y2='"
+                              "<line class='delta' x1='0' y1='0' x2='30' y2='"
                               (- (actx-y (:child-actx delta)) (actx-y (:actx delta)))
                               "' stroke='green' stroke-width='1' marker-end='url(#triangle)'/>"
                               "</g>"])
                :actx-end (when (> (actx-y (:child-actx delta)) line-height)
-                           ["<g transform='translate(80," (actx-y (:child-actx delta)) ")'>"
-                            "<line class='delta' x1='0' y1='0' x2='-50' y2='"
+                           ["<g transform='translate(60," (actx-y (:child-actx delta)) ")'>"
+                            "<line class='delta' x1='0' y1='0' x2='-30' y2='"
                             (- (actx-y (:actx delta)) (actx-y (:child-actx delta)))
-                            "' stroke='green' stroke-width='1' marker-end='url(#triangle)'/>"
+                            "' stroke='black' stroke-width='1' marker-end='url(#triangle)'/>"
                             "</g>"])
                nil))
            deltas)]))
