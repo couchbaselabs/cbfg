@@ -175,42 +175,38 @@
      "</div>"]))
 
 (defn vis-svg-actxs [vis positions deltas]
-  ["<defs>"
-   "<marker id='triangle'"
-   " viewBox='0 0 10 10' refX='0' refY='5'"
-   " markerUnits='strokeWidth'"
-   " markerWidth='8' markerHeight='6'"
-   " orient='auto'>"
-   " <path d='M 0 0 L 10 5 L 0 10 z'/>"
-   "</defs>"
-   (mapv (fn [actx-actx-info]
-           (let [[actx actx-info] actx-actx-info
-                 actx-id (last actx)
-                 actx-position (+ 0.5 (get positions actx-id))
-                 wait-chs (:wait-chs actx-info)
-                 chs (:chs vis)
-                 line-height 21]
-             (mapv (fn [kv]
-                     (let [[ch wait-kind] kv
-                           ch-info (get chs ch)
-                           ch-id (:id ch-info)
-                           ch-position (+ 0.5 (get positions ch-id))
-                           stroke-width (if (some #(and (= (:delta %) wait-kind)
-                                                        (= (:actx %) actx)
-                                                        (= (:ch %) ch)) deltas)
-                                          1.5
-                                          1)]
-                       (if (= :put wait-kind)
-                         ["<line x1='500' y1='" (* actx-position line-height)
-                          "' x2='600' y2='" (* ch-position line-height)
-                          "' stroke='green' stroke-width='" stroke-width
-                          "' marker-end='url(#triangle)'/>"]
-                         ["<line x1='600' y1='" (* ch-position line-height)
-                          "' x2='500' y2='" (* actx-position line-height)
-                          "' stroke='red' stroke-width='" stroke-width
-                          "' marker-end='url(#triangle)'/>"])))
-                   wait-chs)))
-         (:actxs vis))])
+  (let [line-height 21
+        stroke-width 1]
+    ["<defs>"
+     "<marker id='triangle'"
+     " viewBox='0 0 10 10' refX='0' refY='5'"
+     " markerUnits='strokeWidth'"
+     " markerWidth='8' markerHeight='6'"
+     " orient='auto'>"
+     " <path d='M 0 0 L 10 5 L 0 10 z'/>"
+     "</defs>"
+     (map (fn [actx-actx-info]
+            (let [[actx actx-info] actx-actx-info
+                  actx-id (last actx)
+                  actx-position (+ 0.5 (get positions actx-id))
+                  wait-chs (:wait-chs actx-info)
+                  chs (:chs vis)]
+              (mapv (fn [kv]
+                      (let [[ch wait-kind] kv
+                            ch-info (get chs ch)
+                            ch-id (:id ch-info)
+                            ch-position (+ 0.5 (get positions ch-id))]
+                        (if (= :put wait-kind)
+                          ["<line x1='500' y1='" (* actx-position line-height)
+                           "' x2='600' y2='" (* ch-position line-height)
+                           "' stroke='green' stroke-width='" stroke-width
+                           "' marker-end='url(#triangle)'/>"]
+                          ["<line x1='600' y1='" (* ch-position line-height)
+                           "' x2='500' y2='" (* actx-position line-height)
+                           "' stroke='red' stroke-width='" stroke-width
+                           "' marker-end='url(#triangle)'/>"])))
+                    wait-chs)))
+          (:actxs vis))]))
 
 ;; ------------------------------------------------
 
