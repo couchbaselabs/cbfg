@@ -15,9 +15,9 @@
   `(let [ago-id# ((:gen-id (actx-top ~actx)))
          ~child-actx-binding-name (conj ~actx
                                         (str '~child-actx-binding-name "-" ago-id#))]
-     (go (actx-event ~actx ["ago" :before ~child-actx-binding-name])
+     (go (actx-event ~actx ["ago" :start ~child-actx-binding-name])
          (let [result# (do ~@body)]
-           (actx-event ~actx ["ago" :after ~child-actx-binding-name result#])
+           (actx-event ~actx ["ago" :end ~child-actx-binding-name result#])
            result#))))
 
 (defmacro ago-loop [child-actx-binding-name actx bindings & body]

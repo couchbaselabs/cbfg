@@ -52,19 +52,19 @@
 
 (def vis-event-handlers
   {"ago"
-   {:before (fn [vis actx args]
-              (let [[child-actx] args]
-                (swap! vis #(-> %
-                                (assoc-in [:actxs child-actx]
-                                          {:children {} :wait-chs {}})
-                                (assoc-in [:actxs actx :children child-actx] true)))
-                [{:delta :actx-new :actx child-actx}]))
-    :after (fn [vis actx args]
-             (let [[child-actx result] args]
+   {:start (fn [vis actx args]
+             (let [[child-actx] args]
                (swap! vis #(-> %
-                               (dissoc-in [:actxs child-actx])
-                               (dissoc-in [:actxs actx :children child-actx])))
-               [{:delta :actx-remove :actx child-actx}]))}
+                               (assoc-in [:actxs child-actx]
+                                         {:children {} :wait-chs {}})
+                               (assoc-in [:actxs actx :children child-actx] true)))
+               [{:delta :actx-start :actx actx :child-actx child-actx}]))
+    :end (fn [vis actx args]
+           (let [[child-actx result] args]
+             (swap! vis #(-> %
+                             (dissoc-in [:actxs child-actx])
+                             (dissoc-in [:actxs actx :children child-actx])))
+             [{:delta :actx-end :actx actx :child-actx child-actx}]))}
    "aclose"
    {:before (fn [vis actx args]
               (let [[ch] args] nil))
@@ -202,21 +202,32 @@
                      (:wait-chs actx-info))))
            (:actxs vis))
      (mapv (fn [delta]
-             (when (get chs (:ch delta))
-               (case (:delta delta)
-                 :put ["<g transform='translate(500," (actx-y (:actx delta)) ")'>"
+             (case (:delta delta)
+               :put (when (get chs (:ch delta))
+                      ["<g transform='translate(500," (actx-y (:actx delta)) ")'>"
                        "<line class='delta' x1='0' y1='0' x2='100' y2='"
                        (- (ch-y (:ch delta)) (actx-y (:actx delta)))
                        "' stroke='green' stroke-width='1' marker-end='url(#triangle)'/>"
-                       "</g>"]
-                 :take ["<g transform='translate(600," (ch-y (:ch delta)) ")'>"
+                       "</g>"])
+               :take (when (get chs (:ch delta))
+                       ["<g transform='translate(600," (ch-y (:ch delta)) ")'>"
                         "<line class='delta' x1='0' y1='0' x2='-100' y2='"
                         (- (actx-y (:actx delta)) (ch-y (:ch delta)))
                         "' stroke='green' stroke-width='1' marker-end='url(#triangle)'/>"
-                        "</g>"]
-                 :actx-new nil
-                 :actx-remove nil
-                 nil)))
+                        "</g>"])
+               :actx-start (when (> (actx-y (:child-actx delta)) 0)
+                             ["<g transform='translate(30," (actx-y (:actx delta)) ")'>"
+                              "<line class='delta' x1='0' y1='0' x2='50' y2='"
+                              (- (actx-y (:child-actx delta)) (actx-y (:actx delta)))
+                              "' stroke='green' stroke-width='1' marker-end='url(#triangle)'/>"
+                              "</g>"])
+               :actx-end (when (> (actx-y (:child-actx delta)) 0)
+                           ["<g transform='translate(80," (actx-y (:child-actx delta)) ")'>"
+                            "<line class='delta' x1='0' y1='0' x2='-50' y2='"
+                            (- (actx-y (:actx delta)) (actx-y (:child-actx delta)))
+                            "' stroke='green' stroke-width='1' marker-end='url(#triangle)'/>"
+                            "</g>"])
+               nil))
            deltas)]))
 
 ;; ------------------------------------------------
