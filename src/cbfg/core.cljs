@@ -266,17 +266,26 @@
       (when (< @event-delay 0) (<! step-ch))
       (let [[actx event] (<! event-ch)
             [verb step & args] event
+            vis-last @vis
+            vis-positions (atom {})
             vis-event-handler (get (get vis-event-handlers verb) step)
-            positions (atom {})
             deltas (vis-event-handler vis actx args)
             actx-ch-ch-infos (group-by #(:first-taker-actx (second %)) (:chs @vis))]
-        (set-el-innerHTML "vis-html"
-                          (apply str (flatten (vis-html-actx @vis @root-actx positions
-                                                             actx-ch-ch-infos))))
-        (set-el-innerHTML "vis-svg"
-                          (apply str (flatten (vis-svg-actxs @vis @positions deltas))))
         (set-el-innerHTML "event"
                           (str num-events ": " (last actx) " " verb " " step " " args))
+        (when (and (<= @event-delay 1000) (not-empty deltas))
+          (set-el-innerHTML "vis-html"
+                            (apply str (flatten (vis-html-actx vis-last @root-actx vis-positions
+                                                               actx-ch-ch-infos))))
+          (set-el-innerHTML "vis-svg"
+                            (apply str (flatten (vis-svg-actxs vis-last @vis-positions deltas))))
+          (when (> @event-delay 0) (<! (timeout @event-delay)))
+          (when (< @event-delay 0) (<! step-ch)))
+        (set-el-innerHTML "vis-html"
+                          (apply str (flatten (vis-html-actx @vis @root-actx vis-positions
+                                                             actx-ch-ch-infos))))
+        (set-el-innerHTML "vis-svg"
+                          (apply str (flatten (vis-svg-actxs @vis @vis-positions nil))))
         (recur (inc num-events))))
     (ago w-actx w
          (reset! root-actx w-actx)
