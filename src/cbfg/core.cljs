@@ -147,13 +147,6 @@
         chs (:chs vis)]
     (assign-position positions actx-id)
     ["<div id='actx-" actx-id "' class='actx'>" actx-id
-     (if (not-empty wait-chs)
-       [" -- waiting: ("
-        (map (fn [kv] (let [[ch wait-kind] kv]
-                        [(:id (get chs ch)) wait-kind ", "]))
-             wait-chs)
-        ")"]
-       [])
      "<div class='chs'>"
      "  <ul>"
      (mapv (fn [ch-ch-info]
