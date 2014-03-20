@@ -47,8 +47,7 @@
                                :msgs {}
                                :first-taker-actx first-taker-actx}
                               %))
-      (update-in [:chs ch :first-taker-actx]
-                 #(if % % first-taker-actx))))
+      (update-in [:chs ch :first-taker-actx] #(if % % first-taker-actx))))
 
 (def vis-event-handlers
   {"ago"
