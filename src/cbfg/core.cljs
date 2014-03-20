@@ -195,7 +195,7 @@
                          (if (= :put wait-kind)
                            ["<line x1='500' y1='" (actx-y actx)
                             "' x2='600' y2='" (ch-y ch)
-                            "' stroke='#afa' stroke-width='1' marker-end='url(#triangle)'/>"]
+                            "' stroke='#faa' stroke-width='1' marker-end='url(#triangle)'/>"]
                            ["<line x1='600' y1='" (ch-y ch)
                             "' x2='500' y2='" (actx-y actx)
                             "' stroke='#faa' stroke-width='1' marker-end='url(#triangle)'/>"])))
@@ -212,7 +212,7 @@
                  :take ["<g transform='translate(600," (ch-y (:ch delta)) ")'>"
                         "<line class='delta' x1='0' y1='0' x2='-100' y2='"
                         (- (actx-y (:actx delta)) (ch-y (:ch delta)))
-                        "' stroke='red' stroke-width='1' marker-end='url(#triangle)'/>"
+                        "' stroke='green' stroke-width='1' marker-end='url(#triangle)'/>"
                         "</g>"]
                  :actx-new nil
                  :actx-remove nil
