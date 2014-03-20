@@ -195,10 +195,10 @@
                          (if (= :put wait-kind)
                            ["<line x1='500' y1='" (actx-y actx)
                             "' x2='600' y2='" (ch-y ch)
-                            "' stroke='green' stroke-width='1' marker-end='url(#triangle)'/>"]
+                            "' stroke='#afa' stroke-width='1' marker-end='url(#triangle)'/>"]
                            ["<line x1='600' y1='" (ch-y ch)
                             "' x2='500' y2='" (actx-y actx)
-                            "' stroke='red' stroke-width='1' marker-end='url(#triangle)'/>"])))
+                            "' stroke='#faa' stroke-width='1' marker-end='url(#triangle)'/>"])))
                      (:wait-chs actx-info))))
            (:actxs vis))
      (mapv (fn [delta]
