@@ -58,13 +58,13 @@
                                 (assoc-in [:actxs child-actx]
                                           {:children {} :wait-chs {}})
                                 (assoc-in [:actxs actx :children child-actx] true)))
-                [{:detla :actx-appear :actx child-actx}]))
+                [{:delta :actx-new :actx child-actx}]))
     :after (fn [vis actx args]
              (let [[child-actx result] args]
                (swap! vis #(-> %
                                (dissoc-in [:actxs child-actx])
                                (dissoc-in [:actxs actx :children child-actx])))
-               [{:delta :actx-disappear :actx child-actx}]))}
+               [{:delta :actx-remove :actx child-actx}]))}
    "aclose"
    {:before (fn [vis actx args]
               (let [[ch] args] nil))
@@ -175,8 +175,11 @@
      "</div>"]))
 
 (defn vis-svg-actxs [vis positions deltas]
-  (let [line-height 21
-        stroke-width 1]
+  (let [stroke-width 1
+        line-height 21
+        chs (:chs vis)
+        ch-y (fn [ch] (* line-height (+ 0.5 (get positions (:id (get chs ch))))))
+        actx-y (fn [actx] (* line-height (+ 0.5 (get positions (last actx)))))]
     ["<defs>"
      "<marker id='triangle'"
      " viewBox='0 0 10 10' refX='0' refY='5'"
@@ -185,28 +188,32 @@
      " orient='auto'>"
      " <path d='M 0 0 L 10 5 L 0 10 z'/>"
      "</defs>"
-     (map (fn [actx-actx-info]
-            (let [[actx actx-info] actx-actx-info
-                  actx-id (last actx)
-                  actx-position (+ 0.5 (get positions actx-id))
-                  wait-chs (:wait-chs actx-info)
-                  chs (:chs vis)]
-              (mapv (fn [kv]
-                      (let [[ch wait-kind] kv
-                            ch-info (get chs ch)
-                            ch-id (:id ch-info)
-                            ch-position (+ 0.5 (get positions ch-id))]
-                        (if (= :put wait-kind)
-                          ["<line x1='500' y1='" (* actx-position line-height)
-                           "' x2='600' y2='" (* ch-position line-height)
-                           "' stroke='green' stroke-width='" stroke-width
-                           "' marker-end='url(#triangle)'/>"]
-                          ["<line x1='600' y1='" (* ch-position line-height)
-                           "' x2='500' y2='" (* actx-position line-height)
-                           "' stroke='red' stroke-width='" stroke-width
-                           "' marker-end='url(#triangle)'/>"])))
-                    wait-chs)))
-          (:actxs vis))]))
+     (mapv (fn [actx-actx-info]
+             (let [[actx actx-info] actx-actx-info]
+               (mapv (fn [ch-wait-kind]
+                       (let [[ch wait-kind] ch-wait-kind]
+                         (if (= :put wait-kind)
+                           ["<line x1='500' y1='" (actx-y actx)
+                            "' x2='600' y2='" (ch-y ch)
+                            "' stroke='green' stroke-width='1' marker-end='url(#triangle)'/>"]
+                           ["<line x1='600' y1='" (ch-y ch)
+                            "' x2='500' y2='" (actx-y actx)
+                            "' stroke='red' stroke-width='1' marker-end='url(#triangle)'/>"])))
+                     (:wait-chs actx-info))))
+           (:actxs vis))
+     (mapv (fn [delta]
+             (when (get chs (:ch delta))
+               (case (:delta delta)
+                 :put ["<line x1='500' y1='" (actx-y (:actx delta))
+                       "' x2='600' y2='" (ch-y (:ch delta))
+                       "' stroke='green' stroke-width='2' marker-end='url(#triangle)'/>"]
+                 :take ["<line x1='600' y1='" (ch-y (:ch delta))
+                        "' x2='500' y2='" (actx-y (:actx delta))
+                        "' stroke='red' stroke-width='2' marker-end='url(#triangle)'/>"]
+                 :actx-new nil
+                 :actx-remove nil
+                 nil)))
+           deltas)]))
 
 ;; ------------------------------------------------
 
