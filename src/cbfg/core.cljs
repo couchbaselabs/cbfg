@@ -273,7 +273,7 @@
             actx-ch-ch-infos (group-by #(:first-taker-actx (second %)) (:chs @vis))]
         (set-el-innerHTML "event"
                           (str num-events ": " (last actx) " " verb " " step " " args))
-        (when (and (<= @event-delay 1000) (not-empty deltas))
+        (when (and (not (zero? @event-delay)) (not-empty deltas))
           (set-el-innerHTML "vis-html"
                             (apply str (flatten (vis-html-actx vis-last @root-actx vis-positions
                                                                actx-ch-ch-infos))))
