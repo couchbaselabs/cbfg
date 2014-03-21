@@ -66,7 +66,7 @@
              [{:delta :actx-end :actx actx :child-actx child-actx :phase :prev}]))}
    :ago-loop
    {:loop-state (fn [vis actx args]
-                  (swap! vis #(assoc-in % [:actxs actx :loop-state] args))
+                  (swap! vis #(assoc-in % [:actxs actx :loop-state] (first args)))
                   nil)}
    :aclose
    {:before (fn [vis actx args]
@@ -144,9 +144,21 @@
 
 ;; ------------------------------------------------
 
-(defn vis-html-loop-state [loop-state]
-  (mapv (fn [name val])
-        loop-state))
+(defn vis-html-ch [vis ch]
+  (if ch
+    ["(ch " (:id (get-in vis [:chs ch])) ")"]
+    "nil"))
+
+(defn vis-html-loop-state
+  ([vis loop-state] (mapv (fn [nv] [(vis-html-loop-state vis
+                                                         (first nv) (second nv)) ", "])
+                          loop-state))
+  ([vis name val] (let [name-parts (string/split (str name) #"-")]
+                    (cond (= "ch" (last name-parts)) [name " " (vis-html-ch vis val)]
+                          (= "chs" (last name-parts)) [name " ["
+                                                       (map #(vis-html-ch vis %) val)
+                                                       "]"]
+                          :default [name " " (if val val "nil")]))))
 
 ;; ------------------------------------------------
 
@@ -158,7 +170,7 @@
         chs (:chs vis)]
     (assign-position positions actx-id)
     ["<div id='actx-" actx-id "' class='actx'>" actx-id
-     "<div class='loop-state'>" (:loop-state actx-info) "</div>"
+     "<div class='loop-state'>" (vis-html-loop-state vis (:loop-state actx-info)) "</div>"
      "<div class='chs'>"
      "  <ul>"
      (mapv (fn [ch-ch-info]
