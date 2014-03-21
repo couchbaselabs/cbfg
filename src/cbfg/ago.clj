@@ -28,7 +28,7 @@
     `(ago ~child-actx-binding-name ~actx
           (loop ~bindings
             (actx-event ~child-actx-binding-name
-                        [:ago-loop :loop-state (hash-map ~@m)])
+                        [:ago-loop :loop-state (sorted-map ~@m)])
             ~@body))))
 
 (defmacro achan [actx]
