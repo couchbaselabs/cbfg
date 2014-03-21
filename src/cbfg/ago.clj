@@ -21,7 +21,15 @@
            result#))))
 
 (defmacro ago-loop [child-actx-binding-name actx bindings & body]
-  `(ago ~child-actx-binding-name ~actx (loop ~bindings ~@body)))
+  (let [m (->> bindings
+               (partition 2)
+               (map first)
+               (mapcat (fn [sym] [(keyword (name sym)) [(meta sym) sym]])))]
+    `(ago ~child-actx-binding-name ~actx
+          (loop ~bindings
+            (actx-event ~child-actx-binding-name
+                        ["ago-loop" :loop (hash-map ~@m)])
+              ~@body))))
 
 (defmacro achan [actx]
   `(achan-buf ~actx 0))

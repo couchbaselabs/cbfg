@@ -64,6 +64,10 @@
                              (dissoc-in [:actxs child-actx])
                              (dissoc-in [:actxs actx :children child-actx])))
              [{:delta :actx-end :actx actx :child-actx child-actx :phase :prev}]))}
+   "ago-loop"
+   {:loop (fn [vis actx args]
+            (println (last actx) args)
+            nil)}
    "aclose"
    {:before (fn [vis actx args]
               (let [[ch] args] nil))
