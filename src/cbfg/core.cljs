@@ -150,15 +150,19 @@
     "nil"))
 
 (defn vis-html-loop-state
-  ([vis loop-state] (mapv (fn [nv] [(vis-html-loop-state vis
-                                                         (first nv) (second nv)) ", "])
-                          loop-state))
-  ([vis name val] (let [name-parts (string/split (str name) #"-")]
-                    (cond (= "ch" (last name-parts)) [name " " (vis-html-ch vis val)]
-                          (= "chs" (last name-parts)) [name " ["
-                                                       (map #(vis-html-ch vis %) val)
-                                                       "]"]
-                          :default [name " " (if val val "nil")]))))
+  ([vis loop-state]
+     (interpose ", "
+                (mapv (fn [nv] [(vis-html-loop-state vis
+                                                     (first nv) (second nv))])
+                      loop-state)))
+  ([vis name val]
+     (let [name-parts (string/split (str name) #"-")]
+       (cond (= "ch" (last name-parts)) [name " " (vis-html-ch vis val)]
+             (= "chs" (last name-parts)) [name " ["
+                                          (interpose ", "
+                                                     (map #(vis-html-ch vis %) val))
+                                          "]"]
+             :default [name " " (if val val "nil")]))))
 
 ;; ------------------------------------------------
 
