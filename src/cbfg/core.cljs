@@ -50,7 +50,7 @@
       (update-in [:chs ch :first-taker-actx] #(if % % first-taker-actx))))
 
 (def vis-event-handlers
-  {"ago"
+  {:ago
    {:start (fn [vis actx args]
              (let [[child-actx] args]
                (swap! vis #(-> %
@@ -64,16 +64,16 @@
                              (dissoc-in [:actxs child-actx])
                              (dissoc-in [:actxs actx :children child-actx])))
              [{:delta :actx-end :actx actx :child-actx child-actx :phase :prev}]))}
-   "ago-loop"
+   :ago-loop
    {:loop-state (fn [vis actx args]
                   (swap! vis #(assoc-in % [:actxs actx :loop-state] args))
                   nil)}
-   "aclose"
+   :aclose
    {:before (fn [vis actx args]
               (let [[ch] args] nil))
     :after (fn [vis actx args]
              (let [[ch result] args] nil))}
-   "atake"
+   :atake
    {:before (fn [vis actx args]
               (let [[ch] args]
                 (swap! vis #(-> %
@@ -88,7 +88,7 @@
                (when (nil? msg) ; The ch is closed.
                  (swap! vis #(dissoc-in % [:chs ch])))
                [{:delta :take :msg msg :ch ch :actx actx :phase :prev}]))}
-   "aput"
+   :aput
    {:before (fn [vis actx args]
               (let [[ch msg] args]
                 (swap! vis #(-> %
@@ -103,7 +103,7 @@
                ; NOTE: Normally we should cleanup ch when nil result but
                ; looks like CLJS async always incorrectly returns nil from >!.
                nil))}
-   "aalts"
+   :aalts
    {:before (fn [vis actx args]
               (let [[ch-bindings] args
                     ; The ch-actions will be [[ch :take] [ch :put] ...].
@@ -142,7 +142,11 @@
   ; (swap! positions (fn [x] (merge {id (count x)} x)))
   (swap! positions #(update-in % [id] (fn [v] (if v v (count %))))))
 
-(defn vis-html-loop-state [])
+;; ------------------------------------------------
+
+(defn vis-html-loop-state [loop-state]
+  (mapv (fn [name val])
+        loop-state))
 
 ;; ------------------------------------------------
 
