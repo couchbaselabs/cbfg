@@ -293,13 +293,13 @@
          (reset! root-actx world)
          (let [in (achan-buf world 100)
                out (achan-buf world 0)]
-           (ago-loop main-in world [num-ins 0]
+           (ago-loop user-in world [num-ins 0]
                      (let [cmd (<! cmds)
                            cmd-handler ((get cmd-handlers (:op cmd)) cmd)]
-                       (aput main-in in cmd-handler)
+                       (aput user-in in cmd-handler)
                        (recur (inc num-ins))))
-           (ago-loop main-out world [num-outs 0]
-                     (let [result (atake main-out out)]
+           (ago-loop user-out world [num-outs 0]
+                     (let [result (atake user-out out)]
                        (set-el-innerHTML "output" result)
                        (recur (inc num-outs))))
            (make-fenced-pump world in out @max-inflight)))))
