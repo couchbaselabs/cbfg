@@ -66,7 +66,7 @@
              [{:delta :actx-end :actx actx :child-actx child-actx :phase :prev}]))}
    "ago-loop"
    {:loop (fn [vis actx args]
-            (println (last actx) args)
+            (swap! vis #(assoc-in % [:actxs actx :loop] args))
             nil)}
    "aclose"
    {:before (fn [vis actx args]
@@ -152,6 +152,7 @@
         chs (:chs vis)]
     (assign-position positions actx-id)
     ["<div id='actx-" actx-id "' class='actx'>" actx-id
+     "<div class='loop'>" (:loop actx-info) "</div>"
      "<div class='chs'>"
      "  <ul>"
      (mapv (fn [ch-ch-info]
@@ -243,7 +244,8 @@
             :event-ch event-ch}]
         root-actx (atom nil)
         vis (atom {:actxs {} ; {actx -> {:children {child-actx -> true},
-                             ;           :wait-chs {ch -> (:take|:put)}}}.
+                             ;           :wait-chs {ch -> (:take|:put)},
+                             ;           :loop last-loop-bindings}}.
                    :chs {}   ; {ch -> {:id (gen-id),
                              ;         :msgs {msg -> true}
                              ;         :first-taker-actx actx-or-nil}}.
