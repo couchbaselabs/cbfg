@@ -37,39 +37,39 @@
 ;; request format
 ;; {:rq function-to-call :fence true-or-false}
 
-(defn make-fenced-pump [actx in-ch out-ch max-inflights]
+(defn make-fenced-pump [actx in-ch out-ch max-inflight-chs]
   (ago-loop fenced-pump actx
-   [inflights #{}              ; chans of requests currently being processed.
-    fenced nil                 ; chan of last, inflight "fenced" request.
-    fenced-res nil]            ; last received result from last fenced request.
-   (let [i (vec (if (or fenced ; if we're fenced or too many inflight requests,
-                        (>= (count inflights) max-inflights))
-                  inflights    ; then ignore in-ch & finish existing inflight requests.
-                  (conj inflights in-ch)))
-         [v ch] (if (empty? i) ; empty when in-ch is closed and no inflights.
+   [inflight-chs #{}              ; chans of requests currently being processed.
+    fenced-ch nil                 ; chan of last, inflight "fenced" request.
+    fenced-ch-res nil]            ; last received result from last fenced request.
+   (let [i (vec (if (or fenced-ch ; if we're fenced or too many inflight requests,
+                        (>= (count inflight-chs) max-inflight-chs))
+                  inflight-chs    ; then ignore in-ch & finish existing inflight requests.
+                  (conj inflight-chs in-ch)))
+         [v ch] (if (empty? i)    ; empty when in-ch is closed and no inflight-chs.
                   [nil nil]
                   (aalts fenced-pump i))]
      (cond
       (= nil v ch) (aclose fenced-pump out-ch)
       (= ch in-ch) (if (nil? v)
-                     (recur inflights out-ch nil)
+                     (recur inflight-chs out-ch nil)
                      (let [new-inflight ((:rq v) fenced-pump)]
-                       (recur (conj inflights new-inflight)
+                       (recur (conj inflight-chs new-inflight)
                               (if (:fence v) new-inflight nil)
                               nil)))
-      (= v nil) (let [new-inflights (disj inflights ch)] ; an inflight request is done.
-                  (if (empty? new-inflights)             ; if inflight requests are all done,
-                    (do (when fenced-res                 ; finally send the fenced-res that
-                          (aput fenced-pump              ; we have been holding onto.
-                                out-ch fenced-res))
-                        (recur new-inflights nil nil))
-                    (recur new-inflights fenced fenced-res)))
-      (= ch fenced) (do (when fenced-res
-                          (aput fenced-pump              ; send any previous fenced-res so
-                                out-ch fenced-res))      ; we can hold v as last fenced-res.
-                        (recur inflights fenced v))
+      (= v nil) (let [new-inflight-chs (disj inflight-chs ch)] ; an inflight request is done.
+                  (if (empty? new-inflight-chs)                ; if inflight requests are all done,
+                    (do (when fenced-ch-res                    ; finally send the fenced-ch-res that
+                          (aput fenced-pump                    ; we have been holding onto.
+                                out-ch fenced-ch-res))
+                        (recur new-inflight-chs nil nil))
+                    (recur new-inflight-chs fenced-ch fenced-ch-res)))
+      (= ch fenced-ch) (do (when fenced-ch-res
+                          (aput fenced-pump            ; send any previous fenced-res so
+                                out-ch fenced-ch-res)) ; we can hold v as last fenced-ch-res.
+                        (recur inflight-chs fenced-ch v))
       :else (do (aput fenced-pump out-ch v)
-                (recur inflights fenced fenced-res))))))
+                (recur inflight-chs fenced-ch fenced-ch-res))))))
 
 ;; ------------------------------------------------------------
 
@@ -121,13 +121,13 @@
                        "pass"
                        "FAIL")
                      %)
-              [["test with 2 max-inflights"
+              [["test with 2 max-inflight-chs"
                 (let [ch (test-helper test 100 1 2 reqs)
                       res (atake test ch)]
                   (atake test ch)
                   res)
                 '(6 3 12 40 41 42 43 44 11 11 6 7 8 0 1 9 32)]
-               ["test with 200 max-inflights"
+               ["test with 200 max-inflight-chs"
                 (let [ch (test-helper test 100 1 200 reqs)
                       res (atake test ch)]
                   (atake test ch)
