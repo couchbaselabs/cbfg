@@ -39,14 +39,14 @@
 
 (defn make-fenced-pump [actx in-ch out-ch max-inflights]
   (ago-loop fenced-pump actx
-   [^{:kind :set}     inflights #{}   ; chans of requests currently being processed.
-    ^{:kind :nilable} fenced nil      ; chan of last, inflight "fenced" request.
-    ^{:kind :nilable} fenced-res nil] ; last received result from last fenced request.
-   (let [i (vec (if (or fenced        ; if we're fenced or too many inflight requests,
+   [inflights #{}              ; chans of requests currently being processed.
+    fenced nil                 ; chan of last, inflight "fenced" request.
+    fenced-res nil]            ; last received result from last fenced request.
+   (let [i (vec (if (or fenced ; if we're fenced or too many inflight requests,
                         (>= (count inflights) max-inflights))
-                  inflights           ; then ignore in-ch & finish existing inflight requests.
+                  inflights    ; then ignore in-ch & finish existing inflight requests.
                   (conj inflights in-ch)))
-         [v ch] (if (empty? i)        ; empty when in-ch is closed and no inflights.
+         [v ch] (if (empty? i) ; empty when in-ch is closed and no inflights.
                   [nil nil]
                   (aalts fenced-pump i))]
      (cond
