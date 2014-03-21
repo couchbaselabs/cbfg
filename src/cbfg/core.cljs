@@ -65,9 +65,9 @@
                              (dissoc-in [:actxs actx :children child-actx])))
              [{:delta :actx-end :actx actx :child-actx child-actx :phase :prev}]))}
    "ago-loop"
-   {:loop (fn [vis actx args]
-            (swap! vis #(assoc-in % [:actxs actx :loop] args))
-            nil)}
+   {:loop-state (fn [vis actx args]
+                  (swap! vis #(assoc-in % [:actxs actx :loop-state] args))
+                  nil)}
    "aclose"
    {:before (fn [vis actx args]
               (let [[ch] args] nil))
@@ -142,6 +142,8 @@
   ; (swap! positions (fn [x] (merge {id (count x)} x)))
   (swap! positions #(update-in % [id] (fn [v] (if v v (count %))))))
 
+(defn vis-html-loop-state [])
+
 ;; ------------------------------------------------
 
 (defn vis-html-actx [vis actx positions actx-ch-ch-infos]
@@ -152,7 +154,7 @@
         chs (:chs vis)]
     (assign-position positions actx-id)
     ["<div id='actx-" actx-id "' class='actx'>" actx-id
-     "<div class='loop'>" (:loop actx-info) "</div>"
+     "<div class='loop-state'>" (:loop-state actx-info) "</div>"
      "<div class='chs'>"
      "  <ul>"
      (mapv (fn [ch-ch-info]
@@ -245,7 +247,7 @@
         root-actx (atom nil)
         vis (atom {:actxs {} ; {actx -> {:children {child-actx -> true},
                              ;           :wait-chs {ch -> (:take|:put)},
-                             ;           :loop last-loop-bindings}}.
+                             ;           :loop-state last-loop-bindings}}.
                    :chs {}   ; {ch -> {:id (gen-id),
                              ;         :msgs {msg -> true}
                              ;         :first-taker-actx actx-or-nil}}.
