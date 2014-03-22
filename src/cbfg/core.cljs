@@ -226,41 +226,31 @@
            (:actxs vis))
      (mapv (fn [delta]
              (when (= phase (:phase delta))
-               (case (:delta delta)
-                 :put (when (get chs (:ch delta))
-                        ["<g transform='translate(500," (actx-y (:actx delta)) ")'>"
-                         "<line class='delta' x1='0' y1='0' x2='100' y2='"
-                         (- (ch-y (:ch delta)) (actx-y (:actx delta)))
-                         "' stroke='green' stroke-width='1' marker-end='url(#triangle)'/>"
-                         "</g>"
-                         (when (:ch-name delta)
-                           ["<text class='ch-name' x='540' y='"
-                            (* 0.5 (+ (actx-y (:actx delta)) (ch-y (:ch delta))))
-                            "'>" (:ch-name delta) "</text>"])])
-                 :take (when (get chs (:ch delta))
-                         ["<g transform='translate(600," (ch-y (:ch delta)) ")'>"
-                          "<line class='delta' x1='0' y1='0' x2='-100' y2='"
-                          (- (actx-y (:actx delta)) (ch-y (:ch delta)))
-                          "' stroke='" (if (:msg delta) "green" "black")
-                          "' stroke-width='1' marker-end='url(#triangle)'/>"
-                          "</g>"
-                          (when (:ch-name delta)
-                            ["<text class='ch-name' x='540' y='"
-                             (* 0.5 (+ (actx-y (:actx delta)) (ch-y (:ch delta))))
-                             "'>" (:ch-name delta) "</text>"])])
-                 :actx-start (when (> (actx-y (:child-actx delta)) line-height)
-                               ["<g transform='translate(30," (actx-y (:actx delta)) ")'>"
-                                "<line class='delta' x1='0' y1='0' x2='30' y2='"
-                                (- (actx-y (:child-actx delta)) (actx-y (:actx delta)))
-                                "' stroke='green' stroke-width='1' marker-end='url(#triangle)'/>"
-                                "</g>"])
-                 :actx-end (when (> (actx-y (:child-actx delta)) line-height)
-                             ["<g transform='translate(60," (actx-y (:child-actx delta)) ")'>"
-                              "<line class='delta' x1='0' y1='0' x2='-30' y2='"
-                              (- (actx-y (:actx delta)) (actx-y (:child-actx delta)))
-                              "' stroke='black' stroke-width='1' marker-end='url(#triangle)'/>"
-                              "</g>"])
-                 nil)))
+               (let [childy (actx-y (:child-actx delta))
+                     ay (actx-y (:actx delta))
+                     cy (ch-y (:ch delta))]
+                 [(case (:delta delta)
+                    :put (when (get chs (:ch delta))
+                           ["<g transform='translate(500," ay ")'>"
+                            "<line class='delta' x1='0' y1='0' x2='100' y2='" (- cy ay)
+                            "' stroke='green' stroke-width='1' marker-end='url(#triangle)'/></g>"])
+                    :take (when (get chs (:ch delta))
+                            ["<g transform='translate(600," cy ")'>"
+                             "<line class='delta' x1='0' y1='0' x2='-100' y2='" (- ay cy)
+                             "' stroke='" (if (:msg delta) "green" "black")
+                             "' stroke-width='1' marker-end='url(#triangle)'/></g>"])
+                    :actx-start (when (> childy line-height)
+                                  ["<g transform='translate(30," ay ")'>"
+                                   "<line class='delta' x1='0' y1='0' x2='30' y2='" (- childy ay)
+                                   "' stroke='green' stroke-width='1' marker-end='url(#triangle)'/></g>"])
+                    :actx-end (when (> childy line-height)
+                                ["<g transform='translate(60," childy ")'>"
+                                 "<line class='delta' x1='0' y1='0' x2='-30' y2='" (- ay childy)
+                                 "' stroke='black' stroke-width='1' marker-end='url(#triangle)'/></g>"])
+                    nil)
+                  (when (:ch-name delta)
+                    ["<text class='ch-name' x='540' y='" (* 0.5 (+ ay cy))
+                     "'>" (:ch-name delta) "</text>"])])))
            deltas)]))
 
 ;; ------------------------------------------------
