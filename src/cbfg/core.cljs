@@ -87,7 +87,7 @@
                                (dissoc-in [:chs ch :msgs msg])))
                (when (nil? msg) ; The ch is closed.
                  (swap! vis #(dissoc-in % [:chs ch])))
-               [{:delta :take :msg msg :ch ch :actx actx :phase :prev}]))}
+               [{:delta :take :msg msg :ch ch :actx actx :phase :prev :ch-name ch-name}]))}
    :aput
    {:before (fn [vis actx args]
               (let [[ch-name ch msg] args]
@@ -95,7 +95,7 @@
                                 (assoc-in [:actxs actx :wait-chs ch] [:put ch-name])
                                 (vis-add-ch ch nil)
                                 (assoc-in [:chs ch :msgs msg] true)))
-                [{:delta :put :msg msg :actx actx :ch ch :phase :prev}]))
+                [{:delta :put :msg msg :actx actx :ch ch :phase :prev :ch-name ch-name}]))
     :after (fn [vis actx args]
              (let [[ch-name ch msg result] args]
                (swap! vis #(-> %
@@ -232,14 +232,22 @@
                          "<line class='delta' x1='0' y1='0' x2='100' y2='"
                          (- (ch-y (:ch delta)) (actx-y (:actx delta)))
                          "' stroke='green' stroke-width='1' marker-end='url(#triangle)'/>"
-                         "</g>"])
+                         "</g>"
+                         (when (:ch-name delta)
+                           ["<text class='ch-name' x='540' y='"
+                            (* 0.5 (+ (actx-y (:actx delta)) (ch-y (:ch delta))))
+                            "'>" (:ch-name delta) "</text>"])])
                  :take (when (get chs (:ch delta))
                          ["<g transform='translate(600," (ch-y (:ch delta)) ")'>"
                           "<line class='delta' x1='0' y1='0' x2='-100' y2='"
                           (- (actx-y (:actx delta)) (ch-y (:ch delta)))
                           "' stroke='" (if (:msg delta) "green" "black")
                           "' stroke-width='1' marker-end='url(#triangle)'/>"
-                          "</g>"])
+                          "</g>"
+                          (when (:ch-name delta)
+                            ["<text class='ch-name' x='540' y='"
+                             (* 0.5 (+ (actx-y (:actx delta)) (ch-y (:ch delta))))
+                             "'>" (:ch-name delta) "</text>"])])
                  :actx-start (when (> (actx-y (:child-actx delta)) line-height)
                                ["<g transform='translate(30," (actx-y (:actx delta)) ")'>"
                                 "<line class='delta' x1='0' y1='0' x2='30' y2='"
