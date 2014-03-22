@@ -44,15 +44,15 @@
          result#)))
 
 (defmacro atake [actx ch]
-  `(do (actx-event ~actx [:atake :before ~ch])
+  `(do (actx-event ~actx [:atake :before '~ch ~ch])
        (let [result# (cljs.core.async/<! ~ch)]
-         (actx-event ~actx [:atake :after ~ch result#])
+         (actx-event ~actx [:atake :after '~ch ~ch result#])
          result#)))
 
 (defmacro aput [actx ch msg]
-  `(do (actx-event ~actx [:aput :before ~ch ~msg])
+  `(do (actx-event ~actx [:aput :before '~ch ~ch ~msg])
        (let [result# (cljs.core.async/>! ~ch ~msg)]
-         (actx-event ~actx [:aput :after ~ch ~msg result#])
+         (actx-event ~actx [:aput :after '~ch ~ch ~msg result#])
          result#)))
 
 (defmacro aalts [actx chs]

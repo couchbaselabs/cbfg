@@ -75,13 +75,13 @@
              (let [[ch result] args] nil))}
    :atake
    {:before (fn [vis actx args]
-              (let [[ch] args]
+              (let [[ch-name ch] args]
                 (swap! vis #(-> %
-                                (assoc-in [:actxs actx :wait-chs ch] :take)
+                                (assoc-in [:actxs actx :wait-chs ch] [:take ch-name])
                                 (vis-add-ch ch actx)))
                 nil))
     :after (fn [vis actx args]
-             (let [[ch msg] args]
+             (let [[ch-name ch msg] args]
                (swap! vis #(-> %
                                (dissoc-in [:actxs actx :wait-chs ch])
                                (dissoc-in [:chs ch :msgs msg])))
@@ -90,14 +90,14 @@
                [{:delta :take :msg msg :ch ch :actx actx :phase :prev}]))}
    :aput
    {:before (fn [vis actx args]
-              (let [[ch msg] args]
+              (let [[ch-name ch msg] args]
                 (swap! vis #(-> %
-                                (assoc-in [:actxs actx :wait-chs ch] :put)
+                                (assoc-in [:actxs actx :wait-chs ch] [:put ch-name])
                                 (vis-add-ch ch nil)
                                 (assoc-in [:chs ch :msgs msg] true)))
                 [{:delta :put :msg msg :actx actx :ch ch :phase :prev}]))
     :after (fn [vis actx args]
-             (let [[ch msg result] args]
+             (let [[ch-name ch msg result] args]
                (swap! vis #(-> %
                                (dissoc-in [:actxs actx :wait-chs ch])))
                ; NOTE: Normally we should cleanup ch when nil result but
@@ -116,7 +116,7 @@
                                                  (vis-add-ch ch
                                                              (when (= action :take) actx))
                                                  (assoc-in [:actxs actx :wait-chs ch]
-                                                           action)))
+                                                           [action])))
                                  (when (= action :put)
                                    [{:delta :put :msg (first msgv) :actx actx :ch ch
                                      :phase :prev}])))
@@ -169,9 +169,7 @@
 (defn vis-html-actx [vis actx positions actx-ch-ch-infos]
   (let [actx-id (last actx)
         actx-info (get-in vis [:actxs actx])
-        children (:children actx-info)
-        wait-chs (:wait-chs actx-info)
-        chs (:chs vis)]
+        children (:children actx-info)]
     (assign-position positions actx-id)
     ["<div id='actx-" actx-id "' class='actx'>" actx-id
      "<div class='loop-state'>" (vis-html-loop-state vis (:loop-state actx-info)) "</div>"
@@ -211,15 +209,19 @@
      "</defs>"
      (mapv (fn [actx-actx-info]
              (let [[actx actx-info] actx-actx-info]
-               (mapv (fn [ch-wait-kind]
-                       (let [[ch wait-kind] ch-wait-kind]
-                         (if (= :put wait-kind)
-                           ["<line x1='500' y1='" (actx-y actx)
-                            "' x2='600' y2='" (ch-y ch)
-                            "' stroke='#faa' stroke-width='1' marker-end='url(#triangle)'/>"]
-                           ["<line x1='600' y1='" (ch-y ch)
-                            "' x2='500' y2='" (actx-y actx)
-                            "' stroke='#faa' stroke-width='1' marker-end='url(#triangle)'/>"])))
+               (mapv (fn [ch-action]
+                       (let [[ch wait-kind-ch-name] ch-action
+                             [wait-kind ch-name] wait-kind-ch-name
+                             ay (actx-y actx)
+                             cy (ch-y ch)]
+                         [(if (= :put wait-kind)
+                            ["<line x1='500' y1='" ay "' x2='600' y2='" cy
+                             "' stroke='#faa' stroke-width='1' marker-end='url(#triangle)'/>"]
+                            ["<line x1='600' y1='" cy "' x2='500' y2='" ay
+                             "' stroke='#faa' stroke-width='1' marker-end='url(#triangle)'/>"])
+                          (when ch-name
+                            ["<text class='ch-name' x='540' y='" (* 0.5 (+ ay cy))
+                             "'>" ch-name "</text>"])]))
                      (:wait-chs actx-info))))
            (:actxs vis))
      (mapv (fn [delta]
@@ -266,7 +268,7 @@
             :event-ch event-ch}]
         root-actx (atom nil)
         vis (atom {:actxs {} ; {actx -> {:children {child-actx -> true},
-                             ;           :wait-chs {ch -> (:take|:put)},
+                             ;           :wait-chs {ch -> [:take|:put optional-ch-name])},
                              ;           :loop-state last-loop-bindings}}.
                    :chs {}   ; {ch -> {:id (gen-id),
                              ;         :msgs {msg -> true}
