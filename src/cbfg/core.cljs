@@ -200,11 +200,8 @@
         ch-y (fn [ch] (* line-height (+ 0.5 (get positions (:id (get chs ch))))))
         actx-y (fn [actx] (* line-height (+ 0.5 (get positions (last actx)))))]
     ["<defs>"
-     "<marker id='triangle'"
-     " viewBox='0 0 10 10' refX='0' refY='5'"
-     " markerUnits='strokeWidth'"
-     " markerWidth='8' markerHeight='6'"
-     " orient='auto'>"
+     "<marker id='triangle' viewBox='0 0 10 10' refX='0' refY='5'  orient='auto'"
+     " markerUnits='strokeWidth' markerWidth='8' markerHeight='6'>"
      " <path d='M 0 0 L 10 5 L 0 10 z'/>"
      "</defs>"
      (mapv (fn [actx-actx-info]
