@@ -184,11 +184,10 @@
      "  </ul>"
      "</div>"
      (if (not-empty children)
-       ["<ul>" (mapv (fn [child-actx-bool]
-                       ["<li>" (vis-html-actx vis (first child-actx-bool)
-                                              positions actx-ch-ch-infos)
+       ["<ul>" (mapv (fn [child-actx]
+                       ["<li>" (vis-html-actx vis child-actx positions actx-ch-ch-infos)
                         "</li>"])
-                     children)
+                     (sort #(compare (last %1) (last %2)) (keys children)))
         "</ul>"]
        [])
      "</div>"]))
