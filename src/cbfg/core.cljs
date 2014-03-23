@@ -259,6 +259,8 @@
       ((get run-controls (.-id (.-target (<! run-control-ch)))))
       (recur run-control-ch))))
 
+;; ------------------------------------------------
+
 (defn vis-init [cmds cmd-handlers]
   (let [max-inflight (atom 10)
         event-delay (atom 0)
@@ -266,7 +268,8 @@
         step-ch (chan)
         last-id (atom 0)
         gen-id #(swap! last-id inc)
-        w [{:gen-id gen-id :event-ch event-ch}]
+        w [{:gen-id gen-id
+            :event-ch event-ch}]
         root-actx (atom nil)
         vis (atom {:actxs {} ; {actx -> {:children {child-actx -> true},
                              ;           :wait-chs {ch -> [:take|:put optional-ch-name])},
@@ -276,7 +279,9 @@
                              ;         :first-taker-actx actx-or-nil}}.
                    :gen-id gen-id
                    :last-id (fn [] @last-id)})]
-    (go-loop [num-events 0 vis-last nil vis-last-positions nil]
+    (go-loop [num-events 0
+              vis-last nil
+              vis-last-positions nil]
       (when (> @event-delay 0) (<! (timeout @event-delay)))
       (when (< @event-delay 0) (<! step-ch))
       (let [[actx event] (<! event-ch)
