@@ -51,7 +51,7 @@
              (let [[child-actx] args]
                (swap! vis #(-> %
                                (assoc-in [:actxs child-actx]
-                                         {:children {} :wait-chs {}})
+                                         {:children {} :wait-chs {} :closed false})
                                (assoc-in [:actxs actx :children child-actx] true)))
                [{:delta :actx-start :actx actx :child-actx child-actx :phase :curr}]))
     :end (fn [vis actx args]
@@ -163,7 +163,11 @@
         actx-info (get-in vis [:actxs actx])
         children (:children actx-info)]
     (assign-position positions actx-id)
-    ["<div id='actx-" actx-id "' class='actx'>" actx-id
+    ["<div id='actx-" actx-id "' class='actx'>"
+     "<button class='toggle-actx' id='toggle-actx-" actx-id "'>"
+     (if (:closed actx-info) "&#9654;" "&#9660;")
+     "</button>"
+     actx-id
      "<div class='loop-state'>" (vis-html-loop-state vis (:loop-state actx-info)) "</div>"
      "<div class='chs'><ul>"
      (mapv (fn [ch-ch-info]
@@ -268,7 +272,8 @@
         root-actx (atom nil)
         vis (atom {:actxs {} ; {actx -> {:children {child-actx -> true},
                              ;           :wait-chs {ch -> [:take|:put optional-ch-name])},
-                             ;           :loop-state last-loop-bindings}}.
+                             ;           :loop-state last-loop-bindings
+                             ;           :closed bool}}.
                    :chs {}   ; {ch -> {:id (gen-id),
                              ;         :msgs {msg -> true}
                              ;         :first-taker-actx actx-or-nil}}.
