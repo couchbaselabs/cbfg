@@ -40,11 +40,9 @@
 
 (defn vis-add-ch [vis ch first-taker-actx]
   (-> vis
-      (update-in [:chs ch] #(if (nil? %)
-                              {:id ((:gen-id vis))
-                               :msgs {}
-                               :first-taker-actx first-taker-actx}
-                              %))
+      (update-in [:chs ch] #(if % % {:id ((:gen-id vis))
+                                     :msgs {}
+                                     :first-taker-actx first-taker-actx}))
       (update-in [:chs ch :first-taker-actx] #(if % % first-taker-actx))))
 
 (def vis-event-handlers
