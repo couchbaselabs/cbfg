@@ -17,15 +17,13 @@
 
 ;; ------------------------------------------------
 
-(defn get-el-value [elId]
-  (.-value (gdom/getElement elId)))
+(defn get-el-value [elId] (.-value (gdom/getElement elId)))
 
-(defn set-el-innerHTML [elId v]
-  (set! (.-innerHTML (gdom/getElement elId)) v))
+(defn set-el-innerHTML [elId v] (set! (.-innerHTML (gdom/getElement elId)) v))
 
 (defn listen [el type]
   (let [out (chan)]
-    (gevents/listen el type (fn [e] (put! out e)))
+    (gevents/listen el type #(put! out %))
     out))
 
 (defn dissoc-in [m [k & ks :as keys]]
