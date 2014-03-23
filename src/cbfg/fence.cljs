@@ -79,13 +79,13 @@
        (+ x 2)))
 
 (defn test-range-to [actx s e delay]
-  (let [c (achan actx)]
+  (let [out (achan actx)]
     (ago test-range-to actx
          (doseq [n (range s e)]
            (<! (timeout delay))
-           (aput test-range-to c n))
-         (aclose test-range-to c))
-    c))
+           (aput test-range-to out n))
+         (aclose test-range-to out))
+    out))
 
 (defn test-helper [actx
                    in-ch-size
@@ -122,14 +122,14 @@
                        "FAIL")
                      %)
               [["test with 2 max-inflight-chs"
-                (let [ch (test-helper test 100 1 2 reqs)
-                      res (atake test ch)]
-                  (atake test ch)
+                (let [test-helper-out (test-helper test 100 1 2 reqs)
+                      res (atake test test-helper-out)]
+                  (atake test test-helper-out)
                   res)
                 '(6 3 12 40 41 42 43 44 11 11 6 7 8 0 1 9 32)]
                ["test with 200 max-inflight-chs"
-                (let [ch (test-helper test 100 1 200 reqs)
-                      res (atake test ch)]
-                  (atake test ch)
+                (let [test-helper-out (test-helper test 100 1 200 reqs)
+                      res (atake test test-helper-out)]
+                  (atake test test-helper-out)
                   res)
                 '(6 3 12 40 41 42 43 44 6 7 8 0 1 11 11 9 32)]]))))
