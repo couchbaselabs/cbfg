@@ -162,8 +162,6 @@
                                           "]"]
              :default [name " " (if val val "nil")]))))
 
-;; ------------------------------------------------
-
 (defn vis-html-actx [vis actx positions actx-ch-ch-infos]
   (let [actx-id (last actx)
         actx-info (get-in vis [:actxs actx])
@@ -185,6 +183,8 @@
                    (sort #(compare (last %1) (last %2)) (keys children)))
       "</ul>"]
      "</div>"]))
+
+;; ------------------------------------------------
 
 (defn vis-svg-actxs [vis positions deltas phase]
   (let [stroke-width 1
@@ -266,8 +266,7 @@
         step-ch (chan)
         last-id (atom 0)
         gen-id #(swap! last-id inc)
-        w [{:gen-id gen-id
-            :event-ch event-ch}]
+        w [{:gen-id gen-id :event-ch event-ch}]
         root-actx (atom nil)
         vis (atom {:actxs {} ; {actx -> {:children {child-actx -> true},
                              ;           :wait-chs {ch -> [:take|:put optional-ch-name])},
