@@ -173,23 +173,19 @@
     (assign-position positions actx-id)
     ["<div id='actx-" actx-id "' class='actx'>" actx-id
      "<div class='loop-state'>" (vis-html-loop-state vis (:loop-state actx-info)) "</div>"
-     "<div class='chs'>"
-     "  <ul>"
+     "<div class='chs'><ul>"
      (mapv (fn [ch-ch-info]
              (let [ch-info (second ch-ch-info)
                    ch-id (:id ch-info)]
                (assign-position positions ch-id)
                ["<li id='ch-" ch-id "'>" ch-id ": " (:msgs ch-info) "</li>"]))
            (get actx-ch-ch-infos actx))
-     "  </ul>"
-     "</div>"
-     (if (not-empty children)
-       ["<ul>" (mapv (fn [child-actx]
-                       ["<li>" (vis-html-actx vis child-actx positions actx-ch-ch-infos)
-                        "</li>"])
-                     (sort #(compare (last %1) (last %2)) (keys children)))
-        "</ul>"]
-       [])
+     "</ul></div>"
+     ["<ul>" (mapv (fn [child-actx]
+                     ["<li>" (vis-html-actx vis child-actx positions actx-ch-ch-infos)
+                      "</li>"])
+                   (sort #(compare (last %1) (last %2)) (keys children)))
+      "</ul>"]
      "</div>"]))
 
 (defn vis-svg-actxs [vis positions deltas phase]
