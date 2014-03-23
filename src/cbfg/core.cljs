@@ -201,10 +201,9 @@
                              ay (actx-y actx)
                              cy (ch-y ch)]
                          [(if (= :put wait-kind)
-                            ["<line x1='500' y1='" ay "' x2='600' y2='" cy
-                             "' stroke='#faa' stroke-width='1' marker-end='url(#triangle)'/>"]
-                            ["<line x1='600' y1='" cy "' x2='500' y2='" ay
-                             "' stroke='#faa' stroke-width='1' marker-end='url(#triangle)'/>"])
+                            ["<line x1='500' y1='" ay "' x2='600' y2='" cy]
+                            ["<line x1='600' y1='" cy "' x2='500' y2='" ay])
+                          "' stroke='#faa' stroke-width='1' marker-end='url(#triangle)'/>"
                           (when ch-name
                             ["<text class='ch-name' x='540' y='" (* 0.5 (+ ay cy))
                              "'>" ch-name "</text>"])]))
@@ -218,22 +217,22 @@
                  [(case (:delta delta)
                     :put (when (get chs (:ch delta))
                            ["<g transform='translate(500," ay ")'>"
-                            "<line class='delta' x1='0' y1='0' x2='100' y2='" (- cy ay)
-                            "' stroke='green' stroke-width='1' marker-end='url(#triangle)'/></g>"])
+                            "<line class='delta' x1='0' y1='0' x2='100' y2='"
+                            (- cy ay) "' stroke='green'"])
                     :take (when (get chs (:ch delta))
                             ["<g transform='translate(600," cy ")'>"
-                             "<line class='delta' x1='0' y1='0' x2='-100' y2='" (- ay cy)
-                             "' stroke='" (if (:msg delta) "green" "black")
-                             "' stroke-width='1' marker-end='url(#triangle)'/></g>"])
+                             "<line class='delta' x1='0' y1='0' x2='-100' y2='"
+                             (- ay cy) "' stroke='" (if (:msg delta) "green" "black") "'"])
                     :actx-start (when (> childy line-height)
                                   ["<g transform='translate(30," ay ")'>"
-                                   "<line class='delta' x1='0' y1='0' x2='30' y2='" (- childy ay)
-                                   "' stroke='green' stroke-width='1' marker-end='url(#triangle)'/></g>"])
+                                   "<line class='delta' x1='0' y1='0' x2='30' y2='"
+                                   (- childy ay) "' stroke='green'"])
                     :actx-end (when (> childy line-height)
                                 ["<g transform='translate(60," childy ")'>"
-                                 "<line class='delta' x1='0' y1='0' x2='-30' y2='" (- ay childy)
-                                 "' stroke='black' stroke-width='1' marker-end='url(#triangle)'/></g>"])
+                                 "<line class='delta' x1='0' y1='0' x2='-30' y2='"
+                                 (- ay childy) "' stroke='black'"])
                     nil)
+                  " stroke-width='1' marker-end='url(#triangle)'/></g>"
                   (when (:ch-name delta)
                     ["<text class='ch-name' x='540' y='" (* 0.5 (+ ay cy))
                      "'>" (:ch-name delta) "</text>"])])))
