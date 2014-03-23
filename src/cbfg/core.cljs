@@ -147,8 +147,8 @@
 
 (defn vis-html-loop-state
   ([vis loop-state]
-     (interpose ", " (mapv (fn [x] [(vis-html-loop-state vis (first x) (second x))])
-                           loop-state)))
+     (interpose ", " (map (fn [x] [(vis-html-loop-state vis (first x) (second x))])
+                          loop-state)))
   ([vis name val]
      (let [name-parts (string/split (str name) #"-")]
        (cond (= "ch" (last name-parts)) [name " " (vis-html-ch vis val)]
