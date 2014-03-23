@@ -328,13 +328,15 @@
 
 (defn example-add [actx x y delay]
   (ago example-add actx
-       (<! (timeout delay))
-       (+ x y)))
+       (let [timeout-ch (timeout delay)]
+         (atake example-add timeout-ch)
+         (+ x y))))
 
 (defn example-sub [actx x y delay]
   (ago example-sub actx
-       (<! (timeout delay))
-       (- x y)))
+       (let [timeout-ch (timeout delay)]
+         (atake example-sub timeout-ch)
+         (- x y))))
 
 (def example-cmd-handlers
   {"add"  (fn [cmd] {:rq #(example-add % (:x cmd) (:y cmd) (:delay cmd))

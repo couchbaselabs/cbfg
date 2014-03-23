@@ -75,14 +75,16 @@
 
 (defn test-add-two [actx x delay]
   (ago test-add-two actx
-       (<! (timeout delay))
-       (+ x 2)))
+       (let [timeout-ch (timeout delay)]
+         (atake test-add-two timeout-ch)
+         (+ x 2))))
 
 (defn test-range-to [actx s e delay]
   (let [out (achan actx)]
     (ago test-range-to actx
          (doseq [n (range s e)]
-           (<! (timeout delay))
+           (let [timeout-ch (timeout delay)]
+             (atake test-range-to timeout-ch))
            (aput test-range-to out n))
          (aclose test-range-to out))
     out))
