@@ -5,7 +5,7 @@
   (:require-macros [cljs.core.async.macros :refer [go go-loop]]
                    [cbfg.ago :refer [ago ago-loop achan-buf aput atake]])
   (:require [clojure.string :as string]
-            [cljs.core.async :refer [<! >! put! chan timeout merge map<]]
+            [cljs.core.async :refer [<! >! put! chan timeout merge map< dropping-buffer]]
             [goog.dom :as gdom]
             [goog.events :as gevents]
             cbfg.ddl
@@ -265,7 +265,7 @@
   (let [max-inflight (atom 10)
         event-delay (atom 0)
         event-ch (chan)
-        step-ch (chan)
+        step-ch (chan (dropping-buffer 1))
         last-id (atom 0)
         gen-id #(swap! last-id inc)
         w [{:gen-id gen-id
