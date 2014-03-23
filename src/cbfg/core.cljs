@@ -191,7 +191,7 @@
     ["<defs>"
      "<marker id='triangle' viewBox='0 0 10 10' refX='0' refY='5'  orient='auto'"
      " markerUnits='strokeWidth' markerWidth='8' markerHeight='6'>"
-     " <path d='M 0 0 L 10 5 L 0 10 z'/>"
+     " <path d='M 0 0 L 10 5 L 0 10 z'/></marker>"
      "</defs>"
      (mapv (fn [actx-actx-info]
              (let [[actx actx-info] actx-actx-info]
