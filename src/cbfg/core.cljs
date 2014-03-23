@@ -252,6 +252,20 @@
 
 ;; ------------------------------------------------
 
+(defn vis-run-controls [event-delay step-ch]
+  (let [run-controls {"run"      #(do (when (< @event-delay 0) (put! step-ch true))
+                                      (reset! event-delay 0))
+                      "run-slow" #(do (when (< @event-delay 0) (put! step-ch true))
+                                      (reset! event-delay
+                                              (js/parseInt (get-el-value "run-slowness"))))
+                      "pause"    #(reset! event-delay -1)
+                      "step"     #(do (reset! event-delay -1)
+                                      (put! step-ch true))}]
+    (go-loop [run-control-ch (merge (map #(listen (gdom/getElement %) "click")
+                                         (keys run-controls)))]
+      ((get run-controls (.-id (.-target (<! run-control-ch)))))
+      (recur run-control-ch))))
+
 (defn vis-init [cmds cmd-handlers]
   (let [max-inflight (atom 10)
         event-delay (atom 0)
@@ -269,19 +283,7 @@
                              ;         :msgs {msg -> true}
                              ;         :first-taker-actx actx-or-nil}}.
                    :gen-id gen-id
-                   :last-id (fn [] @last-id)})
-        run-controls {"run"      #(do (when (< @event-delay 0) (put! step-ch true))
-                                      (reset! event-delay 0))
-                      "run-slow" #(do (when (< @event-delay 0) (put! step-ch true))
-                                      (reset! event-delay
-                                              (js/parseInt (get-el-value "run-slowness"))))
-                      "pause"    #(reset! event-delay -1)
-                      "step"     #(do (reset! event-delay -1)
-                                      (put! step-ch true))}]
-    (go-loop [run-control-ch (merge (map #(listen (gdom/getElement %) "click")
-                                         (keys run-controls)))]
-      ((get run-controls (.-id (.-target (<! run-control-ch)))))
-      (recur run-control-ch))
+                   :last-id (fn [] @last-id)})]
     (go-loop [num-events 0 vis-last nil vis-last-positions nil]
       (when (> @event-delay 0) (<! (timeout @event-delay)))
       (when (< @event-delay 0) (<! step-ch))
@@ -319,7 +321,8 @@
                      (let [result (atake user-out out)]
                        (set-el-innerHTML "output" result)
                        (recur (inc num-outs))))
-           (make-fenced-pump world in out @max-inflight)))))
+           (make-fenced-pump world in out @max-inflight)))
+    (vis-run-controls event-delay step-ch)))
 
 ;; ------------------------------------------------
 
