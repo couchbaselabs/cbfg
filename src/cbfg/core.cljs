@@ -315,10 +315,10 @@
         (assign-positions @vis @root-actx vis-positions actx-ch-ch-infos nil)
         (let [vis-next-html (apply str (flatten (vis-html-actx @vis @root-actx actx-ch-ch-infos)))
               vis-next-svg (apply str (flatten (vis-svg-actxs @vis @vis-positions deltas :curr)))]
+          (set-el-innerHTML (str el-prefix "-html") vis-next-html)
+          (set-el-innerHTML (str el-prefix "-svg") vis-next-svg)
           (if (or (not= vis-next-html vis-last-html)
                   (not= vis-next-svg vis-last-svg))
-            (set-el-innerHTML (str el-prefix "-html") vis-next-html)
-            (set-el-innerHTML (str el-prefix "-svg") vis-next-svg)
             (when (> @event-delay 0) (<! (timeout @event-delay)))
             (when (< @event-delay 0) (<! step-ch)))
           (recur (inc num-events) @vis @vis-positions vis-next-html vis-next-svg))))
