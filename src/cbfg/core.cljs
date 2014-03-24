@@ -223,9 +223,8 @@
                              cy (ch-y ch)]
                          (when (not= ay cy)
                            [(if (= :put wait-kind)
-                              ["<line x1='500' y1='" ay "' x2='600' y2='" cy]
-                              ["<line x1='600' y1='" cy "' x2='500' y2='" ay])
-                            "' stroke='#faa' stroke-width='1' marker-end='url(#triangle)'/>"
+                              (vis-svg-arrow "" 500 ay 600 cy "#faa")
+                              (vis-svg-arrow "" 600 cy 500 ay "#faa"))
                             (when ch-name
                               ["<text class='ch-name' x='540' y='" (* 0.5 (+ ay cy))
                                "'>" ch-name "</text>"])])))
