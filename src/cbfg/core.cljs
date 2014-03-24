@@ -304,7 +304,7 @@
             vis-event-handler (get (get vis-event-handlers verb) step)
             deltas (vis-event-handler vis actx args)
             actx-ch-ch-infos (group-by #(:first-taker-actx (second %)) (:chs @vis))]
-        (set-el-innerHTML "event"
+        (set-el-innerHTML (str el-prefix "-event")
                           (str num-events ": " (last actx) " " verb " " step " " args))
         (when (and (not (zero? @event-delay)) (not-empty deltas) vis-last vis-last-positions)
           (set-el-innerHTML (str el-prefix "-svg")
@@ -333,7 +333,7 @@
                        (recur (inc num-ins))))
            (ago-loop user-out world [num-outs 0]
                      (let [result (atake user-out out-ch)]
-                       (set-el-innerHTML "output" result)
+                       (set-el-innerHTML (str el-prefix "-output") result)
                        (recur (inc num-outs))))
            (make-fenced-pump world in-ch out-ch @max-inflight)))
     (let [toggle-ch (listen (gdom/getElement (str el-prefix "-html")) "click")]
