@@ -151,6 +151,7 @@
                         (if override override
                             (when (:closed actx-info)
                               (get-in @positions [actx-id])))))))
+
 ;; ------------------------------------------------
 
 (defn vis-html-ch [vis ch]
@@ -291,36 +292,42 @@
                    :chs {}   ; {ch -> {:id (gen-id),
                              ;         :msgs {msg -> true}
                              ;         :first-taker-actx actx-or-nil}}.
-                   :gen-id gen-id})]
-    (go-loop [num-events 0
-              vis-last nil
+                   :gen-id gen-id})
+        render-ch (chan)]
+    (go-loop [num-events 0]  ; Process events from world / simulation.
+      (let [[actx event] (<! event-ch)
+            [verb step & args] event
+            deltas ((get (get vis-event-handlers verb) step) vis actx args)]
+        (set-el-innerHTML (str el-prefix "-event")
+                          (str num-events ": " (last actx) " " verb " " step " " args))
+        (when (and (not (zero? @event-delay)) (not-empty deltas))
+          (>! render-ch [@vis deltas false])
+          (when (> @event-delay 0) (<! (timeout @event-delay)))
+          (when (< @event-delay 0) (<! step-ch)))
+        (>! render-ch [@vis deltas true])
+        (when (> @event-delay 0) (<! (timeout @event-delay)))
+        (when (< @event-delay 0) (<! step-ch)))
+        (recur (inc num-events)))
+    (go-loop [vis-last nil
               vis-last-positions nil
               vis-last-html nil
               vis-last-svg nil]
-      (let [[actx event] (<! event-ch)
-            [verb step & args] event
-            vis-positions (atom {})
-            vis-event-handler (get (get vis-event-handlers verb) step)
-            deltas (vis-event-handler vis actx args)
-            actx-ch-ch-infos (group-by #(:first-taker-actx (second %)) (:chs @vis))]
-        (set-el-innerHTML (str el-prefix "-event")
-                          (str num-events ": " (last actx) " " verb " " step " " args))
-        (when (and (not (zero? @event-delay)) (not-empty deltas) vis-last vis-last-positions)
-          (set-el-innerHTML (str el-prefix "-svg")
-                            (apply str (flatten (vis-svg-actxs vis-last vis-last-positions
-                                                               deltas false))))
-          (when (> @event-delay 0) (<! (timeout @event-delay)))
-          (when (< @event-delay 0) (<! step-ch)))
-        (assign-positions @vis @root-actx vis-positions actx-ch-ch-infos nil)
-        (let [vis-next-html (apply str (flatten (vis-html-actx @vis @root-actx actx-ch-ch-infos)))
-              vis-next-svg (apply str (flatten (vis-svg-actxs @vis @vis-positions deltas true)))]
-          (set-el-innerHTML (str el-prefix "-html") vis-next-html)
-          (set-el-innerHTML (str el-prefix "-svg") vis-next-svg)
-          (if (or (not= vis-next-html vis-last-html)
-                  (not= vis-next-svg vis-last-svg))
-            (when (> @event-delay 0) (<! (timeout @event-delay)))
-            (when (< @event-delay 0) (<! step-ch)))
-          (recur (inc num-events) @vis @vis-positions vis-next-html vis-next-svg))))
+      (let [[vis-next deltas after] (<! render-ch)] ; Process render-ch, updating U/I.
+        (if after
+          (let [vis-next-positions (atom {})
+                actx-ch-ch-infos (group-by #(:first-taker-actx (second %)) (:chs vis-next))]
+            (assign-positions vis-next @root-actx vis-next-positions actx-ch-ch-infos nil)
+            (let [vis-next-html (apply str (flatten (vis-html-actx vis-next @root-actx
+                                                                   actx-ch-ch-infos)))
+                  vis-next-svg (apply str (flatten (vis-svg-actxs vis-next @vis-next-positions
+                                                                  deltas true)))]
+              (set-el-innerHTML (str el-prefix "-html") vis-next-html)
+              (set-el-innerHTML (str el-prefix "-svg") vis-next-svg)
+              (recur vis-next @vis-next-positions vis-next-html vis-next-svg)))
+          (let [vis-next-svg (apply str (flatten (vis-svg-actxs vis-last vis-last-positions
+                                                                deltas false)))]
+            (set-el-innerHTML (str el-prefix "-svg") vis-next-svg)
+            (recur vis-last vis-last-positions vis-last-html vis-next-svg)))))
     (ago world w
          (reset! root-actx world)
          (let [in-ch (achan-buf world 100)
@@ -340,7 +347,8 @@
         (let [actx-id (no-prefix (.-id (.-target (<! toggle-ch))))]
           (doseq [[actx actx-info] (:actxs @vis)]
             (when (= actx-id (last actx))
-              (swap! vis #(assoc-in % [:actxs actx :closed] (not (:closed actx-info))))))
+              (swap! vis #(assoc-in % [:actxs actx :closed] (not (:closed actx-info))))
+              (>! render-ch [@vis nil])))
           (recur))))
     (vis-run-controls event-delay step-ch el-prefix)))
 
