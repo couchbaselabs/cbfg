@@ -133,9 +133,6 @@
 ;; ------------------------------------------------
 
 (defn assign-position [positions id override]
-  ; NOTE: merge doesn't work as expected in CLJS.
-  ; (swap! positions #(merge {id (count %)} %))
-  ; (swap! positions (fn [x] (merge {id (count x)} x)))
   (if override
     (swap! positions #(assoc-in % [id] override))
     (swap! positions #(-> %
