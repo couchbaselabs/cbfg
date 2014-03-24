@@ -164,7 +164,7 @@
         children (:children actx-info)]
     (assign-position positions actx-id)
     ["<div id='actx-" actx-id "' class='actx'>"
-     "<button class='toggle-actx' id='toggle-actx-" actx-id "'>"
+     "<button class='toggle' id='toggle-" actx-id "'>"
      (if (:closed actx-info) "&#9654;" "&#9660;")
      "</button>"
      actx-id
@@ -319,6 +319,13 @@
                        (set-el-innerHTML "output" result)
                        (recur (inc num-outs))))
            (make-fenced-pump world in-ch out-ch @max-inflight)))
+    (let [toggle-ch (listen (gdom/getElement (str el-prefix "-html")) "click")]
+      (go-loop []
+        (let [actx-id (string/join "-" (rest (string/split (.-id (.-target (<! toggle-ch))) #"-")))]
+          (doseq [[actx actx-info] (:actxs @vis)]
+            (when (= actx-id (last actx))
+              (swap! vis #(assoc-in % [:actxs actx :closed] (not (:closed actx-info))))))
+          (recur))))
     (vis-run-controls event-delay step-ch)))
 
 ;; ------------------------------------------------
