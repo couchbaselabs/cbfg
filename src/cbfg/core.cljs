@@ -132,22 +132,26 @@
 
 ;; ------------------------------------------------
 
-(defn assign-position [positions id]
+(defn assign-position [positions id override]
   ; NOTE: merge doesn't work as expected in CLJS.
   ; (swap! positions #(merge {id (count %)} %))
   ; (swap! positions (fn [x] (merge {id (count x)} x)))
-  (swap! positions #(update-in % [id] (fn [v] (if v v (count %))))))
+  (swap! positions #(update-in % [id] (fn [v] (if override override
+                                                  (if v v
+                                                      (count %)))))))
 
-(defn assign-positions [vis actx positions actx-ch-ch-infos parent-closed]
+(defn assign-positions [vis actx positions actx-ch-ch-infos override]
   (let [actx-id (last actx)
         actx-info (get-in vis [:actxs actx])]
-    (assign-position positions actx-id)
+    (assign-position positions actx-id override)
     (doseq [[ch ch-info] (get actx-ch-ch-infos actx)]
-      (assign-position positions (:id ch-info)))
+      (assign-position positions (:id ch-info) override))
     (doseq [child-actx (sort #(compare (last %1) (last %2))
                              (keys (:children actx-info)))]
-      (assign-positions vis child-actx positions
-                        actx-ch-ch-infos (:closed actx-info)))))
+      (assign-positions vis child-actx positions actx-ch-ch-infos
+                        (if override override
+                            (when (:closed actx-info)
+                              (get-in positions [actx-id])))))))
 ;; ------------------------------------------------
 
 (defn vis-html-ch [vis ch]
@@ -307,7 +311,7 @@
                                                                deltas :prev))))
           (when (> @event-delay 0) (<! (timeout @event-delay)))
           (when (< @event-delay 0) (<! step-ch)))
-        (assign-positions @vis @root-actx vis-positions actx-ch-ch-infos false)
+        (assign-positions @vis @root-actx vis-positions actx-ch-ch-infos nil)
         (set-el-innerHTML (str el-prefix "-html")
                           (apply str (flatten (vis-html-actx @vis @root-actx
                                                              actx-ch-ch-infos false))))
