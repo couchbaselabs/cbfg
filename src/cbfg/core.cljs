@@ -138,6 +138,16 @@
   ; (swap! positions (fn [x] (merge {id (count x)} x)))
   (swap! positions #(update-in % [id] (fn [v] (if v v (count %))))))
 
+(defn assign-positions [vis actx positions actx-ch-ch-infos parent-closed]
+  (let [actx-id (last actx)
+        actx-info (get-in vis [:actxs actx])]
+    (assign-position positions actx-id)
+    (doseq [[ch ch-info] (get actx-ch-ch-infos actx)]
+      (assign-position positions (:id ch-info)))
+    (doseq [child-actx (sort #(compare (last %1) (last %2))
+                             (keys (:children actx-info)))]
+      (assign-positions vis child-actx positions
+                        actx-ch-ch-infos (:closed actx-info)))))
 ;; ------------------------------------------------
 
 (defn vis-html-ch [vis ch]
@@ -158,11 +168,10 @@
                                           "]"]
              :default [name " " (if val val "nil")]))))
 
-(defn vis-html-actx [vis actx positions actx-ch-ch-infos]
+(defn vis-html-actx [vis actx actx-ch-ch-infos parent-closed]
   (let [actx-id (last actx)
         actx-info (get-in vis [:actxs actx])
         children (:children actx-info)]
-    (assign-position positions actx-id)
     ["<div id='actx-" actx-id "' class='actx'>"
      "<button class='toggle' id='toggle-" actx-id "'>"
      (if (:closed actx-info) "&#9654;" "&#9660;")
@@ -173,12 +182,12 @@
      (mapv (fn [ch-ch-info]
              (let [ch-info (second ch-ch-info)
                    ch-id (:id ch-info)]
-               (assign-position positions ch-id)
                ["<li id='ch-" ch-id "'>" ch-id ": " (:msgs ch-info) "</li>"]))
            (get actx-ch-ch-infos actx))
      "</ul></div>"
      ["<ul>" (mapv (fn [child-actx]
-                     ["<li>" (vis-html-actx vis child-actx positions actx-ch-ch-infos)
+                     ["<li>" (vis-html-actx vis child-actx
+                                            actx-ch-ch-infos (:closed actx-info))
                       "</li>"])
                    (sort #(compare (last %1) (last %2)) (keys children)))
       "</ul>"]
@@ -298,9 +307,10 @@
                                                                deltas :prev))))
           (when (> @event-delay 0) (<! (timeout @event-delay)))
           (when (< @event-delay 0) (<! step-ch)))
+        (assign-positions @vis @root-actx vis-positions actx-ch-ch-infos false)
         (set-el-innerHTML (str el-prefix "-html")
-                          (apply str (flatten (vis-html-actx @vis @root-actx vis-positions
-                                                             actx-ch-ch-infos))))
+                          (apply str (flatten (vis-html-actx @vis @root-actx
+                                                             actx-ch-ch-infos false))))
         (set-el-innerHTML (str el-prefix "-svg")
                           (apply str (flatten (vis-svg-actxs @vis @vis-positions
                                                              deltas :curr))))
