@@ -171,7 +171,7 @@
                                           "]"]
              :default [name " " (if val val "nil")]))))
 
-(defn vis-html-actx [vis actx actx-ch-ch-infos parent-closed]
+(defn vis-html-actx [vis actx actx-ch-ch-infos]
   (let [actx-id (last actx)
         actx-info (get-in vis [:actxs actx])
         children (:children actx-info)]
@@ -188,12 +188,12 @@
                ["<li id='ch-" ch-id "'>" ch-id ": " (:msgs ch-info) "</li>"]))
            (get actx-ch-ch-infos actx))
      "</ul></div>"
-     ["<ul>" (mapv (fn [child-actx]
-                     ["<li>" (vis-html-actx vis child-actx
-                                            actx-ch-ch-infos (:closed actx-info))
-                      "</li>"])
-                   (sort #(compare (last %1) (last %2)) (keys children)))
-      "</ul>"]
+     (when (not (:closed actx-info))
+       ["<ul>" (mapv (fn [child-actx]
+                       ["<li>" (vis-html-actx vis child-actx actx-ch-ch-infos)
+                        "</li>"])
+                     (sort #(compare (last %1) (last %2)) (keys children)))
+        "</ul>"])
      "</div>"]))
 
 ;; ------------------------------------------------
@@ -216,13 +216,14 @@
                              [wait-kind ch-name] wait-kind-ch-name
                              ay (actx-y actx)
                              cy (ch-y ch)]
-                         [(if (= :put wait-kind)
-                            ["<line x1='500' y1='" ay "' x2='600' y2='" cy]
-                            ["<line x1='600' y1='" cy "' x2='500' y2='" ay])
-                          "' stroke='#faa' stroke-width='1' marker-end='url(#triangle)'/>"
-                          (when ch-name
-                            ["<text class='ch-name' x='540' y='" (* 0.5 (+ ay cy))
-                             "'>" ch-name "</text>"])]))
+                         (when (not= ay cy)
+                           [(if (= :put wait-kind)
+                              ["<line x1='500' y1='" ay "' x2='600' y2='" cy]
+                              ["<line x1='600' y1='" cy "' x2='500' y2='" ay])
+                            "' stroke='#faa' stroke-width='1' marker-end='url(#triangle)'/>"
+                            (when ch-name
+                              ["<text class='ch-name' x='540' y='" (* 0.5 (+ ay cy))
+                               "'>" ch-name "</text>"])])))
                      (:wait-chs actx-info))))
            (:actxs vis))
      (mapv (fn [delta]
@@ -230,28 +231,29 @@
                (let [childy (actx-y (:child-actx delta))
                      ay (actx-y (:actx delta))
                      cy (ch-y (:ch delta))]
-                 [(case (:delta delta)
-                    :put (when (get chs (:ch delta))
-                           ["<g transform='translate(500," ay ")'>"
-                            "<line class='delta' x1='0' y1='0' x2='100' y2='"
-                            (- cy ay) "' stroke='green'"])
-                    :take (when (get chs (:ch delta))
-                            ["<g transform='translate(600," cy ")'>"
-                             "<line class='delta' x1='0' y1='0' x2='-100' y2='"
-                             (- ay cy) "' stroke='" (if (:msg delta) "green" "black") "'"])
-                    :actx-start (when (> childy line-height)
-                                  ["<g transform='translate(30," ay ")'>"
-                                   "<line class='delta' x1='0' y1='0' x2='30' y2='"
-                                   (- childy ay) "' stroke='green'"])
-                    :actx-end (when (> childy line-height)
-                                ["<g transform='translate(60," childy ")'>"
-                                 "<line class='delta' x1='0' y1='0' x2='-30' y2='"
-                                 (- ay childy) "' stroke='black'"])
-                    nil)
-                  " stroke-width='1' marker-end='url(#triangle)'/></g>"
-                  (when (:ch-name delta)
-                    ["<text class='ch-name' x='540' y='" (* 0.5 (+ ay cy))
-                     "'>" (:ch-name delta) "</text>"])])))
+                 (when (not= ay cy)
+                   [(case (:delta delta)
+                      :put (when (get chs (:ch delta))
+                             ["<g transform='translate(500," ay ")'>"
+                              "<line class='delta' x1='0' y1='0' x2='100' y2='"
+                              (- cy ay) "' stroke='green'"])
+                      :take (when (get chs (:ch delta))
+                              ["<g transform='translate(600," cy ")'>"
+                               "<line class='delta' x1='0' y1='0' x2='-100' y2='"
+                               (- ay cy) "' stroke='" (if (:msg delta) "green" "black") "'"])
+                      :actx-start (when (> childy line-height)
+                                    ["<g transform='translate(30," ay ")'>"
+                                     "<line class='delta' x1='0' y1='0' x2='30' y2='"
+                                     (- childy ay) "' stroke='green'"])
+                      :actx-end (when (> childy line-height)
+                                  ["<g transform='translate(60," childy ")'>"
+                                   "<line class='delta' x1='0' y1='0' x2='-30' y2='"
+                                   (- ay childy) "' stroke='black'"])
+                      nil)
+                    " stroke-width='1' marker-end='url(#triangle)'/></g>"
+                    (when (:ch-name delta)
+                      ["<text class='ch-name' x='540' y='" (* 0.5 (+ ay cy))
+                       "'>" (:ch-name delta) "</text>"])]))))
            deltas)]))
 
 ;; ------------------------------------------------
@@ -312,11 +314,9 @@
           (when (< @event-delay 0) (<! step-ch)))
         (assign-positions @vis @root-actx vis-positions actx-ch-ch-infos nil)
         (set-el-innerHTML (str el-prefix "-html")
-                          (apply str (flatten (vis-html-actx @vis @root-actx
-                                                             actx-ch-ch-infos false))))
+                          (apply str (flatten (vis-html-actx @vis @root-actx actx-ch-ch-infos))))
         (set-el-innerHTML (str el-prefix "-svg")
-                          (apply str (flatten (vis-svg-actxs @vis @vis-positions
-                                                             deltas :curr))))
+                          (apply str (flatten (vis-svg-actxs @vis @vis-positions deltas :curr))))
         (recur (inc num-events) @vis @vis-positions)))
     (ago world w
          (reset! root-actx world)
