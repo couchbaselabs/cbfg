@@ -241,7 +241,7 @@
                               (vis-svg-arrow "delta" 0 0 100 (- cy ay)) "</g>"])
                       :take (when (get chs (:ch delta))
                               ["<g transform='translate(600," cy ")'>"
-                               (vis-svg-arrow (str "delta" (when (not (:msg delta)) " close"))
+                               (vis-svg-arrow (if (:msg delta) "delta" "delta close")
                                               0 0 -100 (- ay cy)) "</g>"])
                       :actx-start (when (> childy line-height)
                                     ["<g transform='translate(30," ay ")'>"
