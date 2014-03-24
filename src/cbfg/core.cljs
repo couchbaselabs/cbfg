@@ -199,9 +199,8 @@
 
 ;; ------------------------------------------------
 
-(defn vis-svg-arrow [class x1 y1 x2 y2 stroke]
-  ["<line class='" class "' x1='" x1 "' y1='" y1 "' x2='" x2 "' y2='" y2
-   "' stroke='" stroke "' stroke-width='1' marker-end='url(#triangle)'/>"])
+(defn vis-svg-arrow [class x1 y1 x2 y2]
+  ["<line class='arrow " class "' x1='" x1 "' y1='" y1 "' x2='" x2 "' y2='" y2 "'/>"])
 
 (defn vis-svg-actxs [vis positions deltas after]
   (let [stroke-width 1
@@ -223,8 +222,8 @@
                              cy (ch-y ch)]
                          (when (not= ay cy)
                            [(if (= :put wait-kind)
-                              (vis-svg-arrow "" 500 ay 600 cy "#faa")
-                              (vis-svg-arrow "" 600 cy 500 ay "#faa"))
+                              (vis-svg-arrow "" 500 ay 600 cy)
+                              (vis-svg-arrow "" 600 cy 500 ay))
                             (when ch-name
                               ["<text class='ch-name' x='540' y='" (* 0.5 (+ ay cy))
                                "'>" ch-name "</text>"])])))
@@ -239,17 +238,17 @@
                    [(case (:delta delta)
                       :put (when (get chs (:ch delta))
                              ["<g transform='translate(500," ay ")'>"
-                              (vis-svg-arrow "delta" 0 0 100 (- cy ay) "green") "</g>"])
+                              (vis-svg-arrow "delta" 0 0 100 (- cy ay)) "</g>"])
                       :take (when (get chs (:ch delta))
                               ["<g transform='translate(600," cy ")'>"
-                               (vis-svg-arrow "delta" 0 0 -100 (- ay cy)
-                                          (if (:msg delta) "green" "black")) "</g>"])
+                               (vis-svg-arrow (str "delta" (when (not (:msg delta)) " close"))
+                                              0 0 -100 (- ay cy)) "</g>"])
                       :actx-start (when (> childy line-height)
                                     ["<g transform='translate(30," ay ")'>"
-                                     (vis-svg-arrow "delta" 0 0 30 (- childy ay) "green") "</g>"])
+                                     (vis-svg-arrow "delta" 0 0 30 (- childy ay)) "</g>"])
                       :actx-end (when (> childy line-height)
                                   ["<g transform='translate(60," childy ")'>"
-                                   (vis-svg-arrow "delta" 0 0 -40 0 "black") "</g>"])
+                                   (vis-svg-arrow "delta close" 0 0 -40 0) "</g>"])
                       nil)
                     (when (:ch-name delta)
                       ["<text class='ch-name' x='540' y='" (* 0.5 (+ ay cy))
