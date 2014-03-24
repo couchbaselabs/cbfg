@@ -200,6 +200,10 @@
 
 ;; ------------------------------------------------
 
+(defn vis-arrow [class x1 y1 x2 y2 stroke]
+  ["<line class='" class "' x1='" x1 "' y1='" y1 "' x2='" x2 "' y2='" y2
+   "' stroke='" stroke "' stroke-width='1' marker-end='url(#triangle)'/>"])
+
 (defn vis-svg-actxs [vis positions deltas phase]
   (let [stroke-width 1
         line-height 21
@@ -237,22 +241,18 @@
                    [(case (:delta delta)
                       :put (when (get chs (:ch delta))
                              ["<g transform='translate(500," ay ")'>"
-                              "<line class='delta' x1='0' y1='0' x2='100' y2='"
-                              (- cy ay) "' stroke='green'"])
+                              (vis-arrow "delta" 0 0 100 (- cy ay) "green") "</g>"])
                       :take (when (get chs (:ch delta))
                               ["<g transform='translate(600," cy ")'>"
-                               "<line class='delta' x1='0' y1='0' x2='-100' y2='"
-                               (- ay cy) "' stroke='" (if (:msg delta) "green" "black") "'"])
+                               (vis-arrow "delta" 0 0 -100 (- ay cy)
+                                          (if (:msg delta) "green" "black")) "</g>"])
                       :actx-start (when (> childy line-height)
                                     ["<g transform='translate(30," ay ")'>"
-                                     "<line class='delta' x1='0' y1='0' x2='30' y2='"
-                                     (- childy ay) "' stroke='green'"])
+                                     (vis-arrow "delta" 0 0 30 (- childy ay) "green") "</g>"])
                       :actx-end (when (> childy line-height)
                                   ["<g transform='translate(60," childy ")'>"
-                                   "<line class='delta' x1='0' y1='0' x2='-30' y2='"
-                                   (- ay childy) "' stroke='black'"])
+                                   (vis-arrow "delta" 0 0 -40 0 "black") "</g>"])
                       nil)
-                    " stroke-width='1' marker-end='url(#triangle)'/></g>"
                     (when (:ch-name delta)
                       ["<text class='ch-name' x='540' y='" (* 0.5 (+ ay cy))
                        "'>" (:ch-name delta) "</text>"])]))))
