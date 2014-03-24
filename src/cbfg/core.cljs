@@ -200,7 +200,7 @@
 
 ;; ------------------------------------------------
 
-(defn vis-arrow [class x1 y1 x2 y2 stroke]
+(defn vis-svg-arrow [class x1 y1 x2 y2 stroke]
   ["<line class='" class "' x1='" x1 "' y1='" y1 "' x2='" x2 "' y2='" y2
    "' stroke='" stroke "' stroke-width='1' marker-end='url(#triangle)'/>"])
 
@@ -241,17 +241,17 @@
                    [(case (:delta delta)
                       :put (when (get chs (:ch delta))
                              ["<g transform='translate(500," ay ")'>"
-                              (vis-arrow "delta" 0 0 100 (- cy ay) "green") "</g>"])
+                              (vis-svg-arrow "delta" 0 0 100 (- cy ay) "green") "</g>"])
                       :take (when (get chs (:ch delta))
                               ["<g transform='translate(600," cy ")'>"
-                               (vis-arrow "delta" 0 0 -100 (- ay cy)
+                               (vis-svg-arrow "delta" 0 0 -100 (- ay cy)
                                           (if (:msg delta) "green" "black")) "</g>"])
                       :actx-start (when (> childy line-height)
                                     ["<g transform='translate(30," ay ")'>"
-                                     (vis-arrow "delta" 0 0 30 (- childy ay) "green") "</g>"])
+                                     (vis-svg-arrow "delta" 0 0 30 (- childy ay) "green") "</g>"])
                       :actx-end (when (> childy line-height)
                                   ["<g transform='translate(60," childy ")'>"
-                                   (vis-arrow "delta" 0 0 -40 0 "black") "</g>"])
+                                   (vis-svg-arrow "delta" 0 0 -40 0 "black") "</g>"])
                       nil)
                     (when (:ch-name delta)
                       ["<text class='ch-name' x='540' y='" (* 0.5 (+ ay cy))
