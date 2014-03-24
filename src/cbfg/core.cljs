@@ -293,8 +293,7 @@
                    :chs {}   ; {ch -> {:id (gen-id),
                              ;         :msgs {msg -> true}
                              ;         :first-taker-actx actx-or-nil}}.
-                   :gen-id gen-id
-                   :last-id (fn [] @last-id)})]
+                   :gen-id gen-id})]
     (go-loop [num-events 0
               vis-last nil
               vis-last-positions nil
