@@ -276,7 +276,7 @@
 
 ;; ------------------------------------------------
 
-(defn vis-init [cmds cmd-handlers el-prefix]
+(defn vis-init [cmd-ch cmd-handlers el-prefix]
   (let [max-inflight (atom 10)
         event-delay (atom 0)
         event-ch (chan)
@@ -329,7 +329,7 @@
          (let [in-ch (achan-buf world 100)
                out-ch (achan-buf world 0)]
            (ago-loop user-in world [num-ins 0]
-                     (let [cmd (<! cmds)
+                     (let [cmd (<! cmd-ch)
                            cmd-handler ((get cmd-handlers (:op cmd)) cmd)]
                        (aput user-in in-ch cmd-handler)
                        (recur (inc num-ins))))
