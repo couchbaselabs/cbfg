@@ -260,7 +260,7 @@
 
 ;; ------------------------------------------------
 
-(defn vis-init [cmds cmd-handlers]
+(defn vis-init [cmds cmd-handlers el-prefix]
   (let [max-inflight (atom 10)
         event-delay (atom 0)
         event-ch (chan)
@@ -293,15 +293,15 @@
         (set-el-innerHTML "event"
                           (str num-events ": " (last actx) " " verb " " step " " args))
         (when (and (not (zero? @event-delay)) (not-empty deltas) vis-last vis-last-positions)
-          (set-el-innerHTML "vis-svg"
+          (set-el-innerHTML (str el-prefix "-svg")
                             (apply str (flatten (vis-svg-actxs vis-last vis-last-positions
                                                                deltas :prev))))
           (when (> @event-delay 0) (<! (timeout @event-delay)))
           (when (< @event-delay 0) (<! step-ch)))
-        (set-el-innerHTML "vis-html"
+        (set-el-innerHTML (str el-prefix "-html")
                           (apply str (flatten (vis-html-actx @vis @root-actx vis-positions
                                                              actx-ch-ch-infos))))
-        (set-el-innerHTML "vis-svg"
+        (set-el-innerHTML (str el-prefix "-svg")
                           (apply str (flatten (vis-svg-actxs @vis @vis-positions
                                                              deltas :curr))))
         (recur (inc num-events) @vis @vis-positions)))
@@ -350,4 +350,4 @@
                           :fence (= (get-el-value "fence") "1")})
                 (merge (map #(listen (gdom/getElement %) "click")
                             (keys example-cmd-handlers))))
-          example-cmd-handlers)
+          example-cmd-handlers "vis")
