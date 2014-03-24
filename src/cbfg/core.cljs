@@ -150,7 +150,7 @@
       (assign-positions vis child-actx positions actx-ch-ch-infos
                         (if override override
                             (when (:closed actx-info)
-                              (get-in positions [actx-id])))))))
+                              (get-in @positions [actx-id])))))))
 ;; ------------------------------------------------
 
 (defn vis-html-ch [vis ch]
