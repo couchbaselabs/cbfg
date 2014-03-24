@@ -348,7 +348,7 @@
           (doseq [[actx actx-info] (:actxs @vis)]
             (when (= actx-id (last actx))
               (swap! vis #(assoc-in % [:actxs actx :closed] (not (:closed actx-info))))
-              (>! render-ch [@vis nil])))
+              (>! render-ch [@vis nil true])))
           (recur))))
     (vis-run-controls event-delay step-ch el-prefix)))
 
