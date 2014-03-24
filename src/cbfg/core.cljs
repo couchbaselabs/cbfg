@@ -55,13 +55,13 @@
                                (assoc-in [:actxs child-actx]
                                          {:children {} :wait-chs {} :closed false})
                                (assoc-in [:actxs actx :children child-actx] true)))
-               [{:delta :actx-start :actx actx :child-actx child-actx :phase :curr}]))
+               [{:delta :actx-start :actx actx :child-actx child-actx :after true}]))
     :end (fn [vis actx args]
            (let [[child-actx result] args]
              (swap! vis #(-> %
                              (dissoc-in [:actxs child-actx])
                              (dissoc-in [:actxs actx :children child-actx])))
-             [{:delta :actx-end :actx actx :child-actx child-actx :phase :prev}]))}
+             [{:delta :actx-end :actx actx :child-actx child-actx}]))}
    :ago-loop
    {:loop-state (fn [vis actx args]
                   (swap! vis #(assoc-in % [:actxs actx :loop-state] (first args)))
@@ -85,7 +85,7 @@
                                (dissoc-in [:chs ch :msgs msg])))
                (when (nil? msg) ; The ch is closed.
                  (swap! vis #(dissoc-in % [:chs ch])))
-               [{:delta :take :msg msg :ch ch :actx actx :phase :prev :ch-name ch-name}]))}
+               [{:delta :take :msg msg :ch ch :actx actx :ch-name ch-name}]))}
    :aput
    {:before (fn [vis actx args]
               (let [[ch-name ch msg] args]
@@ -93,7 +93,7 @@
                                 (assoc-in [:actxs actx :wait-chs ch] [:put ch-name])
                                 (vis-add-ch ch nil)
                                 (assoc-in [:chs ch :msgs msg] true)))
-                [{:delta :put :msg msg :actx actx :ch ch :phase :prev :ch-name ch-name}]))
+                [{:delta :put :msg msg :actx actx :ch ch :ch-name ch-name}]))
     :after (fn [vis actx args]
              (let [[ch-name ch msg result] args]
                (swap! vis #(-> %
@@ -116,8 +116,7 @@
                                                  (assoc-in [:actxs actx :wait-chs ch]
                                                            [action])))
                                  (when (= action :put)
-                                   [{:delta :put :msg (first msgv) :actx actx :ch ch
-                                     :phase :prev}])))
+                                   [{:delta :put :msg (first msgv) :actx actx :ch ch}])))
                              ch-actions))))
     :after (fn [vis actx args]
              (let [[ch-bindings result] args
@@ -129,8 +128,7 @@
                (when (nil? result-msg) ; The ch is closed.
                  (swap! vis #(dissoc-in % [:chs result-ch])))
                (when (some #(= % result-ch) ch-bindings)
-                 [{:delta :take :msg result-msg :ch result-ch :actx actx
-                   :phase :prev}])))}})
+                 [{:delta :take :msg result-msg :ch result-ch :actx actx}])))}})
 
 ;; ------------------------------------------------
 
@@ -204,7 +202,7 @@
   ["<line class='" class "' x1='" x1 "' y1='" y1 "' x2='" x2 "' y2='" y2
    "' stroke='" stroke "' stroke-width='1' marker-end='url(#triangle)'/>"])
 
-(defn vis-svg-actxs [vis positions deltas phase]
+(defn vis-svg-actxs [vis positions deltas after]
   (let [stroke-width 1
         line-height 21
         chs (:chs vis)
@@ -233,7 +231,7 @@
                      (:wait-chs actx-info))))
            (:actxs vis))
      (mapv (fn [delta]
-             (when (= phase (:phase delta))
+             (when (= after (not (not (:after delta))))
                (let [childy (actx-y (:child-actx delta))
                      ay (actx-y (:actx delta))
                      cy (ch-y (:ch delta))]
@@ -310,12 +308,12 @@
         (when (and (not (zero? @event-delay)) (not-empty deltas) vis-last vis-last-positions)
           (set-el-innerHTML (str el-prefix "-svg")
                             (apply str (flatten (vis-svg-actxs vis-last vis-last-positions
-                                                               deltas :prev))))
+                                                               deltas false))))
           (when (> @event-delay 0) (<! (timeout @event-delay)))
           (when (< @event-delay 0) (<! step-ch)))
         (assign-positions @vis @root-actx vis-positions actx-ch-ch-infos nil)
         (let [vis-next-html (apply str (flatten (vis-html-actx @vis @root-actx actx-ch-ch-infos)))
-              vis-next-svg (apply str (flatten (vis-svg-actxs @vis @vis-positions deltas :curr)))]
+              vis-next-svg (apply str (flatten (vis-svg-actxs @vis @vis-positions deltas true)))]
           (set-el-innerHTML (str el-prefix "-html") vis-next-html)
           (set-el-innerHTML (str el-prefix "-svg") vis-next-svg)
           (if (or (not= vis-next-html vis-last-html)
