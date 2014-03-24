@@ -295,9 +295,9 @@
                    :last-id (fn [] @last-id)})]
     (go-loop [num-events 0
               vis-last nil
-              vis-last-positions nil]
-      (when (> @event-delay 0) (<! (timeout @event-delay)))
-      (when (< @event-delay 0) (<! step-ch))
+              vis-last-positions nil
+              vis-last-html nil
+              vis-last-svg nil]
       (let [[actx event] (<! event-ch)
             [verb step & args] event
             vis-positions (atom {})
@@ -317,7 +317,9 @@
                           (apply str (flatten (vis-html-actx @vis @root-actx actx-ch-ch-infos))))
         (set-el-innerHTML (str el-prefix "-svg")
                           (apply str (flatten (vis-svg-actxs @vis @vis-positions deltas :curr))))
-        (recur (inc num-events) @vis @vis-positions)))
+        (when (> @event-delay 0) (<! (timeout @event-delay)))
+        (when (< @event-delay 0) (<! step-ch))
+        (recur (inc num-events) @vis @vis-positions nil nil)))
     (ago world w
          (reset! root-actx world)
          (let [in-ch (achan-buf world 100)
