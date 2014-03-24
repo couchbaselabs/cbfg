@@ -136,9 +136,11 @@
   ; NOTE: merge doesn't work as expected in CLJS.
   ; (swap! positions #(merge {id (count %)} %))
   ; (swap! positions (fn [x] (merge {id (count x)} x)))
-  (swap! positions #(update-in % [id] (fn [v] (if override override
-                                                  (if v v
-                                                      (count %)))))))
+  (if override
+    (swap! positions #(assoc-in % [id] override))
+    (swap! positions #(-> %
+                          (assoc-in [id] (get @positions 'NEXT-POSITION))
+                          (update-in ['NEXT-POSITION] (fnil inc 0))))))
 
 (defn assign-positions [vis actx positions actx-ch-ch-infos override]
   (let [actx-id (last actx)
