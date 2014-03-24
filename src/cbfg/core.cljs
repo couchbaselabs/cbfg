@@ -17,6 +17,8 @@
 
 ;; ------------------------------------------------
 
+(defn no-prefix [s] (string/join "-" (rest (string/split s #"-"))))
+
 (defn get-el-value [elId] (.-value (gdom/getElement elId)))
 
 (defn set-el-innerHTML [elId v] (set! (.-innerHTML (gdom/getElement elId)) v))
@@ -269,8 +271,7 @@
                                       (put! step-ch true))}]
     (go-loop [run-control-ch (merge (map #(listen (gdom/getElement (str el-prefix "-" %)) "click")
                                          (keys run-controls)))]
-      ((get run-controls (string/join "-" (rest (string/split (.-id (.-target (<! run-control-ch)))
-                                                              #"-")))))
+      ((get run-controls (no-prefix (.-id (.-target (<! run-control-ch))))))
       (recur run-control-ch))))
 
 ;; ------------------------------------------------
@@ -339,8 +340,7 @@
            (make-fenced-pump world in-ch out-ch @max-inflight)))
     (let [toggle-ch (listen (gdom/getElement (str el-prefix "-html")) "click")]
       (go-loop []
-        (let [actx-id (string/join "-" (rest (string/split (.-id (.-target (<! toggle-ch)))
-                                                           #"-")))]
+        (let [actx-id (no-prefix (.-id (.-target (<! toggle-ch))))]
           (doseq [[actx actx-info] (:actxs @vis)]
             (when (= actx-id (last actx))
               (swap! vis #(assoc-in % [:actxs actx :closed] (not (:closed actx-info))))))
