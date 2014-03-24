@@ -298,7 +298,7 @@
             deltas ((get (get vis-event-handlers verb) step) vis actx args)]
         (set-el-innerHTML (str el-prefix "-event")
                           (str num-events ": " (last actx) " " verb " " step " " args))
-        (when (and (not (zero? @event-delay)) (not-empty deltas))
+        (when (and (not (zero? @event-delay)) (some #(not (:after %)) deltas))
           (>! render-ch [@vis deltas false])
           (when (> @event-delay 0) (<! (timeout @event-delay)))
           (when (< @event-delay 0) (<! step-ch)))
