@@ -362,12 +362,9 @@
          (- x y))))
 
 (def example-cmd-handlers
-  {"add"  (fn [cmd] {:rq #(example-add % (:x cmd) (:y cmd) (:delay cmd))
-                     :fence (:fence cmd)})
-   "sub"  (fn [cmd] {:rq #(example-sub % (:x cmd) (:y cmd) (:delay cmd))
-                     :fence (:fence cmd)})
-   "test" (fn [cmd] {:rq #(cbfg.fence/test %)
-                     :fence (:fence cmd)})})
+  {"add"  (fn [c] {:fence (:fence c) :rq #(example-add % (:x c) (:y c) (:delay c))})
+   "sub"  (fn [c] {:fence (:fence c) :rq #(example-sub % (:x c) (:y c) (:delay c))})
+   "test" (fn [c] {:fence (:fence c) :rq #(cbfg.fence/test %)})})
 
 (vis-init (map< (fn [ev] {:op (.-id (.-target ev))
                           :x (js/parseInt (get-el-value "x"))
