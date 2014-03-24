@@ -136,7 +136,7 @@
   (if override
     (swap! positions #(assoc-in % [id] override))
     (swap! positions #(-> %
-                          (assoc-in [id] (get @positions 'NEXT-POSITION))
+                          (assoc-in [id] (get % 'NEXT-POSITION))
                           (update-in ['NEXT-POSITION] (fnil inc 0))))))
 
 (defn assign-positions [vis actx positions actx-ch-ch-infos override]
