@@ -258,18 +258,19 @@
 
 ;; ------------------------------------------------
 
-(defn vis-run-controls [event-delay step-ch]
+(defn vis-run-controls [event-delay step-ch el-prefix]
   (let [run-controls {"run"      #(do (when (< @event-delay 0) (put! step-ch true))
                                       (reset! event-delay 0))
                       "run-slow" #(do (when (< @event-delay 0) (put! step-ch true))
                                       (reset! event-delay
-                                              (js/parseInt (get-el-value "run-slowness"))))
+                                              (js/parseInt (get-el-value (str el-prefix "-run-slowness")))))
                       "pause"    #(reset! event-delay -1)
                       "step"     #(do (reset! event-delay -1)
                                       (put! step-ch true))}]
-    (go-loop [run-control-ch (merge (map #(listen (gdom/getElement %) "click")
+    (go-loop [run-control-ch (merge (map #(listen (gdom/getElement (str el-prefix "-" %)) "click")
                                          (keys run-controls)))]
-      ((get run-controls (.-id (.-target (<! run-control-ch)))))
+      ((get run-controls (string/join "-" (rest (string/split (.-id (.-target (<! run-control-ch)))
+                                                              #"-")))))
       (recur run-control-ch))))
 
 ;; ------------------------------------------------
@@ -338,12 +339,13 @@
            (make-fenced-pump world in-ch out-ch @max-inflight)))
     (let [toggle-ch (listen (gdom/getElement (str el-prefix "-html")) "click")]
       (go-loop []
-        (let [actx-id (string/join "-" (rest (string/split (.-id (.-target (<! toggle-ch))) #"-")))]
+        (let [actx-id (string/join "-" (rest (string/split (.-id (.-target (<! toggle-ch)))
+                                                           #"-")))]
           (doseq [[actx actx-info] (:actxs @vis)]
             (when (= actx-id (last actx))
               (swap! vis #(assoc-in % [:actxs actx :closed] (not (:closed actx-info))))))
           (recur))))
-    (vis-run-controls event-delay step-ch)))
+    (vis-run-controls event-delay step-ch el-prefix)))
 
 ;; ------------------------------------------------
 
