@@ -240,18 +240,18 @@
                      cy (ch-y (:ch delta))]
                  (when (not= ay cy)
                    [(case (:delta delta)
-                      :put (when (get chs (:ch delta))
+                      :put (when (and (get chs (:ch delta)) (not= ay cy))
                              ["<g transform='translate(500," ay ")'>"
                               (vis-svg-line "arrow delta" 0 0 100 (- cy ay)) "</g>"])
-                      :take (when (get chs (:ch delta))
+                      :take (when (and (get chs (:ch delta)) (not= ay cy))
                               ["<g transform='translate(600," cy ")'>"
                                (vis-svg-line (str "arrow delta"
                                                   (when (not (:msg delta)) " close"))
                                              0 0 -100 (- ay cy)) "</g>"])
-                      :actx-start (when (> childy line-height)
+                      :actx-start (when (and (> childy line-height) (not= childy ay))
                                     ["<g transform='translate(30," ay ")'>"
                                      (vis-svg-line "arrow delta" 0 0 30 (- childy ay)) "</g>"])
-                      :actx-end (when (> childy line-height)
+                      :actx-end (when (and (> childy line-height) (not= childy ay))
                                   ["<g transform='translate(60," childy ")'>"
                                    (vis-svg-line "arrow delta close" 0 0 -40 0) "</g>"])
                       nil)
