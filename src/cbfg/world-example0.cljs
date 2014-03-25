@@ -24,7 +24,7 @@
 
 (def example-max-inflight (atom 10))
 
-(defn example-init [el-prefix]
+(defn world-vis-init [el-prefix]
   (let [cmd-ch (map< (fn [ev] {:op (.-id (.-target ev))
                                :x (js/parseInt (get-el-value "x"))
                                :y (js/parseInt (get-el-value "y"))
@@ -46,6 +46,3 @@
                               (recur (inc num-outs))))
                   (make-fenced-pump world in-ch out-ch @example-max-inflight)))
               el-prefix)))
-
-(example-init "vis")
-
