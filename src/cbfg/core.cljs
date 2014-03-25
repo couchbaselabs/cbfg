@@ -273,9 +273,8 @@
 
 ;; ------------------------------------------------
 
-(defn vis-init [cmd-ch cmd-handlers el-prefix]
-  (let [max-inflight (atom 10)
-        event-delay (atom 0)
+(defn vis-init [world-init-cb el-prefix]
+  (let [event-delay (atom 0)
         event-ch (chan)
         step-ch (chan (dropping-buffer 1))
         last-id (atom 0)
@@ -329,18 +328,7 @@
                  (when (not= vis-next-svg vis-last-svg)
                    (set-el-innerHTML (str el-prefix "-svg") vis-next-svg))
                  (recur vis-last vis-last-positions vis-last-html vis-next-svg)))))
-         (let [in-ch (achan-buf world 100)
-               out-ch (achan-buf world 0)]
-           (ago-loop user-in world [num-ins 0]
-                     (let [cmd (<! cmd-ch)
-                           cmd-handler ((get cmd-handlers (:op cmd)) cmd)]
-                       (aput user-in in-ch cmd-handler)
-                       (recur (inc num-ins))))
-           (ago-loop user-out world [num-outs 0]
-                     (let [result (atake user-out out-ch)]
-                       (set-el-innerHTML (str el-prefix "-output") result)
-                       (recur (inc num-outs))))
-           (make-fenced-pump world in-ch out-ch @max-inflight)))
+         (world-init-cb world))
     (let [toggle-ch (listen (gdom/getElement (str el-prefix "-html")) "click")]
       (go-loop []
         (let [actx-id (no-prefix (.-id (.-target (<! toggle-ch))))]
@@ -370,11 +358,30 @@
    "sub"  (fn [c] {:fence (:fence c) :rq #(example-sub % (:x c) (:y c) (:delay c))})
    "test" (fn [c] {:fence (:fence c) :rq #(cbfg.fence/test %)})})
 
-(vis-init (map< (fn [ev] {:op (.-id (.-target ev))
-                          :x (js/parseInt (get-el-value "x"))
-                          :y (js/parseInt (get-el-value "y"))
-                          :delay (js/parseInt (get-el-value "delay"))
-                          :fence (= (get-el-value "fence") "1")})
-                (merge (map #(listen (gdom/getElement %) "click")
-                            (keys example-cmd-handlers))))
-          example-cmd-handlers "vis")
+(def example-max-inflight (atom 10))
+
+(defn example-init [el-prefix]
+  (let [cmd-ch (map< (fn [ev] {:op (.-id (.-target ev))
+                               :x (js/parseInt (get-el-value "x"))
+                               :y (js/parseInt (get-el-value "y"))
+                               :delay (js/parseInt (get-el-value "delay"))
+                               :fence (= (get-el-value "fence") "1")})
+                     (merge (map #(listen (gdom/getElement %) "click")
+                                 (keys example-cmd-handlers))))]
+    (vis-init (fn [world]
+                (let [in-ch (achan-buf world 100)
+                      out-ch (achan-buf world 0)]
+                  (ago-loop user-in world [num-ins 0]
+                            (let [cmd (<! cmd-ch)
+                                  cmd-handler ((get example-cmd-handlers (:op cmd)) cmd)]
+                              (aput user-in in-ch cmd-handler)
+                              (recur (inc num-ins))))
+                  (ago-loop user-out world [num-outs 0]
+                            (let [result (atake user-out out-ch)]
+                              (set-el-innerHTML (str el-prefix "-output") result)
+                              (recur (inc num-outs))))
+                  (make-fenced-pump world in-ch out-ch @example-max-inflight)))
+              el-prefix)))
+
+(example-init "vis")
+
