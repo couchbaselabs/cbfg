@@ -147,7 +147,7 @@
   (let [actx-id (last actx)
         actx-info (get-in vis [:actxs actx])]
     (assign-position positions actx-id override)
-    (doseq [[ch ch-info] (get actx-ch-ch-infos actx)]
+    (doseq [[ch ch-info] (sort-by #(:id (second %)) (get actx-ch-ch-infos actx))]
       (assign-position positions (:id ch-info) override))
     (doseq [child-actx (sort #(compare (last %1) (last %2))
                              (keys (:children actx-info)))]
@@ -191,7 +191,7 @@
              (let [ch-info (second ch-ch-info)
                    ch-id (:id ch-info)]
                ["<li id='ch-" ch-id "'>" ch-id ": " (:msgs ch-info) "</li>"]))
-           (get actx-ch-ch-infos actx))
+           (sort-by #(:id (second %)) (get actx-ch-ch-infos actx)))
      "</ul></div>"
      (when (not (:closed actx-info))
        ["<ul>" (mapv (fn [child-actx]
