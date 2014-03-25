@@ -2,7 +2,7 @@
   (:require-macros [cbfg.ago :refer [ago ago-loop achan-buf aput atake]])
   (:require [cljs.core.async :refer [<! timeout merge map<]]
             [goog.dom :as gdom]
-            [cbfg.vis :refer [vis-init listen get-el-value set-el-innerHTML]]
+            [cbfg.vis :refer [vis-init listen-el get-el-value set-el-innerHTML]]
             [cbfg.fence :refer [make-fenced-pump]]))
 
 (defn example-add [actx x y delay]
@@ -30,7 +30,7 @@
                                :y (js/parseInt (get-el-value "y"))
                                :delay (js/parseInt (get-el-value "delay"))
                                :fence (= (get-el-value "fence") "1")})
-                     (merge (map #(listen (gdom/getElement %) "click")
+                     (merge (map #(listen-el (gdom/getElement %) "click")
                                  (keys example-cmd-handlers))))]
     (vis-init (fn [world]
                 (let [in-ch (achan-buf world 100)

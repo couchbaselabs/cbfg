@@ -12,7 +12,7 @@
 
 (defn set-el-innerHTML [elId v] (set! (.-innerHTML (gdom/getElement elId)) v))
 
-(defn listen [el type]
+(defn listen-el [el type]
   (let [out (chan)]
     (gevents/listen el type #(put! out %))
     out))
@@ -260,7 +260,7 @@
                       "pause"    #(reset! event-delay -1)
                       "step"     #(do (reset! event-delay -1)
                                       (put! step-ch true))}]
-    (go-loop [run-control-ch (merge (map #(listen (gdom/getElement (str el-prefix "-" %)) "click")
+    (go-loop [run-control-ch (merge (map #(listen-el (gdom/getElement (str el-prefix "-" %)) "click")
                                          (keys run-controls)))]
       ((get run-controls (no-prefix (.-id (.-target (<! run-control-ch))))))
       (recur run-control-ch))))
@@ -323,7 +323,7 @@
                    (set-el-innerHTML (str el-prefix "-svg") vis-next-svg))
                  (recur vis-last vis-last-positions vis-last-html vis-next-svg)))))
          (world-init-cb world))
-    (let [toggle-ch (listen (gdom/getElement (str el-prefix "-html")) "click")]
+    (let [toggle-ch (listen-el (gdom/getElement (str el-prefix "-html")) "click")]
       (go-loop []
         (let [actx-id (no-prefix (.-id (.-target (<! toggle-ch))))]
           (doseq [[actx actx-info] (:actxs @vis)]
