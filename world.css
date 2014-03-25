@@ -1,3 +1,9 @@
+body {
+    background-color: #FFFCF1;
+}
+input {
+    background-color: #FFF6D3;
+}
 .vis, .vis * {
     font-size: 20px;
     white-space: nowrap;
@@ -30,7 +36,7 @@ div.actx div.loop-state {
 div.chs {
     display: block;
     position: relative;
-    left: 600px;
+    left: 520px;
     margin: 0 0 0;
     border-top: 0px solid white;
     padding: 0 0 0;
@@ -38,15 +44,16 @@ div.chs {
 }
 div.chs li {
     border-radius: 6px;
-    background-color: #adf;
+    background-color: #B1F5F7;
     padding-left: 0.5em;
 }
 svg.vis-svg line.arrow {
-    stroke-width: 2;
-    stroke: #faa;
+    stroke-width: 1;
+    stroke: #B1F5F7;
     marker-end: url(#triangle);
 }
 svg.vis-svg line.delta {
+    stroke-width: 2;
     stroke: blue;
 }
 svg.vis-svg line.close {
@@ -64,8 +71,8 @@ svg.vis-svg line.delta {
     animation-timing-function: ease-out;
 }
 svg.vis-svg line.ghost {
-    stroke-width: 1;
-    stroke: #bbb;
+    stroke-width: 0.8;
+    stroke: #aaa;
 }
 svg.vis-svg text.ch-name {
     font-size: 10px;
@@ -83,8 +90,9 @@ button.toggle {
     font-size: 8px;
     width: 14px;
     height: 14px;
-    margin: 0 2px 0 2px;
+    margin: 3px 4px 0 6px;
     padding: 0 0 0 0;
+    vertical-align: top;
 }
 
 
