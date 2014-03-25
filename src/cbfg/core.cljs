@@ -120,10 +120,12 @@
                              ch-actions))))
     :after (fn [vis actx args]
              (let [[ch-bindings result] args
-                   chs (map #(if (seq? %) (first %) %) ch-bindings)
+                    ; The ch-actions will be [[ch :take] [ch :put] ...].
+                    ch-actions (map #(if (seq? %) [(first %) :put (second %)] [% :take])
+                                    ch-bindings)
                    [result-msg result-ch] result]
-               (doseq [ch chs]
-                 (swap! vis #(dissoc-in % [:actxs actx :wait-chs ch])))
+               (doseq [[ch action] ch-actions]
+                 (swap! vis #(assoc-in % [:actxs actx :wait-chs ch] [:ghost])))
                (swap! vis #(dissoc-in % [:chs result-ch :msgs result-msg]))
                (when (nil? result-msg) ; The ch is closed.
                  (swap! vis #(-> %
@@ -201,8 +203,8 @@
 
 ;; ------------------------------------------------
 
-(defn vis-svg-arrow [class x1 y1 x2 y2]
-  ["<line class='arrow " class "' x1='" x1 "' y1='" y1 "' x2='" x2 "' y2='" y2 "'/>"])
+(defn vis-svg-line [class x1 y1 x2 y2]
+  ["<line class='" class "' x1='" x1 "' y1='" y1 "' x2='" x2 "' y2='" y2 "'/>"])
 
 (defn vis-svg-actxs [vis positions deltas after]
   (let [stroke-width 1
@@ -223,9 +225,10 @@
                              ay (actx-y actx)
                              cy (ch-y ch)]
                          (when (not= ay cy)
-                           [(if (= :put wait-kind)
-                              (vis-svg-arrow "" 500 ay 600 cy)
-                              (vis-svg-arrow "" 600 cy 500 ay))
+                           [(case wait-kind
+                              :ghost (vis-svg-line "ghost" 500 ay 600 cy)
+                              :put   (vis-svg-line "arrow" 500 ay 600 cy)
+                              :take  (vis-svg-line "arrow" 600 cy 500 ay))
                             (when ch-name
                               ["<text class='ch-name' x='540' y='" (* 0.5 (+ ay cy))
                                "'>" ch-name "</text>"])])))
@@ -240,17 +243,18 @@
                    [(case (:delta delta)
                       :put (when (get chs (:ch delta))
                              ["<g transform='translate(500," ay ")'>"
-                              (vis-svg-arrow "delta" 0 0 100 (- cy ay)) "</g>"])
+                              (vis-svg-line "arrow delta" 0 0 100 (- cy ay)) "</g>"])
                       :take (when (get chs (:ch delta))
                               ["<g transform='translate(600," cy ")'>"
-                               (vis-svg-arrow (if (:msg delta) "delta" "delta close")
-                                              0 0 -100 (- ay cy)) "</g>"])
+                               (vis-svg-line (str "arrow delta"
+                                                  (when (not (:msg delta)) " close"))
+                                             0 0 -100 (- ay cy)) "</g>"])
                       :actx-start (when (> childy line-height)
                                     ["<g transform='translate(30," ay ")'>"
-                                     (vis-svg-arrow "delta" 0 0 30 (- childy ay)) "</g>"])
+                                     (vis-svg-line "arrow delta" 0 0 30 (- childy ay)) "</g>"])
                       :actx-end (when (> childy line-height)
                                   ["<g transform='translate(60," childy ")'>"
-                                   (vis-svg-arrow "delta close" 0 0 -40 0) "</g>"])
+                                   (vis-svg-line "arrow delta close" 0 0 -40 0) "</g>"])
                       nil)
                     (when (:ch-name delta)
                       ["<text class='ch-name' x='540' y='" (* 0.5 (+ ay cy))

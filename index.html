@@ -92,10 +92,6 @@
     svg.vis-svg line.close {
       stroke: black;
     }
-    svg.vis-svg text.ch-name {
-      font-size: 10px;
-      stroke-color: #bbb;
-    }
     svg.vis-svg line.delta {
       -webkit-animation-name: delta-move;
       -webkit-animation-duration: 0.7s;
@@ -106,6 +102,14 @@
       animation-duration: 0.7s;
       animation-iteration-count: 1;
       animation-timing-function: linear;
+    }
+    svg.vis-svg line.ghost {
+      stroke-width: 1;
+      stroke: #bbb;
+    }
+    svg.vis-svg text.ch-name {
+      font-size: 10px;
+      stroke-color: #bbb;
     }
     @-webkit-keyframes delta-move {
       0% { -webkit-transform: scale(0,0); }
