@@ -126,7 +126,9 @@
                  (swap! vis #(dissoc-in % [:actxs actx :wait-chs ch])))
                (swap! vis #(dissoc-in % [:chs result-ch :msgs result-msg]))
                (when (nil? result-msg) ; The ch is closed.
-                 (swap! vis #(dissoc-in % [:chs result-ch])))
+                 (swap! vis #(-> %
+                                 (dissoc-in [:actxs actx :wait-chs result-ch])
+                                 (dissoc-in [:chs result-ch]))))
                (when (some #(= % result-ch) ch-bindings)
                  [{:delta :take :msg result-msg :ch result-ch :actx actx}])))}})
 
