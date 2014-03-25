@@ -333,6 +333,3 @@
           (recur))))
     (vis-run-controls event-delay step-ch el-prefix)))
 
-
-
-
