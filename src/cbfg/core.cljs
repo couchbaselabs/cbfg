@@ -310,6 +310,7 @@
               vis-last-html nil
               vis-last-svg nil]
       (let [[vis-next deltas after event-str] (<! render-ch)]
+        (set-el-innerHTML (str el-prefix "-event") event-str)
         (if after
           (let [vis-next-positions (atom {})
                 actx-ch-ch-infos (group-by #(:first-taker-actx (second %)) (:chs vis-next))]
@@ -319,8 +320,7 @@
                   vis-next-svg (apply str (flatten (vis-svg-actxs vis-next @vis-next-positions
                                                                   deltas true)))]
               (when (not= vis-next-html vis-last-html)
-                (set-el-innerHTML (str el-prefix "-html") vis-next-html)
-                (set-el-innerHTML (str el-prefix "-event") event-str))
+                (set-el-innerHTML (str el-prefix "-html") vis-next-html))
               (when (not= vis-next-svg vis-last-svg)
                 (set-el-innerHTML (str el-prefix "-svg") vis-next-svg))
               (recur vis-next @vis-next-positions vis-next-html vis-next-svg)))
