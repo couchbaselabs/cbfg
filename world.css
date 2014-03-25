@@ -50,14 +50,17 @@ div.chs li {
 svg.vis-svg line.arrow {
     stroke-width: 1;
     stroke: #B1F5F7;
+    stroke-dasharray: 10,2;
     marker-end: url(#triangle);
 }
 svg.vis-svg line.delta {
     stroke-width: 2;
     stroke: blue;
+    stroke-dasharray: none;
 }
 svg.vis-svg line.close {
     stroke: black;
+    stroke-dasharray: none;
 }
 svg.vis-svg line.delta {
     -webkit-animation-name: delta-move;
@@ -73,6 +76,7 @@ svg.vis-svg line.delta {
 svg.vis-svg line.ghost {
     stroke-width: 0.8;
     stroke: #aaa;
+    stroke-dasharray: none;
 }
 svg.vis-svg text.ch-name {
     font-size: 10px;
