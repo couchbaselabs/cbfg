@@ -12,13 +12,18 @@
   `(cljs.core.async/>! (:event-ch (actx-top ~actx)) [~actx ~event]))
 
 (defmacro ago [child-actx-binding-name actx & body]
-  `(let [ago-id# ((:gen-id (actx-top ~actx)))
+  `(let [ago-ch# (achan-buf ~actx 1)
+         ago-id# ((:gen-id (actx-top ~actx)))
          ~child-actx-binding-name (conj ~actx
                                         (str '~child-actx-binding-name "-" ago-id#))]
      (go (actx-event ~actx [:ago :start ~child-actx-binding-name])
          (let [result# (do ~@body)]
+           (when result#
+             (aput ~child-actx-binding-name ago-ch# result#))
+           (aclose ~child-actx-binding-name ago-ch#)
            (actx-event ~actx [:ago :end ~child-actx-binding-name result#])
-           result#))))
+           result#))
+     ago-ch#))
 
 (defmacro ago-loop [child-actx-binding-name actx bindings & body]
   (let [m (->> bindings
