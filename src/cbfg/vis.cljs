@@ -201,8 +201,8 @@
         ch-y (fn [ch] (* line-height (+ 0.5 (get positions (:id (get chs ch))))))
         actx-y (fn [actx] (* line-height (+ 0.5 (get positions (last actx)))))]
     ["<defs>"
-     "<marker id='triangle' viewBox='0 0 10 10' refX='0' refY='5'  orient='auto'"
-     " markerUnits='strokeWidth' markerWidth='8' markerHeight='6'>"
+     "<marker id='triangle' viewBox='0 0 10 10' refX='0' refY='5' orient='auto'"
+     " markerUnits='1' markerWidth='4' markerHeight='3'>"
      " <path d='M 0 0 L 10 5 L 0 10 z'/></marker>"
      "</defs>"
      (mapv (fn [actx-actx-info]
@@ -214,11 +214,11 @@
                              cy (ch-y ch)]
                          (when (not= ay cy)
                            [(case wait-kind
-                              :ghost (vis-svg-line "ghost" 500 ay 600 cy)
-                              :put   (vis-svg-line "arrow" 500 ay 600 cy)
-                              :take  (vis-svg-line "arrow" 600 cy 500 ay))
+                              :ghost (vis-svg-line "ghost" 10 ay 100 cy)
+                              :put   (vis-svg-line "arrow" 10 ay 100 cy)
+                              :take  (vis-svg-line "arrow" 100 cy 10 ay))
                             (when ch-name
-                              ["<text class='ch-name' x='540' y='" (* 0.5 (+ ay cy))
+                              ["<text class='ch-name' x='50' y='" (* 0.5 (+ ay cy))
                                "'>" ch-name "</text>"])])))
                      (:wait-chs actx-info))))
            (:actxs vis))
@@ -230,22 +230,22 @@
                  (when (not= ay cy)
                    [(case (:delta delta)
                       :put (when (and (get chs (:ch delta)) (not= ay cy))
-                             ["<g transform='translate(500," ay ")'>"
-                              (vis-svg-line "arrow delta" 0 0 100 (- cy ay)) "</g>"])
+                             ["<g transform='translate(10," ay ")'>"
+                              (vis-svg-line "arrow delta" 0 0 90 (- cy ay)) "</g>"])
                       :take (when (and (get chs (:ch delta)) (not= ay cy))
-                              ["<g transform='translate(600," cy ")'>"
+                              ["<g transform='translate(100," cy ")'>"
                                (vis-svg-line (str "arrow delta"
                                                   (when (not (:msg delta)) " close"))
-                                             0 0 -100 (- ay cy)) "</g>"])
+                                             0 0 -90 (- ay cy)) "</g>"])
                       :actx-start (when (and (> childy line-height) (not= childy ay))
-                                    ["<g transform='translate(30," ay ")'>"
-                                     (vis-svg-line "arrow delta" 0 0 30 (- childy ay)) "</g>"])
+                                    ["<g transform='translate(10," ay ")'>"
+                                     (vis-svg-line "arrow delta" 0 0 0 (- childy ay)) "</g>"])
                       :actx-end (when (and (> childy line-height) (not= childy ay))
-                                  ["<g transform='translate(60," childy ")'>"
-                                   (vis-svg-line "arrow delta close" 0 0 -40 0) "</g>"])
+                                  ["<g transform='translate(100," childy ")'>"
+                                   (vis-svg-line "arrow delta close" 0 0 -90 0) "</g>"])
                       nil)
                     (when (:ch-name delta)
-                      ["<text class='ch-name' x='540' y='" (* 0.5 (+ ay cy))
+                      ["<text class='ch-name' x='50' y='" (* 0.5 (+ ay cy))
                        "'>" (:ch-name delta) "</text>"])]))))
            deltas)]))
 

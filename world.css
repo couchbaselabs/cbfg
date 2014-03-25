@@ -13,7 +13,8 @@ div.actx, div.actx ul, div.actx li {
     white-space: nowrap;
 }
 div.actx {
-    border-top: 1px solid #eee;
+    border-top: 1px solid rgb(0,100,0);
+    background-color: rgba(0,100,0,0.4);
 }
 div.actx ul, div.actx li {
     list-style: none;
@@ -35,15 +36,15 @@ div.chs {
     white-space: nowrap;
 }
 div.chs li {
-    background-color: #efe;
+    background-color: #adf;
 }
 svg.vis-svg line.arrow {
-    stroke-width: 1;
+    stroke-width: 2;
     stroke: #faa;
     marker-end: url(#triangle);
 }
 svg.vis-svg line.delta {
-    stroke: green;
+    stroke: blue;
 }
 svg.vis-svg line.close {
     stroke: black;
