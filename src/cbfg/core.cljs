@@ -282,7 +282,6 @@
         gen-id #(swap! last-id inc)
         w [{:gen-id gen-id
             :event-ch event-ch}]
-        root-actx (atom nil)
         vis (atom {:actxs {} ; {actx -> {:children {child-actx -> true},
                              ;           :wait-chs {ch -> [:take|:put optional-ch-name])},
                              ;           :loop-state last-loop-bindings
@@ -305,32 +304,31 @@
         (when (> @event-delay 0) (<! (timeout @event-delay)))
         (when (< @event-delay 0) (<! step-ch)))
         (recur (inc num-events)))
-    (go-loop [vis-last nil ; Process render-ch, updating U/I.
-              vis-last-positions nil
-              vis-last-html nil
-              vis-last-svg nil]
-      (let [[vis-next deltas after event-str] (<! render-ch)]
-        (set-el-innerHTML (str el-prefix "-event") event-str)
-        (if after
-          (let [vis-next-positions (atom {})
-                actx-ch-ch-infos (group-by #(:first-taker-actx (second %)) (:chs vis-next))]
-            (assign-positions vis-next @root-actx vis-next-positions actx-ch-ch-infos nil)
-            (let [vis-next-html (apply str (flatten (vis-html-actx vis-next @root-actx
-                                                                   actx-ch-ch-infos)))
-                  vis-next-svg (apply str (flatten (vis-svg-actxs vis-next @vis-next-positions
-                                                                  deltas true)))]
-              (when (not= vis-next-html vis-last-html)
-                (set-el-innerHTML (str el-prefix "-html") vis-next-html))
-              (when (not= vis-next-svg vis-last-svg)
-                (set-el-innerHTML (str el-prefix "-svg") vis-next-svg))
-              (recur vis-next @vis-next-positions vis-next-html vis-next-svg)))
-          (let [vis-next-svg (apply str (flatten (vis-svg-actxs vis-last vis-last-positions
-                                                                deltas false)))]
-            (when (not= vis-next-svg vis-last-svg)
-              (set-el-innerHTML (str el-prefix "-svg") vis-next-svg))
-            (recur vis-last vis-last-positions vis-last-html vis-next-svg)))))
     (ago world w
-         (reset! root-actx world)
+         (go-loop [vis-last nil ; Process render-ch, updating U/I.
+                   vis-last-positions nil
+                   vis-last-html nil
+                   vis-last-svg nil]
+           (let [[vis-next deltas after event-str] (<! render-ch)]
+             (set-el-innerHTML (str el-prefix "-event") event-str)
+             (if after
+               (let [vis-next-positions (atom {})
+                     actx-ch-ch-infos (group-by #(:first-taker-actx (second %)) (:chs vis-next))]
+                 (assign-positions vis-next world vis-next-positions actx-ch-ch-infos nil)
+                 (let [vis-next-html (apply str (flatten (vis-html-actx vis-next world
+                                                                        actx-ch-ch-infos)))
+                       vis-next-svg (apply str (flatten (vis-svg-actxs vis-next @vis-next-positions
+                                                                       deltas true)))]
+                   (when (not= vis-next-html vis-last-html)
+                     (set-el-innerHTML (str el-prefix "-html") vis-next-html))
+                   (when (not= vis-next-svg vis-last-svg)
+                     (set-el-innerHTML (str el-prefix "-svg") vis-next-svg))
+                   (recur vis-next @vis-next-positions vis-next-html vis-next-svg)))
+               (let [vis-next-svg (apply str (flatten (vis-svg-actxs vis-last vis-last-positions
+                                                                     deltas false)))]
+                 (when (not= vis-next-svg vis-last-svg)
+                   (set-el-innerHTML (str el-prefix "-svg") vis-next-svg))
+                 (recur vis-last vis-last-positions vis-last-html vis-next-svg)))))
          (let [in-ch (achan-buf world 100)
                out-ch (achan-buf world 0)]
            (ago-loop user-in world [num-ins 0]
