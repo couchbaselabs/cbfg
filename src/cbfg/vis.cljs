@@ -170,13 +170,11 @@
         actx-info (get-in vis [:actxs actx])
         children (:children actx-info)]
     ["<div id='actx-" actx-id "' class='actx'>"
-     "<div class='actx-line'>"
      " <button class='toggle' id='toggle-" actx-id "'>"
      (if (:closed actx-info) "&#9654;" "&#9660;")
      " </button>"
      " <span class='actx-id'>" actx-id "</span>&nbsp;"
      " <div class='loop-state'>" (vis-html-loop-state vis (:loop-state actx-info)) "</div>"
-     "</div>"
      "<div class='chs'><ul>"
      (mapv (fn [ch-info]
              (let [ch-id (:id ch-info)]
@@ -187,8 +185,7 @@
      (when (not (:closed actx-info))
        ["<ul class='children'>"
         (mapv (fn [child-actx]
-                ["<li>" (vis-html-actx vis child-actx actx-ch-ch-infos)
-                 "</li>"])
+                ["<li>" (vis-html-actx vis child-actx actx-ch-ch-infos) "</li>"])
               (sort #(compare (last %1) (last %2)) (keys children)))
         "</ul>"])
      "</div>"]))
