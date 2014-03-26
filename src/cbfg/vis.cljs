@@ -179,7 +179,7 @@
      (mapv (fn [ch-info]
              (let [ch-id (:id ch-info)]
                ["<li id='ch-" ch-id "'><span class='ch-id'>" ch-id ":</span>&nbsp;"
-                "<span class='msgs'>" (:msgs ch-info) "</span></li>"]))
+                "<span class='msgs'>" (keys (:msgs ch-info)) "</span></li>"]))
            (sort-by :id (vals (get actx-ch-ch-infos actx))))
      "</ul></div>"
      (when (not (:closed actx-info))
