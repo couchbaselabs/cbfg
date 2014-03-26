@@ -18,30 +18,30 @@
   </div>
   <hr/>
   <div>
-    input: &nbsp;&nbsp;&nbsp;
-    fence: <select id="fence">
-             <option value="0" selected>false</option>
-             <option value="1">true</option>
-           </select>
-    &nbsp;&nbsp;&nbsp;
-    x: <input id="x" type="text" value="1"></input>
-    y: <input id="y" type="text" value="2"></input>
-    delay: <input id="delay" type="text" value="1000"></input>
-    <button id="add">add</button>
-    <button id="sub">sub</button>
-    <button id="test">test</button>
+    input:
+    <div id="vis-input">
+      fence: <select id="fence">
+               <option value="0" selected>false</option>
+               <option value="1">true</option>
+             </select>
+      &nbsp;&nbsp;&nbsp;
+      x: <input id="x" type="text" value="1"></input>
+      y: <input id="y" type="text" value="2"></input>
+      delay: <input id="delay" type="text" value="1000"></input>
+      <button id="add">add</button>
+      <button id="sub">sub</button>
+      <button id="test">test</button>
+    </div>
   </div>
   <hr/>
   <div>output: <div id="vis-output"></div></div>
   <hr/>
-  <div>event:
-    <pre id="vis-event">
-    </pre>
-  </div>
+  <div>event: <div id="vis-event"></div></div>
   <hr/>
   <div class="vis" style="position:relative; width:100%; height:100%;">
-    <div class="vis-html" id="vis-html" style="position:absolute; top:0; left:0; width:100%;"></div>
-    <svg class="vis-svg" id="vis-svg" height="100%" width="120px"
+    <div class="vis-html" id="vis-html"
+         style="position:absolute; top:0; left:0; width:100%;"></div>
+    <svg class="vis-svg" id="vis-svg"
          style="position:absolute; top:0; left:500px; width:120px; height:100%;">
     </svg>
   </div>
