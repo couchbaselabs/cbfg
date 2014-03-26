@@ -8,6 +8,7 @@ input {
 .vis, .vis * {
     font-size: 20px;
     white-space: nowrap;
+    line-height: 1;
 }
 div.actx, div.actx ul, div.actx li {
     width: 100%;
@@ -16,8 +17,7 @@ div.actx, div.actx ul, div.actx li {
     border: none;
     padding-top: 0;
     padding-bottom: 0;
-    line-height: 1;
-    white-space: nowrap;
+    list-style: none;
 }
 div.actx div.actx {
     width: 95%;
@@ -27,36 +27,43 @@ div.actx {
     border-radius: 6px;
     background-color: rgba(0,100,0,0.4);
 }
-div.actx ul, div.actx li {
-    list-style: none;
-}
 div.actx div.loop-state {
     display: inline-block;
     margin-left: 10px;
+    padding-top: 3px;
     white-space: nowrap;
+    vertical-align: top;
     font-size: 10px;
     color: #bbb;
 }
 span.actx-id {
-    font-size: 15px;
     display: inline-block;
-    padding-top: 2px;
+    padding-top: 1px;
+    vertical-align: top;
+    font-size: 15px;
 }
 div.chs {
     display: block;
     position: relative;
     left: 520px;
-    margin: 0 0 0;
+    margin: 0 0 0 0;
     border: none;
-    padding: 0 0 0;
+    padding: 0 0 0 0;
     white-space: nowrap;
 }
 div.chs li {
     width: 37%;
-    border-top: 1px solid #B1F5F7;
+    height: 21px;
+    margin-top: 0;
+    margin-bottom: 0;
+    border: none;
+    border-top: 1px solide #B1F5F7;
     border-radius: 6px;
     background-color: #B1F5F7;
+    padding-top: 0;
+    padding-bottom: 0;
     padding-left: 0.5em;
+    font-size: 20px;
 }
 div.chs li * {
     display: inline-block;
@@ -113,8 +120,8 @@ svg.vis-svg text.ch-name {
 button.toggle {
     font-size: 8px;
     width: 14px;
-    height: 14px;
-    margin: 3px 4px 0 6px;
+    height: 12px;
+    margin: 2px 4px 0 6px;
     padding: 0 0 0 0;
     vertical-align: top;
 }

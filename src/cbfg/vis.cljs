@@ -169,12 +169,12 @@
   (let [actx-id (last actx)
         actx-info (get-in vis [:actxs actx])
         children (:children actx-info)]
-    ["<div id='actx-" actx-id "' class='actx'>"
+    ["<div id='actx-" actx-id "' class='actx'><div class='actx-line'>"
      "<button class='toggle' id='toggle-" actx-id "'>"
      (if (:closed actx-info) "&#9654;" "&#9660;")
      "</button>"
-     "<span class='actx-id'>" actx-id "</span>"
-     "<div class='loop-state'>" (vis-html-loop-state vis (:loop-state actx-info)) "</div>"
+     "<span class='actx-id'>" actx-id "</span>&nbsp;"
+     "<div class='loop-state'>" (vis-html-loop-state vis (:loop-state actx-info)) "</div></div>"
      "<div class='chs'><ul>"
      (mapv (fn [ch-info]
              (let [ch-id (:id ch-info)]
@@ -183,10 +183,11 @@
            (sort-by :id (vals (get actx-ch-ch-infos actx))))
      "</ul></div>"
      (when (not (:closed actx-info))
-       ["<ul>" (mapv (fn [child-actx]
-                       ["<li>" (vis-html-actx vis child-actx actx-ch-ch-infos)
-                        "</li>"])
-                     (sort #(compare (last %1) (last %2)) (keys children)))
+       ["<ul class='children'>"
+        (mapv (fn [child-actx]
+                ["<li>" (vis-html-actx vis child-actx actx-ch-ch-infos)
+                 "</li>"])
+              (sort #(compare (last %1) (last %2)) (keys children)))
         "</ul>"])
      "</div>"]))
 
@@ -197,7 +198,7 @@
 
 (defn vis-svg-actxs [vis positions deltas after]
   (let [stroke-width 1
-        line-height 20
+        line-height 21
         chs (:chs vis)
         ch-y (fn [ch] (* line-height (+ 0.5 (get positions (:id (get chs ch))))))
         actx-y (fn [actx] (* line-height (+ 0.5 (get positions (last actx)))))]
