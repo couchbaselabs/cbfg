@@ -308,7 +308,8 @@
              (if after
                (let [vis-next-positions (atom {})
                      actx-ch-ch-infos (group-by #(:first-taker-actx (second %)) (:chs vis-next))]
-                 (assign-positions vis-next world vis-next-positions actx-ch-ch-infos nil)
+                 (assign-positions vis-next world vis-next-positions actx-ch-ch-infos
+                                   (when (get-in vis-next [:actxs world :closed]) 0))
                  (let [vis-next-html (apply str (flatten (vis-html-actx vis-next world
                                                                         actx-ch-ch-infos)))
                        vis-next-svg (apply str (flatten (vis-svg-actxs vis-next @vis-next-positions
