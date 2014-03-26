@@ -1,5 +1,6 @@
 body {
     background-color: #FFFCF1;
+    font-family: Tahoma, Geneva, sans-serif;
 }
 input {
     background-color: #FFF6D3;
@@ -8,15 +9,23 @@ input {
     font-size: 20px;
     white-space: nowrap;
 }
+span.actx-id {
+    font-size: 15px;
+    display: inline-block;
+    padding-top: 2px;
+}
 div.actx, div.actx ul, div.actx li {
     width: 100%;
     margin-top: 0;
     margin-bottom: 0;
-    border-top: 0px solid white;
+    border: none;
     padding-top: 0;
     padding-bottom: 0;
     line-height: 1;
     white-space: nowrap;
+}
+div.actx div.actx {
+    width: 95%;
 }
 div.actx {
     border-top: 1px solid rgb(0,100,0);
@@ -38,14 +47,22 @@ div.chs {
     position: relative;
     left: 520px;
     margin: 0 0 0;
-    border-top: 0px solid white;
+    border: none;
     padding: 0 0 0;
     white-space: nowrap;
 }
 div.chs li {
+    width: 37%;
+    border-top: 1px solid #B1F5F7;
     border-radius: 6px;
     background-color: #B1F5F7;
     padding-left: 0.5em;
+}
+div.chs li * {
+    font-size: 12px;
+}
+div.chs li span.msgs {
+    color: blue;
 }
 svg.vis-svg line.arrow {
     stroke-width: 1;

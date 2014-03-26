@@ -173,12 +173,13 @@
      "<button class='toggle' id='toggle-" actx-id "'>"
      (if (:closed actx-info) "&#9654;" "&#9660;")
      "</button>"
-     actx-id
+     "<span class='actx-id'>" actx-id "</span>"
      "<div class='loop-state'>" (vis-html-loop-state vis (:loop-state actx-info)) "</div>"
      "<div class='chs'><ul>"
      (mapv (fn [ch-info]
              (let [ch-id (:id ch-info)]
-               ["<li id='ch-" ch-id "'>" ch-id ": " (:msgs ch-info) "</li>"]))
+               ["<li id='ch-" ch-id "'><span class='ch-id'>" ch-id ":</span>&nbsp;"
+                "<span class='msgs'>" (:msgs ch-info) "</span></li>"]))
            (sort-by :id (vals (get actx-ch-ch-infos actx))))
      "</ul></div>"
      (when (not (:closed actx-info))
@@ -196,7 +197,7 @@
 
 (defn vis-svg-actxs [vis positions deltas after]
   (let [stroke-width 1
-        line-height 21
+        line-height 20
         chs (:chs vis)
         ch-y (fn [ch] (* line-height (+ 0.5 (get positions (:id (get chs ch))))))
         actx-y (fn [actx] (* line-height (+ 0.5 (get positions (last actx)))))]
