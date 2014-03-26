@@ -255,14 +255,12 @@
 ;; ------------------------------------------------
 
 (defn vis-run-controls [event-delay step-ch el-prefix]
-  (let [run-controls {"run"      #(do (when (< @event-delay 0) (put! step-ch true))
-                                      (reset! event-delay 0))
-                      "run-slow" #(do (when (< @event-delay 0) (put! step-ch true))
-                                      (reset! event-delay
-                                              (js/parseInt (get-el-value (str el-prefix "-run-slowness")))))
-                      "pause"    #(reset! event-delay -1)
-                      "step"     #(do (reset! event-delay -1)
-                                      (put! step-ch true))}]
+  (let [run-controls {"run"   #(do (when (< @event-delay 0) (put! step-ch true))
+                                   (reset! event-delay
+                                           (js/parseInt (get-el-value (str el-prefix "-run-delay")))))
+                      "pause" #(reset! event-delay -1)
+                      "step"  #(do (reset! event-delay -1)
+                                   (put! step-ch true))}]
     (go-loop [run-control-ch (merge (map #(listen-el (gdom/getElement (str el-prefix "-" %)) "click")
                                          (keys run-controls)))]
       ((get run-controls (no-prefix (.-id (.-target (<! run-control-ch))))))
