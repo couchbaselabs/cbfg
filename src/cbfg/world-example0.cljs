@@ -35,13 +35,13 @@
     (vis-init (fn [world]
                 (let [in-ch (achan-buf world 100)
                       out-ch (achan-buf world 0)]
-                  (ago-loop user-in world [num-ins 0]
+                  (ago-loop a-input world [num-ins 0]
                             (let [cmd (<! cmd-ch)
                                   cmd-handler ((get example-cmd-handlers (:op cmd)) cmd)]
-                              (aput user-in in-ch cmd-handler)
+                              (aput a-input in-ch cmd-handler)
                               (recur (inc num-ins))))
-                  (ago-loop user-out world [num-outs 0]
-                            (let [result (atake user-out out-ch)]
+                  (ago-loop z-output world [num-outs 0]
+                            (let [result (atake z-output out-ch)]
                               (set-el-innerHTML (str el-prefix "-output") result)
                               (recur (inc num-outs))))
                   (make-fenced-pump world in-ch out-ch @example-max-inflight)))
