@@ -9,11 +9,6 @@ input {
     font-size: 20px;
     white-space: nowrap;
 }
-span.actx-id {
-    font-size: 15px;
-    display: inline-block;
-    padding-top: 2px;
-}
 div.actx, div.actx ul, div.actx li {
     width: 100%;
     margin-top: 0;
@@ -42,6 +37,11 @@ div.actx div.loop-state {
     font-size: 10px;
     color: #bbb;
 }
+span.actx-id {
+    font-size: 15px;
+    display: inline-block;
+    padding-top: 2px;
+}
 div.chs {
     display: block;
     position: relative;
@@ -59,6 +59,9 @@ div.chs li {
     padding-left: 0.5em;
 }
 div.chs li * {
+    display: inline-block;
+    padding-top: 4px;
+    vertical-align: top;
     font-size: 12px;
 }
 div.chs li span.msgs {
