@@ -1,7 +1,7 @@
 (ns cbfg.fence
   (:require-macros [cbfg.ago :refer [achan achan-buf aclose aalts
-                                     ago ago-loop aput atake]])
-  (:require [cljs.core.async :refer [<! timeout onto-chan]]))
+                                     ago ago-loop aput atake atimeout]])
+  (:require [cljs.core.async :refer [<! onto-chan]]))
 
 ;; Explaining out-of-order replies and fencing with a diagram.  Client
 ;; sends a bunch of requests (r0...r4), where r2 is fenced (F).  "pX"
@@ -75,7 +75,7 @@
 
 (defn test-add-two [actx x delay]
   (ago test-add-two actx
-       (let [timeout-ch (timeout delay)]
+       (let [timeout-ch (atimeout test-add-two delay)]
          (atake test-add-two timeout-ch)
          (+ x 2))))
 
@@ -83,7 +83,7 @@
   (let [out (achan actx)]
     (ago test-range-to actx
          (doseq [n (range s e)]
-           (let [timeout-ch (timeout delay)]
+           (let [timeout-ch (atimeout test-range-to delay)]
              (atake test-range-to timeout-ch))
            (aput test-range-to out n))
          (aclose test-range-to out))

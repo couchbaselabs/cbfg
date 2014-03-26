@@ -1,19 +1,19 @@
 (ns cbfg.world-example0
-  (:require-macros [cbfg.ago :refer [ago ago-loop achan-buf aput atake]])
-  (:require [cljs.core.async :refer [<! timeout merge map<]]
+  (:require-macros [cbfg.ago :refer [ago ago-loop achan-buf aput atake atimeout]])
+  (:require [cljs.core.async :refer [<! merge map<]]
             [goog.dom :as gdom]
             [cbfg.vis :refer [vis-init listen-el get-el-value set-el-innerHTML]]
             [cbfg.fence :refer [make-fenced-pump]]))
 
 (defn example-add [actx x y delay]
   (ago example-add actx
-       (let [timeout-ch (timeout delay)]
+       (let [timeout-ch (atimeout example-add delay)]
          (atake example-add timeout-ch)
          (+ x y))))
 
 (defn example-sub [actx x y delay]
   (ago example-sub actx
-       (let [timeout-ch (timeout delay)]
+       (let [timeout-ch (atimeout example-sub delay)]
          (atake example-sub timeout-ch)
          (- x y))))
 

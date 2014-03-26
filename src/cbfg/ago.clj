@@ -65,3 +65,7 @@
        (let [result# (cljs.core.async/alts! ~chs)]
          (actx-event ~actx [:aalts :after ~chs result#])
          result#)))
+
+(defmacro atimeout [actx delay]
+  `(cljs.core.async/timeout ~delay))
+

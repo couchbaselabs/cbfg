@@ -1,3 +1,5 @@
+;; Browser and UI-related stuff goes in this file.
+
 (ns cbfg.vis
   (:require-macros [cljs.core.async.macros :refer [go-loop]]
                    [cbfg.ago :refer [ago]])
