@@ -37,13 +37,13 @@
 ;; request format
 ;; {:rq function-to-call :fence true-or-false}
 
-(defn make-fenced-pump [actx in-ch out-ch max-inflight-chs]
+(defn make-fenced-pump [actx in-ch out-ch max-inflight]
   (ago-loop fenced-pump actx
    [inflight-chs #{}              ; chans of requests currently being processed.
     fenced-ch nil                 ; chan of last, inflight "fenced" request.
     fenced-ch-res nil]            ; last received result from last fenced request.
    (let [i (vec (if (or fenced-ch ; if we're fenced or too many inflight requests,
-                        (>= (count inflight-chs) max-inflight-chs))
+                        (>= (count inflight-chs) max-inflight))
                   inflight-chs    ; then ignore in-ch & finish existing inflight requests.
                   (conj inflight-chs in-ch)))
          [v ch] (if (empty? i)    ; empty when in-ch is closed and no inflight-chs.
@@ -123,13 +123,13 @@
                        "pass"
                        "FAIL")
                      %)
-              [["test with 2 max-inflight-chs"
+              [["test with 2 max-inflight"
                 (let [test-helper-out (test-helper test 100 1 2 reqs)
                       res (atake test test-helper-out)]
                   (atake test test-helper-out)
                   res)
                 '(6 3 12 40 41 42 43 44 11 11 6 7 8 0 1 9 32)]
-               ["test with 200 max-inflight-chs"
+               ["test with 200 max-inflight"
                 (let [test-helper-out (test-helper test 100 1 200 reqs)
                       res (atake test test-helper-out)]
                   (atake test test-helper-out)
