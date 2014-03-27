@@ -1,4 +1,4 @@
-(ns cbfg.world-example0
+(ns cbfg.world-fence
   (:require-macros [cbfg.ago :refer [ago ago-loop achan-buf aput atake atimeout]])
   (:require [cljs.core.async :refer [<! merge map<]]
             [goog.dom :as gdom]

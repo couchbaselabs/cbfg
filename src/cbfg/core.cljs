@@ -2,11 +2,11 @@
 
 (ns cbfg.core
   (:require [clojure.string :as string]
-            cbfg.world-example0))
+            cbfg.world-fence))
 
 (enable-console-print!)
 
-(def makers {"world-example0.html" cbfg.world-example0/world-vis-init})
+(def makers {"world-fence.html" cbfg.world-fence/world-vis-init})
 
 (let [world (last (string/split (.-href (.-location js/window)) #"/"))
       maker (makers world)]
