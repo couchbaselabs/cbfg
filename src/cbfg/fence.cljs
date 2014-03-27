@@ -1,7 +1,7 @@
 (ns cbfg.fence
   (:require-macros [cbfg.ago :refer [achan achan-buf aclose aalts
                                      ago ago-loop aput atake atimeout]])
-  (:require [cljs.core.async :refer [<! onto-chan]]))
+  (:require [cljs.core.async :refer [onto-chan]]))
 
 ;; Explaining out-of-order replies and fencing with a diagram.  Client
 ;; sends a bunch of requests (r0...r4), where r2 is fenced (F).  "pX"
