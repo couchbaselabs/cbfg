@@ -10,6 +10,9 @@ input {
     margin-left: 2em;
     color: #666;
 }
+#vis-event {
+    color: #bbb;
+}
 #vis-input-log, #vis-output-log {
     display: block;
     width: 800px;
