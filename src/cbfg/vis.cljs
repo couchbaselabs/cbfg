@@ -11,7 +11,7 @@
 (defn no-prefix [s] (string/join "-" (rest (string/split s #"-"))))
 
 (defn get-el-value [elId] (.-value (gdom/getElement elId)))
-
+(defn get-el-innerHTML [elId] (.-innerHTML (gdom/getElement elId)))
 (defn set-el-innerHTML [elId v] (set! (.-innerHTML (gdom/getElement elId)) v))
 
 (defn listen-el [el type]

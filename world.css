@@ -5,10 +5,19 @@ body {
 input {
     background-color: #FFF6D3;
 }
-#vis-input, #vis-output, #vis-event {
+#vis-input, #vis-event {
     min-height: 2em;
     margin-left: 2em;
     color: #666;
+}
+#vis-input-log, #vis-output-log {
+    display: block;
+    width: 800px;
+    min-height: 5.5em;
+    margin-left: 2em;
+    border: 1px solid #ddd;
+    background-color: #FFF6D3;
+    overflow: scroll;
 }
 .vis, .vis * {
     font-size: 20px;
