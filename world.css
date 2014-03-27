@@ -144,8 +144,11 @@ button.toggle {
     width: 14px;
     height: 12px;
     margin: 2px 4px 0 6px;
+    border: none;
     padding: 0 0 0 0;
     vertical-align: top;
+    color: #666;
+    background-color: rgba(0,0,0,0);
 }
 
 
