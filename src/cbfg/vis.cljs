@@ -197,7 +197,7 @@
 (defn vis-svg-line [class x1 y1 x2 y2]
   ["<line class='" class "' x1='" x1 "' y1='" y1 "' x2='" x2 "' y2='" y2 "'/>"])
 
-(defn vis-svg-actxs [vis positions deltas after]
+(defn vis-svg-actxs [vis positions deltas after prev-deltas]
   (let [stroke-width 1
         line-height 21
         chs (:chs vis)
@@ -208,6 +208,26 @@
      " markerUnits='1' markerWidth='4' markerHeight='3'>"
      " <path d='M 0 0 L 10 5 L 0 10 z'/></marker>"
      "</defs>"
+     (mapv (fn [[after deltas]] ; First paint old trails so they're underneath new lines.
+             (mapv (fn [delta]
+                     (when (= after (not (not (:after delta))))
+                       (let [childy (actx-y (:child-actx delta))
+                             ay (actx-y (:actx delta))
+                             cy (ch-y (:ch delta))]
+                         (when (not= ay cy)
+                           [(case (:delta delta)
+                              :put (when (get chs (:ch delta))
+                                     ["<g transform='translate(10," (+ 2 ay) ")'>"
+                                      (vis-svg-line "trail" 0 0 90 (- cy ay)) "</g>"])
+                              :take (when (and (get chs (:ch delta)) (:msg delta))
+                                      ["<g transform='translate(100," (+ 2 cy) ")'>"
+                                       (vis-svg-line "trail" 0 0 -90 (- ay cy)) "</g>"])
+                              :actx-start (when (and (> childy line-height) (not= childy ay))
+                                            ["<g transform='translate(12," (+ 2 ay) ")'>"
+                                             (vis-svg-line "trail" 0 0 0 (- childy ay)) "</g>"])
+                              nil)]))))
+                   deltas))
+           prev-deltas)
      (mapv (fn [actx-actx-info]
              (let [[actx actx-info] actx-actx-info]
                (mapv (fn [ch-action]
@@ -232,10 +252,10 @@
                      cy (ch-y (:ch delta))]
                  (when (not= ay cy)
                    [(case (:delta delta)
-                      :put (when (and (get chs (:ch delta)) (not= ay cy))
+                      :put (when (get chs (:ch delta))
                              ["<g transform='translate(10," ay ")'>"
                               (vis-svg-line "arrow delta" 0 0 90 (- cy ay)) "</g>"])
-                      :take (when (and (get chs (:ch delta)) (not= ay cy))
+                      :take (when (get chs (:ch delta))
                               ["<g transform='translate(100," cy ")'>"
                                (vis-svg-line (str "arrow delta"
                                                   (when (not (:msg delta)) " close"))
@@ -302,8 +322,10 @@
          (go-loop [vis-last nil ; Process render-ch, updating U/I.
                    vis-last-positions nil
                    vis-last-html nil
-                   vis-last-svg nil]
-           (let [[vis-next deltas after event-str] (<! render-ch)]
+                   vis-last-svg nil
+                   prev-deltas nil]
+           (let [[vis-next deltas after event-str] (<! render-ch)
+                 next-deltas (take 20 (conj prev-deltas [after deltas]))]
              (set-el-innerHTML (str el-prefix "-event") event-str)
              (if after
                (let [vis-next-positions (atom {})
@@ -313,17 +335,17 @@
                  (let [vis-next-html (apply str (flatten (vis-html-actx vis-next world
                                                                         actx-ch-ch-infos)))
                        vis-next-svg (apply str (flatten (vis-svg-actxs vis-next @vis-next-positions
-                                                                       deltas true)))]
+                                                                       deltas true prev-deltas)))]
                    (when (not= vis-next-html vis-last-html)
                      (set-el-innerHTML (str el-prefix "-html") vis-next-html))
                    (when (not= vis-next-svg vis-last-svg)
                      (set-el-innerHTML (str el-prefix "-svg") vis-next-svg))
-                   (recur vis-next @vis-next-positions vis-next-html vis-next-svg)))
+                   (recur vis-next @vis-next-positions vis-next-html vis-next-svg next-deltas)))
                (let [vis-next-svg (apply str (flatten (vis-svg-actxs vis-last vis-last-positions
-                                                                     deltas false)))]
+                                                                     deltas false prev-deltas)))]
                  (when (not= vis-next-svg vis-last-svg)
                    (set-el-innerHTML (str el-prefix "-svg") vis-next-svg))
-                 (recur vis-last vis-last-positions vis-last-html vis-next-svg)))))
+                 (recur vis-last vis-last-positions vis-last-html vis-next-svg next-deltas)))))
          (world-init-cb world))
     (let [toggle-ch (listen-el (gdom/getElement (str el-prefix "-html")) "click")]
       (go-loop []

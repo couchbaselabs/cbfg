@@ -110,6 +110,11 @@ svg.vis-svg line.ghost {
     stroke: #aaa;
     stroke-dasharray: none;
 }
+svg.vis-svg line.trail {
+    stroke-width: 0.5;
+    stroke: #fbb;
+    stroke-dasharray: none;
+}
 svg.vis-svg text.ch-name {
     font-size: 10px;
     stroke-color: #bbb;
