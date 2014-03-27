@@ -6,22 +6,25 @@
                               get-el-innerHTML set-el-innerHTML]]
             [cbfg.fence :refer [make-fenced-pump]]))
 
-(defn example-add [actx x y delay]
+(defn example-add [actx opaque-id x y delay]
   (ago example-add actx
        (let [timeout-ch (atimeout example-add delay)]
          (atake example-add timeout-ch)
-         (+ x y))))
+         {:opaque-id opaque-id :result (+ x y)})))
 
-(defn example-sub [actx x y delay]
+(defn example-sub [actx opaque-id x y delay]
   (ago example-sub actx
        (let [timeout-ch (atimeout example-sub delay)]
          (atake example-sub timeout-ch)
-         (- x y))))
+         {:opaque-id opaque-id :result (- x y)})))
 
 (def example-cmd-handlers
-  {"add"  (fn [c] {:fence (:fence c) :rq #(example-add % (:x c) (:y c) (:delay c))})
-   "sub"  (fn [c] {:fence (:fence c) :rq #(example-sub % (:x c) (:y c) (:delay c))})
-   "test" (fn [c] {:fence (:fence c) :rq #(cbfg.fence/test %)})})
+  {"add"  (fn [c] {:opaque-id (:opaque-id c) :fence (:fence c)
+                   :rq #(example-add % (:opaque-id c) (:x c) (:y c) (:delay c))})
+   "sub"  (fn [c] {:opaque-id (:opaque-id c) :fence (:fence c)
+                   :rq #(example-sub % (:opaque-id c) (:x c) (:y c) (:delay c))})
+   "test" (fn [c] {:opaque-id (:opaque-id c) :fence (:fence c)
+                   :rq #(cbfg.fence/test %)})})
 
 (def example-max-inflight (atom 10))
 
@@ -37,7 +40,7 @@
                 (let [in-ch (achan-buf world 100)
                       out-ch (achan-buf world 0)]
                   (ago-loop a-input world [num-ins 0]
-                            (let [cmd (<! cmd-ch)
+                            (let [cmd (assoc-in (<! cmd-ch) [:opaque-id] num-ins)
                                   cmd-handler ((get example-cmd-handlers (:op cmd)) cmd)]
                               (set-el-innerHTML (str el-prefix "-input-log")
                                                 (str num-ins ": " cmd "\n"
