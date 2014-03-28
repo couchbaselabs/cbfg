@@ -19,9 +19,15 @@
          {:opaque-id opaque-id :result (- x y)})))
 
 (def example-cmd-handlers
-  {"add"  (fn [c] {:opaque-id (:opaque-id c) :fence (:fence c)
+  {"get"  (fn [c] {:opaque-id (:opaque-id c) :fence (:fence c)
                    :rq #(example-add % (:opaque-id c) (:x c) (:y c) (:delay c))})
-   "sub"  (fn [c] {:opaque-id (:opaque-id c) :fence (:fence c)
+   "set"  (fn [c] {:opaque-id (:opaque-id c) :fence (:fence c)
+                   :rq #(example-sub % (:opaque-id c) (:x c) (:y c) (:delay c))})
+   "del"  (fn [c] {:opaque-id (:opaque-id c) :fence (:fence c)
+                   :rq #(example-sub % (:opaque-id c) (:x c) (:y c) (:delay c))})
+   "scan" (fn [c] {:opaque-id (:opaque-id c) :fence (:fence c)
+                   :rq #(example-sub % (:opaque-id c) (:x c) (:y c) (:delay c))})
+   "noop" (fn [c] {:opaque-id (:opaque-id c) :fence (:fence c)
                    :rq #(example-sub % (:opaque-id c) (:x c) (:y c) (:delay c))})
    "test" (fn [c] {:opaque-id (:opaque-id c) :fence (:fence c)
                    :rq #(cbfg.fence/test %)})})
