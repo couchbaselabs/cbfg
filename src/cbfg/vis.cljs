@@ -296,8 +296,7 @@
                    :gen-id gen-id})
         render-ch (chan)]
     (go-loop [num-events 0]  ; Process events from world / simulation.
-      (let [[actx event] (<! event-ch)
-            [verb step & args] event
+      (let [[actx [verb step & args]] (<! event-ch)
             deltas ((get (get vis-event-handlers verb) step) vis actx args)
             event-str (str num-events ": " (last actx) " " verb " " step " " args)]
         (when (and (not (zero? @event-delay)) (some #(not (:after %)) deltas))
