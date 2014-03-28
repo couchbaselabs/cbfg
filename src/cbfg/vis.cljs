@@ -290,7 +290,7 @@
 
 (defn vis-init [world-init-cb el-prefix]
   (let [event-delay (atom 0)
-        event-ch (chan)
+        event-ch (chan 10) ; TODO: hacks around RACE during early initialization!!
         step-ch (chan (dropping-buffer 1))
         last-id (atom 0)
         gen-id #(swap! last-id inc)
