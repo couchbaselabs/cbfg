@@ -90,21 +90,19 @@
                     ch-actions (map #(if (seq? %) [(first %) :put (second %)] [% :take])
                                     ch-bindings)]
                 (apply concat
-                       (mapv (fn [ch-action]
-                               (let [[ch action & msgv] ch-action]
-                                 (swap! vis #(-> %
-                                                 (vis-add-ch ch
-                                                             (when (= action :take) actx))
-                                                 (assoc-in [:actxs actx :wait-chs ch]
-                                                           [action])))
-                                 (when (= action :put)
-                                   [{:delta :put :msg (first msgv) :actx actx :ch ch}])))
+                       (mapv (fn [[ch action & msgv]]
+                               (swap! vis #(-> %
+                                               (vis-add-ch ch
+                                                           (when (= action :take) actx))
+                                               (assoc-in [:actxs actx :wait-chs ch]
+                                                         [action])))
+                               (when (= action :put)
+                                 [{:delta :put :msg (first msgv) :actx actx :ch ch}]))
                              ch-actions))))
-    :after (fn [vis actx [ch-bindings result]]
+    :after (fn [vis actx [ch-bindings [result-msg result-ch]]]
              (let [; The ch-actions will be [[ch :take] [ch :put] ...].
                    ch-actions (map #(if (seq? %) [(first %) :put (second %)] [% :take])
-                                   ch-bindings)
-                   [result-msg result-ch] result]
+                                   ch-bindings)]
                (doseq [[ch action] ch-actions]
                  (swap! vis #(assoc-in % [:actxs actx :wait-chs ch] [:ghost])))
                (swap! vis #(dissoc-in % [:chs result-ch :msgs result-msg]))
