@@ -40,62 +40,53 @@
 
 (def vis-event-handlers
   {:ago
-   {:start (fn [vis actx args]
-             (let [[child-actx] args]
-               (swap! vis #(-> %
-                               (assoc-in [:actxs child-actx]
-                                         {:children {} :wait-chs {} :closed false})
-                               (assoc-in [:actxs actx :children child-actx] true)))
-               [{:delta :actx-start :actx actx :child-actx child-actx :after true}]))
-    :end (fn [vis actx args]
-           (let [[child-actx result] args]
+   {:start (fn [vis actx [child-actx]]
              (swap! vis #(-> %
-                             (dissoc-in [:actxs child-actx])
-                             (dissoc-in [:actxs actx :children child-actx])))
-             [{:delta :actx-end :actx actx :child-actx child-actx}]))}
+                             (assoc-in [:actxs child-actx]
+                                       {:children {} :wait-chs {} :closed false})
+                             (assoc-in [:actxs actx :children child-actx] true)))
+             [{:delta :actx-start :actx actx :child-actx child-actx :after true}])
+    :end (fn [vis actx [child-actx result]]
+           (swap! vis #(-> %
+                           (dissoc-in [:actxs child-actx])
+                           (dissoc-in [:actxs actx :children child-actx])))
+           [{:delta :actx-end :actx actx :child-actx child-actx}])}
    :ago-loop
-   {:loop-state (fn [vis actx args]
-                  (swap! vis #(assoc-in % [:actxs actx :loop-state] (first args)))
+   {:loop-state (fn [vis actx [loop-state]]
+                  (swap! vis #(assoc-in % [:actxs actx :loop-state] loop-state))
                   nil)}
    :aclose
-   {:before (fn [vis actx args]
-              (let [[ch] args] nil))
-    :after (fn [vis actx args]
-             (let [[ch result] args] nil))}
+   {:before (fn [vis actx [ch]] nil)
+    :after (fn [vis actx [ch result]] nil)}
    :atake
-   {:before (fn [vis actx args]
-              (let [[ch-name ch] args]
-                (swap! vis #(-> %
-                                (assoc-in [:actxs actx :wait-chs ch] [:take ch-name])
-                                (vis-add-ch ch actx)))
-                nil))
-    :after (fn [vis actx args]
-             (let [[ch-name ch msg] args]
-               (swap! vis #(-> %
-                               (dissoc-in [:actxs actx :wait-chs ch])
-                               (dissoc-in [:chs ch :msgs msg])))
-               (when (nil? msg) ; The ch is closed.
-                 (swap! vis #(dissoc-in % [:chs ch])))
-               [{:delta :take :msg msg :ch ch :actx actx :ch-name ch-name}]))}
+   {:before (fn [vis actx [ch-name ch]]
+              (swap! vis #(-> %
+                              (assoc-in [:actxs actx :wait-chs ch] [:take ch-name])
+                              (vis-add-ch ch actx)))
+              nil)
+    :after (fn [vis actx [ch-name ch msg]]
+             (swap! vis #(-> %
+                             (dissoc-in [:actxs actx :wait-chs ch])
+                             (dissoc-in [:chs ch :msgs msg])))
+             (when (nil? msg) ; The ch is closed.
+               (swap! vis #(dissoc-in % [:chs ch])))
+             [{:delta :take :msg msg :ch ch :actx actx :ch-name ch-name}])}
    :aput
-   {:before (fn [vis actx args]
-              (let [[ch-name ch msg] args]
-                (swap! vis #(-> %
-                                (assoc-in [:actxs actx :wait-chs ch] [:put ch-name])
-                                (vis-add-ch ch nil)
-                                (assoc-in [:chs ch :msgs msg] true)))
-                [{:delta :put :msg msg :actx actx :ch ch :ch-name ch-name}]))
-    :after (fn [vis actx args]
-             (let [[ch-name ch msg result] args]
-               (swap! vis #(-> %
-                               (dissoc-in [:actxs actx :wait-chs ch])))
+   {:before (fn [vis actx [ch-name ch msg]]
+              (swap! vis #(-> %
+                              (assoc-in [:actxs actx :wait-chs ch] [:put ch-name])
+                              (vis-add-ch ch nil)
+                              (assoc-in [:chs ch :msgs msg] true)))
+              [{:delta :put :msg msg :actx actx :ch ch :ch-name ch-name}])
+    :after (fn [vis actx [ch-name ch msg result]]
+             (swap! vis #(-> %
+                             (dissoc-in [:actxs actx :wait-chs ch])))
                ; NOTE: Normally we should cleanup ch when nil result but
                ; looks like CLJS async always incorrectly returns nil from >!.
-               nil))}
+               nil)}
    :aalts
-   {:before (fn [vis actx args]
-              (let [[ch-bindings] args
-                    ; The ch-actions will be [[ch :take] [ch :put] ...].
+   {:before (fn [vis actx [ch-bindings]]
+              (let [; The ch-actions will be [[ch :take] [ch :put] ...].
                     ch-actions (map #(if (seq? %) [(first %) :put (second %)] [% :take])
                                     ch-bindings)]
                 (apply concat
@@ -109,11 +100,10 @@
                                  (when (= action :put)
                                    [{:delta :put :msg (first msgv) :actx actx :ch ch}])))
                              ch-actions))))
-    :after (fn [vis actx args]
-             (let [[ch-bindings result] args
-                    ; The ch-actions will be [[ch :take] [ch :put] ...].
-                    ch-actions (map #(if (seq? %) [(first %) :put (second %)] [% :take])
-                                    ch-bindings)
+    :after (fn [vis actx [ch-bindings result]]
+             (let [; The ch-actions will be [[ch :take] [ch :put] ...].
+                   ch-actions (map #(if (seq? %) [(first %) :put (second %)] [% :take])
+                                   ch-bindings)
                    [result-msg result-ch] result]
                (doseq [[ch action] ch-actions]
                  (swap! vis #(assoc-in % [:actxs actx :wait-chs ch] [:ghost])))
