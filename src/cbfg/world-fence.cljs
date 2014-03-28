@@ -1,6 +1,6 @@
 (ns cbfg.world-fence
   (:require-macros [cbfg.ago :refer [ago ago-loop achan-buf aput atake atimeout]])
-  (:require [cljs.core.async :refer [<! merge map<]]
+  (:require [cljs.core.async :refer [chan <! merge map< sliding-buffer]]
             [goog.dom :as gdom]
             [cbfg.vis :refer [vis-init listen-el get-el-value
                               get-el-innerHTML set-el-innerHTML]]
@@ -55,3 +55,8 @@
                               (recur (inc num-outs))))
                   (make-fenced-pump world in-ch out-ch @example-max-inflight)))
               el-prefix)))
+
+(let [last-id (atom 0)
+      gen-id #(swap! last-id inc)]
+  (ago test-actx [{:gen-id gen-id :event-ch (chan (sliding-buffer 1))}]
+       (println (<! (cbfg.fence/test test-actx)))))
