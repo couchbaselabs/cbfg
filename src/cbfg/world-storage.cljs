@@ -6,58 +6,73 @@
                               get-el-innerHTML set-el-innerHTML]]
             [cbfg.fence :refer [make-fenced-pump]]))
 
-(defn example-add [actx opaque-id x y delay]
-  (ago example-add actx
-       (let [timeout-ch (atimeout example-add delay)]
-         (atake example-add timeout-ch)
-         {:opaque-id opaque-id :result (+ x y)})))
+(defn storage-get [actx opaque-id key]
+  (ago storage-get actx
+       {:opaque-id opaque-id :status :ok :key key :val "yay"}))
 
-(defn example-sub [actx opaque-id x y delay]
-  (ago example-sub actx
-       (let [timeout-ch (atimeout example-sub delay)]
-         (atake example-sub timeout-ch)
-         {:opaque-id opaque-id :result (- x y)})))
+(defn storage-set [actx opaque-id key val]
+  (ago storage-set actx
+       {:opaque-id opaque-id :status :ok}))
 
-(def example-cmd-handlers
-  {"get"  (fn [c] {:opaque-id (:opaque-id c) :fence (:fence c)
-                   :rq #(example-add % (:opaque-id c) (:x c) (:y c) (:delay c))})
-   "set"  (fn [c] {:opaque-id (:opaque-id c) :fence (:fence c)
-                   :rq #(example-sub % (:opaque-id c) (:x c) (:y c) (:delay c))})
-   "del"  (fn [c] {:opaque-id (:opaque-id c) :fence (:fence c)
-                   :rq #(example-sub % (:opaque-id c) (:x c) (:y c) (:delay c))})
-   "scan" (fn [c] {:opaque-id (:opaque-id c) :fence (:fence c)
-                   :rq #(example-sub % (:opaque-id c) (:x c) (:y c) (:delay c))})
-   "noop" (fn [c] {:opaque-id (:opaque-id c) :fence (:fence c)
-                   :rq #(example-sub % (:opaque-id c) (:x c) (:y c) (:delay c))})
-   "test" (fn [c] {:opaque-id (:opaque-id c) :fence (:fence c)
-                   :rq #(cbfg.fence/test %)})})
+(defn storage-del [actx opaque-id key]
+  (ago storage-del actx
+       {:opaque-id opaque-id :status :ok}))
 
-(def example-max-inflight (atom 10))
+(defn storage-scan [actx opaque-id from to]
+  (ago storage-del actx
+       {:opaque-id opaque-id :status :ok}))
+
+(defn storage-noop [actx opaque-id]
+  (ago storage-del actx
+       {:opaque-id opaque-id :status :ok}))
+
+(def storage-cmd-handlers
+  {"get"  [["key"]
+           (fn [c] {:rq #(storage-get % (:opaque-id c) (:key c))})]
+   "set"  [["key" "val"]
+           (fn [c] {:rq #(storage-set % (:opaque-id c) (:key c) (:val c))})]
+   "del"  [["key"]
+           (fn [c] {:rq #(storage-del % (:opaque-id c) (:key c))})]
+   "scan" [["from" "to"]
+           (fn [c] {:rq #(storage-scan % (:opaque-id c) (:from c) (:to c))})]
+   "noop" [[]
+           (fn [c] {:rq #(storage-noop % (:opaque-id c))})]
+   "test" [[]
+           (fn [c] {:rq #(cbfg.fence/test %)})]})
+
+(def storage-max-inflight (atom 10))
 
 (defn world-vis-init [el-prefix]
-  (let [cmd-ch (map< (fn [ev] {:op (.-id (.-target ev))
-                               :x (js/parseInt (get-el-value "x"))
-                               :y (js/parseInt (get-el-value "y"))
-                               :delay (js/parseInt (get-el-value "delay"))
-                               :fence (= (get-el-value "fence") "1")})
+  (let [cmd-ch (map< (fn [ev] {:op (.-id (.-target ev))})
                      (merge (map #(listen-el (gdom/getElement %) "click")
-                                 (keys example-cmd-handlers))))]
+                                 (keys storage-cmd-handlers))))]
     (vis-init (fn [world]
-                (let [in-ch (achan-buf world 100)
+                (let [input-log (str el-prefix "-input-log")
+                      output-log (str el-prefix "-output-log")
+                      in-ch (achan-buf world 100)
                       out-ch (achan-buf world 0)]
                   (ago-loop a-input world [num-ins 0]
-                            (let [cmd (assoc-in (<! cmd-ch) [:opaque-id] num-ins)
-                                  cmd-handler ((get example-cmd-handlers (:op cmd)) cmd)]
-                              (set-el-innerHTML (str el-prefix "-input-log")
-                                                (str num-ins ": " cmd "\n"
-                                                     (get-el-innerHTML (str el-prefix "-input-log"))))
-                              (aput a-input in-ch cmd-handler)
+                            (let [cmd (<! cmd-ch)
+                                  op (:op cmd)
+                                  op-fence (= (get-el-value (str op "-fence")) "1")
+                                  [params handler] (get storage-cmd-handlers op)
+                                  cmd2 (-> cmd
+                                           (assoc-in [:opaque-id] num-ins)
+                                           (assoc-in [:fence] op-fence))
+                                  cmd3 (reduce #(assoc %1
+                                                  (symbol (str ":" %2))
+                                                  (get-el-value (str op "-" %2)))
+                                               cmd2 params)]
+                              (set-el-innerHTML input-log
+                                                (str num-ins ": " cmd3 "\n"
+                                                     (get-el-innerHTML input-log)))
+                              (aput a-input in-ch (handler cmd3))
                               (recur (inc num-ins))))
                   (ago-loop z-output world [num-outs 0]
                             (let [result (atake z-output out-ch)]
-                              (set-el-innerHTML (str el-prefix "-output-log")
+                              (set-el-innerHTML output-log
                                                 (str num-outs ": " result "\n"
-                                                     (get-el-innerHTML (str el-prefix "-output-log"))))
+                                                     (get-el-innerHTML output-log)))
                               (recur (inc num-outs))))
-                  (make-fenced-pump world in-ch out-ch @example-max-inflight)))
+                  (make-fenced-pump world in-ch out-ch @storage-max-inflight)))
               el-prefix)))
