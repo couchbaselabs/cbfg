@@ -1,7 +1,8 @@
 (ns cbfg.fence
-  (:require-macros [cbfg.ago :refer [achan achan-buf aclose aalts
+  (:require-macros [cljs.core.async.macros :refer [go]]
+                   [cbfg.ago :refer [achan achan-buf aclose aalts
                                      ago ago-loop aput atake atimeout]])
-  (:require [cljs.core.async :refer [onto-chan]]))
+  (:require [cljs.core.async :refer [chan onto-chan <! sliding-buffer]]))
 
 ;; Explaining out-of-order replies and fencing with a diagram.  Client
 ;; sends a bunch of requests (r0...r4), where r2 is fenced (F).  "pX"
@@ -96,16 +97,13 @@
                    in-msgs]
   (let [in (achan-buf actx in-ch-size)
         out (achan-buf actx out-ch-size)
-        fdp (make-fenced-pump actx in out max-inflight)
-        gch (ago-loop test-out actx [acc nil]
+        fdp (make-fenced-pump actx in out max-inflight)]
+    (onto-chan in in-msgs)
+    (ago-loop test-out actx [acc nil]
               (let [result (atake test-out out)]
                 (if result
-                  (do (println "Output result: " result)
-                      (recur (conj acc result)))
-                  (do (println "Output channel closed")
-                      (reverse acc)))))]
-    (onto-chan in in-msgs)
-    gch))
+                  (recur (conj acc result))
+                  (reverse acc))))))
 
 (defn test [actx]
   (let [reqs [{:rq #(test-add-two % 1 200)}
@@ -135,3 +133,8 @@
                   (atake test test-helper-out)
                   res)
                 '(6 3 12 40 41 42 43 44 6 7 8 0 1 11 11 9 32)]]))))
+
+(let [last-id (atom 0)
+      gen-id #(swap! last-id inc)]
+  (go (println (<! (test [{:gen-id gen-id
+                           :event-ch (chan (sliding-buffer 1))}])))))
