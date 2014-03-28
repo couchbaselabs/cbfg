@@ -15,7 +15,7 @@ input {
 }
 #vis-input-log, #vis-output-log {
     display: block;
-    width: 800px;
+    width: 600px;
     min-height: 5.5em;
     margin-left: 2em;
     border: 1px solid #ddd;
