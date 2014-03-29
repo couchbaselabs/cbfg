@@ -104,7 +104,7 @@
                   (recur (conj acc result))
                   (reverse acc))))))
 
-(defn test [actx]
+(defn test [actx opaque-id]
   (let [reqs [{:rq #(test-add-two % 1 200)}
               {:rq #(test-add-two % 4 100)}
               {:rq #(test-add-two % 10 50) :fence true}
@@ -115,20 +115,21 @@
               {:rq #(test-range-to % 6 10 5) :fence true}
               {:rq #(test-add-two % 30 100)}]]
     (ago test actx ; TODO - revisit timing wobbles.
-         (map #(cons (if (= (sort (nth % 1))
-                            (sort (nth % 2)))
-                       "pass"
-                       "FAIL")
-                     %)
-              [["test with 2 max-inflight"
-                (let [test-helper-out (test-helper test 100 1 2 reqs)
-                      res (atake test test-helper-out)]
-                  (atake test test-helper-out)
-                  res)
-                '(6 3 12 40 41 42 43 44 11 11 6 7 8 0 1 9 32)]
-               ["test with 200 max-inflight"
-                (let [test-helper-out (test-helper test 100 1 200 reqs)
-                      res (atake test test-helper-out)]
-                  (atake test test-helper-out)
-                  res)
-                '(6 3 12 40 41 42 43 44 6 7 8 0 1 11 11 9 32)]]))))
+         {:opaque-id opaque-id
+          :result (map #(cons (if (= (sort (nth % 1))
+                                     (sort (nth % 2)))
+                                "pass"
+                                "FAIL")
+                              %)
+                       [["test with 2 max-inflight"
+                         (let [test-helper-out (test-helper test 100 1 2 reqs)
+                               res (atake test test-helper-out)]
+                           (atake test test-helper-out)
+                           res)
+                         '(6 3 12 40 41 42 43 44 11 11 6 7 8 0 1 9 32)]
+                        ["test with 200 max-inflight"
+                         (let [test-helper-out (test-helper test 100 1 200 reqs)
+                               res (atake test test-helper-out)]
+                           (atake test test-helper-out)
+                           res)
+                         '(6 3 12 40 41 42 43 44 6 7 8 0 1 11 11 9 32)]])})))

@@ -24,22 +24,42 @@
    "sub"  (fn [c] {:opaque-id (:opaque-id c) :fence (:fence c)
                    :rq #(example-sub % (:opaque-id c) (:x c) (:y c) (:delay c))})
    "test" (fn [c] {:opaque-id (:opaque-id c) :fence (:fence c)
-                   :rq #(cbfg.fence/test %)})})
+                   :rq #(cbfg.fence/test % (:opaque-id c))})})
 
 (def example-max-inflight (atom 10))
 
-(defn el-log [el v] (set-el-innerHTML el (str v "\n" (get-el-innerHTML el))))
+(defn filter-r [r] (if (map? r)
+                     (-> r
+                         (dissoc :opaque-id)
+                         (dissoc :op)
+                         (dissoc :fence))
+                     r))
+
+(defn render-client-cmds [client-cmds]
+  (set-el-innerHTML "client"
+                    (apply str
+                           (flatten ["<table>"
+                                     "<tr><th>id</th><th>fence</th><th>op</th><th>args</th><th>responses</th></tr>"
+                                     (map (fn [[opaque-id [request responses]]]
+                                            ["<tr class='" (when (seq responses) "complete") "'>"
+                                             " <td>" opaque-id "</td>"
+                                             " <td>" (:fence request) "</td>"
+                                             " <td>" (:op request) "</td>"
+                                             " <td>" (filter-r request) "</td>"
+                                             " <td class='responses'>" (map filter-r responses) "</td>"
+                                             "</tr>"])
+                                          (sort #(compare (first %1) (first %2)) client-cmds))
+                                     "</table>"]))))
 
 (defn world-vis-init [el-prefix]
-  (let [el-input-log (str el-prefix "-input-log")
-        el-output-log (str el-prefix "-output-log")
-        cmd-ch (map< (fn [ev] {:op (.-id (.-target ev))
+  (let [cmd-ch (map< (fn [ev] {:op (.-id (.-target ev))
                                :x (js/parseInt (get-el-value "x"))
                                :y (js/parseInt (get-el-value "y"))
                                :delay (js/parseInt (get-el-value "delay"))
                                :fence (= (get-el-value "fence") "1")})
                      (merge (map #(listen-el (gdom/getElement %) "click")
-                                 (keys example-cmd-handlers))))]
+                                 (keys example-cmd-handlers))))
+        client-cmds (atom {})] ; Keyed by opaque-id -> [request, replies]
     (vis-init (fn [world]
                 (let [in-ch (achan-buf world 100)
                       out-ch (achan-buf world 0)]
@@ -48,10 +68,13 @@
                               (cond
                                 (= ch cmd-ch) (let [cmd (assoc-in v [:opaque-id] num-ins)
                                                     cmd-handler ((get example-cmd-handlers (:op cmd)) cmd)]
-                                                (el-log el-input-log (str num-ins ": " cmd))
+                                                (render-client-cmds (swap! client-cmds
+                                                                           #(assoc % num-ins [cmd nil])))
                                                 (aput client in-ch cmd-handler)
                                                 (recur (inc num-ins) num-outs))
-                                (= ch out-ch) (do (el-log el-output-log (str num-outs ": " v))
+                                (= ch out-ch) (do (render-client-cmds (swap! client-cmds
+                                                                             #(update-in % [(:opaque-id v) 1]
+                                                                                         conj v)))
                                                   (recur num-ins (inc num-outs))))))
                   (make-fenced-pump world in-ch out-ch @example-max-inflight)))
               el-prefix nil)))
@@ -59,4 +82,4 @@
 (let [last-id (atom 0)
       gen-id #(swap! last-id inc)]
   (ago test-actx [{:gen-id gen-id :event-ch (chan (sliding-buffer 1))}]
-       (println (<! (cbfg.fence/test test-actx)))))
+       (println (<! (cbfg.fence/test test-actx 0)))))
