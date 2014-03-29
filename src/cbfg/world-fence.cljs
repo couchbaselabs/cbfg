@@ -54,7 +54,7 @@
                                                                          (get-el-innerHTML (str el-prefix "-output-log"))))
                                                   (recur num-ins (inc num-outs))))))
                   (make-fenced-pump world in-ch out-ch @example-max-inflight)))
-              el-prefix)))
+              el-prefix nil)))
 
 (let [last-id (atom 0)
       gen-id #(swap! last-id inc)]

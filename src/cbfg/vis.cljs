@@ -276,7 +276,7 @@
 
 ;; ------------------------------------------------
 
-(defn vis-init [world-init-cb el-prefix]
+(defn vis-init [world-init-cb el-prefix on-render-cb]
   (let [event-delay (atom 0)
         event-ch (chan 10) ; TODO: hacks around RACE during early initialization!!
         step-ch (chan (dropping-buffer 1))
@@ -327,7 +327,9 @@
                          vis-next-svg (apply str (flatten (vis-svg-actxs vis-next @vis-next-positions
                                                                          deltas true prev-deltas)))]
                      (when (not= vis-next-html vis-last-html)
-                       (set-el-innerHTML el-html vis-next-html))
+                       (set-el-innerHTML el-html vis-next-html)
+                       (when on-render-cb
+                         (on-render-cb vis-next)))
                      (when (not= vis-next-svg vis-last-svg)
                        (set-el-innerHTML el-svg vis-next-svg))
                      (recur vis-next @vis-next-positions vis-next-html vis-next-svg next-deltas)))
