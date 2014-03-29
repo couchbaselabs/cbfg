@@ -48,7 +48,7 @@
                                              " <td>" (filter-r request) "</td>"
                                              " <td class='responses'><ul>"
                                              (map (fn [[out-time response]]
-                                                    ["<li style='padding-left: " out-time "em;'>"
+                                                    ["<li style='margin-left: " out-time "em;'>"
                                                      (filter-r response)
                                                      "</li>"])
                                                   responses)
