@@ -28,8 +28,12 @@
 
 (def example-max-inflight (atom 10))
 
+(defn el-log [el v] (set-el-innerHTML el (str v "\n" (get-el-innerHTML el))))
+
 (defn world-vis-init [el-prefix]
-  (let [cmd-ch (map< (fn [ev] {:op (.-id (.-target ev))
+  (let [el-input-log (str el-prefix "-input-log")
+        el-output-log (str el-prefix "-output-log")
+        cmd-ch (map< (fn [ev] {:op (.-id (.-target ev))
                                :x (js/parseInt (get-el-value "x"))
                                :y (js/parseInt (get-el-value "y"))
                                :delay (js/parseInt (get-el-value "delay"))
@@ -44,14 +48,10 @@
                               (cond
                                 (= ch cmd-ch) (let [cmd (assoc-in v [:opaque-id] num-ins)
                                                     cmd-handler ((get example-cmd-handlers (:op cmd)) cmd)]
-                                                (set-el-innerHTML (str el-prefix "-input-log")
-                                                                  (str num-ins ": " cmd "\n"
-                                                                       (get-el-innerHTML (str el-prefix "-input-log"))))
+                                                (el-log el-input-log (str num-ins ": " cmd))
                                                 (aput client in-ch cmd-handler)
                                                 (recur (inc num-ins) num-outs))
-                                (= ch out-ch) (do (set-el-innerHTML (str el-prefix "-output-log")
-                                                                    (str num-outs ": " v "\n"
-                                                                         (get-el-innerHTML (str el-prefix "-output-log"))))
+                                (= ch out-ch) (do (el-log el-output-log (str num-outs ": " v))
                                                   (recur num-ins (inc num-outs))))))
                   (make-fenced-pump world in-ch out-ch @example-max-inflight)))
               el-prefix nil)))
