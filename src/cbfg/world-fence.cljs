@@ -1,5 +1,5 @@
 (ns cbfg.world-fence
-  (:require-macros [cbfg.ago :refer [ago ago-loop achan-buf aput atake atimeout]])
+  (:require-macros [cbfg.ago :refer [ago ago-loop achan-buf aalts aput atake atimeout]])
   (:require [cljs.core.async :refer [chan <! merge map< sliding-buffer]]
             [goog.dom :as gdom]
             [cbfg.vis :refer [vis-init listen-el get-el-value
@@ -39,20 +39,20 @@
     (vis-init (fn [world]
                 (let [in-ch (achan-buf world 100)
                       out-ch (achan-buf world 0)]
-                  (ago-loop a-input world [num-ins 0]
-                            (let [cmd (assoc-in (<! cmd-ch) [:opaque-id] num-ins)
-                                  cmd-handler ((get example-cmd-handlers (:op cmd)) cmd)]
-                              (set-el-innerHTML (str el-prefix "-input-log")
-                                                (str num-ins ": " cmd "\n"
-                                                     (get-el-innerHTML (str el-prefix "-input-log"))))
-                              (aput a-input in-ch cmd-handler)
-                              (recur (inc num-ins))))
-                  (ago-loop z-output world [num-outs 0]
-                            (let [result (atake z-output out-ch)]
-                              (set-el-innerHTML (str el-prefix "-output-log")
-                                                (str num-outs ": " result "\n"
-                                                     (get-el-innerHTML (str el-prefix "-output-log"))))
-                              (recur (inc num-outs))))
+                  (ago-loop client world [num-ins 0 num-outs 0]
+                            (let [[v ch] (aalts client [cmd-ch out-ch])]
+                              (cond
+                                (= ch cmd-ch) (let [cmd (assoc-in v [:opaque-id] num-ins)
+                                                    cmd-handler ((get example-cmd-handlers (:op cmd)) cmd)]
+                                                (set-el-innerHTML (str el-prefix "-input-log")
+                                                                  (str num-ins ": " cmd "\n"
+                                                                       (get-el-innerHTML (str el-prefix "-input-log"))))
+                                                (aput client in-ch cmd-handler)
+                                                (recur (inc num-ins) num-outs))
+                                (= ch out-ch) (do (set-el-innerHTML (str el-prefix "-output-log")
+                                                                    (str num-outs ": " v "\n"
+                                                                         (get-el-innerHTML (str el-prefix "-output-log"))))
+                                                  (recur num-ins (inc num-outs))))))
                   (make-fenced-pump world in-ch out-ch @example-max-inflight)))
               el-prefix)))
 
