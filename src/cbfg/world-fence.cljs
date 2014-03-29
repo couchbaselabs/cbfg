@@ -46,7 +46,13 @@
                                              " <td>" (:fence request) "</td>"
                                              " <td>" (:op request) "</td>"
                                              " <td>" (filter-r request) "</td>"
-                                             " <td class='responses'>" (map filter-r responses) "</td>"
+                                             " <td class='responses'><ul>"
+                                             (map (fn [[out-time response]]
+                                                    ["<li style='padding-left: " out-time "em;'>"
+                                                     (filter-r response)
+                                                     "</li>"])
+                                                  responses)
+                                             "</ul></td>"
                                              "</tr>"])
                                           (sort #(compare (first %1) (first %2)) client-cmds))
                                      "</table>"]))))
@@ -74,7 +80,7 @@
                                                 (recur (inc num-ins) num-outs))
                                 (= ch out-ch) (do (render-client-cmds (swap! client-cmds
                                                                              #(update-in % [(:opaque-id v) 1]
-                                                                                         conj v)))
+                                                                                         conj [num-outs v])))
                                                   (recur num-ins (inc num-outs))))))
                   (make-fenced-pump world in-ch out-ch @example-max-inflight)))
               el-prefix nil)))
