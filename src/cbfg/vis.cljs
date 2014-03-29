@@ -285,7 +285,7 @@
         w [{:gen-id gen-id
             :event-ch event-ch}]
         vis (atom {:actxs {} ; {actx -> {:children {child-actx -> true},
-                             ;           :wait-chs {ch -> [:take|:put optional-ch-name])},
+                             ;           :wait-chs {ch -> [:ghost|take|:put optional-ch-name])},
                              ;           :loop-state last-loop-bindings
                              ;           :closed bool}}.
                    :chs {}   ; {ch -> {:id (gen-id),
@@ -305,7 +305,7 @@
         (when (> @event-delay 0) (<! (timeout @event-delay)))
         (when (< @event-delay 0) (<! step-ch)))
         (recur (inc num-events)))
-    (let [el-event (str el-prefix "-event")
+    (let [el-event (str el-prefix "-event") ; Process U/I related events.
           el-html (str el-prefix "-html")
           el-svg (str el-prefix "-svg")]
       (ago world w
@@ -337,7 +337,7 @@
                      (set-el-innerHTML el-svg vis-next-svg))
                    (recur vis-last vis-last-positions vis-last-html vis-next-svg next-deltas)))))
            (world-init-cb world))
-      (let [toggle-ch (listen-el (gdom/getElement el-html) "click")]
+      (let [toggle-ch (listen-el (gdom/getElement el-html) "click")] ; Process toggle U/I events.
         (go-loop []
           (let [actx-id (no-prefix (.-id (.-target (<! toggle-ch))))]
             (doseq [[actx actx-info] (:actxs @vis)]
