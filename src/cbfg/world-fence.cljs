@@ -22,10 +22,13 @@
 (defn example-count [actx opaque-id x y delay]
   (let [out (achan actx)]
     (ago example-count actx
-         (doseq [n (range x (+ y 1))]
+         (doseq [n (range x y)]
            (let [timeout-ch (atimeout example-count delay)]
              (atake example-count timeout-ch))
-           (aput example-count out {:opaque-id opaque-id :result n}))
+           (aput example-count out {:opaque-id opaque-id :partial n}))
+         (let [timeout-ch (atimeout example-count delay)]
+           (atake example-count timeout-ch))
+         (aput example-count out {:opaque-id opaque-id :result y})
          (aclose example-count out))
     out))
 
@@ -54,7 +57,7 @@
                            (flatten ["<table>"
                                      "<tr><th>id</th><th>fence</th><th>op</th><th>args</th><th>responses</th></tr>"
                                      (map (fn [[opaque-id [request responses]]]
-                                            ["<tr class='" (when (seq responses) "complete") "'>"
+                                            ["<tr class='" (when (some #(:result (second %)) responses) "complete") "'>"
                                              " <td>" opaque-id "</td>"
                                              " <td>" (:fence request) "</td>"
                                              " <td>" (:op request) "</td>"
