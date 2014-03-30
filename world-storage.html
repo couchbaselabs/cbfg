@@ -64,6 +64,16 @@
         <button id="scan">scan</button>
       </div>
       <div class="cmd">
+        fence: <select id="changes-fence">
+                 <option value="0" selected>false</option>
+                 <option value="1">true</option>
+               </select>
+        <div class="kv">
+          since: <input id="changes-since" type="text" value="0"></input>
+        </div>
+        <button id="changes">changes</button>
+      </div>
+      <div class="cmd">
         fence: <select id="noop-fence">
                  <option value="0" selected>false</option>
                  <option value="1">true</option>
@@ -119,7 +129,7 @@
                          padding: 5px 5px 5px 5px; }
     #vis-input input { width: 80px; }
     #vis-input div.kv { display: inline-block; min-width: 250px; }
-    #vis-input button { display: inline-block; width: 50px; }
+    #vis-input button { display: inline-block; width: 60px; }
     div.vis-input-log { margin-left: 2em;
                         border-top: 1px solid #888;
                         padding: 5px 0 5px 0; }
