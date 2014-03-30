@@ -1,5 +1,6 @@
 (ns cbfg.world-fence
-  (:require-macros [cbfg.ago :refer [ago ago-loop achan-buf aalts aput atake atimeout]])
+  (:require-macros [cbfg.ago :refer [ago ago-loop aclose achan achan-buf
+                                     aalts aput atake atimeout]])
   (:require [cljs.core.async :refer [chan <! merge map< sliding-buffer]]
             [goog.dom :as gdom]
             [cbfg.vis :refer [vis-init listen-el get-el-value
@@ -18,13 +19,25 @@
          (atake example-sub timeout-ch)
          {:opaque-id opaque-id :result (- x y)})))
 
+(defn example-count [actx opaque-id x y delay]
+  (let [out (achan actx)]
+    (ago example-count actx
+         (doseq [n (range x (+ y 1))]
+           (let [timeout-ch (atimeout example-count delay)]
+             (atake example-count timeout-ch))
+           (aput example-count out {:opaque-id opaque-id :result n}))
+         (aclose example-count out))
+    out))
+
 (def example-cmd-handlers
-  {"add"  (fn [c] {:opaque-id (:opaque-id c) :fence (:fence c)
-                   :rq #(example-add % (:opaque-id c) (:x c) (:y c) (:delay c))})
-   "sub"  (fn [c] {:opaque-id (:opaque-id c) :fence (:fence c)
-                   :rq #(example-sub % (:opaque-id c) (:x c) (:y c) (:delay c))})
-   "test" (fn [c] {:opaque-id (:opaque-id c) :fence (:fence c)
-                   :rq #(cbfg.fence/test % (:opaque-id c))})})
+  {"add"   (fn [c] {:opaque-id (:opaque-id c) :fence (:fence c)
+                    :rq #(example-add % (:opaque-id c) (:x c) (:y c) (:delay c))})
+   "sub"   (fn [c] {:opaque-id (:opaque-id c) :fence (:fence c)
+                    :rq #(example-sub % (:opaque-id c) (:x c) (:y c) (:delay c))})
+   "count" (fn [c] {:opaque-id (:opaque-id c) :fence (:fence c)
+                    :rq #(example-count % (:opaque-id c) (:x c) (:y c) (:delay c))})
+   "test"  (fn [c] {:opaque-id (:opaque-id c) :fence (:fence c)
+                    :rq #(cbfg.fence/test % (:opaque-id c))})})
 
 (def example-max-inflight (atom 10))
 
@@ -51,7 +64,7 @@
                                                     ["<li style='margin-left: " out-time "em;'>"
                                                      (filter-r response)
                                                      "</li>"])
-                                                  responses)
+                                                  (reverse responses))
                                              "</ul></td>"
                                              "</tr>"])
                                           (sort #(compare (first %1) (first %2)) client-cmds))
