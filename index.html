@@ -3,10 +3,10 @@
 <div class="container">
   <div class="side">
     <ul>
-      <li><a target="world" href="world-fence.html">fence</a>
+      <li><a href="index.html#world-fence.html" onclick="reload(this.href)">fence</a>
           <div>out-of-order responses and fenced protocol</div>
       </li>
-      <li><a target="world" href="world-storage.html">storage</a>
+      <li><a href="index.html#world-storage.html" onclick="reload(this.href)">storage</a>
           <div>storage queues, dedupe, slow I/O, back-pressure</div>
       </li>
       <li><a target="world" href="help.html">help</a>
@@ -64,6 +64,10 @@ body, div, iframe {
 var a = window.location.href.split("#")[1];
 if (a) {
   document.getElementById("world").src = a;
+}
+function reload(a) {
+  window.location.href = a;
+  window.location.reload(true);
 }
 </script>
 </body>
