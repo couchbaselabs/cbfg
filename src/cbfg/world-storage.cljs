@@ -6,44 +6,49 @@
                               get-el-innerHTML set-el-innerHTML]]
             [cbfg.fence :refer [make-fenced-pump]]))
 
-(defn storage-get [actx opaque-id key]
-  (ago storage-get actx
-       {:opaque-id opaque-id :status :ok :key key :val "yay"}))
-
-(defn storage-set [actx opaque-id key val]
-  (ago storage-set actx
-       {:opaque-id opaque-id :status :ok}))
-
-(defn storage-del [actx opaque-id key]
-  (ago storage-del actx
-       {:opaque-id opaque-id :status :ok}))
-
-(defn storage-scan [actx opaque-id from to]
-  (ago storage-del actx
-       {:opaque-id opaque-id :status :ok}))
-
-(defn storage-noop [actx opaque-id]
-  (ago storage-del actx
-       {:opaque-id opaque-id :status :ok}))
-
-(def storage-cmd-handlers
+(defn make-storage-cmd-handlers [kvs changes last-seq max-deleted-seq]
   {"get"  [["key"]
-           (fn [c] {:rq #(storage-get % (:opaque-id c) (:key c))})]
+           (fn [c] {:rq
+                    (fn [actx]
+                      (ago storage-get actx
+                           {:opaque-id (:opaque-id c) :status :ok
+                            :key (:key c) :val "yay"}))})]
    "set"  [["key" "val"]
-           (fn [c] {:rq #(storage-set % (:opaque-id c) (:key c) (:val c))})]
+           (fn [c] {:rq
+                    (fn [actx]
+                      (ago storage-get actx
+                           {:opaque-id (:opaque-id c) :status :ok
+                            :key (:key c)}))})]
    "del"  [["key"]
-           (fn [c] {:rq #(storage-del % (:opaque-id c) (:key c))})]
+           (fn [c] {:rq
+                    (fn [actx]
+                      (ago storage-get actx
+                           {:opaque-id (:opaque-id c) :status :ok
+                            :key (:key c)}))})]
    "scan" [["from" "to"]
-           (fn [c] {:rq #(storage-scan % (:opaque-id c) (:from c) (:to c))})]
+           (fn [c] {:rq
+                    (fn [actx]
+                      (ago storage-get actx
+                           {:opaque-id (:opaque-id c) :status :ok
+                            :from (:from c) :to (:to c)}))})]
    "noop" [[]
-           (fn [c] {:rq #(storage-noop % (:opaque-id c))})]
+           (fn [c] {:rq
+                    (fn [actx]
+                      (ago storage-get actx
+                           {:opaque-id (:opaque-id c) :status :ok}))})]
    "test" [[]
-           (fn [c] {:rq #(cbfg.fence/test %)})]})
+           (fn [c] {:rq #(cbfg.fence/test % (:opaque-id c))})]})
 
 (def storage-max-inflight (atom 10))
 
 (defn world-vis-init [el-prefix]
-  (let [cmd-ch (map< (fn [ev] {:op (.-id (.-target ev))})
+  (let [kvs (atom {})
+        changes (atom {})
+        last-seq (atom 0)
+        max-deleted-seq (atom 0)
+        storage-cmd-handlers (make-storage-cmd-handlers kvs changes
+                                                        last-seq max-deleted-seq)
+        cmd-ch (map< (fn [ev] {:op (.-id (.-target ev))})
                      (merge (map #(listen-el (gdom/getElement %) "click")
                                  (keys storage-cmd-handlers))))]
     (vis-init (fn [world]
