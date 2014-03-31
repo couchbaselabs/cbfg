@@ -21,91 +21,101 @@
     input:
     <div id="vis-input">
       &nbsp;&nbsp;&nbsp;
-      <div class="cmd">
-        fence: <select id="get-fence">
-                 <option value="0" selected>false</option>
-                 <option value="1">true</option>
-               </select>
-        <div class="kv">
-          key: <input id="get-key" type="text" value="a"></input>
+      <div class="cmds">
+        <div class="cmd">
+          fence: <select id="get-fence">
+                   <option value="0" selected>false</option>
+                   <option value="1">true</option>
+                 </select>
+          <div class="kv">
+            key: <input id="get-key" type="text" value="a"></input>
+          </div>
+          <button id="get">get</button>
         </div>
-        <button id="get">get</button>
-      </div>
-      <div class="cmd">
-        fence: <select id="set-fence">
-                 <option value="0" selected>false</option>
-                 <option value="1">true</option>
-               </select>
-        <div class="kv">
-          key: <input id="set-key" type="text" value="a"></input>
-          val: <input id="set-val" type="text" value="hello"></input>
+        <div class="cmd">
+          fence: <select id="set-fence">
+                   <option value="0" selected>false</option>
+                   <option value="1">true</option>
+                 </select>
+          <div class="kv">
+            key: <input id="set-key" type="text" value="a"></input>
+            val: <input id="set-val" type="text" value="hello"></input>
+          </div>
+          <button id="set">set</button>
         </div>
-        <button id="set">set</button>
-      </div>
-      <div class="cmd">
-        fence: <select id="del-fence">
-                 <option value="0" selected>false</option>
-                 <option value="1">true</option>
-               </select>
-        <div class="kv">
-          key: <input id="del-key" type="text" value="a"></input>
+        <div class="cmd">
+          fence: <select id="del-fence">
+                   <option value="0" selected>false</option>
+                   <option value="1">true</option>
+                 </select>
+          <div class="kv">
+            key: <input id="del-key" type="text" value="a"></input>
+          </div>
+          <button id="del">del</button>
         </div>
-        <button id="del">del</button>
-      </div>
-      <div class="cmd">
-        fence: <select id="scan-fence">
-                 <option value="0" selected>false</option>
-                 <option value="1">true</option>
-               </select>
-        <div class="kv">
-          from: <input id="scan-from" type="text" value="a"></input>
-          to: <input id="scan-to" type="text" value="c"></input>
+        <div class="cmd">
+          fence: <select id="scan-fence">
+                   <option value="0" selected>false</option>
+                   <option value="1">true</option>
+                 </select>
+          <div class="kv">
+            from: <input id="scan-from" type="text" value="a"></input>
+            to: <input id="scan-to" type="text" value="c"></input>
+          </div>
+          <button id="scan">scan</button>
         </div>
-        <button id="scan">scan</button>
-      </div>
-      <div class="cmd">
-        fence: <select id="changes-fence">
-                 <option value="0" selected>false</option>
-                 <option value="1">true</option>
-               </select>
-        <div class="kv">
-          since: <input id="changes-since" type="text" value="0"></input>
+        <div class="cmd">
+          fence: <select id="changes-fence">
+                   <option value="0" selected>false</option>
+                   <option value="1">true</option>
+                 </select>
+          <div class="kv">
+            since: <input id="changes-since" type="text" value="0"></input>
+          </div>
+          <button id="changes">changes</button>
         </div>
-        <button id="changes">changes</button>
+        <div class="cmd">
+          fence: <select id="noop-fence">
+                   <option value="0" selected>false</option>
+                   <option value="1">true</option>
+                 </select>
+          <div class="kv"></div>
+          <button id="noop">noop</button>
+        </div>
+        <div class="cmd">
+          fence: <select id="test-fence">
+                   <option value="0" selected>false</option>
+                   <option value="1">true</option>
+                 </select>
+          <div class="kv"></div>
+          <button id="test">test</button>
+        </div>
       </div>
-      <div class="cmd">
-        fence: <select id="noop-fence">
-                 <option value="0" selected>false</option>
-                 <option value="1">true</option>
-               </select>
-        <div class="kv"></div>
-        <button id="noop">noop</button>
-      </div>
-      <div class="cmd">
-        fence: <select id="test-fence">
-                 <option value="0" selected>false</option>
-                 <option value="1">true</option>
-               </select>
-        <div class="kv"></div>
-        <button id="test">test</button>
-      </div>
-      <div class="cmd">
-        seq. read:
-        <select id="speed-read">
-          <option value="1" selected>full-speed</option>
-          <option value="2">slow</option>
-        </select>
-        seq. write:
-        <select id="speed-write">
-          <option value="1" selected>full-speed</option>
-          <option value="2">slow</option>
-        </select>
-        seek:
-        <select id="speed-seek">
-          <option value="1" selected>full-speed</option>
-          <option value="2">slow</option>
-        </select>
-        <button id="speed-apply">apply</button>
+      <div class="speeds">
+        <div class="cmd">
+          seq. read:
+          <select id="speed-read">
+            <option value="1" selected>full-speed</option>
+            <option value="2">slow</option>
+          </select>
+        </div>
+        <div class="cmd">
+          seq. write:
+          <select id="speed-write">
+            <option value="1" selected>full-speed</option>
+            <option value="2">slow</option>
+          </select>
+        </div>
+        <div class="cmd">
+          seek:
+          <select id="speed-seek">
+            <option value="1" selected>full-speed</option>
+            <option value="2">slow</option>
+          </select>
+        </div>
+        <div class="cmd">
+          <button id="speed-apply">apply</button>
+        </div>
       </div>
     </div>
     <div class="vis-input-log">
@@ -125,12 +135,23 @@
     </svg>
   </div>
   <style>
+    #vis-input div.cmds {
+      display: inline-block;
+      margin-bottom: 20px;
+      border-right: 1px solid #ddd;
+      padding-right: 20px;
+    }
+    #vis-input div.speeds {
+      display: inline-block;
+      padding-left: 20px;
+      vertical-align: top;
+    }
     #vis-input div.cmd { padding: 5px 5px 5px 5px; }
     #vis-input input { width: 80px; }
     #vis-input div.kv { display: inline-block; min-width: 250px; }
     #vis-input button { display: inline-block; width: 60px; }
     div.vis-input-log { margin-left: 2em;
-                        border-top: 1px solid #888;
+                        border-top: 1px solid #ddd;
                         padding: 5px 0 5px 0; }
     #vis-output-log { margin-left: 5em; }
   </style>
