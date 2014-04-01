@@ -64,12 +64,12 @@
                           (ago storage-cmd-scan actx
                                {:opaque (:opaque c) :status :ok
                                 :from (:from c) :to (:to c)}))})]
-   "changes" [["since"]
+   "changes" [["from" "to"]
               (fn [c] {:rq
                        (fn [actx]
                          (ago storage-cmd-changes actx
                               {:opaque (:opaque c) :status :ok
-                               :since (:since c)}))})]
+                                :from (:from c) :to (:to c)}))})]
    "noop" [[] (fn [c] {:rq
                        (fn [actx]
                          (ago storage-cmd-noop actx
