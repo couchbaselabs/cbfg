@@ -24,8 +24,7 @@
 
 (defn storage-set [actx storage opaque key cas-old val op]
   (ago storage-set actx
-       (let [cas-new (gen-cas)
-             res (atom nil)]
+       (let [res (atom nil)]
          (swap! storage
                 #(let [s1 (assoc % :next-sq (max (:next-sq %)
                                                  (inc (:max-deleted-sq %))))
@@ -51,21 +50,22 @@
                            (do (reset! res {:opaque opaque :status :not-found
                                             :key key})
                                s1)
-                           (do (reset! res {:opaque opaque :status :ok
-                                            :key key :sq sq-new :cas cas-new})
-                               (let [val-new (case op
-                                               :add val
-                                               :replace val
-                                               :append (str (:val prev-change) val)
-                                               :prepend (str val (:val prev-change))
-                                               val)]
-                                 (-> s1
-                                     (dissoc-in [:changes sq-old])
-                                     (assoc-in [:keys key] sq-new)
-                                     (assoc-in [:changes sq-new]
-                                               {:key key :sq sq-new :cas cas-new
-                                                :val val-new})
-                                     (update-in [:next-sq] inc))))))))))
+                           (let [cas-new (gen-cas)
+                                 val-new (case op
+                                           :add val
+                                           :replace val
+                                           :append (str (:val prev-change) val)
+                                           :prepend (str val (:val prev-change))
+                                           val)]
+                             (reset! res {:opaque opaque :status :ok
+                                          :key key :sq sq-new :cas cas-new})
+                             (-> s1
+                                 (dissoc-in [:changes sq-old])
+                                 (assoc-in [:keys key] sq-new)
+                                 (assoc-in [:changes sq-new]
+                                           {:key key :sq sq-new :cas cas-new
+                                            :val val-new})
+                                 (update-in [:next-sq] inc)))))))))
          @res)))
 
 (defn storage-del [actx storage opaque key]
