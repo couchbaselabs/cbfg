@@ -4,7 +4,7 @@
   (:require [cljs.core.async :refer [chan <! merge map< sliding-buffer]]
             [goog.dom :as gdom]
             [cbfg.vis :refer [vis-init listen-el get-el-value
-                              get-el-innerHTML set-el-innerHTML]]
+                              set-el-innerHTML render-client-cmds]]
             [cbfg.fence :refer [make-fenced-pump]]
             [cbfg.fence-test]))
 
@@ -44,39 +44,6 @@
                     :rq #(cbfg.fence-test/test % (:opaque c))})})
 
 (def example-max-inflight (atom 10))
-
-(defn filter-r [r] (if (map? r)
-                     (-> r
-                         (dissoc :opaque)
-                         (dissoc :op)
-                         (dissoc :fence))
-                     r))
-
-(defn render-client-cmds [client-cmds]
-  (set-el-innerHTML "client"
-                    (apply str
-                           (flatten ["<table>"
-                                     "<tr><th>id</th><th>fence</th><th>op</th>"
-                                     "    <th>args</th><th>responses</th></tr>"
-                                     (map (fn [[opaque [request responses]]]
-                                            ["<tr class='"
-                                             (when (some #(:result (second %)) responses)
-                                               "complete") "'>"
-                                             " <td>" opaque "</td>"
-                                             " <td>" (:fence request) "</td>"
-                                             " <td>" (:op request) "</td>"
-                                             " <td>" (filter-r request) "</td>"
-                                             " <td class='responses'><ul>"
-                                             (map (fn [[out-time response]]
-                                                    ["<li style='margin-left: " out-time "em;'>"
-                                                     (filter-r response)
-                                                     "</li>"])
-                                                  (reverse responses))
-                                             "</ul></td>"
-                                             "</tr>"])
-                                          (sort #(compare (first %1) (first %2))
-                                                client-cmds))
-                                     "</table>"]))))
 
 (defn world-vis-init [el-prefix]
   (let [cmd-ch (map< (fn [ev] {:op (.-id (.-target ev))

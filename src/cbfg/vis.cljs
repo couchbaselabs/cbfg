@@ -345,3 +345,37 @@
             (recur)))))
     (vis-run-controls event-delay step-ch el-prefix)))
 
+;; ------------------------------------------------
+
+(defn filter-r [r] (if (map? r)
+                     (-> r
+                         (dissoc :opaque)
+                         (dissoc :op)
+                         (dissoc :fence))
+                     r))
+
+(defn render-client-cmds [client-cmds]
+  (set-el-innerHTML "client"
+                    (apply str
+                           (flatten ["<table>"
+                                     "<tr><th>id</th><th>fence</th><th>op</th>"
+                                     "    <th>args</th><th>responses</th></tr>"
+                                     (map (fn [[opaque [request responses]]]
+                                            ["<tr class='"
+                                             (when (some #(:result (second %)) responses)
+                                               "complete") "'>"
+                                             " <td>" opaque "</td>"
+                                             " <td>" (:fence request) "</td>"
+                                             " <td>" (:op request) "</td>"
+                                             " <td>" (filter-r request) "</td>"
+                                             " <td class='responses'><ul>"
+                                             (map (fn [[out-time response]]
+                                                    ["<li style='margin-left: " out-time "em;'>"
+                                                     (filter-r response)
+                                                     "</li>"])
+                                                  (reverse responses))
+                                             "</ul></td>"
+                                             "</tr>"])
+                                          (sort #(compare (first %1) (first %2))
+                                                client-cmds))
+                                     "</table>"]))))
