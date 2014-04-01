@@ -8,7 +8,7 @@
   (reset! atom atom-val)
   result)
 
-(defn make-store []
+(defn make-store [actx]
   (atom {:keys (sorted-map)    ; key -> sq
          :changes (sorted-map) ; sq -> {:key k, :sq s, <:cas c, :val v> | :deleted true}
          :next-sq 1

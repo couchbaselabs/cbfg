@@ -41,12 +41,12 @@
 (def store-max-inflight (atom 10))
 
 (defn world-vis-init [el-prefix]
-  (let [store (store/make-store)
-        store-cmd-handlers (make-store-cmd-handlers store)
-        cmd-ch (map< (fn [ev] {:op (.-id (.-target ev))})
-                     (merge (map #(listen-el (gdom/getElement %) "click")
-                                 (keys store-cmd-handlers))))]
-    (vis-init (fn [world]
+  (vis-init (fn [world]
+              (let [store (store/make-store world)
+                    store-cmd-handlers (make-store-cmd-handlers store)
+                    cmd-ch (map< (fn [ev] {:op (.-id (.-target ev))})
+                                 (merge (map #(listen-el (gdom/getElement %) "click")
+                                             (keys store-cmd-handlers))))]
                 (let [in-ch (achan-buf world 100)
                       out-ch (achan-buf world 0)]
                   (ago-loop a-input world [num-ins 0]
@@ -67,8 +67,8 @@
                             (let [result (atake z-output out-ch)]
                               (log-el el-prefix "output" (str num-outs ": " result))
                               (recur (inc num-outs))))
-                  (make-fenced-pump world in-ch out-ch @store-max-inflight)))
-              el-prefix nil)))
+                  (make-fenced-pump world in-ch out-ch @store-max-inflight))))
+            el-prefix nil))
 
 (let [last-id (atom 0)
       gen-id #(swap! last-id inc)]

@@ -9,9 +9,9 @@
   (= result expect))
 
 (defn test [actx opaque-id]
-  (let [n (atom 0)
-        s (store/make-store)]
-    (ago test actx
+  (ago test actx
+       (let [n (atom 0)
+             s (store/make-store)]
          (if (and (e n (atake test (store/store-get test s 1 "does-not-exist"))
                      {:status :not-found, :key "does-not-exist", :opaque 1}))
            "pass"
