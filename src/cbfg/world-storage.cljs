@@ -96,10 +96,8 @@
               (fn [c] {:rq #(storage-changes % storage (:opaque c)
                                              (js/parseInt (:from c))
                                              (js/parseInt (:to c)))})]
-   "noop" [[] (fn [c] {:rq
-                       (fn [actx]
-                         (ago storage-cmd-noop actx
-                              {:opaque (:opaque c) :status :ok}))})]
+   "noop" [[] (fn [c] {:rq #(ago storage-cmd-noop %
+                                 {:opaque (:opaque c) :status :ok})})]
    "test" [[] (fn [c] {:rq #(cbfg.fence/test % (:opaque c))})]})
 
 (def storage-max-inflight (atom 10))
