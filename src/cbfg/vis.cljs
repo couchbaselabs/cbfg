@@ -6,7 +6,8 @@
   (:require [clojure.string :as string]
             [cljs.core.async :refer [<! >! put! chan timeout merge dropping-buffer]]
             [goog.dom :as gdom]
-            [goog.events :as gevents]))
+            [goog.events :as gevents]
+            [cbfg.misc :refer [dissoc-in]]))
 
 (defn no-prefix [s] (string/join "-" (rest (string/split s #"-"))))
 
@@ -19,15 +20,10 @@
     (gevents/listen el type #(put! out %))
     out))
 
-(defn dissoc-in [m [k & ks :as keys]]
-  (if ks
-    (if-let [next-map (get m k)]
-      (let [new-map (dissoc-in next-map ks)]
-        (if (seq new-map)
-          (assoc m k new-map)
-          (dissoc m k)))
-      m)
-    (dissoc m k)))
+(defn log-el [el-prefix log-kind msg]
+  (set-el-innerHTML (str el-prefix "-" log-kind "-log")
+                    (str msg "\n"
+                         (get-el-innerHTML (str el-prefix "-" log-kind "-log")))))
 
 ;; ------------------------------------------------
 
