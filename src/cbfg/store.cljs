@@ -6,8 +6,7 @@
 
 (defn make-store []
   (atom {:keys (sorted-map)    ; key -> sq
-         :changes (sorted-map) ; sq -> {:key k, :sq s,
-                               ;        <:cas c, :val v> | :deleted bool}
+         :changes (sorted-map) ; sq -> {:key k, :sq s, <:cas c, :val v> | :deleted true}
          :next-sq 1
          :max-deleted-sq 0}))
 
