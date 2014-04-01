@@ -70,19 +70,34 @@
                                      (update-in [:next-sq] inc)))))))))
              @res)))))
 
-(defn storage-del [actx storage opaque key]
+(defn storage-del [actx storage opaque key old-cas]
   (ago storage-del actx
-       (let [s2 (swap! storage
-                       #(-> %
-                            (assoc :max-deleted-sq (max (get-in % [:keys key])
-                                                        (:max-deleted-sq %)))
-                            (dissoc-in [:changes (get-in % [:keys key])])
-                            (dissoc-in [:keys key])
-                            (assoc-in [:changes (:next-sq %)]
-                                      {:key key :sq (:next-sq %) :deleted true})
-                            (update-in [:next-sq] inc)))]
-         {:opaque opaque :status :ok
-          :key key :sq (dec (:next-sq s2))})))
+       (let [res (atom nil)]
+         (swap! storage
+                #(let [old-sq (get-in % [:keys key])
+                       cas-check (and old-cas (not (zero? old-cas)))
+                       prev-change (when cas-check
+                                     (get-in % [:changes old-sq]))]
+                   (if (not old-sq)
+                     (do (reset! res {:opaque opaque :status :not-found
+                                      :key key})
+                         s1)
+                     (if (and cas-check (not= old-cas (:cas prev-change)))
+                       (do (reset! res {:opaque opaque :status :wrong-cas
+                                        :key key})
+                           s1)
+                       (let [new-sq (:next-sq %)]
+                         (reset! res {:opaque opaque :status :wrong-cas
+                                      :key key :sq new-sq})
+                         (-> %
+                             (assoc :max-deleted-sq (max old-sq
+                                                         (:max-deleted-sq %)))
+                             (dissoc-in [:changes old-sq])
+                             (dissoc-in [:keys key])
+                             (assoc-in [:changes new-sq]
+                                       {:key key :sq new-sq :deleted true})
+                             (update-in [:next-sq] inc)))))))
+         @res)))
 
 (defn storage-scan [actx storage opaque from to]
   (let [out (achan actx)]
@@ -120,7 +135,7 @@
    "set" [["key" "val"]
           (fn [c] {:rq #(storage-set % storage (:opaque c) (:key c) (:cas c) (:val c) :set)})]
    "del" [["key"]
-          (fn [c] {:rq #(storage-del % storage (:opaque c) (:key c))})]
+          (fn [c] {:rq #(storage-del % storage (:opaque c) (:key c) (:cas c))})]
    "add" [["key" "val"]
           (fn [c] {:rq #(storage-set % storage (:opaque c) (:key c) (:cas c) (:val c) :add)})]
    "replace" [["key" "val"]
