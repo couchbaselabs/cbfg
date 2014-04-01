@@ -42,6 +42,16 @@
     {:opaque opaque :status :ok
      :key key :sq (dec (:next-sq storage2))}))
 
+(defn storage-scan [storage opaque from to]
+  (let [s @storage
+        sq (get (:keys s) key)
+        change (get (:changes s) sq)]
+    (if (and change (not (:deletion change)))
+      {:opaque opaque :status :ok
+       :key key :sq sq :cas (:cas change) :val (:val change)}
+      {:opaque opaque :status :not-found
+       :key key})))
+
 (defn make-storage-cmd-handlers [storage]
   {"get" [["key"]
           (fn [c] {:rq #(ago storage-cmd-get %
@@ -80,7 +90,8 @@
                          (get-el-innerHTML (str el-prefix "-" log-kind "-log")))))
 
 (defn world-vis-init [el-prefix]
-  (let [storage (atom {:keys {} :changes {} :next-sq 1 :max-deleted-sq 1})
+  (let [storage (atom {:keys (sorted-map) :changes (sorted-map)
+                       :next-sq 1 :max-deleted-sq 1})
         storage-cmd-handlers (make-storage-cmd-handlers storage)
         cmd-ch (map< (fn [ev] {:op (.-id (.-target ev))})
                      (merge (map #(listen-el (gdom/getElement %) "click")
