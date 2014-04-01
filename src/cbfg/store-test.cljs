@@ -94,6 +94,26 @@
                     (e n (atake test c)
                        {:status :wrong-cas, :key "a", :opaque @n}
                        (atake test c)))
+                  (let [c (store/store-set test s @n "a" 666 "" :add)]
+                    (e n (atake test c)
+                       {:status :wrong-cas, :key "a", :opaque @n}
+                       (atake test c)))
+                  (let [c (store/store-set test s @n "a" 666 "" :replace)]
+                    (e n (atake test c)
+                       {:status :wrong-cas, :key "a", :opaque @n}
+                       (atake test c)))
+                  (let [c (store/store-set test s @n "a" 666 "" :append)]
+                    (e n (atake test c)
+                       {:status :wrong-cas, :key "a", :opaque @n}
+                       (atake test c)))
+                  (let [c (store/store-set test s @n "a" 666 "" :prepend)]
+                    (e n (atake test c)
+                       {:status :wrong-cas, :key "a", :opaque @n}
+                       (atake test c)))
+                  (let [c (store/store-del test s @n "a" 666)]
+                    (e n (atake test c)
+                       {:status :wrong-cas, :key "a", :opaque @n}
+                       (atake test c)))
                   (let [c (store/store-get test s @n "a")]
                     (e n (atake test c)
                        {:status :ok, :key "a", :opaque @n, :sq 5, :val "prefixAAAsuffix"}
