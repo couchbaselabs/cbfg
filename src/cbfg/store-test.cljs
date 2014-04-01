@@ -15,6 +15,9 @@
     (and pass (nil? result-nil))))
 
 (defn test [actx opaque-id]
+  (test-basic actx))
+
+(defn test-basic [actx opaque-id]
   (ago test actx
        (let [n (atom 0)
              s (store/make-store test)]
