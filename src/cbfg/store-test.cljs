@@ -281,6 +281,17 @@
            "pass"
            (str "FAIL: on test-scan #" @n)))))
 
+(defn test-changes [actx]
+  (ago test-changes actx
+       (let [n (atom 0)
+             s (store/make-store test-changes)]
+         (if (and (let [c (store/store-changes test-changes s @n 0 100)]
+                    (e n (atake test-changes c)
+                       {:status :ok, :opaque @n}
+                       (atake test-changes c))))
+           "pass"
+           (str "FAIL: on test-changes #" @n)))))
+
 (defn test [actx opaque]
   (ago test actx
        {:opaque opaque
@@ -291,6 +302,11 @@
                    cv)
                  "test-scan"
                  (let [ch (test-scan test)
+                       cv (atake test ch)
+                       _  (atake test ch)]
+                   cv)
+                 "test-changes"
+                 (let [ch (test-changes test)
                        cv (atake test ch)
                        _  (atake test ch)]
                    cv)}}))
