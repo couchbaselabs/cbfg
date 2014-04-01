@@ -12,7 +12,7 @@
              (if pass
                (str "pass: " (:key expect))
                (str "FAIL:" result2 expect)))
-    (and pass (not result-nil))))
+    (and pass (nil? result-nil))))
 
 (defn test [actx opaque-id]
   (ago test actx
@@ -57,6 +57,46 @@
                   (let [c (store/store-get test s @n "a")]
                     (e n (atake test c)
                        {:status :ok, :key "a", :opaque @n, :sq 2, :val "AA"}
+                       (atake test c)))
+                  (let [c (store/store-set test s @n "a" 0 "" :add)]
+                    (e n (atake test c)
+                       {:status :exists, :key "a", :opaque @n}
+                       (atake test c)))
+                  (let [c (store/store-get test s @n "a")]
+                    (e n (atake test c)
+                       {:status :ok, :key "a", :opaque @n, :sq 2, :val "AA"}
+                       (atake test c)))
+                  (let [c (store/store-set test s @n "a" 0 "AAA" :replace)]
+                    (e n (atake test c)
+                       {:status :ok, :key "a", :opaque @n, :sq 3}
+                       (atake test c)))
+                  (let [c (store/store-get test s @n "a")]
+                    (e n (atake test c)
+                       {:status :ok, :key "a", :opaque @n, :sq 3, :val "AAA"}
+                       (atake test c)))
+                  (let [c (store/store-set test s @n "a" 0 "suffix" :append)]
+                    (e n (atake test c)
+                       {:status :ok, :key "a", :opaque @n, :sq 4}
+                       (atake test c)))
+                  (let [c (store/store-get test s @n "a")]
+                    (e n (atake test c)
+                       {:status :ok, :key "a", :opaque @n, :sq 4, :val "AAAsuffix"}
+                       (atake test c)))
+                  (let [c (store/store-set test s @n "a" 0 "prefix" :prepend)]
+                    (e n (atake test c)
+                       {:status :ok, :key "a", :opaque @n, :sq 5}
+                       (atake test c)))
+                  (let [c (store/store-get test s @n "a")]
+                    (e n (atake test c)
+                       {:status :ok, :key "a", :opaque @n, :sq 5, :val "prefixAAAsuffix"}
+                       (atake test c)))
+                  (let [c (store/store-set test s @n "a" 666 "" :set)]
+                    (e n (atake test c)
+                       {:status :wrong-cas, :key "a", :opaque @n}
+                       (atake test c)))
+                  (let [c (store/store-get test s @n "a")]
+                    (e n (atake test c)
+                       {:status :ok, :key "a", :opaque @n, :sq 5, :val "prefixAAAsuffix"}
                        (atake test c))))
            "pass"
            (str "FAIL: on test #" @n)))))
