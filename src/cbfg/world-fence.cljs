@@ -86,7 +86,7 @@
                                :fence (= (get-el-value "fence") "1")})
                      (merge (map #(listen-el (gdom/getElement %) "click")
                                  (keys example-cmd-handlers))))
-        client-cmds (atom {})] ; Keyed by opaque-id -> [request, replies]
+        client-cmds (atom {})] ; Keyed by opaque-id -> [request, replies].
     (vis-init (fn [world]
                 (let [in-ch (achan-buf world 100)
                       out-ch (achan-buf world 0)]
