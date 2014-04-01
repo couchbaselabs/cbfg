@@ -35,7 +35,7 @@
                   (recur (conj acc result))
                   (reverse acc))))))
 
-(defn test [actx opaque-id]
+(defn test [actx opaque]
   (let [reqs [{:rq #(test-add-two % 1 200)}
               {:rq #(test-add-two % 4 100)}
               {:rq #(test-add-two % 10 50) :fence true}
@@ -46,7 +46,7 @@
               {:rq #(test-range-to % 6 10 5) :fence true}
               {:rq #(test-add-two % 30 100)}]]
     (ago test actx ; TODO - revisit timing wobbles.
-         {:opaque-id opaque-id
+         {:opaque opaque
           :result (map #(cons (if (= (sort (nth % 1))
                                      (sort (nth % 2)))
                                 "pass"
