@@ -21,6 +21,10 @@
                   (e n (atake test (store/store-del test s 3 "does-not-exist" 0))
                      {:status :not-found, :key "does-not-exist", :opaque 3})
                   (e n (atake test (store/store-set test s 4 "does-not-exist" 0 "" :replace))
-                     {:status :not-found, :key "does-not-exist", :opaque 4}))
+                     {:status :not-found, :key "does-not-exist", :opaque 4})
+                  (e n (atake test (store/store-set test s 5 "does-not-exist" 0 "" :append))
+                     {:status :not-found, :key "does-not-exist", :opaque 5})
+                  (e n (atake test (store/store-set test s 6 "does-not-exist" 0 "" :replace))
+                     {:status :not-found, :key "does-not-exist", :opaque 6}))
            "pass"
            (str "FAIL: on test #" @n)))))
