@@ -40,19 +40,19 @@
                        (if (and (= op :add) old-sq)
                          (return s1 res
                                  {:opaque opaque :status :exists :key key})
-                         (let [prev-change (when (or cas-check
-                                                     (= op :append)
-                                                     (= op :prepend))
-                                             (get-in s1 [:changes old-sq]))]
-                           (if (and cas-check (not= old-cas (:cas prev-change)))
-                             (return s1 res
-                                     {:opaque opaque :status :wrong-cas :key key})
-                             (if (and (or (= op :replace)
-                                          (= op :append)
-                                          (= op :prepend))
-                                      (not old-sq))
+                         (if (and (or (= op :replace)
+                                      (= op :append)
+                                      (= op :prepend))
+                                  (not old-sq))
+                           (return s1 res
+                                   {:opaque opaque :status :not-found :key key})
+                           (let [prev-change (when (or cas-check
+                                                       (= op :append)
+                                                       (= op :prepend))
+                                               (get-in s1 [:changes old-sq]))]
+                             (if (and cas-check (not= old-cas (:cas prev-change)))
                                (return s1 res
-                                       {:opaque opaque :status :not-found :key key})
+                                       {:opaque opaque :status :wrong-cas :key key})
                                (let [new-cas (gen-cas)
                                      new-val (case op
                                                :add val
