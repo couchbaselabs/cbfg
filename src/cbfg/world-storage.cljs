@@ -2,30 +2,42 @@
   (:require-macros [cbfg.ago :refer [ago ago-loop achan-buf aput atake atimeout]])
   (:require [cljs.core.async :refer [<! merge map<]]
             [goog.dom :as gdom]
-            [cbfg.vis :refer [vis-init listen-el get-el-value
-                              get-el-innerHTML set-el-innerHTML]]
+            [cbfg.vis :refer [dissoc-in listen-el get-el-value
+                              get-el-innerHTML set-el-innerHTML
+                              vis-init ]]
             [cbfg.fence :refer [make-fenced-pump]]))
 
 (defn storage-get [storage opaque-id key]
   (let [s @storage
-        sq (get (:kvs s) key)
-        change (when sq (get (:changes s) sq))]
+        sq (get (:keys s) key)
+        change (get (:changes s) sq)]
     (if (and change (not (:deletion change)))
-      [:ok (:val change)]
-      [:not-found nil])))
+      [:ok {:val (:val change) :sq sq}]
+      [:not-found {}])))
+
+(defn storage-set [storage opaque-id key val]
+  (let [storage2 (swap! storage
+                        #(-> %
+                             (dissoc-in [:changes (get-in % [:keys key :sq])])
+                             (assoc-in [:keys key] (:next-sq %))
+                             (assoc-in [:changes (:next-sq %)]
+                                       {:key key :val val :sq (:next-sq %)})
+                             (update-in [:next-sq] inc)))]
+    [:ok {:sq (dec (:next-sq storage2))}]))
 
 (defn make-storage-cmd-handlers [storage]
   {"get" [["key"]
           (fn [c] {:rq (fn [actx]
                          (ago storage-cmd-get actx
-                              (let [[status val] (storage-get storage (:opaque-id c) (:key c))]
+                              (let [[status ext] (storage-get storage (:opaque-id c) (:key c))]
                                 {:opaque-id (:opaque-id c) :status status
-                                 :key (:key c) :val val})))})]
+                                 :key (:key c) :val (:val ext) :sq (:sq ext)})))})]
    "set" [["key" "val"]
           (fn [c] {:rq (fn [actx]
                          (ago storage-cmd-set actx
-                              {:opaque-id (:opaque-id c) :status :ok
-                               :key (:key c)}))})]
+                              (let [[status ext] (storage-set storage (:opaque-id c) (:key c) (:val c))]
+                                {:opaque-id (:opaque-id c) :status :ok
+                                 :key (:key c) :sq (:sq ext)})))})]
    "del" [["key"]
           (fn [c] {:rq (fn [actx]
                          (ago storage-cmd-del actx
@@ -56,7 +68,7 @@
                          (get-el-innerHTML (str el-prefix "-" log-kind "-log")))))
 
 (defn world-vis-init [el-prefix]
-  (let [storage (atom {:kvs {} :changes {} :last-sq 0 :max-deleted-sq 0})
+  (let [storage (atom {:keys {} :changes {} :next-sq 1 :max-deleted-sq 1})
         storage-cmd-handlers (make-storage-cmd-handlers storage)
         cmd-ch (map< (fn [ev] {:op (.-id (.-target ev))})
                      (merge (map #(listen-el (gdom/getElement %) "click")
