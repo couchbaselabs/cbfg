@@ -85,4 +85,4 @@
       gen-id #(swap! last-id inc)]
   (ago test-actx [{:gen-id gen-id :event-ch (chan (sliding-buffer 1))}]
        (println "store-test:"
-                (atake test-actx (cbfg.store-test/test test-actx 0)))))
+                (<! (cbfg.store-test/test test-actx 0)))))
