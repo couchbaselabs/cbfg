@@ -9,16 +9,16 @@
 
 (defn gen-cas [] (rand-int 0x7fffffff))
 
-(defn storage-get [storage opaque-id key]
+(defn storage-get [storage opaque key]
   (let [s @storage
         sq (get (:keys s) key)
         change (get (:changes s) sq)]
     (if (and change (not (:deletion change)))
-      {:opaque-id opaque-id :status :ok
+      {:opaque opaque :status :ok
        :key key :sq sq :cas (:cas change) :val (:val change)}
-      {:opaque-id opaque-id :status :not-found})))
+      {:opaque opaque :status :not-found})))
 
-(defn storage-set [storage opaque-id key val]
+(defn storage-set [storage opaque key val]
   (let [cas (gen-cas)
         storage2 (swap! storage
                         #(-> %
@@ -27,10 +27,10 @@
                              (assoc-in [:changes (:next-sq %)]
                                        {:key key :sq (:next-sq %) :cas cas :val val})
                              (update-in [:next-sq] inc)))]
-    {:opaque-id opaque-id :status :ok
+    {:opaque opaque :status :ok
      :key key :sq (dec (:next-sq storage2)) :cas cas}))
 
-(defn storage-del [storage opaque-id key]
+(defn storage-del [storage opaque key]
   (let [storage2 (swap! storage
                         #(-> %
                              (dissoc-in [:changes (get-in % [:keys key :sq])])
@@ -38,39 +38,39 @@
                              (assoc-in [:changes (:next-sq %)]
                                        {:key key :sq (:next-sq %) :deletion true})
                              (update-in [:next-sq] inc)))]
-    {:opaque-id opaque-id :status :ok
+    {:opaque opaque :status :ok
      :key key :sq (dec (:next-sq storage2))}))
 
 (defn make-storage-cmd-handlers [storage]
   {"get" [["key"]
           (fn [c] {:rq #(ago storage-cmd-get %
-                             (assoc (storage-get storage (:opaque-id c) (:key c))
+                             (assoc (storage-get storage (:opaque c) (:key c))
                                :op "get"))})]
    "set" [["key" "val"]
           (fn [c] {:rq #(ago storage-cmd-set %
-                             (assoc (storage-set storage (:opaque-id c) (:key c) (:val c))
+                             (assoc (storage-set storage (:opaque c) (:key c) (:val c))
                                :op "set"))})]
    "del" [["key"]
           (fn [c] {:rq (fn [actx]
                          (ago storage-cmd-del actx
-                              {:opaque-id (:opaque-id c) :status :ok
+                              {:opaque (:opaque c) :status :ok
                                :key (:key c)}))})]
    "scan" [["from" "to"]
            (fn [c] {:rq (fn [actx]
                           (ago storage-cmd-scan actx
-                               {:opaque-id (:opaque-id c) :status :ok
+                               {:opaque (:opaque c) :status :ok
                                 :from (:from c) :to (:to c)}))})]
    "changes" [["since"]
               (fn [c] {:rq
                        (fn [actx]
                          (ago storage-cmd-changes actx
-                              {:opaque-id (:opaque-id c) :status :ok
+                              {:opaque (:opaque c) :status :ok
                                :since (:since c)}))})]
    "noop" [[] (fn [c] {:rq
                        (fn [actx]
                          (ago storage-cmd-noop actx
-                              {:opaque-id (:opaque-id c) :status :ok}))})]
-   "test" [[] (fn [c] {:rq #(cbfg.fence/test % (:opaque-id c))})]})
+                              {:opaque (:opaque c) :status :ok}))})]
+   "test" [[] (fn [c] {:rq #(cbfg.fence/test % (:opaque c))})]})
 
 (def storage-max-inflight (atom 10))
 
@@ -94,7 +94,7 @@
                                   op-fence (= (get-el-value (str op "-fence")) "1")
                                   [params handler] (get storage-cmd-handlers op)
                                   cmd2 (-> cmd
-                                           (assoc-in [:opaque-id] num-ins)
+                                           (assoc-in [:opaque] num-ins)
                                            (assoc-in [:fence] op-fence))
                                   cmd3 (reduce #(assoc %1 (keyword %2)
                                                        (get-el-value (str op "-" %2)))
