@@ -13,7 +13,7 @@
   (let [s @storage
         sq (get (:keys s) key)
         change (get (:changes s) sq)]
-    (if (and change (not (:deletion change)))
+    (if (and change (not (:deleted change)))
       {:opaque opaque :status :ok
        :key key :sq sq :cas (:cas change) :val (:val change)}
       {:opaque opaque :status :not-found
@@ -23,7 +23,9 @@
   (let [cas (gen-cas)
         storage2 (swap! storage
                         #(-> %
-                             (dissoc-in [:changes (get-in % [:keys key :sq])])
+                             (assoc :next-sq (max (:next-sq %)
+                                                  (inc (:max-deleted-sq %))))
+                             (dissoc-in [:changes (get-in % [:keys key])])
                              (assoc-in [:keys key] (:next-sq %))
                              (assoc-in [:changes (:next-sq %)]
                                        {:key key :sq (:next-sq %) :cas cas :val val})
@@ -34,23 +36,15 @@
 (defn storage-del [storage opaque key]
   (let [storage2 (swap! storage
                         #(-> %
-                             (dissoc-in [:changes (get-in % [:keys key :sq])])
+                             (assoc :max-deleted-sq (max (get-in % [:keys key])
+                                                         (:max-deleted-sq %)))
+                             (dissoc-in [:changes (get-in % [:keys key])])
                              (dissoc-in [:keys key])
                              (assoc-in [:changes (:next-sq %)]
-                                       {:key key :sq (:next-sq %) :deletion true})
+                                       {:key key :sq (:next-sq %) :deleted true})
                              (update-in [:next-sq] inc)))]
     {:opaque opaque :status :ok
      :key key :sq (dec (:next-sq storage2))}))
-
-(defn storage-scan [storage opaque from to]
-  (let [s @storage
-        sq (get (:keys s) key)
-        change (get (:changes s) sq)]
-    (if (and change (not (:deletion change)))
-      {:opaque opaque :status :ok
-       :key key :sq sq :cas (:cas change) :val (:val change)}
-      {:opaque opaque :status :not-found
-       :key key})))
 
 (defn make-storage-cmd-handlers [storage]
   {"get" [["key"]
@@ -90,8 +84,11 @@
                          (get-el-innerHTML (str el-prefix "-" log-kind "-log")))))
 
 (defn world-vis-init [el-prefix]
-  (let [storage (atom {:keys (sorted-map) :changes (sorted-map)
-                       :next-sq 1 :max-deleted-sq 1})
+  (let [storage (atom {:keys (sorted-map)    ; key -> sq
+                       :changes (sorted-map) ; sq -> {:key k, :sq s,
+                                             ;        <:cas c, :val v> | :deleted bool}
+                       :next-sq 1
+                       :max-deleted-sq 1})
         storage-cmd-handlers (make-storage-cmd-handlers storage)
         cmd-ch (map< (fn [ev] {:op (.-id (.-target ev))})
                      (merge (map #(listen-el (gdom/getElement %) "click")
