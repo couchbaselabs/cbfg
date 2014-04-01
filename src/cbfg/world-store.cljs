@@ -36,7 +36,8 @@
                                    (:val c) :prepend)})]
    "scan"
    [["from" "to"]
-    (fn [c] {:rq #(store/store-scan % store (:opaque c) (:from c) (:to c))})]
+    (fn [c] {:rq #(store/store-scan % store (:opaque c)
+                                    (:from c) (:to c))})]
    "changes"
    [["from" "to"]
     (fn [c] {:rq #(store/store-changes % store (:opaque c)

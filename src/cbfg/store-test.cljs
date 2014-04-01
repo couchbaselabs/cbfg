@@ -1,7 +1,6 @@
 (ns cbfg.store-test
   (:require-macros [cbfg.ago :refer [achan aclose ago atake]])
-  (:require [cljs.core.async :refer [into]]
-            [cbfg.store :as store]))
+  (:require [cbfg.store :as store]))
 
 (defn e [n result expect result-nil]
   (let [result2 (if (:cas expect)
