@@ -76,28 +76,26 @@
        (let [res (atom nil)]
          (swap! storage
                 #(let [old-sq (get-in % [:keys key])
+                       new-sq (:next-sq %)
                        cas-check (and old-cas (not (zero? old-cas)))
                        prev-change (when cas-check
                                      (get-in % [:changes old-sq]))]
                    (if (not old-sq)
-                     (do (reset! res {:opaque opaque :status :not-found
-                                      :key key})
-                         %)
+                     (return % res
+                             {:opaque opaque :status :not-found :key key})
                      (if (and cas-check (not= old-cas (:cas prev-change)))
-                       (do (reset! res {:opaque opaque :status :wrong-cas
-                                        :key key})
-                           %)
-                       (let [new-sq (:next-sq %)]
-                         (reset! res {:opaque opaque :status :wrong-cas
-                                      :key key :sq new-sq})
-                         (-> %
-                             (assoc :max-deleted-sq (max old-sq
-                                                         (:max-deleted-sq %)))
-                             (dissoc-in [:changes old-sq])
-                             (dissoc-in [:keys key])
-                             (assoc-in [:changes new-sq]
-                                       {:key key :sq new-sq :deleted true})
-                             (update-in [:next-sq] inc)))))))
+                       (return % res
+                               {:opaque opaque :status :wrong-cas :key key})
+                       (return (-> %
+                                   (assoc :max-deleted-sq (max old-sq
+                                                               (:max-deleted-sq %)))
+                                   (dissoc-in [:changes old-sq])
+                                   (dissoc-in [:keys key])
+                                   (assoc-in [:changes new-sq]
+                                             {:key key :sq new-sq :deleted true})
+                                   (update-in [:next-sq] inc))
+                               res {:opaque opaque :status :ok
+                                    :key key :sq new-sq})))))
          @res)))
 
 (defn storage-scan [actx storage opaque from to]
