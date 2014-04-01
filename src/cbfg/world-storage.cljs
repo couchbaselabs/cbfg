@@ -22,21 +22,38 @@
            {:opaque opaque :status :not-found
             :key key}))))
 
-(defn storage-set [actx storage opaque key val]
+(defn storage-set [actx storage opaque key val op]
   (ago storage-set actx
        (let [cas (gen-cas)
-             s2 (swap! storage
-                       #(let [s1 (assoc % :next-sq (max (:next-sq %)
-                                                        (inc (:max-deleted-sq %))))
-                              sq (:next-sq s1)]
-                          (-> s1
-                              (dissoc-in [:changes (get-in s1 [:keys key])])
-                              (assoc-in [:keys key] sq)
-                              (assoc-in [:changes sq]
-                                        {:key key :sq sq :cas cas :val val})
-                              (update-in [:next-sq] inc))))]
-         {:opaque opaque :status :ok
-          :key key :sq (dec (:next-sq s2)) :cas cas})))
+             res (atom nil)]
+         (swap! storage
+                #(let [s1 (assoc % :next-sq (max (:next-sq %)
+                                                 (inc (:max-deleted-sq %))))
+                       sq-new (:next-sq s1)
+                       sq-old (get-in s1 [:keys key])]
+                   (if (and (= op :add) sq-old)
+                     (do (reset! res {:opaque opaque :status :exists
+                                      :key key})
+                         s1)
+                     (if (and (= op :replace) (not sq-old))
+                       (do (reset! res {:opaque opaque :status :not-found
+                                        :key key})
+                           s1)
+                       (do (reset! res {:opaque opaque :status :ok
+                                        :key key :sq sq-new :cas cas})
+                           (let [val2 (case op
+                                        :add val
+                                        :replace val
+                                        :append (str val (get-in s1 [:changes sq-old :val]))
+                                        :prepend (str (get-in s1 [:changes sq-old :val]) val)
+                                        val)]
+                             (-> s1
+                                 (dissoc-in [:changes sq-old])
+                                 (assoc-in [:keys key] sq-new)
+                                 (assoc-in [:changes sq-new]
+                                           {:key key :sq sq-new :cas cas :val val2})
+                                 (update-in [:next-sq] inc))))))))
+         @res)))
 
 (defn storage-del [actx storage opaque key]
   (ago storage-del actx
@@ -47,8 +64,7 @@
                             (dissoc-in [:changes (get-in % [:keys key])])
                             (dissoc-in [:keys key])
                             (assoc-in [:changes (:next-sq %)]
-                                      {:key key :sq (:next-sq %)
-                                       :deleted true})
+                                      {:key key :sq (:next-sq %) :deleted true})
                             (update-in [:next-sq] inc)))]
          {:opaque opaque :status :ok
           :key key :sq (dec (:next-sq s2))})))
@@ -87,9 +103,15 @@
   {"get" [["key"]
           (fn [c] {:rq #(storage-get % storage (:opaque c) (:key c))})]
    "set" [["key" "val"]
-          (fn [c] {:rq #(storage-set % storage (:opaque c) (:key c) (:val c))})]
+          (fn [c] {:rq #(storage-set % storage (:opaque c) (:key c) (:val c) :set)})]
    "del" [["key"]
           (fn [c] {:rq #(storage-del % storage (:opaque c) (:key c))})]
+   "add" [["key" "val"]
+          (fn [c] {:rq #(storage-set % storage (:opaque c) (:key c) (:val c) :add)})]
+   "replace" [["key" "val"]
+          (fn [c] {:rq #(storage-set % storage (:opaque c) (:key c) (:val c) :replace)})]
+   "append" [["key" "val"]
+          (fn [c] {:rq #(storage-set % storage (:opaque c) (:key c) (:val c) :append)})]
    "scan" [["from" "to"]
            (fn [c] {:rq #(storage-scan % storage (:opaque c) (:from c) (:to c))})]
    "changes" [["from" "to"]

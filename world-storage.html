@@ -60,6 +60,45 @@
           <button id="del">del</button>
         </div>
         <div class="cmd">
+          <label>add</label>
+          fence:
+          <select id="add-fence">
+            <option value="0" selected>false</option>
+            <option value="1">true</option>
+          </select>
+          <div class="kv">
+            key: <input id="add-key" type="text" value="a"></input>
+            val: <input id="add-val" type="text" value="hi"></input>
+          </div>
+          <button id="add">add</button>
+        </div>
+        <div class="cmd">
+          <label>replace</label>
+          fence:
+          <select id="replace-fence">
+            <option value="0" selected>false</option>
+            <option value="1">true</option>
+          </select>
+          <div class="kv">
+            key: <input id="replace-key" type="text" value="a"></input>
+            val: <input id="replace-val" type="text" value="bye"></input>
+          </div>
+          <button id="replace">replace</button>
+        </div>
+        <div class="cmd">
+          <label>append</label>
+          fence:
+          <select id="append-fence">
+            <option value="0" selected>false</option>
+            <option value="1">true</option>
+          </select>
+          <div class="kv">
+            key: <input id="append-key" type="text" value="a"></input>
+            val: <input id="append-val" type="text" value="you"></input>
+          </div>
+          <button id="append">append</button>
+        </div>
+        <div class="cmd">
           <label>scan</label>
           fence:
           <select id="scan-fence">
