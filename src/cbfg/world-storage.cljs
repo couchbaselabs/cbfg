@@ -7,21 +7,24 @@
                               vis-init ]]
             [cbfg.fence :refer [make-fenced-pump]]))
 
+(defn gen-cas [] (rand-int 0x7fffffff))
+
 (defn storage-get [storage opaque-id key]
   (let [s @storage
         sq (get (:keys s) key)
         change (get (:changes s) sq)]
     (if (and change (not (:deletion change)))
-      {:opaque-id opaque-id :status :ok :key key :val (:val change) :sq sq}
+      {:opaque-id opaque-id :status :ok
+       :key key :sq sq :cas (:cas change) :val (:val change)}
       {:opaque-id opaque-id :status :not-found})))
 
-(defn storage-set [storage opaque-id key val]
+(defn storage-set [storage opaque-id key prev-sq val]
   (let [storage2 (swap! storage
                         #(-> %
                              (dissoc-in [:changes (get-in % [:keys key :sq])])
                              (assoc-in [:keys key] (:next-sq %))
                              (assoc-in [:changes (:next-sq %)]
-                                       {:key key :val val :sq (:next-sq %)})
+                                       {:key key :sq (:next-sq %) :cas (gen-cas) :val val})
                              (update-in [:next-sq] inc)))]
     {:opaque-id opaque-id :status :ok :key key :sq (dec (:next-sq storage2))}))
 
