@@ -18,15 +18,17 @@
        :key key :sq sq :cas (:cas change) :val (:val change)}
       {:opaque-id opaque-id :status :not-found})))
 
-(defn storage-set [storage opaque-id key prev-sq val]
-  (let [storage2 (swap! storage
+(defn storage-set [storage opaque-id key val]
+  (let [cas (gen-cas)
+        storage2 (swap! storage
                         #(-> %
                              (dissoc-in [:changes (get-in % [:keys key :sq])])
                              (assoc-in [:keys key] (:next-sq %))
                              (assoc-in [:changes (:next-sq %)]
-                                       {:key key :sq (:next-sq %) :cas (gen-cas) :val val})
+                                       {:key key :sq (:next-sq %) :cas cas :val val})
                              (update-in [:next-sq] inc)))]
-    {:opaque-id opaque-id :status :ok :key key :sq (dec (:next-sq storage2))}))
+    {:opaque-id opaque-id :status :ok
+     :key key :sq (dec (:next-sq storage2)) :cas cas}))
 
 (defn make-storage-cmd-handlers [storage]
   {"get" [["key"]
