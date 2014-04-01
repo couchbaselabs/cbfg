@@ -5,7 +5,8 @@
             [goog.dom :as gdom]
             [cbfg.vis :refer [vis-init listen-el get-el-value
                               get-el-innerHTML set-el-innerHTML]]
-            [cbfg.fence :refer [make-fenced-pump]]))
+            [cbfg.fence :refer [make-fenced-pump]]
+            [cbfg.fence-test]))
 
 (defn example-add [actx opaque-id x y delay]
   (ago example-add actx
@@ -40,7 +41,7 @@
    "count" (fn [c] {:opaque-id (:opaque-id c) :fence (:fence c)
                     :rq #(example-count % (:opaque-id c) (:x c) (:y c) (:delay c))})
    "test"  (fn [c] {:opaque-id (:opaque-id c) :fence (:fence c)
-                    :rq #(cbfg.fence/test % (:opaque-id c))})})
+                    :rq #(cbfg.fence-test/test % (:opaque-id c))})})
 
 (def example-max-inflight (atom 10))
 
@@ -104,4 +105,4 @@
 (let [last-id (atom 0)
       gen-id #(swap! last-id inc)]
   (ago test-actx [{:gen-id gen-id :event-ch (chan (sliding-buffer 1))}]
-       (println (<! (cbfg.fence/test test-actx 0)))))
+       (println (<! (cbfg.fence-test/test test-actx 0)))))
