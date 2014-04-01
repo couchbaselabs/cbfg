@@ -3,7 +3,7 @@
   (:require [cljs.core.async :refer [into]]
             [cbfg.store :as store]))
 
-(defn e [n result expect]
+(defn e [n result expect result-nil]
   (let [result2 (if (:cas expect)
                   result
                   (dissoc result :cas))
@@ -12,25 +12,51 @@
              (if pass
                (str "pass: " (:key expect))
                (str "FAIL:" result2 expect)))
-    pass))
+    (and pass (not result-nil))))
 
 (defn test [actx opaque-id]
   (ago test actx
        (let [n (atom 0)
              s (store/make-store test)]
-         (if (and (e n (atake test (store/store-get test s 1 "does-not-exist"))
-                     {:status :not-found, :key "does-not-exist", :opaque 1})
-                  (e n (atake test (store/store-get test s 2 "does-not-exist2"))
-                     {:status :not-found, :key "does-not-exist2", :opaque 2})
-                  (e n (atake test (store/store-del test s 3 "does-not-exist" 0))
-                     {:status :not-found, :key "does-not-exist", :opaque 3})
-                  (e n (atake test (store/store-set test s 4 "does-not-exist" 0 "" :replace))
-                     {:status :not-found, :key "does-not-exist", :opaque 4})
-                  (e n (atake test (store/store-set test s 5 "does-not-exist" 0 "" :append))
-                     {:status :not-found, :key "does-not-exist", :opaque 5})
-                  (e n (atake test (store/store-set test s 6 "does-not-exist" 0 "" :replace))
-                     {:status :not-found, :key "does-not-exist", :opaque 6})
-                  (e n (atake test (store/store-set test s 7 "does-not-exist" 0 "7" :set))
-                     {:status :ok, :key "does-not-exist", :opaque 7, :sq 2}))
+         (if (and (let [c (store/store-get test s @n "does-not-exist")]
+                    (e n (atake test c)
+                       {:status :not-found, :key "does-not-exist", :opaque @n}
+                       (atake test c)))
+                  (let [c (store/store-get test s @n "does-not-exist2")]
+                    (e n (atake test c)
+                       {:status :not-found, :key "does-not-exist2", :opaque @n}
+                       (atake test c)))
+                  (let [c (store/store-del test s @n "does-not-exist" 0)]
+                    (e n (atake test c)
+                       {:status :not-found, :key "does-not-exist", :opaque @n}
+                       (atake test c)))
+                  (let [c (store/store-set test s @n "does-not-exist" 0 "" :replace)]
+                    (e n (atake test c)
+                       {:status :not-found, :key "does-not-exist", :opaque @n}
+                       (atake test c)))
+                  (let [c (store/store-set test s @n "does-not-exist" 0 "" :append)]
+                    (e n (atake test c)
+                       {:status :not-found, :key "does-not-exist", :opaque @n}
+                       (atake test c)))
+                  (let [c (store/store-set test s @n "does-not-exist" 0 "" :replace)]
+                    (e n (atake test c)
+                       {:status :not-found, :key "does-not-exist", :opaque @n}
+                       (atake test c)))
+                  (let [c (store/store-set test s @n "a" 0 "A" :set)]
+                    (e n (atake test c)
+                       {:status :ok, :key "a", :opaque @n, :sq 1}
+                       (atake test c)))
+                  (let [c (store/store-get test s @n "a")]
+                    (e n (atake test c)
+                       {:status :ok, :key "a", :opaque @n, :sq 1, :val "A"}
+                       (atake test c)))
+                  (let [c (store/store-set test s @n "a" 0 "AA" :set)]
+                    (e n (atake test c)
+                       {:status :ok, :key "a", :opaque @n, :sq 2}
+                       (atake test c)))
+                  (let [c (store/store-get test s @n "a")]
+                    (e n (atake test c)
+                       {:status :ok, :key "a", :opaque @n, :sq 2, :val "AA"}
+                       (atake test c))))
            "pass"
            (str "FAIL: on test #" @n)))))
