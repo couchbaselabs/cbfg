@@ -44,8 +44,10 @@
                            (let [val2 (case op
                                         :add val
                                         :replace val
-                                        :append (str val (get-in s1 [:changes sq-old :val]))
-                                        :prepend (str (get-in s1 [:changes sq-old :val]) val)
+                                        :append (str (get-in s1 [:changes sq-old :val])
+                                                     val)
+                                        :prepend (str val
+                                                      (get-in s1 [:changes sq-old :val]))
                                         val)]
                              (-> s1
                                  (dissoc-in [:changes sq-old])
@@ -112,6 +114,8 @@
           (fn [c] {:rq #(storage-set % storage (:opaque c) (:key c) (:val c) :replace)})]
    "append" [["key" "val"]
           (fn [c] {:rq #(storage-set % storage (:opaque c) (:key c) (:val c) :append)})]
+   "prepend" [["key" "val"]
+          (fn [c] {:rq #(storage-set % storage (:opaque c) (:key c) (:val c) :prepend)})]
    "scan" [["from" "to"]
            (fn [c] {:rq #(storage-scan % storage (:opaque c) (:from c) (:to c))})]
    "changes" [["from" "to"]

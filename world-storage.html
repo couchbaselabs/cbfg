@@ -99,6 +99,19 @@
           <button id="append">append</button>
         </div>
         <div class="cmd">
+          <label>prepend</label>
+          fence:
+          <select id="prepend-fence">
+            <option value="0" selected>false</option>
+            <option value="1">true</option>
+          </select>
+          <div class="kv">
+            key: <input id="prepend-key" type="text" value="a"></input>
+            val: <input id="prepend-val" type="text" value="ah"></input>
+          </div>
+          <button id="prepend">prepend</button>
+        </div>
+        <div class="cmd">
           <label>scan</label>
           fence:
           <select id="scan-fence">
