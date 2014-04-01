@@ -1,7 +1,11 @@
 cbfg
 ====
 
-a vague thing discussed over lunch at five guys
+An experiment / prototype in distributed systems modeling,
+simulation and (perhaps one day) code-gen.
+
+Also, it was initially discussed over lunch at (f)ive (g)uys,
+so "c.b.f.g.".
 
 # build
 
