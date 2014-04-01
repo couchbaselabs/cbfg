@@ -17,7 +17,8 @@
              change (get (:changes s) sq)]
          (if (and change (not (:deleted change)))
            {:opaque opaque :status :ok
-            :key key :sq sq :cas (:cas change) :val (:val change)}
+            :key key :sq sq :cas (:cas change)
+            :val (:val change)}
            {:opaque opaque :status :not-found
             :key key}))))
 
@@ -31,8 +32,8 @@
                                   (dissoc-in [:changes (get-in % [:keys key])])
                                   (assoc-in [:keys key] (:next-sq %))
                                   (assoc-in [:changes (:next-sq %)]
-                                            {:key key :sq (:next-sq %)
-                                             :cas cas :val val})
+                                            {:key key :sq (:next-sq %) :cas cas
+                                             :val val})
                                   (update-in [:next-sq] inc)))]
          {:opaque opaque :status :ok
           :key key :sq (dec (:next-sq storage2)) :cas cas})))
@@ -57,11 +58,13 @@
     (ago storage-scan actx
          (let [s @storage
                changes (:changes s)]
-           (doseq [[key sq] (subseq s >= from < to)]
+           (doseq [[key sq] (subseq (:keys s) >= from < to)]
              (when-let [change (get changes sq)]
                (when (not (:deleted change))
                  (aput storage-scan out
-                       (merge change {:opaque opaque :status :ok})))))
+                       {:opaque opaque :status :ok
+                        :key key :sq sq :cas (:cas change)
+                        :val (:val change)}))))
            (aput storage-scan out {:opaque opaque :status :ok})
            (aclose storage-scan out)))
     out))
