@@ -213,6 +213,42 @@
                             nil)
                          (e n (atake test-scan c)
                             {:status :ok, :opaque m}
+                            (atake test-scan c))))
+                  (let [c (store/store-set test-scan s @n "c" 0 "C" :set)]
+                    (e n (atake test-scan c)
+                       {:status :ok, :key "c", :opaque @n, :sq 2}
+                       (atake test-scan c)))
+                  (let [c (store/store-scan test-scan s @n "a" "z")
+                        m @n]
+                    (and (e n (atake test-scan c)
+                            {:status :part, :opaque m, :key "a", :sq 1, :val "A"}
+                            nil)
+                         (e n (atake test-scan c)
+                            {:status :part, :opaque m, :key "c", :sq 2, :val "C"}
+                            nil)
+                         (e n (atake test-scan c)
+                            {:status :ok, :opaque m}
+                            (atake test-scan c))))
+                  (let [c (store/store-scan test-scan s @n "a" "c")
+                        m @n]
+                    (and (e n (atake test-scan c)
+                            {:status :part, :opaque m, :key "a", :sq 1, :val "A"}
+                            nil)
+                         (e n (atake test-scan c)
+                            {:status :ok, :opaque m}
+                            (atake test-scan c))))
+                  (let [c (store/store-scan test-scan s @n "b" "c")
+                        m @n]
+                    (and (e n (atake test-scan c)
+                            {:status :ok, :opaque m}
+                            (atake test-scan c))))
+                  (let [c (store/store-scan test-scan s @n "b" "z")
+                        m @n]
+                    (and (e n (atake test-scan c)
+                            {:status :part, :opaque m, :key "c", :sq 2, :val "C"}
+                            nil)
+                         (e n (atake test-scan c)
+                            {:status :ok, :opaque m}
                             (atake test-scan c)))))
            "pass"
            (str "FAIL: on test-scan #" @n)))))
