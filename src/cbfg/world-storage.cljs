@@ -22,9 +22,9 @@
            {:opaque opaque :status :not-found
             :key key}))))
 
-(defn storage-set [actx storage opaque key val op]
+(defn storage-set [actx storage opaque key cas-old val op]
   (ago storage-set actx
-       (let [cas (gen-cas)
+       (let [cas-new (gen-cas)
              res (atom nil)]
          (swap! storage
                 #(let [s1 (assoc % :next-sq (max (:next-sq %)
@@ -35,26 +35,37 @@
                      (do (reset! res {:opaque opaque :status :exists
                                       :key key})
                          s1)
-                     (if (and (= op :replace) (not sq-old))
-                       (do (reset! res {:opaque opaque :status :not-found
-                                        :key key})
-                           s1)
-                       (do (reset! res {:opaque opaque :status :ok
-                                        :key key :sq sq-new :cas cas})
-                           (let [val2 (case op
-                                        :add val
-                                        :replace val
-                                        :append (str (get-in s1 [:changes sq-old :val])
-                                                     val)
-                                        :prepend (str val
-                                                      (get-in s1 [:changes sq-old :val]))
-                                        val)]
-                             (-> s1
-                                 (dissoc-in [:changes sq-old])
-                                 (assoc-in [:keys key] sq-new)
-                                 (assoc-in [:changes sq-new]
-                                           {:key key :sq sq-new :cas cas :val val2})
-                                 (update-in [:next-sq] inc))))))))
+                     (let [cas-check (and cas-old (not (zero? cas-old)))
+                           prev-change (when (or cas-check
+                                                 (= op :append)
+                                                 (= op :prepend))
+                                         (get-in s1 [:changes sq-old]))]
+                       (if (and cas-check (not= cas-old (:cas prev-change)))
+                         (do (reset! res {:opaque opaque :status :wrong-cas
+                                          :key key})
+                             s1)
+                         (if (and (or (= op :replace)
+                                      (= op :append)
+                                      (= op :prepend))
+                                  (not sq-old))
+                           (do (reset! res {:opaque opaque :status :not-found
+                                            :key key})
+                               s1)
+                           (do (reset! res {:opaque opaque :status :ok
+                                            :key key :sq sq-new :cas cas-new})
+                               (let [val-new (case op
+                                               :add val
+                                               :replace val
+                                               :append (str (:val prev-change) val)
+                                               :prepend (str val (:val prev-change))
+                                               val)]
+                                 (-> s1
+                                     (dissoc-in [:changes sq-old])
+                                     (assoc-in [:keys key] sq-new)
+                                     (assoc-in [:changes sq-new]
+                                               {:key key :sq sq-new :cas cas-new
+                                                :val val-new})
+                                     (update-in [:next-sq] inc))))))))))
          @res)))
 
 (defn storage-del [actx storage opaque key]
@@ -105,17 +116,17 @@
   {"get" [["key"]
           (fn [c] {:rq #(storage-get % storage (:opaque c) (:key c))})]
    "set" [["key" "val"]
-          (fn [c] {:rq #(storage-set % storage (:opaque c) (:key c) (:val c) :set)})]
+          (fn [c] {:rq #(storage-set % storage (:opaque c) (:key c) (:cas c) (:val c) :set)})]
    "del" [["key"]
           (fn [c] {:rq #(storage-del % storage (:opaque c) (:key c))})]
    "add" [["key" "val"]
-          (fn [c] {:rq #(storage-set % storage (:opaque c) (:key c) (:val c) :add)})]
+          (fn [c] {:rq #(storage-set % storage (:opaque c) (:key c) (:cas c) (:val c) :add)})]
    "replace" [["key" "val"]
-          (fn [c] {:rq #(storage-set % storage (:opaque c) (:key c) (:val c) :replace)})]
+          (fn [c] {:rq #(storage-set % storage (:opaque c) (:key c) (:cas c) (:val c) :replace)})]
    "append" [["key" "val"]
-          (fn [c] {:rq #(storage-set % storage (:opaque c) (:key c) (:val c) :append)})]
+          (fn [c] {:rq #(storage-set % storage (:opaque c) (:key c) (:cas c) (:val c) :append)})]
    "prepend" [["key" "val"]
-          (fn [c] {:rq #(storage-set % storage (:opaque c) (:key c) (:val c) :prepend)})]
+          (fn [c] {:rq #(storage-set % storage (:opaque c) (:key c) (:cas c) (:val c) :prepend)})]
    "scan" [["from" "to"]
            (fn [c] {:rq #(storage-scan % storage (:opaque c) (:from c) (:to c))})]
    "changes" [["from" "to"]
