@@ -16,7 +16,8 @@
     (if (and change (not (:deletion change)))
       {:opaque opaque :status :ok
        :key key :sq sq :cas (:cas change) :val (:val change)}
-      {:opaque opaque :status :not-found})))
+      {:opaque opaque :status :not-found
+       :key key})))
 
 (defn storage-set [storage opaque key val]
   (let [cas (gen-cas)
@@ -51,10 +52,9 @@
                              (assoc (storage-set storage (:opaque c) (:key c) (:val c))
                                :op "set"))})]
    "del" [["key"]
-          (fn [c] {:rq (fn [actx]
-                         (ago storage-cmd-del actx
-                              {:opaque (:opaque c) :status :ok
-                               :key (:key c)}))})]
+          (fn [c] {:rq #(ago storage-cmd-del %
+                             (assoc (storage-del storage (:opaque c) (:key c))
+                               :op "del"))})]
    "scan" [["from" "to"]
            (fn [c] {:rq (fn [actx]
                           (ago storage-cmd-scan actx
