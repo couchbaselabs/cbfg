@@ -3,7 +3,6 @@
   (:require [cljs.core.async :refer [chan <! merge map< sliding-buffer]]
             [goog.dom :as gdom]
             [cbfg.fence :refer [make-fenced-pump]]
-            [cbfg.fence-test]
             [cbfg.store :as store]
             [cbfg.store-test]
             [cbfg.vis :refer [vis-init listen-el get-el-value log-el]]))
@@ -36,7 +35,7 @@
                                                  (js/parseInt (:to c)))})]
    "noop" [[] (fn [c] {:rq #(ago store-cmd-noop %
                                  {:opaque (:opaque c) :status :ok})})]
-   "test" [[] (fn [c] {:rq #(cbfg.fence-test/test % (:opaque c))})]})
+   "test" [[] (fn [c] {:rq #(cbfg.store-test/test % (:opaque c))})]})
 
 (def store-max-inflight (atom 10))
 
@@ -73,4 +72,5 @@
 (let [last-id (atom 0)
       gen-id #(swap! last-id inc)]
   (ago test-actx [{:gen-id gen-id :event-ch (chan (sliding-buffer 1))}]
-       (println "store-test:" (<! (cbfg.store-test/test test-actx 0)))))
+       (println "store-test:"
+                (atake test-actx (cbfg.store-test/test test-actx 0)))))

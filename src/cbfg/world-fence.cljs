@@ -1,7 +1,7 @@
 (ns cbfg.world-fence
   (:require-macros [cbfg.ago :refer [ago ago-loop aclose achan achan-buf
                                      aalts aput atake atimeout]])
-  (:require [cljs.core.async :refer [chan <! merge map< sliding-buffer]]
+  (:require [cljs.core.async :refer [chan merge map< sliding-buffer]]
             [goog.dom :as gdom]
             [cbfg.vis :refer [vis-init listen-el get-el-value
                               get-el-innerHTML set-el-innerHTML]]
@@ -109,4 +109,5 @@
 (let [last-id (atom 0)
       gen-id #(swap! last-id inc)]
   (ago test-actx [{:gen-id gen-id :event-ch (chan (sliding-buffer 1))}]
-       (println "fence-test:" (<! (cbfg.fence-test/test test-actx 0)))))
+       (println "fence-test:"
+                (atake test-actx (cbfg.fence-test/test test-actx 0)))))
