@@ -249,7 +249,35 @@
                             nil)
                          (e n (atake test-scan c)
                             {:status :ok, :opaque m}
-                            (atake test-scan c)))))
+                            (atake test-scan c))))
+                  (let [c (store/store-del test-scan s @n "c" 0)]
+                    (e n (atake test-scan c)
+                       {:status :ok, :key "c", :opaque @n, :sq 3}
+                       (atake test-scan c)))
+                  (let [c (store/store-scan test-scan s @n "b" "z")]
+                    (e n (atake test-scan c)
+                       {:status :ok, :opaque @n}
+                       (atake test-scan c)))
+                  (let [c (store/store-scan test-scan s @n "a" "a")]
+                    (e n (atake test-scan c)
+                       {:status :ok, :opaque @n}
+                       (atake test-scan c)))
+                  (let [c (store/store-scan test-scan s @n "a" "z")
+                        m @n]
+                    (and (e n (atake test-scan c)
+                            {:status :part, :opaque m, :key "a", :sq 1, :val "A"}
+                            nil)
+                         (e n (atake test-scan c)
+                            {:status :ok, :opaque m}
+                            (atake test-scan c))))
+                  (let [c (store/store-del test-scan s @n "a" 0)]
+                    (e n (atake test-scan c)
+                       {:status :ok, :key "a", :opaque @n, :sq 4}
+                       (atake test-scan c)))
+                  (let [c (store/store-scan test-scan s @n "a" "z")]
+                    (e n (atake test-scan c)
+                       {:status :ok, :opaque @n}
+                       (atake test-scan c))))
            "pass"
            (str "FAIL: on test-scan #" @n)))))
 
