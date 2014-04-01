@@ -6,36 +6,45 @@
                               get-el-innerHTML set-el-innerHTML]]
             [cbfg.fence :refer [make-fenced-pump]]))
 
-(defn make-storage-cmd-handlers [kvs changes last-seq max-deleted-seq]
+(defn storage-get [storage opaque-id key]
+  (let [s @storage
+        sq (get (:kvs s) key)
+        change (when sq (get (:changes s) sq))]
+    (if (and change (not (:deletion change)))
+      [:ok (:val change)]
+      [:not-found nil])))
+
+(defn make-storage-cmd-handlers [storage]
   {"get" [["key"]
           (fn [c] {:rq (fn [actx]
-                         (ago storage-get actx
-                              {:opaque-id (:opaque-id c) :status :ok
-                               :key (:key c) :val "yay"}))})]
+                         (ago storage-cmd-get actx
+                              (let [[status val] (storage-get storage (:opaque-id c) (:key c))]
+                                {:opaque-id (:opaque-id c) :status status
+                                 :key (:key c) :val val})))})]
    "set" [["key" "val"]
           (fn [c] {:rq (fn [actx]
-                         (ago storage-get actx
+                         (ago storage-cmd-set actx
                               {:opaque-id (:opaque-id c) :status :ok
                                :key (:key c)}))})]
    "del" [["key"]
           (fn [c] {:rq (fn [actx]
-                         (ago storage-get actx
+                         (ago storage-cmd-del actx
                               {:opaque-id (:opaque-id c) :status :ok
                                :key (:key c)}))})]
    "scan" [["from" "to"]
            (fn [c] {:rq (fn [actx]
-                          (ago storage-get actx
+                          (ago storage-cmd-scan actx
                                {:opaque-id (:opaque-id c) :status :ok
                                 :from (:from c) :to (:to c)}))})]
    "changes" [["since"]
               (fn [c] {:rq
                        (fn [actx]
-                         (ago storage-get actx
+                         (ago storage-cmd-changes actx
                               {:opaque-id (:opaque-id c) :status :ok
                                :since (:since c)}))})]
    "noop" [[] (fn [c] {:rq
                        (fn [actx]
-                         (ago storage-get actx
+                         (ago storage-cmd-noop actx
                               {:opaque-id (:opaque-id c) :status :ok}))})]
    "test" [[] (fn [c] {:rq #(cbfg.fence/test % (:opaque-id c))})]})
 
@@ -47,12 +56,8 @@
                          (get-el-innerHTML (str el-prefix "-" log-kind "-log")))))
 
 (defn world-vis-init [el-prefix]
-  (let [kvs (atom {})
-        changes (atom {})
-        last-seq (atom 0)
-        max-deleted-seq (atom 0)
-        storage-cmd-handlers (make-storage-cmd-handlers kvs changes
-                                                        last-seq max-deleted-seq)
+  (let [storage (atom {:kvs {} :changes {} :last-sq 0 :max-deleted-sq 0})
+        storage-cmd-handlers (make-storage-cmd-handlers storage)
         cmd-ch (map< (fn [ev] {:op (.-id (.-target ev))})
                      (merge (map #(listen-el (gdom/getElement %) "click")
                                  (keys storage-cmd-handlers))))]
@@ -67,9 +72,8 @@
                                   cmd2 (-> cmd
                                            (assoc-in [:opaque-id] num-ins)
                                            (assoc-in [:fence] op-fence))
-                                  cmd3 (reduce #(assoc %1
-                                                  (symbol (str ":" %2))
-                                                  (get-el-value (str op "-" %2)))
+                                  cmd3 (reduce #(assoc %1 (keyword %2)
+                                                       (get-el-value (str op "-" %2)))
                                                cmd2 params)]
                               (el-log el-prefix "input" (str num-ins ": " cmd3))
                               (aput a-input in-ch (handler cmd3))
