@@ -62,11 +62,23 @@
              (when-let [change (get changes sq)]
                (when (not (:deleted change))
                  (aput storage-scan out
-                       {:opaque opaque :status :ok
+                       {:opaque opaque :status :part
                         :key key :sq sq :cas (:cas change)
-                        :val (:val change)}))))
-           (aput storage-scan out {:opaque opaque :status :ok})
-           (aclose storage-scan out)))
+                        :val (:val change)})))))
+         (aput storage-scan out {:opaque opaque :status :ok})
+         (aclose storage-scan out))
+    out))
+
+(defn storage-changes [actx storage opaque from to]
+  (let [out (achan actx)]
+    (ago storage-changes actx
+         (let [s @storage]
+             (doseq [[sq change] (subseq (into (sorted-map) (:changes s)) >= from < to)]
+               (aput storage-changes out (-> change
+                                             (assoc :opaque opaque)
+                                             (assoc :status :part)))))
+         (aput storage-changes out {:opaque opaque :status :ok})
+         (aclose storage-changes out))
     out))
 
 (defn make-storage-cmd-handlers [storage]
@@ -79,11 +91,9 @@
    "scan" [["from" "to"]
            (fn [c] {:rq #(storage-scan % storage (:opaque c) (:from c) (:to c))})]
    "changes" [["from" "to"]
-              (fn [c] {:rq
-                       (fn [actx]
-                         (ago storage-cmd-changes actx
-                              {:opaque (:opaque c) :status :ok
-                                :from (:from c) :to (:to c)}))})]
+              (fn [c] {:rq #(storage-changes % storage (:opaque c)
+                                             (js/parseInt (:from c))
+                                             (js/parseInt (:to c)))})]
    "noop" [[] (fn [c] {:rq
                        (fn [actx]
                          (ago storage-cmd-noop actx
