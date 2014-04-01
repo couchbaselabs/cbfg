@@ -56,9 +56,12 @@
   (set-el-innerHTML "client"
                     (apply str
                            (flatten ["<table>"
-                                     "<tr><th>id</th><th>fence</th><th>op</th><th>args</th><th>responses</th></tr>"
+                                     "<tr><th>id</th><th>fence</th><th>op</th>"
+                                     "    <th>args</th><th>responses</th></tr>"
                                      (map (fn [[opaque-id [request responses]]]
-                                            ["<tr class='" (when (some #(:result (second %)) responses) "complete") "'>"
+                                            ["<tr class='"
+                                             (when (some #(:result (second %)) responses)
+                                               "complete") "'>"
                                              " <td>" opaque-id "</td>"
                                              " <td>" (:fence request) "</td>"
                                              " <td>" (:op request) "</td>"
@@ -71,7 +74,8 @@
                                                   (reverse responses))
                                              "</ul></td>"
                                              "</tr>"])
-                                          (sort #(compare (first %1) (first %2)) client-cmds))
+                                          (sort #(compare (first %1) (first %2))
+                                                client-cmds))
                                      "</table>"]))))
 
 (defn world-vis-init [el-prefix]
