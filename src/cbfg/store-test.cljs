@@ -114,9 +114,57 @@
                     (e n (atake test c)
                        {:status :wrong-cas, :key "a", :opaque @n}
                        (atake test c)))
-                  (let [c (store/store-get test s @n "a")]
-                    (e n (atake test c)
-                       {:status :ok, :key "a", :opaque @n, :sq 5, :val "prefixAAAsuffix"}
-                       (atake test c))))
+                  (let [gc (store/store-get test s @n "a")
+                        gv (atake test gc)
+                        _ (atake test gc)
+                        sc (store/store-set test s @n "a" (:cas gv) "AAAA" :set)
+                        sv (atake test sc)]
+                    (and (e n sv
+                            {:status :ok, :key "a", :opaque @n, :sq 6, :cas (:cas sv)}
+                            (atake test sc))
+                         (let [gc2 (store/store-get test s @n "a")]
+                           (e n (atake test gc2)
+                              {:status :ok, :key "a", :opaque @n, :sq 6, :cas (:cas sv)
+                               :val "AAAA"}
+                              (atake test gc2)))))
+                  (let [gc (store/store-get test s @n "a")
+                        gv (atake test gc)
+                        _ (atake test gc)
+                        sc (store/store-set test s @n "a" (:cas gv) "AAAAA" :replace)
+                        sv (atake test sc)]
+                    (and (e n sv
+                            {:status :ok, :key "a", :opaque @n, :sq 7, :cas (:cas sv)}
+                            (atake test sc))
+                         (let [gc2 (store/store-get test s @n "a")]
+                           (e n (atake test gc2)
+                              {:status :ok, :key "a", :opaque @n, :sq 7, :cas (:cas sv)
+                               :val "AAAAA"}
+                              (atake test gc2)))))
+                  (let [gc (store/store-get test s @n "a")
+                        gv (atake test gc)
+                        _ (atake test gc)
+                        sc (store/store-set test s @n "a" (:cas gv) "suffix" :append)
+                        sv (atake test sc)]
+                    (and (e n sv
+                            {:status :ok, :key "a", :opaque @n, :sq 8, :cas (:cas sv)}
+                            (atake test sc))
+                         (let [gc2 (store/store-get test s @n "a")]
+                           (e n (atake test gc2)
+                              {:status :ok, :key "a", :opaque @n, :sq 8, :cas (:cas sv)
+                               :val "AAAAAsuffix"}
+                              (atake test gc2)))))
+                  (let [gc (store/store-get test s @n "a")
+                        gv (atake test gc)
+                        _ (atake test gc)
+                        sc (store/store-set test s @n "a" (:cas gv) "prefix" :prepend)
+                        sv (atake test sc)]
+                    (and (e n sv
+                            {:status :ok, :key "a", :opaque @n, :sq 9, :cas (:cas sv)}
+                            (atake test sc))
+                         (let [gc2 (store/store-get test s @n "a")]
+                           (e n (atake test gc2)
+                              {:status :ok, :key "a", :opaque @n, :sq 9, :cas (:cas sv)
+                               :val "prefixAAAAAsuffix"}
+                              (atake test gc2))))))
            "pass"
            (str "FAIL: on test #" @n)))))
