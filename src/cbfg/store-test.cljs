@@ -165,6 +165,18 @@
                            (e n (atake test gc2)
                               {:status :ok, :key "a", :opaque @n, :sq 9, :cas (:cas sv)
                                :val "prefixAAAAAsuffix"}
+                              (atake test gc2)))))
+                  (let [gc (store/store-get test s @n "a")
+                        gv (atake test gc)
+                        _ (atake test gc)
+                        dc (store/store-del test s @n "a" (:cas gv))
+                        dv (atake test dc)]
+                    (and (e n dv
+                            {:status :ok, :key "a", :opaque @n, :sq 10}
+                            (atake test dc))
+                         (let [gc2 (store/store-get test s @n "a")]
+                           (e n (atake test gc2)
+                              {:status :not-found, :key "a", :opaque @n}
                               (atake test gc2))))))
            "pass"
            (str "FAIL: on test #" @n)))))
