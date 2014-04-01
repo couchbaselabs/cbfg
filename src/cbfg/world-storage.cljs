@@ -25,18 +25,18 @@
 (defn storage-set [actx storage opaque key val]
   (ago storage-set actx
        (let [cas (gen-cas)
-             storage2 (swap! storage
-                             #(-> %
-                                  (assoc :next-sq (max (:next-sq %)
-                                                       (inc (:max-deleted-sq %))))
-                                  (dissoc-in [:changes (get-in % [:keys key])])
-                                  (assoc-in [:keys key] (:next-sq %))
-                                  (assoc-in [:changes (:next-sq %)]
-                                            {:key key :sq (:next-sq %) :cas cas
-                                             :val val})
-                                  (update-in [:next-sq] inc)))]
+             s2 (swap! storage
+                       #(let [s1 (assoc % :next-sq (max (:next-sq %)
+                                                        (inc (:max-deleted-sq %))))
+                              sq (:next-sq s1)]
+                          (-> s1
+                              (dissoc-in [:changes (get-in s1 [:keys key])])
+                              (assoc-in [:keys key] sq)
+                              (assoc-in [:changes sq]
+                                        {:key key :sq sq :cas cas :val val})
+                              (update-in [:next-sq] inc))))]
          {:opaque opaque :status :ok
-          :key key :sq (dec (:next-sq storage2)) :cas cas})))
+          :key key :sq (dec (:next-sq s2)) :cas cas})))
 
 (defn storage-del [actx storage opaque key]
   (ago storage-del actx
@@ -112,7 +112,7 @@
                        :changes (sorted-map) ; sq -> {:key k, :sq s,
                                              ;        <:cas c, :val v> | :deleted bool}
                        :next-sq 1
-                       :max-deleted-sq 1})
+                       :max-deleted-sq 0})
         storage-cmd-handlers (make-storage-cmd-handlers storage)
         cmd-ch (map< (fn [ev] {:op (.-id (.-target ev))})
                      (merge (map #(listen-el (gdom/getElement %) "click")
