@@ -1,5 +1,6 @@
 (ns cbfg.world-storage
-  (:require-macros [cbfg.ago :refer [ago ago-loop achan-buf aput atake atimeout]])
+  (:require-macros [cbfg.ago :refer [ago ago-loop achan achan-buf
+                                     aclose aput atake atimeout]])
   (:require [cljs.core.async :refer [<! merge map<]]
             [goog.dom :as gdom]
             [cbfg.vis :refer [dissoc-in listen-el get-el-value
@@ -9,61 +10,71 @@
 
 (defn gen-cas [] (rand-int 0x7fffffff))
 
-(defn storage-get [storage opaque key]
-  (let [s @storage
-        sq (get (:keys s) key)
-        change (get (:changes s) sq)]
-    (if (and change (not (:deleted change)))
-      {:opaque opaque :status :ok
-       :key key :sq sq :cas (:cas change) :val (:val change)}
-      {:opaque opaque :status :not-found
-       :key key})))
+(defn storage-get [actx storage opaque key]
+  (ago storage-get actx
+       (let [s @storage
+             sq (get (:keys s) key)
+             change (get (:changes s) sq)]
+         (if (and change (not (:deleted change)))
+           {:opaque opaque :status :ok
+            :key key :sq sq :cas (:cas change) :val (:val change)}
+           {:opaque opaque :status :not-found
+            :key key}))))
 
-(defn storage-set [storage opaque key val]
-  (let [cas (gen-cas)
-        storage2 (swap! storage
-                        #(-> %
-                             (assoc :next-sq (max (:next-sq %)
-                                                  (inc (:max-deleted-sq %))))
-                             (dissoc-in [:changes (get-in % [:keys key])])
-                             (assoc-in [:keys key] (:next-sq %))
-                             (assoc-in [:changes (:next-sq %)]
-                                       {:key key :sq (:next-sq %) :cas cas :val val})
-                             (update-in [:next-sq] inc)))]
-    {:opaque opaque :status :ok
-     :key key :sq (dec (:next-sq storage2)) :cas cas}))
+(defn storage-set [actx storage opaque key val]
+  (ago storage-set actx
+       (let [cas (gen-cas)
+             storage2 (swap! storage
+                             #(-> %
+                                  (assoc :next-sq (max (:next-sq %)
+                                                       (inc (:max-deleted-sq %))))
+                                  (dissoc-in [:changes (get-in % [:keys key])])
+                                  (assoc-in [:keys key] (:next-sq %))
+                                  (assoc-in [:changes (:next-sq %)]
+                                            {:key key :sq (:next-sq %)
+                                             :cas cas :val val})
+                                  (update-in [:next-sq] inc)))]
+         {:opaque opaque :status :ok
+          :key key :sq (dec (:next-sq storage2)) :cas cas})))
 
-(defn storage-del [storage opaque key]
-  (let [storage2 (swap! storage
-                        #(-> %
-                             (assoc :max-deleted-sq (max (get-in % [:keys key])
-                                                         (:max-deleted-sq %)))
-                             (dissoc-in [:changes (get-in % [:keys key])])
-                             (dissoc-in [:keys key])
-                             (assoc-in [:changes (:next-sq %)]
-                                       {:key key :sq (:next-sq %) :deleted true})
-                             (update-in [:next-sq] inc)))]
-    {:opaque opaque :status :ok
-     :key key :sq (dec (:next-sq storage2))}))
+(defn storage-del [actx storage opaque key]
+  (ago storage-del actx
+       (let [storage2 (swap! storage
+                             #(-> %
+                                  (assoc :max-deleted-sq (max (get-in % [:keys key])
+                                                              (:max-deleted-sq %)))
+                                  (dissoc-in [:changes (get-in % [:keys key])])
+                                  (dissoc-in [:keys key])
+                                  (assoc-in [:changes (:next-sq %)]
+                                            {:key key :sq (:next-sq %)
+                                             :deleted true})
+                                  (update-in [:next-sq] inc)))]
+         {:opaque opaque :status :ok
+          :key key :sq (dec (:next-sq storage2))})))
+
+(defn storage-scan [actx storage opaque from to]
+  (let [out (achan actx)]
+    (ago storage-scan actx
+         (let [s @storage
+               changes (:changes s)]
+           (doseq [[key sq] (subseq s >= from < to)]
+             (when-let [change (get changes sq)]
+               (when (not (:deleted change))
+                 (aput storage-scan out
+                       (merge change {:opaque opaque :status :ok})))))
+           (aput storage-scan out {:opaque opaque :status :ok})
+           (aclose storage-scan out)))
+    out))
 
 (defn make-storage-cmd-handlers [storage]
   {"get" [["key"]
-          (fn [c] {:rq #(ago storage-cmd-get %
-                             (assoc (storage-get storage (:opaque c) (:key c))
-                               :op "get"))})]
+          (fn [c] {:rq #(storage-get % storage (:opaque c) (:key c))})]
    "set" [["key" "val"]
-          (fn [c] {:rq #(ago storage-cmd-set %
-                             (assoc (storage-set storage (:opaque c) (:key c) (:val c))
-                               :op "set"))})]
+          (fn [c] {:rq #(storage-set % storage (:opaque c) (:key c) (:val c))})]
    "del" [["key"]
-          (fn [c] {:rq #(ago storage-cmd-del %
-                             (assoc (storage-del storage (:opaque c) (:key c))
-                               :op "del"))})]
+          (fn [c] {:rq #(storage-del % storage (:opaque c) (:key c))})]
    "scan" [["from" "to"]
-           (fn [c] {:rq (fn [actx]
-                          (ago storage-cmd-scan actx
-                               {:opaque (:opaque c) :status :ok
-                                :from (:from c) :to (:to c)}))})]
+           (fn [c] {:rq #(storage-scan % storage (:opaque c) (:from c) (:to c))})]
    "changes" [["from" "to"]
               (fn [c] {:rq
                        (fn [actx]
