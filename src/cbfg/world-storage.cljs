@@ -12,8 +12,8 @@
         sq (get (:keys s) key)
         change (get (:changes s) sq)]
     (if (and change (not (:deletion change)))
-      [:ok {:val (:val change) :sq sq}]
-      [:not-found {}])))
+      {:opaque-id opaque-id :status :ok :key key :val (:val change) :sq sq}
+      {:opaque-id opaque-id :status :not-found})))
 
 (defn storage-set [storage opaque-id key val]
   (let [storage2 (swap! storage
@@ -23,21 +23,15 @@
                              (assoc-in [:changes (:next-sq %)]
                                        {:key key :val val :sq (:next-sq %)})
                              (update-in [:next-sq] inc)))]
-    [:ok {:sq (dec (:next-sq storage2))}]))
+    {:opaque-id opaque-id :status :ok :key key :sq (dec (:next-sq storage2))}))
 
 (defn make-storage-cmd-handlers [storage]
   {"get" [["key"]
-          (fn [c] {:rq (fn [actx]
-                         (ago storage-cmd-get actx
-                              (let [[status ext] (storage-get storage (:opaque-id c) (:key c))]
-                                {:opaque-id (:opaque-id c) :status status
-                                 :key (:key c) :val (:val ext) :sq (:sq ext)})))})]
+          (fn [c] {:rq #(ago storage-cmd-get %
+                             (storage-get storage (:opaque-id c) (:key c)))})]
    "set" [["key" "val"]
-          (fn [c] {:rq (fn [actx]
-                         (ago storage-cmd-set actx
-                              (let [[status ext] (storage-set storage (:opaque-id c) (:key c) (:val c))]
-                                {:opaque-id (:opaque-id c) :status :ok
-                                 :key (:key c) :sq (:sq ext)})))})]
+          (fn [c] {:rq #(ago storage-cmd-set %
+                             (storage-set storage (:opaque-id c) (:key c) (:val c)))})]
    "del" [["key"]
           (fn [c] {:rq (fn [actx]
                          (ago storage-cmd-del actx
