@@ -41,6 +41,11 @@
 
 (def storage-max-inflight (atom 10))
 
+(defn el-log [el-prefix log-kind msg]
+  (set-el-innerHTML (str el-prefix "-" log-kind "-log")
+                    (str msg "\n"
+                         (get-el-innerHTML (str el-prefix "-" log-kind "-log")))))
+
 (defn world-vis-init [el-prefix]
   (let [kvs (atom {})
         changes (atom {})
@@ -52,9 +57,7 @@
                      (merge (map #(listen-el (gdom/getElement %) "click")
                                  (keys storage-cmd-handlers))))]
     (vis-init (fn [world]
-                (let [input-log (str el-prefix "-input-log")
-                      output-log (str el-prefix "-output-log")
-                      in-ch (achan-buf world 100)
+                (let [in-ch (achan-buf world 100)
                       out-ch (achan-buf world 0)]
                   (ago-loop a-input world [num-ins 0]
                             (let [cmd (<! cmd-ch)
@@ -68,16 +71,12 @@
                                                   (symbol (str ":" %2))
                                                   (get-el-value (str op "-" %2)))
                                                cmd2 params)]
-                              (set-el-innerHTML input-log
-                                                (str num-ins ": " cmd3 "\n"
-                                                     (get-el-innerHTML input-log)))
+                              (el-log el-prefix "input" (str num-ins ": " cmd3))
                               (aput a-input in-ch (handler cmd3))
                               (recur (inc num-ins))))
                   (ago-loop z-output world [num-outs 0]
                             (let [result (atake z-output out-ch)]
-                              (set-el-innerHTML output-log
-                                                (str num-outs ": " result "\n"
-                                                     (get-el-innerHTML output-log)))
+                              (el-log el-prefix "output" (str num-outs ": " result))
                               (recur (inc num-outs))))
                   (make-fenced-pump world in-ch out-ch @storage-max-inflight)))
               el-prefix nil)))
