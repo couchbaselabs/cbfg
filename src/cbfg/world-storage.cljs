@@ -40,18 +40,18 @@
 
 (defn storage-del [actx storage opaque key]
   (ago storage-del actx
-       (let [storage2 (swap! storage
-                             #(-> %
-                                  (assoc :max-deleted-sq (max (get-in % [:keys key])
-                                                              (:max-deleted-sq %)))
-                                  (dissoc-in [:changes (get-in % [:keys key])])
-                                  (dissoc-in [:keys key])
-                                  (assoc-in [:changes (:next-sq %)]
-                                            {:key key :sq (:next-sq %)
-                                             :deleted true})
-                                  (update-in [:next-sq] inc)))]
+       (let [s2 (swap! storage
+                       #(-> %
+                            (assoc :max-deleted-sq (max (get-in % [:keys key])
+                                                        (:max-deleted-sq %)))
+                            (dissoc-in [:changes (get-in % [:keys key])])
+                            (dissoc-in [:keys key])
+                            (assoc-in [:changes (:next-sq %)]
+                                      {:key key :sq (:next-sq %)
+                                       :deleted true})
+                            (update-in [:next-sq] inc)))]
          {:opaque opaque :status :ok
-          :key key :sq (dec (:next-sq storage2))})))
+          :key key :sq (dec (:next-sq s2))})))
 
 (defn storage-scan [actx storage opaque from to]
   (let [out (achan actx)]
