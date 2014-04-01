@@ -4,6 +4,10 @@
 
 (defn gen-cas [] (rand-int 0x7fffffff))
 
+(defn return [result atom atom-val]
+  (reset! atom atom-val)
+  result)
+
 (defn make-store []
   (atom {:keys (sorted-map)    ; key -> sq
          :changes (sorted-map) ; sq -> {:key k, :sq s, <:cas c, :val v> | :deleted true}
@@ -21,10 +25,6 @@
             :val (:val change)}
            {:opaque opaque :status :not-found
             :key key}))))
-
-(defn return [r atom atom-val]
-  (reset! atom atom-val)
-  r)
 
 (defn store-set [actx store opaque key old-cas val op]
   (ago store-set actx
