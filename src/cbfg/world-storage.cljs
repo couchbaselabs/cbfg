@@ -30,13 +30,26 @@
     {:opaque-id opaque-id :status :ok
      :key key :sq (dec (:next-sq storage2)) :cas cas}))
 
+(defn storage-del [storage opaque-id key]
+  (let [storage2 (swap! storage
+                        #(-> %
+                             (dissoc-in [:changes (get-in % [:keys key :sq])])
+                             (dissoc-in [:keys key])
+                             (assoc-in [:changes (:next-sq %)]
+                                       {:key key :sq (:next-sq %) :deletion true})
+                             (update-in [:next-sq] inc)))]
+    {:opaque-id opaque-id :status :ok
+     :key key :sq (dec (:next-sq storage2))}))
+
 (defn make-storage-cmd-handlers [storage]
   {"get" [["key"]
           (fn [c] {:rq #(ago storage-cmd-get %
-                             (storage-get storage (:opaque-id c) (:key c)))})]
+                             (assoc (storage-get storage (:opaque-id c) (:key c))
+                               :op "get"))})]
    "set" [["key" "val"]
           (fn [c] {:rq #(ago storage-cmd-set %
-                             (storage-set storage (:opaque-id c) (:key c) (:val c)))})]
+                             (assoc (storage-set storage (:opaque-id c) (:key c) (:val c))
+                               :op "set"))})]
    "del" [["key"]
           (fn [c] {:rq (fn [actx]
                          (ago storage-cmd-del actx
