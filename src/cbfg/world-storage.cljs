@@ -24,49 +24,51 @@
 
 (defn storage-set [actx storage opaque key cas-old val op]
   (ago storage-set actx
-       (let [res (atom nil)]
-         (swap! storage
-                #(let [s1 (assoc % :next-sq (max (:next-sq %)
-                                                 (inc (:max-deleted-sq %))))
-                       sq-new (:next-sq s1)
-                       sq-old (get-in s1 [:keys key])]
-                   (if (and (= op :add) sq-old)
-                     (do (reset! res {:opaque opaque :status :exists
-                                      :key key})
-                         s1)
-                     (let [cas-check (and cas-old (not (zero? cas-old)))
-                           prev-change (when (or cas-check
-                                                 (= op :append)
-                                                 (= op :prepend))
-                                         (get-in s1 [:changes sq-old]))]
-                       (if (and cas-check (not= cas-old (:cas prev-change)))
-                         (do (reset! res {:opaque opaque :status :wrong-cas
+       (let [cas-check (and cas-old (not (zero? cas-old)))]
+         (if (and cas-check (= op :add))
+           {:opaque opaque :status :wrong-cas :key key}
+           (let [res (atom nil)]
+             (swap! storage
+                    #(let [s1 (assoc % :next-sq (max (:next-sq %)
+                                                     (inc (:max-deleted-sq %))))
+                           sq-new (:next-sq s1)
+                           sq-old (get-in s1 [:keys key])]
+                       (if (and (= op :add) sq-old)
+                         (do (reset! res {:opaque opaque :status :exists
                                           :key key})
                              s1)
-                         (if (and (or (= op :replace)
-                                      (= op :append)
-                                      (= op :prepend))
-                                  (not sq-old))
-                           (do (reset! res {:opaque opaque :status :not-found
-                                            :key key})
-                               s1)
-                           (let [cas-new (gen-cas)
-                                 val-new (case op
-                                           :add val
-                                           :replace val
-                                           :append (str (:val prev-change) val)
-                                           :prepend (str val (:val prev-change))
-                                           val)]
-                             (reset! res {:opaque opaque :status :ok
-                                          :key key :sq sq-new :cas cas-new})
-                             (-> s1
-                                 (dissoc-in [:changes sq-old])
-                                 (assoc-in [:keys key] sq-new)
-                                 (assoc-in [:changes sq-new]
-                                           {:key key :sq sq-new :cas cas-new
-                                            :val val-new})
-                                 (update-in [:next-sq] inc)))))))))
-         @res)))
+                         (let [prev-change (when (or cas-check
+                                                     (= op :append)
+                                                     (= op :prepend))
+                                             (get-in s1 [:changes sq-old]))]
+                           (if (and cas-check (not= cas-old (:cas prev-change)))
+                             (do (reset! res {:opaque opaque :status :wrong-cas
+                                              :key key})
+                                 s1)
+                             (if (and (or (= op :replace)
+                                          (= op :append)
+                                          (= op :prepend))
+                                      (not sq-old))
+                               (do (reset! res {:opaque opaque :status :not-found
+                                                :key key})
+                                   s1)
+                               (let [cas-new (gen-cas)
+                                     val-new (case op
+                                               :add val
+                                               :replace val
+                                               :append (str (:val prev-change) val)
+                                               :prepend (str val (:val prev-change))
+                                               val)]
+                                 (reset! res {:opaque opaque :status :ok
+                                              :key key :sq sq-new :cas cas-new})
+                                 (-> s1
+                                     (dissoc-in [:changes sq-old])
+                                     (assoc-in [:keys key] sq-new)
+                                     (assoc-in [:changes sq-new]
+                                               {:key key :sq sq-new :cas cas-new
+                                                :val val-new})
+                                     (update-in [:next-sq] inc)))))))))
+             @res)))))
 
 (defn storage-del [actx storage opaque key]
   (ago storage-del actx
