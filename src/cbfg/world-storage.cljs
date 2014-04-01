@@ -58,7 +58,8 @@
     (ago storage-scan actx
          (let [s @storage
                changes (:changes s)]
-           (doseq [[key sq] (subseq (:keys s) >= from < to)]
+           (doseq [[key sq]
+                   (subseq (into (sorted-map) (:keys s)) >= from < to)]
              (when-let [change (get changes sq)]
                (when (not (:deleted change))
                  (aput storage-scan out
@@ -73,7 +74,8 @@
   (let [out (achan actx)]
     (ago storage-changes actx
          (let [s @storage]
-             (doseq [[sq change] (subseq (into (sorted-map) (:changes s)) >= from < to)]
+             (doseq [[sq change]
+                     (subseq (into (sorted-map) (:changes s)) >= from < to)]
                (aput storage-changes out (-> change
                                              (assoc :opaque opaque)
                                              (assoc :status :part)))))
