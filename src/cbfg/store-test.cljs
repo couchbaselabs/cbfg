@@ -187,10 +187,27 @@
            "pass"
            (str "FAIL: on test-basic #" @n)))))
 
+(defn test-scan [actx]
+  (ago test-scan actx
+       (let [n (atom 0)
+             s (store/make-store test-scan)]
+         (if (and (let [c (store/store-scan test-scan s @n "a" "z")]
+                    (e n (atake test-scan c)
+                       {:status :ok, :opaque @n}
+                       (atake test-scan c))))
+           "pass"
+           (str "FAIL: on test-scan #" @n)))))
+
 (defn test [actx opaque]
   (ago test actx
-       (let [ch (test-basic test)
-             cv (atake test ch)
-             _ (atake test ch)]
-         {:opaque opaque
-          :result {"test-basic" cv}})))
+       {:opaque opaque
+        :result {"test-basic"
+                 (let [ch (test-basic test)
+                       cv (atake test ch)
+                       _  (atake test ch)]
+                   cv)
+                 "test-scan"
+                 (let [ch (test-scan test)
+                       cv (atake test ch)
+                       _  (atake test ch)]
+                   cv)}}))

@@ -8,34 +8,45 @@
             [cbfg.vis :refer [vis-init listen-el get-el-value log-el]]))
 
 (defn make-store-cmd-handlers [store]
-  {"get" [["key"]
-          (fn [c] {:rq #(store/store-get % store (:opaque c) (:key c))})]
-   "set" [["key" "val"]
-          (fn [c] {:rq #(store/store-set % store (:opaque c) (:key c) (:cas c)
-                                         (:val c) :set)})]
-   "del" [["key"]
-          (fn [c] {:rq #(store/store-del % store (:opaque c) (:key c) (:cas c))})]
-   "add" [["key" "val"]
-          (fn [c] {:rq #(store/store-set % store (:opaque c) (:key c) (:cas c)
-                                         (:val c) :add)})]
-   "replace" [["key" "val"]
-              (fn [c] {:rq #(store/store-set % store (:opaque c) (:key c) (:cas c)
-                                             (:val c) :replace)})]
-   "append" [["key" "val"]
-             (fn [c] {:rq #(store/store-set % store (:opaque c) (:key c) (:cas c)
-                                            (:val c) :append)})]
-   "prepend" [["key" "val"]
-              (fn [c] {:rq #(store/store-set % store (:opaque c) (:key c) (:cas c)
-                                             (:val c) :prepend)})]
-   "scan" [["from" "to"]
-           (fn [c] {:rq #(store/store-scan % store (:opaque c) (:from c) (:to c))})]
-   "changes" [["from" "to"]
-              (fn [c] {:rq #(store/store-changes % store (:opaque c)
-                                                 (js/parseInt (:from c))
-                                                 (js/parseInt (:to c)))})]
-   "noop" [[] (fn [c] {:rq #(ago store-cmd-noop %
-                                 {:opaque (:opaque c) :status :ok})})]
-   "test" [[] (fn [c] {:rq #(cbfg.store-test/test % (:opaque c))})]})
+  {"get"
+   [["key"]
+    (fn [c] {:rq #(store/store-get % store (:opaque c) (:key c))})]
+   "set"
+   [["key" "val"]
+    (fn [c] {:rq #(store/store-set % store (:opaque c) (:key c) (:cas c)
+                                   (:val c) :set)})]
+   "del"
+   [["key"]
+    (fn [c] {:rq #(store/store-del % store (:opaque c) (:key c) (:cas c))})]
+   "add"
+   [["key" "val"]
+    (fn [c] {:rq #(store/store-set % store (:opaque c) (:key c) (:cas c)
+                                   (:val c) :add)})]
+   "replace"
+   [["key" "val"]
+    (fn [c] {:rq #(store/store-set % store (:opaque c) (:key c) (:cas c)
+                                   (:val c) :replace)})]
+   "append"
+   [["key" "val"]
+    (fn [c] {:rq #(store/store-set % store (:opaque c) (:key c) (:cas c)
+                                   (:val c) :append)})]
+   "prepend"
+   [["key" "val"]
+    (fn [c] {:rq #(store/store-set % store (:opaque c) (:key c) (:cas c)
+                                   (:val c) :prepend)})]
+   "scan"
+   [["from" "to"]
+    (fn [c] {:rq #(store/store-scan % store (:opaque c) (:from c) (:to c))})]
+   "changes"
+   [["from" "to"]
+    (fn [c] {:rq #(store/store-changes % store (:opaque c)
+                                       (js/parseInt (:from c))
+                                       (js/parseInt (:to c)))})]
+   "noop"
+   [[] (fn [c] {:rq #(ago store-cmd-noop %
+                          {:opaque (:opaque c) :status :ok})})]
+   "test"
+   [[] (fn [c] {:rq #(cbfg.store-test/test % (:opaque c))})]})
 
 (def store-max-inflight (atom 10))
 
