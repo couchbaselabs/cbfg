@@ -109,4 +109,4 @@
 (let [last-id (atom 0)
       gen-id #(swap! last-id inc)]
   (ago test-actx [{:gen-id gen-id :event-ch (chan (sliding-buffer 1))}]
-       (println (<! (cbfg.fence-test/test test-actx 0)))))
+       (println "fence-test:" (<! (cbfg.fence-test/test test-actx 0)))))

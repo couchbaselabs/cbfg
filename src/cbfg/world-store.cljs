@@ -1,10 +1,11 @@
 (ns cbfg.world-store
   (:require-macros [cbfg.ago :refer [ago ago-loop achan-buf aput atake]])
-  (:require [cljs.core.async :refer [<! merge map<]]
+  (:require [cljs.core.async :refer [chan <! merge map< sliding-buffer]]
             [goog.dom :as gdom]
             [cbfg.fence :refer [make-fenced-pump]]
             [cbfg.fence-test]
             [cbfg.store :as store]
+            [cbfg.store-test]
             [cbfg.vis :refer [vis-init listen-el get-el-value log-el]]))
 
 (defn make-store-cmd-handlers [store]
@@ -68,3 +69,8 @@
                               (recur (inc num-outs))))
                   (make-fenced-pump world in-ch out-ch @store-max-inflight)))
               el-prefix nil)))
+
+(let [last-id (atom 0)
+      gen-id #(swap! last-id inc)]
+  (ago test-actx [{:gen-id gen-id :event-ch (chan (sliding-buffer 1))}]
+       (println "store-test:" (<! (cbfg.store-test/test test-actx 0)))))
