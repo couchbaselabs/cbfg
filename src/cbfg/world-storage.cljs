@@ -22,6 +22,10 @@
            {:opaque opaque :status :not-found
             :key key}))))
 
+(defn return [r atom atom-val]
+  (reset! atom atom-val)
+  r)
+
 (defn storage-set [actx storage opaque key old-cas val op]
   (ago storage-set actx
        (let [cas-check (and old-cas (not (zero? old-cas)))]
@@ -34,24 +38,21 @@
                            new-sq (:next-sq s1)
                            old-sq (get-in s1 [:keys key])]
                        (if (and (= op :add) old-sq)
-                         (do (reset! res {:opaque opaque :status :exists
-                                          :key key})
-                             s1)
+                         (return s1 res
+                                 {:opaque opaque :status :exists :key key})
                          (let [prev-change (when (or cas-check
                                                      (= op :append)
                                                      (= op :prepend))
                                              (get-in s1 [:changes old-sq]))]
                            (if (and cas-check (not= old-cas (:cas prev-change)))
-                             (do (reset! res {:opaque opaque :status :wrong-cas
-                                              :key key})
-                                 s1)
+                             (return s1 res
+                                     {:opaque opaque :status :wrong-cas :key key})
                              (if (and (or (= op :replace)
                                           (= op :append)
                                           (= op :prepend))
                                       (not old-sq))
-                               (do (reset! res {:opaque opaque :status :not-found
-                                                :key key})
-                                   s1)
+                               (return s1 res
+                                       {:opaque opaque :status :not-found :key key})
                                (let [new-cas (gen-cas)
                                      new-val (case op
                                                :add val
@@ -59,15 +60,15 @@
                                                :append (str (:val prev-change) val)
                                                :prepend (str val (:val prev-change))
                                                val)]
-                                 (reset! res {:opaque opaque :status :ok
-                                              :key key :sq new-sq :cas new-cas})
-                                 (-> s1
-                                     (dissoc-in [:changes old-sq])
-                                     (assoc-in [:keys key] new-sq)
-                                     (assoc-in [:changes new-sq]
-                                               {:key key :sq new-sq :cas new-cas
-                                                :val new-val})
-                                     (update-in [:next-sq] inc)))))))))
+                                 (return (-> s1
+                                             (dissoc-in [:changes old-sq])
+                                             (assoc-in [:keys key] new-sq)
+                                             (assoc-in [:changes new-sq]
+                                                       {:key key :sq new-sq :cas new-cas
+                                                        :val new-val})
+                                             (update-in [:next-sq] inc))
+                                         res {:opaque opaque :status :ok
+                                              :key key :sq new-sq :cas new-cas}))))))))
              @res)))))
 
 (defn storage-del [actx storage opaque key old-cas]
@@ -81,11 +82,11 @@
                    (if (not old-sq)
                      (do (reset! res {:opaque opaque :status :not-found
                                       :key key})
-                         s1)
+                         %)
                      (if (and cas-check (not= old-cas (:cas prev-change)))
                        (do (reset! res {:opaque opaque :status :wrong-cas
                                         :key key})
-                           s1)
+                           %)
                        (let [new-sq (:next-sq %)]
                          (reset! res {:opaque opaque :status :wrong-cas
                                       :key key :sq new-sq})
