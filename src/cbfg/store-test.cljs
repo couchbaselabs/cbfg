@@ -288,7 +288,130 @@
          (if (and (let [c (store/store-changes test-changes s @n 0 100)]
                     (e n (atake test-changes c)
                        {:status :ok, :opaque @n}
-                       (atake test-changes c))))
+                       (atake test-changes c)))
+                  (let [c (store/store-changes test-changes s @n 0 0)]
+                    (e n (atake test-changes c)
+                       {:status :ok, :opaque @n}
+                       (atake test-changes c)))
+                  (let [c (store/store-set test-changes s @n "b" 0 "B" :set)]
+                    (e n (atake test-changes c)
+                       {:status :ok, :key "b", :opaque @n, :sq 1}
+                       (atake test-changes c)))
+                  (let [c (store/store-changes test-changes s @n 0 0)]
+                    (e n (atake test-changes c)
+                       {:status :ok, :opaque @n}
+                       (atake test-changes c)))
+                  (let [c (store/store-changes test-changes s @n 0 100)
+                        m @n]
+                    (and (e n (atake test-changes c)
+                            {:status :part, :opaque m, :key "b", :sq 1, :val "B"}
+                            nil)
+                         (e n (atake test-changes c)
+                            {:status :ok, :opaque m}
+                            (atake test-changes c))))
+                  (let [c (store/store-set test-changes s @n "b" 0 "BB" :set)]
+                    (e n (atake test-changes c)
+                       {:status :ok, :key "b", :opaque @n, :sq 2}
+                       (atake test-changes c)))
+                  (let [c (store/store-changes test-changes s @n 0 100)
+                        m @n]
+                    (and (e n (atake test-changes c)
+                            {:status :part, :opaque m, :key "b", :sq 2, :val "BB"}
+                            nil)
+                         (e n (atake test-changes c)
+                            {:status :ok, :opaque m}
+                            (atake test-changes c))))
+                  (let [c (store/store-set test-changes s @n "a" 0 "A" :set)]
+                    (e n (atake test-changes c)
+                       {:status :ok, :key "a", :opaque @n, :sq 3}
+                       (atake test-changes c)))
+                  (let [c (store/store-changes test-changes s @n 0 100)
+                        m @n]
+                    (and (e n (atake test-changes c)
+                            {:status :part, :opaque m, :key "b", :sq 2, :val "BB"}
+                            nil)
+                         (e n (atake test-changes c)
+                            {:status :part, :opaque m, :key "a", :sq 3, :val "A"}
+                            nil)
+                         (e n (atake test-changes c)
+                            {:status :ok, :opaque m}
+                            (atake test-changes c))))
+                  (let [c (store/store-changes test-changes s @n 2 2)
+                        m @n]
+                    (and (e n (atake test-changes c)
+                            {:status :ok, :opaque m}
+                            (atake test-changes c))))
+                  (let [c (store/store-changes test-changes s @n 2 3)
+                        m @n]
+                    (and (e n (atake test-changes c)
+                            {:status :part, :opaque m, :key "b", :sq 2, :val "BB"}
+                            nil)
+                         (e n (atake test-changes c)
+                            {:status :ok, :opaque m}
+                            (atake test-changes c))))
+                  (let [c (store/store-changes test-changes s @n 3 100)
+                        m @n]
+                    (and (e n (atake test-changes c)
+                            {:status :part, :opaque m, :key "a", :sq 3, :val "A"}
+                            nil)
+                         (e n (atake test-changes c)
+                            {:status :ok, :opaque m}
+                            (atake test-changes c))))
+                  (let [c (store/store-del test-changes s @n "a" 0)]
+                    (e n (atake test-changes c)
+                       {:status :ok, :key "a", :opaque @n, :sq 4}
+                       (atake test-changes c)))
+                  (let [c (store/store-changes test-changes s @n 0 100)
+                        m @n]
+                    (and (e n (atake test-changes c)
+                            {:status :part, :opaque m, :key "b", :sq 2, :val "BB"}
+                            nil)
+                         (e n (atake test-changes c)
+                            {:status :part, :opaque m, :key "a", :sq 4, :deleted true}
+                            nil)
+                         (e n (atake test-changes c)
+                            {:status :ok, :opaque m}
+                            (atake test-changes c))))
+                  (let [c (store/store-set test-changes s @n "a" 0 "AA" :set)]
+                    (e n (atake test-changes c)
+                       {:status :ok, :key "a", :opaque @n, :sq 5}
+                       (atake test-changes c)))
+                  (let [c (store/store-changes test-changes s @n 0 100)
+                        m @n]
+                    (and (e n (atake test-changes c)
+                            {:status :part, :opaque m, :key "b", :sq 2, :val "BB"}
+                            nil)
+                         (e n (atake test-changes c)
+                            {:status :part, :opaque m, :key "a", :sq 4, :deleted true}
+                            nil)
+                         (e n (atake test-changes c)
+                            {:status :part, :opaque m, :key "a", :sq 5, :val "AA"}
+                            nil)
+                         (e n (atake test-changes c)
+                            {:status :ok, :opaque m}
+                            (atake test-changes c))))
+                  (let [c (store/store-del test-changes s @n "a" 0)]
+                    (e n (atake test-changes c)
+                       {:status :ok, :key "a", :opaque @n, :sq 6}
+                       (atake test-changes c)))
+                  (let [c (store/store-del test-changes s @n "b" 0)]
+                    (e n (atake test-changes c)
+                       {:status :ok, :key "b", :opaque @n, :sq 7}
+                       (atake test-changes c)))
+                  (let [c (store/store-changes test-changes s @n 0 100)
+                        m @n]
+                    (and (e n (atake test-changes c)
+                            {:status :part, :opaque m, :key "a", :sq 4, :deleted true}
+                            nil)
+                         (e n (atake test-changes c)
+                            {:status :part, :opaque m, :key "a", :sq 6, :deleted true}
+                            nil)
+                         (e n (atake test-changes c)
+                            {:status :part, :opaque m, :key "b", :sq 7, :deleted true}
+                            nil)
+                         (e n (atake test-changes c)
+                            {:status :ok, :opaque m}
+                            (atake test-changes c)))))
            "pass"
            (str "FAIL: on test-changes #" @n)))))
 
