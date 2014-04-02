@@ -303,38 +303,38 @@
         (recur (inc num-events)))
     (let [el-event (str el-prefix "-event") ; Process U/I related events.
           el-html (str el-prefix "-html")
-          el-svg (str el-prefix "-svg")]
-      (go (let [world (conj w 'world-1)]    ; Can't use ago to initialize world.
-            (go-loop [vis-last nil          ; Process render-ch, updating U/I.
-                      vis-last-positions nil
-                      vis-last-html nil
-                      vis-last-svg nil
-                      prev-deltas nil]
-              (let [[vis-next deltas after event-str] (<! render-ch)
-                    next-deltas (take 20 (conj prev-deltas [after deltas]))]
-                (set-el-innerHTML el-event event-str)
-                (if after
-                  (let [vis-next-positions (atom {})
-                        actx-ch-ch-infos (group-by #(:first-taker-actx (second %)) (:chs vis-next))]
-                    (assign-positions vis-next world vis-next-positions actx-ch-ch-infos
-                                      (when (get-in vis-next [:actxs world :closed]) 0))
-                    (let [vis-next-html (apply str (flatten (vis-html-actx vis-next world
-                                                                           actx-ch-ch-infos)))
-                          vis-next-svg (apply str (flatten (vis-svg-actxs vis-next @vis-next-positions
-                                                                          deltas true prev-deltas)))]
-                      (when (not= vis-next-html vis-last-html)
-                        (set-el-innerHTML el-html vis-next-html)
-                        (when on-render-cb
-                          (on-render-cb vis-next)))
-                      (when (not= vis-next-svg vis-last-svg)
-                        (set-el-innerHTML el-svg vis-next-svg))
-                      (recur vis-next @vis-next-positions vis-next-html vis-next-svg next-deltas)))
-                  (let [vis-next-svg (apply str (flatten (vis-svg-actxs vis-last vis-last-positions
-                                                                        deltas false prev-deltas)))]
-                    (when (not= vis-next-svg vis-last-svg)
-                      (set-el-innerHTML el-svg vis-next-svg))
-                    (recur vis-last vis-last-positions vis-last-html vis-next-svg next-deltas)))))
-            (world-init-cb world)))
+          el-svg (str el-prefix "-svg")
+          world (conj w 'world-1)]    ; No ago for world actx init to avoid recursion.
+      (go-loop [vis-last nil          ; Process render-ch, updating U/I.
+                vis-last-positions nil
+                vis-last-html nil
+                vis-last-svg nil
+                prev-deltas nil]
+        (let [[vis-next deltas after event-str] (<! render-ch)
+              next-deltas (take 20 (conj prev-deltas [after deltas]))]
+          (set-el-innerHTML el-event event-str)
+          (if after
+            (let [vis-next-positions (atom {})
+                  actx-ch-ch-infos (group-by #(:first-taker-actx (second %)) (:chs vis-next))]
+              (assign-positions vis-next world vis-next-positions actx-ch-ch-infos
+                                (when (get-in vis-next [:actxs world :closed]) 0))
+              (let [vis-next-html (apply str (flatten (vis-html-actx vis-next world
+                                                                     actx-ch-ch-infos)))
+                    vis-next-svg (apply str (flatten (vis-svg-actxs vis-next @vis-next-positions
+                                                                    deltas true prev-deltas)))]
+                (when (not= vis-next-html vis-last-html)
+                  (set-el-innerHTML el-html vis-next-html)
+                  (when on-render-cb
+                    (on-render-cb vis-next)))
+                (when (not= vis-next-svg vis-last-svg)
+                  (set-el-innerHTML el-svg vis-next-svg))
+                (recur vis-next @vis-next-positions vis-next-html vis-next-svg next-deltas)))
+            (let [vis-next-svg (apply str (flatten (vis-svg-actxs vis-last vis-last-positions
+                                                                  deltas false prev-deltas)))]
+              (when (not= vis-next-svg vis-last-svg)
+                (set-el-innerHTML el-svg vis-next-svg))
+              (recur vis-last vis-last-positions vis-last-html vis-next-svg next-deltas)))))
+      (world-init-cb world)
       (let [toggle-ch (listen-el (gdom/getElement el-html) "click")] ; Process toggle U/I events.
         (go-loop []
           (let [actx-id (no-prefix (.-id (.-target (<! toggle-ch))))]
