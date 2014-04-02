@@ -53,7 +53,7 @@
                      (recur inflight-chs out-ch nil)
                      (let [new-inflight ((:rq v) fenced-pump)]
                        (recur (conj inflight-chs new-inflight)
-                              (if (:fence v) new-inflight nil)
+                              (when (:fence v) new-inflight)
                               nil)))
       (= v nil) (let [new-inflight-chs (disj inflight-chs ch)] ; an inflight request is done.
                   (if (empty? new-inflight-chs)                ; if inflight requests are all done,

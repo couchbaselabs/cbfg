@@ -69,14 +69,14 @@
                                                  op-fence (= (get-el-value (str op "-fence")) "1")
                                                  [params handler] (get store-cmd-handlers op)
                                                  cmd2 (-> v
-                                                          (assoc-in [:opaque] num-ins)
-                                                          (assoc-in [:fence] op-fence))
+                                                          (assoc :opaque num-ins)
+                                                          (assoc :fence op-fence))
                                                  cmd3 (reduce #(assoc %1 (keyword %2)
                                                                       (get-el-value (str op "-" %2)))
                                                               cmd2 params)]
                                              (render-client-cmds (swap! client-cmds
                                                                         #(assoc % num-ins [cmd3 nil])))
-                                             (aput client in-ch (handler cmd3))
+                                             (aput client in-ch (assoc (handler cmd3) :fence op-fence))
                                              (recur (inc num-ins) num-outs))
                              (= ch out-ch) (do (render-client-cmds (swap! client-cmds
                                                                           #(update-in % [(:opaque v) 1]
