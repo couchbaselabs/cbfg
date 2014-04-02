@@ -273,26 +273,27 @@
 ;; ------------------------------------------------
 
 (defn vis-init [world-init-cb el-prefix on-render-cb]
-  (let [event-delay (atom 0)
+  (let [step-ch (chan (dropping-buffer 1))
         event-ch (chan)
-        step-ch (chan (dropping-buffer 1))
+        event-delay (atom 0)
+        render-ch (chan)
         last-id (atom 0)
         gen-id #(swap! last-id inc)
         w [{:gen-id gen-id
             :event-ch event-ch}]
-        vis (atom {:actxs {} ; {actx -> {:children {child-actx -> true},
-                             ;           :wait-chs {ch -> [:ghost|take|:put optional-ch-name])},
-                             ;           :loop-state last-loop-bindings
-                             ;           :closed bool}}.
-                   :chs {}   ; {ch -> {:id (gen-id),
-                             ;         :msgs {msg -> true}
-                             ;         :first-taker-actx actx-or-nil}}.
+        world (conj w "world-1")  ; No ago for world actx init to avoid recursion.
+        vis (atom {:actxs {world {:children {} ; child-actx -> true,
+                                  :wait-chs {} ; ch -> [:ghost|:take|:put optional-ch-name],
+                                  ; :loop-state last-loop-bindings,
+                                  ; :closed bool.
+                                  }}
+                   :chs {} ; {ch -> {:id (gen-id),
+                           ;         :msgs {msg -> true}
+                           ;         :first-taker-actx actx-or-nil}}.
                    :gen-id gen-id})
-        render-ch (chan)
         el-event (str el-prefix "-event")
         el-html (str el-prefix "-html")
-        el-svg (str el-prefix "-svg")
-        world (conj w 'world-1)] ; No ago for world actx init to avoid recursion.
+        el-svg (str el-prefix "-svg")]
     (world-init-cb world)
     (go-loop [num-events 0]      ; Process events from world / simulation.
       (let [[actx [verb step & args]] (<! event-ch)
