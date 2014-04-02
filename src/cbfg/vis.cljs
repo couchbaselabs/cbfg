@@ -301,10 +301,11 @@
         (when (> @event-delay 0) (<! (timeout @event-delay)))
         (when (< @event-delay 0) (<! step-ch)))
         (recur (inc num-events)))
-    (let [el-event (str el-prefix "-event") ; Process U/I related events.
+    (let [el-event (str el-prefix "-event")
           el-html (str el-prefix "-html")
           el-svg (str el-prefix "-svg")
           world (conj w 'world-1)]    ; No ago for world actx init to avoid recursion.
+      (world-init-cb world)
       (go-loop [vis-last nil          ; Process render-ch, updating U/I.
                 vis-last-positions nil
                 vis-last-html nil
@@ -334,7 +335,6 @@
               (when (not= vis-next-svg vis-last-svg)
                 (set-el-innerHTML el-svg vis-next-svg))
               (recur vis-last vis-last-positions vis-last-html vis-next-svg next-deltas)))))
-      (world-init-cb world)
       (let [toggle-ch (listen-el (gdom/getElement el-html) "click")] ; Process toggle U/I events.
         (go-loop []
           (let [actx-id (no-prefix (.-id (.-target (<! toggle-ch))))]
