@@ -1,6 +1,6 @@
 (ns cbfg.world-store
   (:require-macros [cbfg.ago :refer [ago ago-loop achan-buf aalts aput]])
-  (:require [cljs.core.async :refer [chan <! merge map< sliding-buffer]]
+  (:require [cljs.core.async :refer [chan <! map< sliding-buffer]]
             [goog.dom :as gdom]
             [cbfg.fence :refer [make-fenced-pump]]
             [cbfg.store :as store]
@@ -57,8 +57,8 @@
               (let [store (store/make-store world)
                     store-cmd-handlers (make-store-cmd-handlers store)
                     cmd-ch (map< (fn [ev] {:op (.-id (.-target ev))})
-                                 (merge (map #(listen-el (gdom/getElement %) "click")
-                                             (keys store-cmd-handlers))))
+                                 (cljs.core.async/merge (map #(listen-el (gdom/getElement %) "click")
+                                                             (keys store-cmd-handlers))))
                     client-cmds (atom {}) ; Keyed by opaque -> [request, replies]
                     in-ch (achan-buf world 100)
                     out-ch (achan-buf world 0)]
@@ -76,7 +76,7 @@
                                                               cmd2 params)]
                                              (render-client-cmds (swap! client-cmds
                                                                         #(assoc % num-ins [cmd3 nil])))
-                                             (aput client in-ch (assoc (handler cmd3) :fence op-fence))
+                                             (aput client in-ch (merge cmd3 (handler cmd3)))
                                              (recur (inc num-ins) num-outs))
                              (= ch out-ch) (do (render-client-cmds (swap! client-cmds
                                                                           #(update-in % [(:opaque v) 1]
