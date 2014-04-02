@@ -34,7 +34,14 @@
                   (e n
                      (atake tg (:take-all-ch g))
                      {:a :AA}
-                     nil))
+                     nil)
+                  (let [r (ago take-test tg
+                               (atake take-test (:take-all-ch g)))]
+                    (aput tg (:put-ch g) [:b (fn [_] :B)])
+                    (e n
+                       (atake tg r)
+                       {:b :B}
+                       (atake tg r))))
            "pass"
            (str "FAIL: on test-grouper #" @n)))))
 
