@@ -48,7 +48,37 @@
                     (e n
                        (atake tg (:take-all-ch g))
                        {:a :A :b :B}
-                       nil)))
+                       nil))
+                  (let [r (ago full-test0 tg
+                               (aput full-test0 (:put-ch g) [:a (fn [_] :A)])
+                               (aput full-test0 (:put-ch g) [:b (fn [_] :B)])
+                               :full-test0)]
+                    (e n
+                       (atake tg r)
+                       :full-test0
+                       (atake tg r)))
+                  (let [puts-started-ch (achan tg)
+                        r (ago full-test1 tg
+                               (aclose full-test1 puts-started-ch)
+                               (aput full-test1 (:put-ch g) [:c (fn [_] :C)])
+                               (aput full-test1 (:put-ch g) [:d (fn [_] :D)])
+                               :full-test1)]
+                    (and (e n
+                            (atake tg puts-started-ch)
+                            nil
+                            nil)
+                         (e n
+                            (atake tg (:take-all-ch g))
+                            {:a :A :b :B}
+                            nil)
+                         (e n
+                            (atake tg r)
+                            :full-test1
+                            (atake tg r))
+                         (e n
+                            (atake tg (:take-all-ch g))
+                            {:c :C :d :D}
+                            nil))))
            "pass"
            (str "FAIL: on test-grouper #" @n)))))
 
