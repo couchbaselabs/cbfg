@@ -99,7 +99,8 @@
          @res)))
 
 (defn store-scan [actx store opaque from to]
-  (let [out (achan actx)]
+  (let [out (achan actx)
+        msg {:opaque opaque :status :part}]
     (ago store-scan actx
          (let [s @store
                changes (:changes s)]
@@ -108,22 +109,20 @@
              (when-let [change (get changes sq)]
                (when (not (:deleted change))
                  (aput store-scan out
-                       {:opaque opaque :status :part
-                        :key key :sq sq :cas (:cas change)
-                        :val (:val change)})))))
+                       (merge msg {:key key :sq sq :cas (:cas change)
+                                   :val (:val change)}))))))
          (aput store-scan out {:opaque opaque :status :ok})
          (aclose store-scan out))
     out))
 
 (defn store-changes [actx store opaque from to]
-  (let [out (achan actx)]
+  (let [out (achan actx)
+        msg {:opaque opaque :status :part}]
     (ago store-changes actx
          (let [s @store]
              (doseq [[sq change]
                      (subseq (into (sorted-map) (:changes s)) >= from < to)]
-               (aput store-changes out (-> change
-                                             (assoc :opaque opaque)
-                                             (assoc :status :part)))))
+               (aput store-changes out (merge msg change))))
          (aput store-changes out {:opaque opaque :status :ok})
          (aclose store-changes out))
     out))
