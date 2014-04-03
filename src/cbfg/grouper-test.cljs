@@ -12,46 +12,48 @@
 (defn test-grouper [actx]
   (ago tg actx
        (let [n (atom 0)
-             g (make-grouper tg 2)]
+             put-ch (achan tg)
+             take-all-ch (achan tg)
+             g (make-grouper tg put-ch take-all-ch 2)]
          (if (and (let [r (achan tg)]
-                    (aput tg (:put-ch g) [:a #(do (ago cb tg
-                                                       (aput cb r [%])
+                    (aput tg put-ch [:a #(do (ago cb tg
+                                                  (aput cb r [%])
                                                        (aclose tg r))
-                                                  :A)])
+                                             :A)])
                     (e n
                        (atake tg r)
                        [nil]
                        (atake tg r)))
                   (let [r (achan tg)]
-                    (aput tg (:put-ch g) [:a #(do (ago cb tg
-                                                       (aput cb r [%])
-                                                       (aclose tg r))
-                                                  :AA)])
+                    (aput tg put-ch [:a #(do (ago cb tg
+                                                  (aput cb r [%])
+                                                  (aclose tg r))
+                                             :AA)])
                     (e n
                        (atake tg r)
                        [:A]
                        (atake tg r)))
                   (e n
-                     (atake tg (:take-all-ch g))
+                     (atake tg take-all-ch)
                      {:a :AA}
                      nil)
                   (let [r (ago take-test tg
-                               (atake take-test (:take-all-ch g)))]
-                    (aput tg (:put-ch g) [:b (fn [_] :B)])
+                               (atake take-test take-all-ch))]
+                    (aput tg put-ch [:b (fn [_] :B)])
                     (e n
                        (atake tg r)
                        {:b :B}
                        (atake tg r)))
                   (do
-                    (aput tg (:put-ch g) [:a (fn [_] :A)])
-                    (aput tg (:put-ch g) [:b (fn [_] :B)])
+                    (aput tg put-ch [:a (fn [_] :A)])
+                    (aput tg put-ch [:b (fn [_] :B)])
                     (e n
-                       (atake tg (:take-all-ch g))
+                       (atake tg take-all-ch)
                        {:a :A :b :B}
                        nil))
                   (let [r (ago full-test0 tg
-                               (aput full-test0 (:put-ch g) [:a (fn [_] :A)])
-                               (aput full-test0 (:put-ch g) [:b (fn [_] :B)])
+                               (aput full-test0 put-ch [:a (fn [_] :A)])
+                               (aput full-test0 put-ch [:b (fn [_] :B)])
                                :full-test0)]
                     (e n
                        (atake tg r)
@@ -60,15 +62,15 @@
                   (let [puts-started-ch (achan tg)
                         r (ago full-test1 tg
                                (aclose full-test1 puts-started-ch)
-                               (aput full-test1 (:put-ch g) [:c (fn [_] :C)])
-                               (aput full-test1 (:put-ch g) [:d (fn [_] :D)])
+                               (aput full-test1 put-ch [:c (fn [_] :C)])
+                               (aput full-test1 put-ch [:d (fn [_] :D)])
                                :full-test1)]
                     (and (e n
                             (atake tg puts-started-ch)
                             nil
                             nil)
                          (e n
-                            (atake tg (:take-all-ch g))
+                            (atake tg take-all-ch)
                             {:a :A :b :B}
                             nil)
                          (e n
@@ -76,7 +78,7 @@
                             :full-test1
                             (atake tg r))
                          (e n
-                            (atake tg (:take-all-ch g))
+                            (atake tg take-all-ch)
                             {:c :C :d :D}
                             nil))))
            "pass"
