@@ -27,7 +27,7 @@
                    in-msgs]
   (let [in (achan-buf actx in-ch-size)
         out (achan-buf actx out-ch-size)
-        fdp (make-fenced-pump actx "test" in out max-inflight)]
+        fdp (make-fenced-pump actx "test" in out max-inflight true)]
     (onto-chan in in-msgs)
     (ago-loop test-out actx [acc nil]
               (let [result (atake test-out out)]

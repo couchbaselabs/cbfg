@@ -35,7 +35,7 @@
 ;; request format
 ;; {:rq function-to-call :fence true-or-false}
 
-(defn make-fenced-pump [actx name in-ch out-ch max-inflight]
+(defn make-fenced-pump [actx name in-ch out-ch max-inflight close?]
   (ago-loop fenced-pump actx
    [name name
     inflight-chs #{}                ; chans of requests currently being processed.
@@ -68,4 +68,4 @@
                                (recur name inflight-chs fenced-ch v))
           :else (do (aput fenced-pump out-ch v)
                     (recur name inflight-chs fenced-ch fenced-ch-res))))
-       (aclose fenced-pump out-ch)))))
+       (when close? (aclose fenced-pump out-ch))))))

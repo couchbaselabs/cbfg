@@ -40,11 +40,12 @@
                                                                             #(assoc % ts [cmd nil])))
                                                  (aput client in-ch cmd-rq)
                                                  (recur (inc num-ins) num-outs)))
-                               (= ch out-ch) (do (render-client-hist (swap! client-hist
-                                                                            #(update-in % [(:opaque v) 1]
-                                                                                        conj [ts v])))
-                                                 (recur num-ins (inc num-outs))))))
-                  (make-fenced-pump world "main" in-ch out-ch @max-inflight)))
+                               (= ch out-ch) (when v
+                                               (do (render-client-hist (swap! client-hist
+                                                                              #(update-in % [(:opaque v) 1]
+                                                                                          conj [ts v])))
+                                                   (recur num-ins (inc num-outs)))))))
+                  (make-fenced-pump world "main" in-ch out-ch @max-inflight true)))
               el-prefix nil init-event-delay)
     cmd-inject-ch))
 
