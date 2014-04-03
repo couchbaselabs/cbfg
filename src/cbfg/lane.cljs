@@ -1,5 +1,5 @@
 (ns cbfg.lane
-  (:require-macros [cbfg.ago :refer [ago-loop achan aput atake]]))
+  (:require-macros [cbfg.ago :refer [ago-loop achan aclose aput atake]]))
 
 (defn make-lane-pump [actx in-ch out-ch make-lane]
   (ago-loop lane-pump actx [lane-chs {}]
@@ -11,13 +11,14 @@
                       ; still be putting late responses on the out-ch,
                       ; which the client should be prepared to handle
                       ; or drop and to also not re-use lane names.
-                      (aput lane-pump out-ch (merge m {:status ok}))
+                      (aput lane-pump out-ch (merge m {:status :ok}))
                       (recur (dissoc lane-chs (:lane m))))
-                  (do (aput lane-pump out-ch (merge m {:status not-found})) ; Unknown lane.
+                  (do (aput lane-pump out-ch (merge m {:status :not-found})) ; Unknown lane.
                       (recur lane-chs)))
                 (let [[lane-ch lane-chs2] (if-let [lane-ch (get lane-chs (:lane m))]
                                             [lane-ch lane-chs]
-                                            (let [new-lane-ch (make-lane lane-pump (:lane m))]
+                                            (let [new-lane-ch (make-lane lane-pump
+                                                                         (:lane m) out-ch)]
                                               [new-lane-ch (assoc lane-chs (:lane m)
                                                                   new-lane-ch)]))]
                   (aput lane-pump lane-ch m)
