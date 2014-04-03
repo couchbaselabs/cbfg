@@ -4,7 +4,8 @@
   (:require [clojure.string :as string]
             cbfg.world-fence
             cbfg.world-store
-            cbfg.world-grouper))
+            cbfg.world-grouper
+            cbfg.world-lane))
 
 (enable-console-print!)
 
