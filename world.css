@@ -22,6 +22,9 @@ input {
     background-color: #FFF6D3;
     overflow: scroll;
 }
+.vis {
+    margin-top: 20px;
+}
 .vis, .vis * {
     font-size: 20px;
     white-space: nowrap;
@@ -195,5 +198,11 @@ button.toggle {
   top: 0px;
   left: -10px;
   z-index: 1;
+}
+.event {
+  margin-top: 60px; border-top: 1px solid #ddd;
+}
+.event, #event {
+  white-space: nowrap;
 }
 
