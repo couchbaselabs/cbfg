@@ -6,11 +6,10 @@
   (let [result2 (if (:cas expect)
                   result
                   (dissoc result :cas))
-        pass (= result2 expect)]
-    (println (str (swap! n inc) ":")
-             (if pass
-               (str "pass: " (:key expect))
-               (str "FAIL:" result2 expect)))
+        pass (= result2 expect)
+        my-n (swap! n inc)]
+    (when (not pass)
+      (println (str my-n ":") "FAIL:" result2 expect))
     (and pass (nil? result-nil))))
 
 (defn test-basic [actx]
