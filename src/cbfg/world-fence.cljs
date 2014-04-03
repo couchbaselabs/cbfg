@@ -18,13 +18,15 @@
 (def max-inflight (atom 10))
 
 (defn world-vis-init [el-prefix]
-  (let [cmd-ch (map< (fn [ev] {:op (.-id (.-target ev))
-                               :x (js/parseInt (get-el-value "x"))
-                               :y (js/parseInt (get-el-value "y"))
-                               :delay (js/parseInt (get-el-value "delay"))
-                               :fence (= (get-el-value "fence") "1")})
-                     (merge (map #(listen-el (gdom/getElement %) "click")
-                                 (keys cmd-handlers))))
+  (let [cmd-inject-ch (chan)
+        cmd-ch (merge [cmd-inject-ch
+                       (map< (fn [ev] {:op (.-id (.-target ev))
+                                       :x (js/parseInt (get-el-value "x"))
+                                       :y (js/parseInt (get-el-value "y"))
+                                       :delay (js/parseInt (get-el-value "delay"))
+                                       :fence (= (get-el-value "fence") "1")})
+                             (merge (map #(listen-el (gdom/getElement %) "click")
+                                         (keys cmd-handlers))))])
         client-hist (atom {})] ; Keyed by opaque -> [request, replies].
     (vis-init (fn [world vis-chs]
                 (let [in-ch (achan-buf world 100)
@@ -35,7 +37,6 @@
                               (cond
                                (= ch cmd-ch) (if (= (:op v) "replay")
                                                (do (aclose client in-ch)
-                                                   (println "closing vis-chs:" vis-chs)
                                                    (doseq [vis-ch (vals vis-chs)]
                                                      (aclose client vis-ch))
                                                    (world-replay world-vis-init el-prefix @client-hist))
@@ -51,7 +52,7 @@
                                                  (recur num-ins (inc num-outs))))))
                   (make-fenced-pump world in-ch out-ch @max-inflight)))
               el-prefix nil)
-    cmd-ch))
+    cmd-inject-ch))
 
 (let [last-id (atom 0)
       gen-id #(swap! last-id inc)]

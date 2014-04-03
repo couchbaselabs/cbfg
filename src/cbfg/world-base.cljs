@@ -5,13 +5,11 @@
             [cbfg.vis :refer [set-el-innerHTML]]))
 
 (defn world-replay [world-vis-init el-prefix client-hist]
-  (println "world-replay" client-hist)
+  (set-el-innerHTML "client" "replaying...")
   (let [cmd-ch (world-vis-init el-prefix)]
-    (when false
     (go (doseq [[opaque [request responses]] (sort #(compare (first %1) (first %2))
                                                    client-hist)]
           (>! cmd-ch request)))))
-)
 
 (defn filter-r [r] (if (map? r)
                      (-> r
