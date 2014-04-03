@@ -360,7 +360,7 @@
                     (apply str
                            (flatten ["<table>"
                                      "<tr><th>op</th><th>fence</th>"
-                                     "    <th>args</th><th>timeline</th></tr>"
+                                     "    <th>request</th><th>timeline</th></tr>"
                                      (map (fn [[opaque [request responses]]]
                                             ["<tr class='"
                                              (when (some #(:result (second %)) responses)

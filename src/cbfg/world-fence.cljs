@@ -8,40 +8,36 @@
             [cbfg.fence :refer [make-fenced-pump]]
             [cbfg.fence-test]))
 
-(defn example-add [actx opaque x y delay]
+(defn example-add [actx c]
   (ago example-add actx
-       (let [timeout-ch (atimeout example-add delay)]
+       (let [timeout-ch (atimeout example-add (:delay c))]
          (atake example-add timeout-ch)
-         {:opaque opaque :result (+ x y)})))
+         (assoc c :result (+ (:x c) (:y c))))))
 
-(defn example-sub [actx opaque x y delay]
+(defn example-sub [actx c]
   (ago example-sub actx
-       (let [timeout-ch (atimeout example-sub delay)]
+       (let [timeout-ch (atimeout example-sub (:delay c))]
          (atake example-sub timeout-ch)
-         {:opaque opaque :result (- x y)})))
+         (assoc c :result (- (:x c) (:y c))))))
 
-(defn example-count [actx opaque x y delay]
+(defn example-count [actx c]
   (let [out (achan actx)]
     (ago example-count actx
-         (doseq [n (range x y)]
-           (let [timeout-ch (atimeout example-count delay)]
+         (doseq [n (range (:x c) (:y c))]
+           (let [timeout-ch (atimeout example-count (:delay c))]
              (atake example-count timeout-ch))
-           (aput example-count out {:opaque opaque :partial n}))
-         (let [timeout-ch (atimeout example-count delay)]
+           (aput example-count out (assoc c :partial n)))
+         (let [timeout-ch (atimeout example-count (:delay c))]
            (atake example-count timeout-ch))
-         (aput example-count out {:opaque opaque :result y})
+         (aput example-count out (assoc c :result (:y c)))
          (aclose example-count out))
     out))
 
 (def example-cmd-handlers
-  {"add"   (fn [c] {:opaque (:opaque c) :fence (:fence c)
-                    :rq #(example-add % (:opaque c) (:x c) (:y c) (:delay c))})
-   "sub"   (fn [c] {:opaque (:opaque c) :fence (:fence c)
-                    :rq #(example-sub % (:opaque c) (:x c) (:y c) (:delay c))})
-   "count" (fn [c] {:opaque (:opaque c) :fence (:fence c)
-                    :rq #(example-count % (:opaque c) (:x c) (:y c) (:delay c))})
-   "test"  (fn [c] {:opaque (:opaque c) :fence (:fence c)
-                    :rq #(cbfg.fence-test/test % (:opaque c))})})
+  {"add"   (fn [c] (assoc c :rq #(example-add % c)))
+   "sub"   (fn [c] (assoc c :rq #(example-sub % c)))
+   "count" (fn [c] (assoc c :rq #(example-count % c)))
+   "test"  (fn [c] (assoc c :rq #(cbfg.fence-test/test % (:opaque c))))})
 
 (def example-max-inflight (atom 10))
 
