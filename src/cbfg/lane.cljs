@@ -29,5 +29,5 @@
                   (let [lane-ch (make-lane-fn lane-pump (:lane m) out-ch)]
                     (aput lane-pump lane-ch m)
                     (recur (assoc lane-chs (:lane m) lane-ch)))))
-              (doseq [[n lane-ch] lane-chs] ; Close all lane-chs and exit.
+              (doseq [[lane-name lane-ch] lane-chs] ; Close lane-chs & exit.
                 (aclose lane-pump lane-ch)))))
