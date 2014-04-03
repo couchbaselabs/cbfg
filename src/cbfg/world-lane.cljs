@@ -1,13 +1,12 @@
 (ns cbfg.world-lane
-  (:require-macros [cbfg.ago :refer [ago ago-loop aclose achan achan-buf
-                                     aalts aput atake atimeout]])
+  (:require-macros [cbfg.ago :refer [ago-loop achan-buf aalts aput]])
   (:require [cljs.core.async :refer [chan]]
             [cbfg.vis :refer [vis-init get-el-value]]
             [cbfg.fence :refer [make-fenced-pump]]
             [cbfg.lane :refer [make-lane-pump]]
             [cbfg.lane-test]
-            [cbfg.world-base :refer [replay-cmd-ch world-replay render-client-hist
-                                     start-test]]))
+            [cbfg.world-base :refer [replay-cmd-ch world-replay
+                                     render-client-hist start-test]]))
 
 (def cmd-handlers
   {"add"    (fn [c] (assoc c :rq #(cbfg.world-base/example-add % c)))
@@ -41,11 +40,8 @@
                                   ts (+ num-ins num-outs)]
                               (cond
                                 (= ch cmd-ch) (if (= (:op v) "replay")
-                                                (do (aclose client in-ch)
-                                                    (doseq [vis-ch (vals vis-chs)]
-                                                      (aclose client vis-ch))
-                                                    (world-replay world-vis-init el-prefix
-                                                                  @client-hist (:x v)))
+                                                (world-replay in-ch vis-chs world-vis-init el-prefix
+                                                              @client-hist (:replay-to v))
                                                 (let [cmd (assoc v :opaque ts)
                                                       cmd-handler ((get cmd-handlers (:op cmd)) cmd)]
                                                   (render-client-hist (swap! client-hist

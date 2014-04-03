@@ -2,23 +2,26 @@
   (:require-macros [cljs.core.async.macros :refer [go]]
                    [cbfg.ago :refer [ago aclose achan aput atake atimeout]])
   (:require [clojure.string :as string]
-            [cljs.core.async :refer [chan <! >! merge map< filter< sliding-buffer]]
+            [cljs.core.async :refer [chan <! >! close! merge map< filter< sliding-buffer]]
             [goog.dom :as gdom]
             [cbfg.vis :refer [listen-el set-el-innerHTML]]))
 
 (defn replay-cmd-ch [cmd-inject-ch el-ids ev-to-cmd-fn]
   (merge [cmd-inject-ch
           (map< #(let [[op x] (string/split (.-id (.-target %)) #"-")]
-                   {:op op :x x})
+                   {:op op :replay-to x})
                 (filter< #(= "BUTTON" (.-tagName (.-target %)))
                          (listen-el (gdom/getElement "client") "click")))
           (map< ev-to-cmd-fn
                 (merge (map #(listen-el (gdom/getElement %) "click")
                             (conj el-ids "replay"))))]))
 
-(defn world-replay [world-vis-init el-prefix client-hist up-to-ts]
-  (let [cmd-ch (world-vis-init el-prefix)]
-    (go (doseq [[opaque [request responses]]
+(defn world-replay [prev-in-ch prev-vis-chs world-vis-init el-prefix client-hist up-to-ts]
+  (go (close! prev-in-ch)
+      (doseq [prev-vis-ch (vals prev-vis-chs)]
+        (close! prev-vis-ch))
+      (let [cmd-ch (world-vis-init el-prefix)]
+        (doseq [[opaque [request responses]]
                 (sort #(compare (first %1) (first %2)) client-hist)]
           (when (or (nil? up-to-ts)
                     (<= opaque up-to-ts))

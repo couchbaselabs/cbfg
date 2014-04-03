@@ -1,12 +1,12 @@
 (ns cbfg.world-store
-  (:require-macros [cbfg.ago :refer [ago ago-loop achan-buf aclose aalts aput]])
-  (:require [cljs.core.async :refer [chan <! sliding-buffer]]
-            [cbfg.vis :refer [vis-init listen-el get-el-value]]
+  (:require-macros [cbfg.ago :refer [ago ago-loop achan-buf aalts aput]])
+  (:require [cljs.core.async :refer [chan]]
+            [cbfg.vis :refer [vis-init get-el-value]]
             [cbfg.fence :refer [make-fenced-pump]]
             [cbfg.store :as store]
             [cbfg.store-test]
-            [cbfg.world-base :refer [replay-cmd-ch world-replay render-client-hist
-                                     start-test]]))
+            [cbfg.world-base :refer [replay-cmd-ch world-replay
+                                     render-client-hist start-test]]))
 
 (defn make-store-cmd-handlers [store]
   {"get"
@@ -67,11 +67,8 @@
                                   ts (+ num-ins num-outs)]
                               (cond
                                (= ch cmd-ch) (if (= (:op v) "replay")
-                                               (do (aclose client in-ch)
-                                                   (doseq [vis-ch (vals vis-chs)]
-                                                     (aclose client vis-ch))
-                                                   (world-replay world-vis-init el-prefix
-                                                                 @client-hist (:x v)))
+                                               (world-replay in-ch vis-chs world-vis-init el-prefix
+                                                             @client-hist (:replay-to v))
                                                (let [op (:op v)
                                                      op-fence (= (get-el-value (str op "-fence")) "1")
                                                      [params handler] (get store-cmd-handlers op)
