@@ -15,6 +15,7 @@
     </select>
     <button id="vis-pause">&#10074;&#10074; pause</button>
     <button id="vis-step">&#9654;&#10074; step</button>
+    <button id="replay">&#8635; replay</button>
   </div>
   <hr/>
   <div>
@@ -157,32 +158,6 @@
           <button id="test">test</button>
         </div>
       </div>
-      <div class="speeds">
-        <div class="cmd">
-          seq. read:
-          <select id="speed-read">
-            <option value="1" selected>full-speed</option>
-            <option value="2">slow</option>
-          </select>
-        </div>
-        <div class="cmd">
-          seq. write:
-          <select id="speed-write">
-            <option value="1" selected>full-speed</option>
-            <option value="2">slow</option>
-          </select>
-        </div>
-        <div class="cmd">
-          seek:
-          <select id="speed-seek">
-            <option value="1" selected>full-speed</option>
-            <option value="2">slow</option>
-          </select>
-        </div>
-        <div class="cmd">
-          <button id="speed-apply">apply</button>
-        </div>
-      </div>
     </div>
     <div id="client"></div>
   </div>
@@ -201,13 +176,8 @@
       border-right: 1px solid #ddd;
       padding-right: 20px;
     }
-    #vis-input div.speeds {
-      display: inline-block;
-      padding-left: 20px;
-      vertical-align: top;
-    }
     #vis-input div.cmd { padding: 5px 5px 5px 5px; }
-    #vis-input div.cmd:hover, #vis-input div.speeds:hover { background-color: #D3F6FF; }
+    #vis-input div.cmd:hover { background-color: #D3F6FF; }
     #vis-input div.cmd label { display: inline-block; width: 80px; }
     #vis-input div.cmd input { width: 80px; }
     #vis-input div.kv { display: inline-block; min-width: 250px; }

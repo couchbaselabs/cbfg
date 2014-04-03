@@ -1,5 +1,5 @@
 (ns cbfg.world-store
-  (:require-macros [cbfg.ago :refer [ago ago-loop achan-buf aalts aput]])
+  (:require-macros [cbfg.ago :refer [ago ago-loop achan-buf aclose aalts aput]])
   (:require [cljs.core.async :refer [chan <! merge map< sliding-buffer]]
             [goog.dom :as gdom]
             [cbfg.fence :refer [make-fenced-pump]]
@@ -48,13 +48,15 @@
    [[] (fn [c] {:rq #(ago store-cmd-noop %
                           {:opaque (:opaque c) :status :ok})})]
    "test"
-   [[] (fn [c] {:rq #(cbfg.store-test/test % (:opaque c))})]})
+   [[] (fn [c] {:rq #(cbfg.store-test/test % (:opaque c))})]
+   "replay"
+   [:never-reached]})
 
 (def store-max-inflight (atom 10))
 
 (defn world-vis-init [el-prefix]
   (let [cmd-inject-ch (chan)]
-    (vis-init (fn [world]
+    (vis-init (fn [world vis-chs]
                 (let [store (store/make-store world)
                       store-cmd-handlers (make-store-cmd-handlers store)
                       cmd-ch (merge [cmd-inject-ch
@@ -68,19 +70,24 @@
                             (let [[v ch] (aalts client [cmd-ch out-ch])
                                   ts (+ num-ins num-outs)]
                               (cond
-                               (= ch cmd-ch) (let [op (:op v)
-                                                   op-fence (= (get-el-value (str op "-fence")) "1")
-                                                   [params handler] (get store-cmd-handlers op)
-                                                   cmd2 (-> v
-                                                            (assoc :opaque ts)
-                                                            (assoc :fence op-fence))
-                                                   cmd3 (reduce #(assoc %1 (keyword %2)
-                                                                        (get-el-value (str op "-" %2)))
-                                                                cmd2 params)]
-                                               (render-client-hist (swap! client-hist
-                                                                          #(assoc % ts [cmd3 nil])))
-                                               (aput client in-ch (cljs.core/merge cmd3 (handler cmd3)))
-                                               (recur (inc num-ins) num-outs))
+                               (= ch cmd-ch) (if (= (:op v) "replay")
+                                               (do (aclose client in-ch)
+                                                   (doseq [vis-ch (vals vis-chs)]
+                                                     (aclose client vis-ch))
+                                                   (world-replay world-vis-init el-prefix @client-hist))
+                                               (let [op (:op v)
+                                                     op-fence (= (get-el-value (str op "-fence")) "1")
+                                                     [params handler] (get store-cmd-handlers op)
+                                                     cmd2 (-> v
+                                                              (assoc :opaque ts)
+                                                              (assoc :fence op-fence))
+                                                     cmd3 (reduce #(assoc %1 (keyword %2)
+                                                                          (get-el-value (str op "-" %2)))
+                                                                  cmd2 params)]
+                                                 (render-client-hist (swap! client-hist
+                                                                            #(assoc % ts [cmd3 nil])))
+                                                 (aput client in-ch (cljs.core/merge cmd3 (handler cmd3)))
+                                                 (recur (inc num-ins) num-outs)))
                                (= ch out-ch) (do (render-client-hist (swap! client-hist
                                                                             #(update-in % [(:opaque v) 1]
                                                                                         conj [ts v])))
