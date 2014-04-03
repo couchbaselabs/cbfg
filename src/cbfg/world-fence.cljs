@@ -12,8 +12,7 @@
   {"add"    (fn [c] (assoc c :rq #(cbfg.world-base/example-add % c)))
    "sub"    (fn [c] (assoc c :rq #(cbfg.world-base/example-sub % c)))
    "count"  (fn [c] (assoc c :rq #(cbfg.world-base/example-count % c)))
-   "test"   (fn [c] (assoc c :rq #(cbfg.fence-test/test % (:opaque c))))
-   "replay" (fn [c] nil)})
+   "test"   (fn [c] (assoc c :rq #(cbfg.fence-test/test % (:opaque c))))})
 
 (def max-inflight (atom 10))
 
@@ -26,7 +25,7 @@
                                        :delay (js/parseInt (get-el-value "delay"))
                                        :fence (= (get-el-value "fence") "1")})
                              (merge (map #(listen-el (gdom/getElement %) "click")
-                                         (keys cmd-handlers))))])
+                                         (conj (keys cmd-handlers) "replay"))))])
         client-hist (atom {})] ; Keyed by opaque -> [request, replies].
     (vis-init (fn [world vis-chs]
                 (let [in-ch (achan-buf world 100)

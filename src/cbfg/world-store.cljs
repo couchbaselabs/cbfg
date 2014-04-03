@@ -48,9 +48,7 @@
    [[] (fn [c] {:rq #(ago store-cmd-noop %
                           {:opaque (:opaque c) :status :ok})})]
    "test"
-   [[] (fn [c] {:rq #(cbfg.store-test/test % (:opaque c))})]
-   "replay"
-   [:never-reached]})
+   [[] (fn [c] {:rq #(cbfg.store-test/test % (:opaque c))})]})
 
 (def store-max-inflight (atom 10))
 
@@ -62,7 +60,7 @@
                       cmd-ch (merge [cmd-inject-ch
                                      (map< (fn [ev] {:op (.-id (.-target ev))})
                                            (merge (map #(listen-el (gdom/getElement %) "click")
-                                                       (keys store-cmd-handlers))))])
+                                                       (conj (keys store-cmd-handlers) "replay"))))])
                       client-hist (atom {}) ; Keyed by opaque -> [request, replies]
                       in-ch (achan-buf world 100)
                       out-ch (achan-buf world 0)]
