@@ -271,7 +271,7 @@
                             </select>
                             <button id='" el-prefix "-pause'>&#10074;&#10074; pause</button>
                             <button id='" el-prefix "-step'>&#9654;&#10074; step</button>
-                            <button id='replay'>&#8635; replay</button>"))
+                            <button id='replay'>&#8635; replay all</button>"))
   (let [run-controls
         {"run"   #(do (when (< @event-delay 0) (put! step-ch true))
                       (reset! event-delay
