@@ -10,7 +10,7 @@
                 (sort #(compare (first %1) (first %2)) client-hist)]
           (when (or (nil? up-to-ts)
                     (<= opaque up-to-ts))
-            (>! cmd-ch request))))))
+            (>! cmd-ch (dissoc request :opaque)))))))
 
 (defn filter-r [r] (if (map? r)
                      (-> r

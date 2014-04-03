@@ -85,8 +85,8 @@
                                                      cmd2 (-> v
                                                               (assoc :opaque ts)
                                                               (assoc :fence op-fence))
-                                                     cmd3 (reduce #(assoc %1 (keyword %2)
-                                                                          (get-el-value (str op "-" %2)))
+                                                     cmd3 (reduce #(cljs.core/merge {(keyword %2) (get-el-value (str op "-" %2))}
+                                                                                    %1) ; Using merge so cmd2 has precedence.
                                                                   cmd2 params)]
                                                  (render-client-hist (swap! client-hist
                                                                             #(assoc % ts [cmd3 nil])))
