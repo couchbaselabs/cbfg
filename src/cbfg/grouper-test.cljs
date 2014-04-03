@@ -80,7 +80,12 @@
                          (e n
                             (atake tg take-all-ch)
                             {:c :C :d :D}
-                            nil))))
+                            nil)))
+                  (do (aclose tg put-ch)
+                      (e n
+                         (atake tg take-all-ch)
+                         nil
+                         nil)))
            "pass"
            (str "FAIL: on test-grouper #" @n)))))
 
