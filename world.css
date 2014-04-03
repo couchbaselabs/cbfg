@@ -150,5 +150,50 @@ button.toggle {
     color: #666;
     background-color: rgba(0,0,0,0);
 }
-
+.client { margin-top: 20px; }
+#client { margin-left: 4em; }
+#client table.hist tr { border: 1px solid #999; }
+#client table.hist tr th { text-align: left; }
+#client table.hist tr td {
+  padding-right: 10px;
+  color: green;
+  vertical-align: top;
+  white-space: nowrap;
+}
+#client table.hist tr.complete td {
+  color: #666;
+}
+#client table.hist tr.hist-event td {
+  border-top: 1px solid #FFFCF1;
+}
+#client table.hist tr.hist-event:hover td {
+  border-top: 1px solid #dde;
+}
+#client table.hist li {
+  position: relative;
+}
+#client table.hist li div.timeline-focus {
+  position: absolute;
+  display: none;
+}
+#client table.hist li:hover div.timeline-focus {
+  position: absolute;
+  display: block;
+  top: -1000px;
+  left: -18px;
+  width: 6px;
+  height: 6000px;
+  z-index: -1;
+  background-color: #dde;
+}
+#client table.hist li button {
+  display: none;
+}
+#client table.hist li:hover button {
+  position: absolute;
+  display: block;
+  top: 0px;
+  left: -10px;
+  z-index: 1;
+}
 

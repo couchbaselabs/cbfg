@@ -5,7 +5,6 @@
             [cbfg.vis :refer [set-el-innerHTML]]))
 
 (defn world-replay [world-vis-init el-prefix client-hist]
-  (set-el-innerHTML "client" "replaying...")
   (let [cmd-ch (world-vis-init el-prefix)]
     (go (doseq [[opaque [request responses]] (sort #(compare (first %1) (first %2))
                                                    client-hist)]
@@ -21,19 +20,22 @@
 (defn render-client-hist [client-hist]
   (set-el-innerHTML "client"
                     (apply str
-                           (flatten ["<table>"
+                           (flatten ["<table class='hist'>"
                                      "<tr><th>op</th><th>fence</th>"
                                      "    <th>request</th><th>timeline</th></tr>"
                                      (map (fn [[ts [request responses]]]
-                                            ["<tr class='"
+                                            ["<tr class='hist-event"
                                              (when (some #(:result (second %)) responses)
-                                               "complete") "'>"
+                                               " complete") "'>"
                                              " <td>" (:op request) "</td>"
                                              " <td>" (:fence request) "</td>"
                                              " <td>" (filter-r request) "</td>"
                                              " <td class='responses'><ul>"
-                                             "<li style='list-type: none; margin-left: "
-                                             ts "em;'>request</li>"
+                                             "  <li style='list-type: none; margin-left: "
+                                             ts "em;'>request"
+                                             "   <div class='timeline-focus'></div>"
+                                             "   <button>&lt; replay requests to here</button>"
+                                             "  </li>"
                                              (map (fn [[response-ts response]]
                                                     ["<li style='margin-left: " response-ts "em;'>"
                                                      (-> (filter-r response)
@@ -41,7 +43,7 @@
                                                          (dissoc :delay))
                                                      "</li>"])
                                                   (reverse responses))
-                                             "</ul></td>"
+                                             " </ul></td>"
                                              "</tr>"])
                                           (sort #(compare [(:lane (first (second %1))) (first %1)]
                                                           [(:lane (first (second %2))) (first %2)])
