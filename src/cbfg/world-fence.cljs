@@ -3,11 +3,10 @@
                                      aalts aput atake atimeout]])
   (:require [cljs.core.async :refer [chan <! merge map< sliding-buffer]]
             [goog.dom :as gdom]
-            [cbfg.vis :refer [vis-init listen-el get-el-value
-                              set-el-innerHTML render-client-cmds]]
+            [cbfg.vis :refer [vis-init listen-el get-el-value set-el-innerHTML]]
             [cbfg.fence :refer [make-fenced-pump]]
             [cbfg.fence-test]
-            [cbfg.world-base]))
+            [cbfg.world-base :refer [render-client-cmds]]))
 
 (def example-cmd-handlers
   {"add"   (fn [c] (assoc c :rq #(cbfg.world-base/example-add % c)))

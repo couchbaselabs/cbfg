@@ -1,5 +1,43 @@
 (ns cbfg.world-base
-  (:require-macros [cbfg.ago :refer [ago aclose achan aput atake atimeout]]))
+  (:require-macros [cbfg.ago :refer [ago aclose achan aput atake atimeout]])
+  (:require [cbfg.vis :refer [vis-init listen-el get-el-value set-el-innerHTML]]))
+
+(defn filter-r [r] (if (map? r)
+                     (-> r
+                         (dissoc :opaque)
+                         (dissoc :op)
+                         (dissoc :fence))
+                     r))
+
+(defn render-client-cmds [client-cmds]
+  (set-el-innerHTML "client"
+                    (apply str
+                           (flatten ["<table>"
+                                     "<tr><th>op</th><th>fence</th>"
+                                     "    <th>request</th><th>timeline</th></tr>"
+                                     (map (fn [[opaque [request responses]]]
+                                            ["<tr class='"
+                                             (when (some #(:result (second %)) responses)
+                                               "complete") "'>"
+                                             " <td>" (:op request) "</td>"
+                                             " <td>" (:fence request) "</td>"
+                                             " <td>" (filter-r request) "</td>"
+                                             " <td class='responses'><ul>"
+                                             "<li style='list-type: none; margin-left: "
+                                             opaque "em;'>request</li>"
+                                             (map (fn [[out-time response]]
+                                                    ["<li style='margin-left: " out-time "em;'>"
+                                                     (dissoc (filter-r response) :lane)
+                                                     "</li>"])
+                                                  (reverse responses))
+                                             "</ul></td>"
+                                             "</tr>"])
+                                          (sort #(compare [(:lane (first (second %1))) (first %1)]
+                                                          [(:lane (first (second %2))) (first %2)])
+                                                client-cmds))
+                                     "</table>"]))))
+
+;; ------------------------------------------------
 
 (defn example-add [actx c]
   (ago example-add actx

@@ -5,8 +5,8 @@
             [cbfg.fence :refer [make-fenced-pump]]
             [cbfg.store :as store]
             [cbfg.store-test]
-            [cbfg.vis :refer [vis-init listen-el get-el-value
-                              set-el-innerHTML render-client-cmds]]))
+            [cbfg.vis :refer [vis-init listen-el get-el-value set-el-innerHTML]]
+            [cbfg.world-base :refer [render-client-cmds]]))
 
 (defn make-store-cmd-handlers [store]
   {"get"
