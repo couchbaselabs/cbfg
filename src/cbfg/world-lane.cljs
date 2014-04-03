@@ -17,6 +17,12 @@
    "test"  (fn [c] (assoc c :rq #(cbfg.lane-test/test % (:opaque c))))})
 
 (def example-max-inflight (atom 10))
+(def example-lane-buf-size (atom 20))
+
+(defn make-fenced-pump-lane [actx lane-name lane-out-ch]
+  (let [lane-in-ch (achan-buf actx @example-lane-buf-size)]
+    (make-fenced-pump actx lane-in-ch lane-out-ch @example-max-inflight)
+    lane-in-ch))
 
 (defn world-vis-init [el-prefix]
   (let [cmd-ch (map< (fn [ev] {:op (.-id (.-target ev))
@@ -45,7 +51,7 @@
                                                                              #(update-in % [(:opaque v) 1]
                                                                                          conj [ts v])))
                                                   (recur num-ins (inc num-outs))))))
-                  (make-fenced-pump world in-ch out-ch @example-max-inflight)))
+                  (make-lane-pump world in-ch out-ch make-fenced-pump-lane)))
               el-prefix nil)))
 
 (let [last-id (atom 0)
