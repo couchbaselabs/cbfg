@@ -22,7 +22,7 @@
     (make-fenced-pump actx lane-in-ch lane-out-ch @max-inflight)
     lane-in-ch))
 
-(defn world-vis-init [el-prefix]
+(defn world-vis-init [el-prefix init-event-delay]
   (let [cmd-inject-ch (chan)
         cmd-ch (replay-cmd-ch cmd-inject-ch (keys cmd-handlers)
                               (fn [ev] {:op (.-id (.-target ev))
@@ -53,7 +53,7 @@
                                                                                          conj [ts v])))
                                                   (recur num-ins (inc num-outs))))))
                   (make-lane-pump world in-ch out-ch make-fenced-pump-lane)))
-              el-prefix nil)
+              el-prefix nil init-event-delay)
     cmd-inject-ch))
 
 (start-test "lane-test" cbfg.lane-test/test)

@@ -15,7 +15,7 @@
 
 (def max-inflight (atom 10))
 
-(defn world-vis-init [el-prefix]
+(defn world-vis-init [el-prefix init-event-delay]
   (let [cmd-inject-ch (chan)
         cmd-ch (replay-cmd-ch cmd-inject-ch (keys cmd-handlers)
                               (fn [ev] {:op (.-id (.-target ev))
@@ -45,7 +45,7 @@
                                                                                         conj [ts v])))
                                                  (recur num-ins (inc num-outs))))))
                   (make-fenced-pump world in-ch out-ch @max-inflight)))
-              el-prefix nil)
+              el-prefix nil init-event-delay)
     cmd-inject-ch))
 
 (start-test "fence-test" cbfg.fence-test/test)

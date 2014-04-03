@@ -52,7 +52,7 @@
 
 (def store-max-inflight (atom 10))
 
-(defn world-vis-init [el-prefix]
+(defn world-vis-init [el-prefix init-event-delay]
   (let [cmd-inject-ch (chan)]
     (vis-init (fn [world vis-chs]
                 (let [store (store/make-store world)
@@ -89,7 +89,7 @@
                                                                                         conj [ts v])))
                                                  (recur num-ins (inc num-outs))))))
                   (make-fenced-pump world in-ch out-ch @store-max-inflight)))
-              el-prefix nil)
+              el-prefix nil init-event-delay)
     cmd-inject-ch))
 
 (start-test "store-test" cbfg.store-test/test)

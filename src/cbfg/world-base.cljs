@@ -4,7 +4,7 @@
   (:require [clojure.string :as string]
             [cljs.core.async :refer [chan <! >! close! merge map< filter< sliding-buffer]]
             [goog.dom :as gdom]
-            [cbfg.vis :refer [listen-el set-el-innerHTML]]))
+            [cbfg.vis :refer [listen-el get-el-value set-el-innerHTML]]))
 
 (defn replay-cmd-ch [cmd-inject-ch el-ids ev-to-cmd-fn]
   (merge [cmd-inject-ch
@@ -20,7 +20,8 @@
   (go (close! prev-in-ch)
       (doseq [prev-vis-ch (vals prev-vis-chs)]
         (close! prev-vis-ch))
-      (let [cmd-ch (world-vis-init el-prefix)]
+      (let [cmd-ch (world-vis-init el-prefix
+                                   (js/parseInt (get-el-value (str el-prefix "-run-delay"))))]
         (doseq [[opaque [request responses]]
                 (sort #(compare (first %1) (first %2)) client-hist)]
           (when (or (nil? up-to-ts)

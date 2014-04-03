@@ -290,10 +290,10 @@
 
 ;; ------------------------------------------------
 
-(defn vis-init [world-init-cb el-prefix on-render-cb]
+(defn vis-init [world-init-cb el-prefix on-render-cb init-event-delay]
   (let [step-ch (chan (dropping-buffer 1))
         event-ch (chan)
-        event-delay (atom 0)
+        event-delay (atom init-event-delay)
         render-ch (chan)
         last-id (atom 0)
         gen-id #(swap! last-id inc)
