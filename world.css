@@ -1,13 +1,25 @@
 body {
-    background-color: #FFFCF1;
+    margin: 0 0 0 0;
+    padding: 0 0 0 0;
     font-family: Tahoma, Geneva, sans-serif;
+    background-color: #FFFCF1;
+}
+.container {
+    margin: 0 0 0 0;
+    padding: 0 10px 0 15px;
 }
 input {
     background-color: #FFF6D3;
 }
+#vis-run-controls {
+    margin: 0 0 0 0;
+    background-color: #FFFCF1;
+    padding-top: 10px;
+}
 #vis-input, #vis-event {
     min-height: 2em;
     margin-left: 2em;
+    background-color: #FFFCF1;
     color: #666;
 }
 #vis-event {
@@ -23,7 +35,8 @@ input {
     overflow: scroll;
 }
 .vis {
-    margin-top: 20px;
+    padding-top: 20px;
+    background-color: #FFFCF1;
 }
 .vis, .vis * {
     font-size: 20px;
@@ -153,56 +166,65 @@ button.toggle {
     color: #666;
     background-color: rgba(0,0,0,0);
 }
-.client { margin-top: 20px; }
+.client-label {
+    margin: 0 0 0 0;
+    background-color: #FFFCF1;
+    padding-top: 20px;
+}
 #client { margin-left: 4em; }
 #client table.hist tr { border: 1px solid #999; }
-#client table.hist tr th { text-align: left; }
+#client table.hist tr th {
+    border-top: 1px solid #FFFCF1;
+    text-align: left;
+}
 #client table.hist tr td {
-  padding-right: 10px;
-  color: green;
-  vertical-align: top;
-  white-space: nowrap;
+    padding-right: 10px;
+    color: green;
+    vertical-align: top;
+    white-space: nowrap;
 }
 #client table.hist tr.complete td {
-  color: #666;
+    color: #666;
 }
 #client table.hist tr.hist-event td {
-  border-top: 1px solid #FFFCF1;
+    border-top: 1px solid #FFFCF1;
 }
 #client table.hist tr.hist-event:hover td {
-  border-top: 1px solid #dde;
+    border-top: 1px solid #dde;
 }
 #client table.hist li {
-  position: relative;
+    position: relative;
 }
 #client table.hist li div.timeline-focus {
-  position: absolute;
-  display: none;
+    position: absolute;
+    display: none;
 }
 #client table.hist li:hover div.timeline-focus {
-  position: absolute;
-  display: block;
-  top: -1000px;
-  left: -18px;
-  width: 6px;
-  height: 6000px;
-  z-index: -1;
-  background-color: #dde;
+    position: absolute;
+    display: block;
+    top: -1000px;
+    left: -18px;
+    width: 6px;
+    height: 6000px;
+    z-index: -1;
+    background-color: #dde;
 }
 #client table.hist li button {
-  display: none;
+    display: none;
 }
 #client table.hist li:hover button {
-  position: absolute;
-  display: block;
-  top: 0px;
-  left: -10px;
-  z-index: 1;
+    position: absolute;
+    display: block;
+    top: 0px;
+    left: -10px;
+    z-index: 1;
 }
 .event {
-  margin-top: 60px; border-top: 1px solid #ddd;
+    margin-top: 60px;
+    border-top: 1px solid #ddd;
+    background-color: #FFFCF1;
 }
 .event, #event {
-  white-space: nowrap;
+    white-space: nowrap;
 }
 
