@@ -161,13 +161,13 @@
      " </button>"
      " <span class='actx-id'>" actx-id "</span>&nbsp;"
      " <div class='loop-state'>" (vis-html-loop-state vis (:loop-state actx-info)) "</div>"
-     "<div class='chs'><ul>"
+     " <div class='chs'><ul>"
      (mapv (fn [ch-info]
              (let [ch-id (:id ch-info)]
                ["<li id='ch-" ch-id "'><span class='ch-id'>" ch-id ":</span>&nbsp;"
                 "<span class='msgs'>" (keys (:msgs ch-info)) "</span></li>"]))
            (sort-by :id (vals (get actx-ch-ch-infos actx))))
-     "</ul></div>"
+     " </ul></div>"
      (when (not (:closed actx-info))
        ["<ul class='children'>"
         (mapv (fn [child-actx]
