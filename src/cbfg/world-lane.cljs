@@ -36,7 +36,7 @@
                              (merge (map #(listen-el (gdom/getElement %) "click")
                                          (keys cmd-handlers))))])
         client-hist (atom {})] ; Keyed by opaque -> [request, replies].
-    (vis-init (fn [world]
+    (vis-init (fn [world vis-chs]
                 (let [in-ch (achan-buf world 100)
                       out-ch (achan-buf world 0)]
                   (ago-loop client world [num-ins 0 num-outs 0]
