@@ -5,7 +5,8 @@
             [cbfg.fence :refer [make-fenced-pump]]
             [cbfg.store :as store]
             [cbfg.store-test]
-            [cbfg.world-base :refer [replay-cmd-ch world-replay render-client-hist]]))
+            [cbfg.world-base :refer [replay-cmd-ch world-replay render-client-hist
+                                     start-test]]))
 
 (defn make-store-cmd-handlers [store]
   {"get"
@@ -94,8 +95,4 @@
               el-prefix nil)
     cmd-inject-ch))
 
-(let [last-id (atom 0)
-      gen-id #(swap! last-id inc)]
-  (ago test-actx [{:gen-id gen-id :event-ch (chan (sliding-buffer 1))}]
-       (println "store-test:"
-                (<! (cbfg.store-test/test test-actx 0)))))
+(start-test "store-test" cbfg.store-test/test)

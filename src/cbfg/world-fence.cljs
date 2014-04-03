@@ -1,13 +1,12 @@
 (ns cbfg.world-fence
   (:require-macros [cbfg.ago :refer [ago ago-loop aclose achan achan-buf
                                      aalts aput atake atimeout]])
-  (:require [clojure.string :as string]
-            [cljs.core.async :refer [chan <! sliding-buffer]]
-            [goog.dom :as gdom]
+  (:require [cljs.core.async :refer [chan]]
             [cbfg.vis :refer [vis-init get-el-value]]
             [cbfg.fence :refer [make-fenced-pump]]
             [cbfg.fence-test]
-            [cbfg.world-base :refer [replay-cmd-ch world-replay render-client-hist]]))
+            [cbfg.world-base :refer [replay-cmd-ch world-replay render-client-hist
+                                     start-test]]))
 
 (def cmd-handlers
   {"add"    (fn [c] (assoc c :rq #(cbfg.world-base/example-add % c)))
@@ -53,8 +52,4 @@
               el-prefix nil)
     cmd-inject-ch))
 
-(let [last-id (atom 0)
-      gen-id #(swap! last-id inc)]
-  (ago test-actx [{:gen-id gen-id :event-ch (chan (sliding-buffer 1))}]
-       (println "fence-test:"
-                (<! (cbfg.fence-test/test test-actx 0)))))
+(start-test "fence-test" cbfg.fence-test/test)

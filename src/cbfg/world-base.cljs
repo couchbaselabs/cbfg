@@ -2,7 +2,7 @@
   (:require-macros [cljs.core.async.macros :refer [go]]
                    [cbfg.ago :refer [ago aclose achan aput atake atimeout]])
   (:require [clojure.string :as string]
-            [cljs.core.async :refer [>! merge map< filter<]]
+            [cljs.core.async :refer [chan <! >! merge map< filter< sliding-buffer]]
             [goog.dom :as gdom]
             [cbfg.vis :refer [listen-el set-el-innerHTML]]))
 
@@ -66,6 +66,13 @@
                                      "</table>"]))))
 
 ;; ------------------------------------------------
+
+(defn start-test [name test-fn]
+  (let [last-id (atom 0)
+        gen-id #(swap! last-id inc)]
+    (ago test-actx [{:gen-id gen-id :event-ch (chan (sliding-buffer 1))}]
+         (println (str name ":")
+                  (<! (test-fn test-actx 0))))))
 
 (defn example-add [actx c]
   (ago example-add actx
