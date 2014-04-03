@@ -3,22 +3,8 @@
   <link href="world.css" rel="stylesheet" type="text/css">
 </head>
 <body>
-  <div>
-    <button id="vis-run">&#9654; run</button>
-    <select id="vis-run-delay">
-      <option value="0" selected>full speed</option>
-      <option value="100">0.1 sec delay</option>
-      <option value="500">0.5 sec delay</option>
-      <option value="1000">1 sec delay</option>
-      <option value="2000">2 sec delay</option>
-      <option value="5000">5 sec delay</option>
-    </select>
-    <button id="vis-pause">&#10074;&#10074; pause</button>
-    <button id="vis-step">&#9654;&#10074; step</button>
-    <button id="replay">&#8635; replay</button>
-  </div>
-  <hr/>
-  <div>
+  <div id="vis-run-controls"></div>
+  <div class="client">
     client:
     <div id="vis-input">
       <div class="cmds">
@@ -182,6 +168,7 @@
     #vis-input div.cmd input { width: 80px; }
     #vis-input div.kv { display: inline-block; min-width: 250px; }
     #vis-input button { display: inline-block; width: 60px; }
+    .client { margin-top: 20px; }
     #client { margin-left: 4em; }
     #client table tr { border: 1px solid #999; }
     #client table tr th { text-align: left; }

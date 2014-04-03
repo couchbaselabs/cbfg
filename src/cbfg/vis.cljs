@@ -259,14 +259,29 @@
 ;; ------------------------------------------------
 
 (defn vis-run-controls [event-delay step-ch el-prefix]
-  (let [run-controls {"run"   #(do (when (< @event-delay 0) (put! step-ch true))
-                                   (reset! event-delay
-                                           (js/parseInt (get-el-value (str el-prefix "-run-delay")))))
-                      "pause" #(reset! event-delay -1)
-                      "step"  #(do (reset! event-delay -1)
-                                   (put! step-ch true))}
-        run-controls-ch (merge (map #(listen-el (gdom/getElement (str el-prefix "-" %)) "click")
-                                   (keys run-controls)))]
+  (set-el-innerHTML (str el-prefix "-run-controls")
+                    (str "<button id='" el-prefix "-run'>&#9654; run</button>
+                            <select id='" el-prefix "-run-delay'>
+                              <option value='0' selected>full speed</option>
+                              <option value='100'>0.1 sec delay</option>
+                              <option value='500'>0.5 sec delay</option>
+                              <option value='1000'>1 sec delay</option>
+                              <option value='2000'>2 sec delay</option>
+                              <option value='5000'>5 sec delay</option>
+                            </select>
+                            <button id='" el-prefix "-pause'>&#10074;&#10074; pause</button>
+                            <button id='" el-prefix "-step'>&#9654;&#10074; step</button>
+                            <button id='replay'>&#8635; replay</button>"))
+  (let [run-controls
+        {"run"   #(do (when (< @event-delay 0) (put! step-ch true))
+                      (reset! event-delay
+                              (js/parseInt (get-el-value (str el-prefix "-run-delay")))))
+         "pause" #(reset! event-delay -1)
+         "step"  #(do (reset! event-delay -1)
+                      (put! step-ch true))}
+        run-controls-ch
+        (merge (map #(listen-el (gdom/getElement (str el-prefix "-" %)) "click")
+                    (keys run-controls)))]
     (go-loop []
       (when-let [rc (<! run-controls-ch)]
         ((get run-controls (no-prefix (.-id (.-target rc)))))
