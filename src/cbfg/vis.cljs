@@ -378,6 +378,7 @@
                                                   (reverse responses))
                                              "</ul></td>"
                                              "</tr>"])
-                                          (sort #(compare (first %1) (first %2))
+                                          (sort #(compare [(:lane (first (second %1))) (first %1)]
+                                                          [(:lane (first (second %2))) (first %2)])
                                                 client-cmds))
                                      "</table>"]))))
