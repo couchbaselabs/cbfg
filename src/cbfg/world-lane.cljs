@@ -7,20 +7,20 @@
             [cbfg.fence :refer [make-fenced-pump]]
             [cbfg.lane :refer [make-lane-pump]]
             [cbfg.lane-test]
-            [cbfg.world-base :refer [render-client-hist]]))
+            [cbfg.world-base :refer [world-replay render-client-hist]]))
 
-(def example-cmd-handlers
+(def cmd-handlers
   {"add"   (fn [c] (assoc c :rq #(cbfg.world-base/example-add % c)))
    "sub"   (fn [c] (assoc c :rq #(cbfg.world-base/example-sub % c)))
    "count" (fn [c] (assoc c :rq #(cbfg.world-base/example-count % c)))
    "test"  (fn [c] (assoc c :rq #(cbfg.lane-test/test % (:opaque c))))})
 
-(def example-max-inflight (atom 10))
-(def example-lane-buf-size (atom 20))
+(def max-inflight (atom 10))
+(def lane-buf-size (atom 20))
 
 (defn make-fenced-pump-lane [actx lane-name lane-out-ch]
-  (let [lane-in-ch (achan-buf actx @example-lane-buf-size)]
-    (make-fenced-pump actx lane-in-ch lane-out-ch @example-max-inflight)
+  (let [lane-in-ch (achan-buf actx @lane-buf-size)]
+    (make-fenced-pump actx lane-in-ch lane-out-ch @max-inflight)
     lane-in-ch))
 
 (defn world-vis-init [el-prefix]
@@ -31,7 +31,7 @@
                                :fence (= (get-el-value "fence") "1")
                                :lane (get-el-value "lane")})
                      (merge (map #(listen-el (gdom/getElement %) "click")
-                                 (keys example-cmd-handlers))))
+                                 (keys cmd-handlers))))
         client-hist (atom {})] ; Keyed by opaque -> [request, replies].
     (vis-init (fn [world]
                 (let [in-ch (achan-buf world 100)
@@ -41,7 +41,7 @@
                                   ts (+ num-ins num-outs)]
                               (cond
                                 (= ch cmd-ch) (let [cmd (assoc v :opaque ts)
-                                                    cmd-handler ((get example-cmd-handlers (:op cmd)) cmd)]
+                                                    cmd-handler ((get cmd-handlers (:op cmd)) cmd)]
                                                 (render-client-hist (swap! client-hist
                                                                            #(assoc % ts [cmd nil])))
                                                 (aput client in-ch cmd-handler)

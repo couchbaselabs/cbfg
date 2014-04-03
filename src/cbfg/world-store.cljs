@@ -6,7 +6,7 @@
             [cbfg.store :as store]
             [cbfg.store-test]
             [cbfg.vis :refer [vis-init listen-el get-el-value]]
-            [cbfg.world-base :refer [render-client-hist]]))
+            [cbfg.world-base :refer [world-replay render-client-hist]]))
 
 (defn make-store-cmd-handlers [store]
   {"get"
