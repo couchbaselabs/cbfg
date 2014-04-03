@@ -27,7 +27,9 @@
                                              opaque "em;'>request</li>"
                                              (map (fn [[out-time response]]
                                                     ["<li style='margin-left: " out-time "em;'>"
-                                                     (dissoc (filter-r response) :lane)
+                                                     (-> (filter-r response)
+                                                         (dissoc :lane)
+                                                         (dissoc :delay))
                                                      "</li>"])
                                                   (reverse responses))
                                              "</ul></td>"
