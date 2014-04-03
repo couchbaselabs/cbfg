@@ -13,9 +13,10 @@
   (let [lane-in-ch (achan actx)]
     (ago-loop lane-echo actx
               [num-msgs 0]
-              (when-let [m (atake lane-echo lane-in-ch)]
-                (aput lane-echo lane-out-ch [lane-name num-msgs m])
-                (recur (inc num-msgs))))
+              (if-let [m (atake lane-echo lane-in-ch)]
+                (do (aput lane-echo lane-out-ch [lane-name num-msgs m])
+                    (recur (inc num-msgs)))
+                (aput lane-echo lane-out-ch :done)))
     lane-in-ch))
 
 (defn test-lane-pump [actx]
@@ -64,16 +65,31 @@
                          (atake tlp out-ch)
                          {:lane :a :op :close-lane :status :ok}
                          nil))
+                  (e n
+                     (atake tlp out-ch) ; For lane :a.
+                     :done
+                     nil)
                   (do (aput tlp in-ch {:lane :a :x 1000})
                       (e n
                          (atake tlp out-ch)
                          [:a 0 {:lane :a :x 1000}]
                          nil))
                   (do (aclose tlp in-ch)
-                      (aclose tlp out-ch)
-                      true))
+                      true)
+                  (e n
+                     (atake tlp out-ch) ; For lane :a.
+                     :done
+                     nil)
+                  (e n
+                     (atake tlp out-ch) ; For lane :b.
+                     :done
+                     nil)
+                  (e n
+                     (atake tlp out-ch) ; For lane nil.
+                     :done
+                     nil))
            "pass"
-           (str "FAIL: on test-grouper #" @n)))))
+           (str "FAIL: on test-lane #" @n)))))
 
 (defn test [actx opaque]
   (ago test actx
