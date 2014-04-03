@@ -1,8 +1,20 @@
 (ns cbfg.world-base
   (:require-macros [cljs.core.async.macros :refer [go]]
                    [cbfg.ago :refer [ago aclose achan aput atake atimeout]])
-  (:require [cljs.core.async :refer [>!]]
-            [cbfg.vis :refer [set-el-innerHTML]]))
+  (:require [clojure.string :as string]
+            [cljs.core.async :refer [>! merge map< filter<]]
+            [goog.dom :as gdom]
+            [cbfg.vis :refer [listen-el set-el-innerHTML]]))
+
+(defn replay-cmd-ch [cmd-inject-ch el-ids ev-to-cmd-fn]
+  (merge [cmd-inject-ch
+          (map< #(let [[op x] (string/split (.-id (.-target %)) #"-")]
+                   {:op op :x x})
+                (filter< #(= "BUTTON" (.-tagName (.-target %)))
+                         (listen-el (gdom/getElement "client") "click")))
+          (map< ev-to-cmd-fn
+                (merge (map #(listen-el (gdom/getElement %) "click")
+                            (conj el-ids "replay"))))]))
 
 (defn world-replay [world-vis-init el-prefix client-hist up-to-ts]
   (let [cmd-ch (world-vis-init el-prefix)]

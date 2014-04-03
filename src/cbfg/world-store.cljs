@@ -1,13 +1,11 @@
 (ns cbfg.world-store
   (:require-macros [cbfg.ago :refer [ago ago-loop achan-buf aclose aalts aput]])
-  (:require [clojure.string :as string]
-            [cljs.core.async :refer [chan <! merge map< filter< sliding-buffer]]
-            [goog.dom :as gdom]
+  (:require [cljs.core.async :refer [chan <! sliding-buffer]]
+            [cbfg.vis :refer [vis-init listen-el get-el-value]]
             [cbfg.fence :refer [make-fenced-pump]]
             [cbfg.store :as store]
             [cbfg.store-test]
-            [cbfg.vis :refer [vis-init listen-el get-el-value]]
-            [cbfg.world-base :refer [world-replay render-client-hist]]))
+            [cbfg.world-base :refer [replay-cmd-ch world-replay render-client-hist]]))
 
 (defn make-store-cmd-handlers [store]
   {"get"
@@ -58,14 +56,8 @@
     (vis-init (fn [world vis-chs]
                 (let [store (store/make-store world)
                       store-cmd-handlers (make-store-cmd-handlers store)
-                      cmd-ch (merge [cmd-inject-ch
-                                     (map< #(let [[op x] (string/split (.-id (.-target %)) #"-")]
-                                              {:op op :x x})
-                                           (filter< #(= "BUTTON" (.-tagName (.-target %)))
-                                                    (listen-el (gdom/getElement "client") "click")))
-                                     (map< (fn [ev] {:op (.-id (.-target ev))})
-                                           (merge (map #(listen-el (gdom/getElement %) "click")
-                                                       (conj (keys store-cmd-handlers) "replay"))))])
+                      cmd-ch (replay-cmd-ch cmd-inject-ch (keys store-cmd-handlers)
+                                            (fn [ev] {:op (.-id (.-target ev))}))
                       client-hist (atom {}) ; Keyed by opaque -> [request, replies]
                       in-ch (achan-buf world 100)
                       out-ch (achan-buf world 0)]

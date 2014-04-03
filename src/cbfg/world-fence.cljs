@@ -2,12 +2,12 @@
   (:require-macros [cbfg.ago :refer [ago ago-loop aclose achan achan-buf
                                      aalts aput atake atimeout]])
   (:require [clojure.string :as string]
-            [cljs.core.async :refer [chan <! merge map< filter< sliding-buffer]]
+            [cljs.core.async :refer [chan <! sliding-buffer]]
             [goog.dom :as gdom]
-            [cbfg.vis :refer [vis-init listen-el get-el-value]]
+            [cbfg.vis :refer [vis-init get-el-value]]
             [cbfg.fence :refer [make-fenced-pump]]
             [cbfg.fence-test]
-            [cbfg.world-base :refer [world-replay render-client-hist]]))
+            [cbfg.world-base :refer [replay-cmd-ch world-replay render-client-hist]]))
 
 (def cmd-handlers
   {"add"    (fn [c] (assoc c :rq #(cbfg.world-base/example-add % c)))
@@ -19,18 +19,12 @@
 
 (defn world-vis-init [el-prefix]
   (let [cmd-inject-ch (chan)
-        cmd-ch (merge [cmd-inject-ch
-                       (map< #(let [[op x] (string/split (.-id (.-target %)) #"-")]
-                                {:op op :x x})
-                             (filter< #(= "BUTTON" (.-tagName (.-target %)))
-                                      (listen-el (gdom/getElement "client") "click")))
-                       (map< (fn [ev] {:op (.-id (.-target ev))
-                                       :x (js/parseInt (get-el-value "x"))
-                                       :y (js/parseInt (get-el-value "y"))
-                                       :delay (js/parseInt (get-el-value "delay"))
-                                       :fence (= (get-el-value "fence") "1")})
-                             (merge (map #(listen-el (gdom/getElement %) "click")
-                                         (conj (keys cmd-handlers) "replay"))))])
+        cmd-ch (replay-cmd-ch cmd-inject-ch (keys cmd-handlers)
+                              (fn [ev] {:op (.-id (.-target ev))
+                                        :x (js/parseInt (get-el-value "x"))
+                                        :y (js/parseInt (get-el-value "y"))
+                                        :delay (js/parseInt (get-el-value "delay"))
+                                        :fence (= (get-el-value "fence") "1")}))
         client-hist (atom {})] ; Keyed by opaque -> [request, replies].
     (vis-init (fn [world vis-chs]
                 (let [in-ch (achan-buf world 100)
