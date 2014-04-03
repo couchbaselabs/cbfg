@@ -19,7 +19,7 @@
 
 (defn make-fenced-pump-lane [actx lane-name lane-out-ch]
   (let [lane-in-ch (achan-buf actx @lane-buf-size)]
-    (make-fenced-pump actx lane-in-ch lane-out-ch @max-inflight)
+    (make-fenced-pump actx lane-name lane-in-ch lane-out-ch @max-inflight)
     lane-in-ch))
 
 (defn world-vis-init [el-prefix init-event-delay]

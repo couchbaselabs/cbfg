@@ -44,7 +44,7 @@
                                                                             #(update-in % [(:opaque v) 1]
                                                                                         conj [ts v])))
                                                  (recur num-ins (inc num-outs))))))
-                  (make-fenced-pump world in-ch out-ch @max-inflight)))
+                  (make-fenced-pump world "main" in-ch out-ch @max-inflight)))
               el-prefix nil init-event-delay)
     cmd-inject-ch))
 
