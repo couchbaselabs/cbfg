@@ -10,10 +10,11 @@
             [cbfg.world-base :refer [world-replay render-client-hist]]))
 
 (def cmd-handlers
-  {"add"   (fn [c] (assoc c :rq #(cbfg.world-base/example-add % c)))
-   "sub"   (fn [c] (assoc c :rq #(cbfg.world-base/example-sub % c)))
-   "count" (fn [c] (assoc c :rq #(cbfg.world-base/example-count % c)))
-   "test"  (fn [c] (assoc c :rq #(cbfg.lane-test/test % (:opaque c))))})
+  {"add"    (fn [c] (assoc c :rq #(cbfg.world-base/example-add % c)))
+   "sub"    (fn [c] (assoc c :rq #(cbfg.world-base/example-sub % c)))
+   "count"  (fn [c] (assoc c :rq #(cbfg.world-base/example-count % c)))
+   "test"   (fn [c] (assoc c :rq #(cbfg.lane-test/test % (:opaque c))))
+   "replay" (fn [c] nil)})
 
 (def max-inflight (atom 10))
 (def lane-buf-size (atom 20))
@@ -24,14 +25,16 @@
     lane-in-ch))
 
 (defn world-vis-init [el-prefix]
-  (let [cmd-ch (map< (fn [ev] {:op (.-id (.-target ev))
-                               :x (js/parseInt (get-el-value "x"))
-                               :y (js/parseInt (get-el-value "y"))
-                               :delay (js/parseInt (get-el-value "delay"))
-                               :fence (= (get-el-value "fence") "1")
-                               :lane (get-el-value "lane")})
-                     (merge (map #(listen-el (gdom/getElement %) "click")
-                                 (keys cmd-handlers))))
+  (let [cmd-inject-ch (chan)
+        cmd-ch (merge [cmd-inject-ch
+                       (map< (fn [ev] {:op (.-id (.-target ev))
+                                       :x (js/parseInt (get-el-value "x"))
+                                       :y (js/parseInt (get-el-value "y"))
+                                       :delay (js/parseInt (get-el-value "delay"))
+                                       :fence (= (get-el-value "fence") "1")
+                                       :lane (get-el-value "lane")})
+                             (merge (map #(listen-el (gdom/getElement %) "click")
+                                         (keys cmd-handlers))))])
         client-hist (atom {})] ; Keyed by opaque -> [request, replies].
     (vis-init (fn [world]
                 (let [in-ch (achan-buf world 100)
@@ -40,18 +43,24 @@
                             (let [[v ch] (aalts client [cmd-ch out-ch])
                                   ts (+ num-ins num-outs)]
                               (cond
-                                (= ch cmd-ch) (let [cmd (assoc v :opaque ts)
-                                                    cmd-handler ((get cmd-handlers (:op cmd)) cmd)]
-                                                (render-client-hist (swap! client-hist
-                                                                           #(assoc % ts [cmd nil])))
-                                                (aput client in-ch cmd-handler)
-                                                (recur (inc num-ins) num-outs))
+                                (= ch cmd-ch) (if (= (:op v) "replay")
+                                                (do (aclose client in-ch)
+                                                    (doseq [vis-ch (vals vis-chs)]
+                                                      (aclose client vis-ch))
+                                                    (world-replay world-vis-init el-prefix @client-hist))
+                                                (let [cmd (assoc v :opaque ts)
+                                                      cmd-handler ((get cmd-handlers (:op cmd)) cmd)]
+                                                  (render-client-hist (swap! client-hist
+                                                                             #(assoc % ts [cmd nil])))
+                                                  (aput client in-ch cmd-handler)
+                                                  (recur (inc num-ins) num-outs)))
                                 (= ch out-ch) (do (render-client-hist (swap! client-hist
                                                                              #(update-in % [(:opaque v) 1]
                                                                                          conj [ts v])))
                                                   (recur num-ins (inc num-outs))))))
                   (make-lane-pump world in-ch out-ch make-fenced-pump-lane)))
-              el-prefix nil)))
+              el-prefix nil)
+    cmd-inject-ch))
 
 (let [last-id (atom 0)
       gen-id #(swap! last-id inc)]
