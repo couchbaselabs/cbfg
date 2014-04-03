@@ -1,6 +1,6 @@
 (ns cbfg.world-base
   (:require-macros [cbfg.ago :refer [ago aclose achan aput atake atimeout]])
-  (:require [cbfg.vis :refer [vis-init listen-el get-el-value set-el-innerHTML]]))
+  (:require [cbfg.vis :refer [set-el-innerHTML]]))
 
 (defn filter-r [r] (if (map? r)
                      (-> r

@@ -3,7 +3,7 @@
                                      aalts aput atake atimeout]])
   (:require [cljs.core.async :refer [chan <! merge map< sliding-buffer]]
             [goog.dom :as gdom]
-            [cbfg.vis :refer [vis-init listen-el get-el-value set-el-innerHTML]]
+            [cbfg.vis :refer [vis-init listen-el get-el-value]]
             [cbfg.fence :refer [make-fenced-pump]]
             [cbfg.lane :refer [make-lane-pump]]
             [cbfg.lane-test]
