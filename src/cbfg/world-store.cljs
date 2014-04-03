@@ -12,44 +12,44 @@
 (defn make-store-cmd-handlers [store]
   {"get"
    [["key"]
-    (fn [c] {:rq #(store/store-get % store (:opaque c) (:key c))})]
+    (fn [c] #(store/store-get % store (:opaque c) (:key c)))]
    "set"
    [["key" "val"]
-    (fn [c] {:rq #(store/store-set % store (:opaque c) (:key c) (:cas c)
-                                   (:val c) :set)})]
+    (fn [c] #(store/store-set % store (:opaque c) (:key c) (:cas c)
+                              (:val c) :set))]
    "del"
    [["key"]
-    (fn [c] {:rq #(store/store-del % store (:opaque c) (:key c) (:cas c))})]
+    (fn [c] #(store/store-del % store (:opaque c) (:key c) (:cas c)))]
    "add"
    [["key" "val"]
-    (fn [c] {:rq #(store/store-set % store (:opaque c) (:key c) (:cas c)
-                                   (:val c) :add)})]
+    (fn [c] #(store/store-set % store (:opaque c) (:key c) (:cas c)
+                              (:val c) :add))]
    "replace"
    [["key" "val"]
-    (fn [c] {:rq #(store/store-set % store (:opaque c) (:key c) (:cas c)
-                                   (:val c) :replace)})]
+    (fn [c] #(store/store-set % store (:opaque c) (:key c) (:cas c)
+                              (:val c) :replace))]
    "append"
    [["key" "val"]
-    (fn [c] {:rq #(store/store-set % store (:opaque c) (:key c) (:cas c)
-                                   (:val c) :append)})]
+    (fn [c] #(store/store-set % store (:opaque c) (:key c) (:cas c)
+                              (:val c) :append))]
    "prepend"
    [["key" "val"]
-    (fn [c] {:rq #(store/store-set % store (:opaque c) (:key c) (:cas c)
-                                   (:val c) :prepend)})]
+    (fn [c] #(store/store-set % store (:opaque c) (:key c) (:cas c)
+                              (:val c) :prepend))]
    "scan"
    [["from" "to"]
-    (fn [c] {:rq #(store/store-scan % store (:opaque c)
-                                    (:from c) (:to c))})]
+    (fn [c] #(store/store-scan % store (:opaque c)
+                               (:from c) (:to c)))]
    "changes"
    [["from" "to"]
-    (fn [c] {:rq #(store/store-changes % store (:opaque c)
-                                       (js/parseInt (:from c))
-                                       (js/parseInt (:to c)))})]
+    (fn [c] #(store/store-changes % store (:opaque c)
+                                  (js/parseInt (:from c))
+                                  (js/parseInt (:to c))))]
    "noop"
-   [[] (fn [c] {:rq #(ago store-cmd-noop %
-                          {:opaque (:opaque c) :status :ok})})]
+   [[] (fn [c] #(ago store-cmd-noop %
+                     {:opaque (:opaque c) :status :ok}))]
    "test"
-   [[] (fn [c] {:rq #(cbfg.store-test/test % (:opaque c))})]})
+   [[] (fn [c] #(cbfg.store-test/test % (:opaque c)))]})
 
 (def store-max-inflight (atom 10))
 
@@ -85,12 +85,14 @@
                                                      cmd2 (-> v
                                                               (assoc :opaque ts)
                                                               (assoc :fence op-fence))
-                                                     cmd3 (reduce #(cljs.core/merge {(keyword %2) (get-el-value (str op "-" %2))}
-                                                                                    %1) ; Using merge so cmd2 has precedence.
+                                                     cmd3 (reduce #(if (get %1 (keyword %2))
+                                                                     %1 ; Allows cmd2 to have precedence.
+                                                                     (assoc %1 (keyword %2)
+                                                                            (get-el-value (str op "-" %2))))
                                                                   cmd2 params)]
                                                  (render-client-hist (swap! client-hist
                                                                             #(assoc % ts [cmd3 nil])))
-                                                 (aput client in-ch (cljs.core/merge cmd3 (handler cmd3)))
+                                                 (aput client in-ch (assoc cmd3 :rq (handler cmd3)))
                                                  (recur (inc num-ins) num-outs)))
                                (= ch out-ch) (do (render-client-hist (swap! client-hist
                                                                             #(update-in % [(:opaque v) 1]
