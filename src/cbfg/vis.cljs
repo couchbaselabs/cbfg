@@ -359,17 +359,18 @@
   (set-el-innerHTML "client"
                     (apply str
                            (flatten ["<table>"
-                                     "<tr><th>id</th><th>fence</th><th>op</th>"
-                                     "    <th>args</th><th>responses</th></tr>"
+                                     "<tr><th>op</th><th>fence</th>"
+                                     "    <th>args</th><th>timeline</th></tr>"
                                      (map (fn [[opaque [request responses]]]
                                             ["<tr class='"
                                              (when (some #(:result (second %)) responses)
                                                "complete") "'>"
-                                             " <td>" opaque "</td>"
-                                             " <td>" (:fence request) "</td>"
                                              " <td>" (:op request) "</td>"
+                                             " <td>" (:fence request) "</td>"
                                              " <td>" (filter-r request) "</td>"
                                              " <td class='responses'><ul>"
+                                             "<li style='list-type: none; margin-left: "
+                                             opaque "em;'>request</li>"
                                              (map (fn [[out-time response]]
                                                     ["<li style='margin-left: " out-time "em;'>"
                                                      (filter-r response)
