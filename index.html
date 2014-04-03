@@ -35,22 +35,31 @@ body, div, iframe {
   width: 10%;
   height: 99%;
 
-  background: -webkit-linear-gradient(left, #65F3F6, #C5E4E6);
-  background: -moz-linear-gradient(right, #65F3F6, #C5E4E6);
-  background: -o-linear-gradient(right, #65F3F6, #C5E4E6);
-  background: linear-gradient(to right, #65F3F6, #C5E4E6);
+  background: -webkit-linear-gradient(left, #65F3F6, #FFFCF1);
+  background: -moz-linear-gradient(right, #65F3F6, #FFFCF1);
+  background: -o-linear-gradient(right, #65F3F6, #FFFCF1);
+  background: linear-gradient(to right, #65F3F6, #FFFCF1);
 
+  padding-top: 1.5em;
   padding-right: 1em;
   vertical-align: top;
   overflow: scroll;
 }
 .side ul, .side li {
   list-style: none;
-  padding: 0 0 1.5em 10px;
+  padding: 0 0 3em 10px;
   white-space: normal;
 }
 .side li div {
   padding-left: 0.5em;
+  font-size: 10px;
+  color: #558;
+}
+.side li a {
+  text-decoration: none;
+}
+.side li a:hover {
+  text-decoration: underline;
 }
 .main {
   display: inline-block;
