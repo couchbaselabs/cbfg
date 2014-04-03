@@ -62,24 +62,25 @@
         in-ch (achan-buf world 100)
         out-ch (achan-buf world 0)]
     (ago-loop client world [num-ins 0 num-outs 0]
-              (let [[v ch] (aalts client [cmd-ch out-ch])]
+              (let [[v ch] (aalts client [cmd-ch out-ch])
+                    ts (+ num-ins num-outs)]
                 (cond
                  (= ch cmd-ch) (let [op (:op v)
                                      op-fence (= (get-el-value (str op "-fence")) "1")
                                      [params handler] (get store-cmd-handlers op)
                                      cmd2 (-> v
-                                              (assoc :opaque num-ins)
+                                              (assoc :opaque ts)
                                               (assoc :fence op-fence))
                                      cmd3 (reduce #(assoc %1 (keyword %2)
                                                           (get-el-value (str op "-" %2)))
                                                   cmd2 params)]
                                  (render-client-cmds (swap! client-cmds
-                                                            #(assoc % num-ins [cmd3 nil])))
+                                                            #(assoc % ts [cmd3 nil])))
                                  (aput client in-ch (merge cmd3 (handler cmd3)))
                                  (recur (inc num-ins) num-outs))
                  (= ch out-ch) (do (render-client-cmds (swap! client-cmds
                                                               #(update-in % [(:opaque v) 1]
-                                                                          conj [num-outs v])))
+                                                                          conj [ts v])))
                                    (recur num-ins (inc num-outs))))))
     (make-fenced-pump world in-ch out-ch @store-max-inflight)))
 

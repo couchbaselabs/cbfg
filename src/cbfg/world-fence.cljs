@@ -58,17 +58,18 @@
                 (let [in-ch (achan-buf world 100)
                       out-ch (achan-buf world 0)]
                   (ago-loop client world [num-ins 0 num-outs 0]
-                            (let [[v ch] (aalts client [cmd-ch out-ch])]
+                            (let [[v ch] (aalts client [cmd-ch out-ch])
+                                  ts (+ num-ins num-outs)]
                               (cond
-                                (= ch cmd-ch) (let [cmd (assoc-in v [:opaque] num-ins)
+                                (= ch cmd-ch) (let [cmd (assoc-in v [:opaque] ts)
                                                     cmd-handler ((get example-cmd-handlers (:op cmd)) cmd)]
                                                 (render-client-cmds (swap! client-cmds
-                                                                           #(assoc % num-ins [cmd nil])))
+                                                                           #(assoc % ts [cmd nil])))
                                                 (aput client in-ch cmd-handler)
                                                 (recur (inc num-ins) num-outs))
                                 (= ch out-ch) (do (render-client-cmds (swap! client-cmds
                                                                              #(update-in % [(:opaque v) 1]
-                                                                                         conj [num-outs v])))
+                                                                                         conj [ts v])))
                                                   (recur num-ins (inc num-outs))))))
                   (make-fenced-pump world in-ch out-ch @example-max-inflight)))
               el-prefix nil)))
