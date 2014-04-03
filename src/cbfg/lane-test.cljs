@@ -24,12 +24,54 @@
              in-ch (achan actx)
              out-ch (achan actx)
              g (make-lane-pump tlp in-ch out-ch make-echo-lane)]
-         (if (and (do
-                    (aput tlp in-ch {:lane :a :x 1})
-                    (e n
-                       (atake tlp out-ch)
-                       [:a 0 {:lane :a :x 1}]
-                       nil)))
+         (if (and (do (aput tlp in-ch {:lane :a :op :hi :x 1})
+                      (e n
+                         (atake tlp out-ch)
+                         [:a 0 {:lane :a :op :hi :x 1}]
+                         nil))
+                  (do (aput tlp in-ch {:lane :b :x 2})
+                      (e n
+                         (atake tlp out-ch)
+                         [:b 0 {:lane :b :x 2}]
+                         nil))
+                  (do (aput tlp in-ch {:x 3})
+                      (e n
+                         (atake tlp out-ch)
+                         [nil 0 {:x 3}]
+                         nil))
+                  (do (aput tlp in-ch {:lane :a :x 10})
+                      (e n
+                         (atake tlp out-ch)
+                         [:a 1 {:lane :a :x 10}]
+                         nil))
+                  (do (aput tlp in-ch {:x 30})
+                      (e n
+                         (atake tlp out-ch)
+                         [nil 1 {:x 30}]
+                         nil))
+                  (do (aput tlp in-ch {:lane :x :op :close-lane})
+                      (e n
+                         (atake tlp out-ch)
+                         {:lane :x :op :close-lane :status :not-found}
+                         nil))
+                  (do (aput tlp in-ch {:lane :a :x 100})
+                      (e n
+                         (atake tlp out-ch)
+                         [:a 2 {:lane :a :x 100}]
+                         nil))
+                  (do (aput tlp in-ch {:lane :a :op :close-lane})
+                      (e n
+                         (atake tlp out-ch)
+                         {:lane :a :op :close-lane :status :ok}
+                         nil))
+                  (do (aput tlp in-ch {:lane :a :x 1000})
+                      (e n
+                         (atake tlp out-ch)
+                         [:a 0 {:lane :a :x 1000}]
+                         nil))
+                  (do (aclose tlp in-ch)
+                      (aclose tlp out-ch)
+                      true))
            "pass"
            (str "FAIL: on test-grouper #" @n)))))
 
