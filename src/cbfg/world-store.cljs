@@ -6,7 +6,7 @@
             [cbfg.store :as store]
             [cbfg.store-test]
             [cbfg.vis :refer [vis-init listen-el get-el-value]]
-            [cbfg.world-base :refer [render-client-cmds]]))
+            [cbfg.world-base :refer [render-client-hist]]))
 
 (defn make-store-cmd-handlers [store]
   {"get"
@@ -58,7 +58,7 @@
         cmd-ch (map< (fn [ev] {:op (.-id (.-target ev))})
                      (cljs.core.async/merge (map #(listen-el (gdom/getElement %) "click")
                                                  (keys store-cmd-handlers))))
-        client-cmds (atom {}) ; Keyed by opaque -> [request, replies]
+        client-hist (atom {}) ; Keyed by opaque -> [request, replies]
         in-ch (achan-buf world 100)
         out-ch (achan-buf world 0)]
     (ago-loop client world [num-ins 0 num-outs 0]
@@ -74,11 +74,11 @@
                                      cmd3 (reduce #(assoc %1 (keyword %2)
                                                           (get-el-value (str op "-" %2)))
                                                   cmd2 params)]
-                                 (render-client-cmds (swap! client-cmds
+                                 (render-client-hist (swap! client-hist
                                                             #(assoc % ts [cmd3 nil])))
                                  (aput client in-ch (merge cmd3 (handler cmd3)))
                                  (recur (inc num-ins) num-outs))
-                 (= ch out-ch) (do (render-client-cmds (swap! client-cmds
+                 (= ch out-ch) (do (render-client-hist (swap! client-hist
                                                               #(update-in % [(:opaque v) 1]
                                                                           conj [ts v])))
                                    (recur num-ins (inc num-outs))))))

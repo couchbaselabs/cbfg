@@ -264,11 +264,14 @@
                                            (js/parseInt (get-el-value (str el-prefix "-run-delay")))))
                       "pause" #(reset! event-delay -1)
                       "step"  #(do (reset! event-delay -1)
-                                   (put! step-ch true))}]
-    (go-loop [run-control-ch (merge (map #(listen-el (gdom/getElement (str el-prefix "-" %)) "click")
-                                         (keys run-controls)))]
-      ((get run-controls (no-prefix (.-id (.-target (<! run-control-ch))))))
-      (recur run-control-ch))))
+                                   (put! step-ch true))}
+        run-controls-ch (merge (map #(listen-el (gdom/getElement (str el-prefix "-" %)) "click")
+                                   (keys run-controls)))]
+    (go-loop []
+      (when-let [rc (<! run-controls-ch)]
+        ((get run-controls (no-prefix (.-id (.-target rc)))))
+        (recur)))
+    run-controls-ch))
 
 ;; ------------------------------------------------
 
@@ -293,8 +296,12 @@
                    :gen-id gen-id})
         el-event (str el-prefix "-event")
         el-html (str el-prefix "-html")
-        el-svg (str el-prefix "-svg")]
-    (world-init-cb world)
+        el-svg (str el-prefix "-svg")
+        run-controls-ch (vis-run-controls event-delay step-ch el-prefix)]
+    (world-init-cb world {:step-ch step-ch
+                          :event-ch event-ch
+                          :render-ch render-ch
+                          :run-controls-ch run-controls-ch})
     (go-loop [num-events 0]      ; Process events from world / simulation.
       (when-let [[actx [verb step & args]] (<! event-ch)]
         (let [deltas ((get (get vis-event-handlers verb) step) vis actx args)
@@ -336,7 +343,6 @@
               (when (not= vis-next-svg vis-last-svg)
                 (set-el-innerHTML el-svg vis-next-svg))
               (recur vis-last vis-last-positions vis-last-html vis-next-svg next-deltas))))))
-    (vis-run-controls event-delay step-ch el-prefix)
     (let [toggle-ch (listen-el (gdom/getElement el-html) "click")] ; Process toggle U/I events.
       (go-loop []
         (let [actx-id (no-prefix (.-id (.-target (<! toggle-ch))))]
@@ -344,5 +350,4 @@
             (when (= actx-id (last actx))
               (swap! vis #(assoc-in % [:actxs actx :closed] (not (:closed actx-info))))
               (>! render-ch [@vis nil true nil])))
-          (recur))))
-    [event-ch render-ch]))
+          (recur))))))

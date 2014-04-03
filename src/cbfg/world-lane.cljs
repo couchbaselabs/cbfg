@@ -7,7 +7,7 @@
             [cbfg.fence :refer [make-fenced-pump]]
             [cbfg.lane :refer [make-lane-pump]]
             [cbfg.lane-test]
-            [cbfg.world-base :refer [render-client-cmds]]))
+            [cbfg.world-base :refer [render-client-hist]]))
 
 (def example-cmd-handlers
   {"add"   (fn [c] (assoc c :rq #(cbfg.world-base/example-add % c)))
@@ -32,7 +32,7 @@
                                :lane (get-el-value "lane")})
                      (merge (map #(listen-el (gdom/getElement %) "click")
                                  (keys example-cmd-handlers))))
-        client-cmds (atom {})] ; Keyed by opaque -> [request, replies].
+        client-hist (atom {})] ; Keyed by opaque -> [request, replies].
     (vis-init (fn [world]
                 (let [in-ch (achan-buf world 100)
                       out-ch (achan-buf world 0)]
@@ -42,11 +42,11 @@
                               (cond
                                 (= ch cmd-ch) (let [cmd (assoc v :opaque ts)
                                                     cmd-handler ((get example-cmd-handlers (:op cmd)) cmd)]
-                                                (render-client-cmds (swap! client-cmds
+                                                (render-client-hist (swap! client-hist
                                                                            #(assoc % ts [cmd nil])))
                                                 (aput client in-ch cmd-handler)
                                                 (recur (inc num-ins) num-outs))
-                                (= ch out-ch) (do (render-client-cmds (swap! client-cmds
+                                (= ch out-ch) (do (render-client-hist (swap! client-hist
                                                                              #(update-in % [(:opaque v) 1]
                                                                                          conj [ts v])))
                                                   (recur num-ins (inc num-outs))))))

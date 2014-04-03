@@ -1,6 +1,17 @@
 (ns cbfg.world-base
-  (:require-macros [cbfg.ago :refer [ago aclose achan aput atake atimeout]])
-  (:require [cbfg.vis :refer [set-el-innerHTML]]))
+  (:require-macros [cljs.core.async.macros :refer [go]]
+                   [cbfg.ago :refer [ago aclose achan aput atake atimeout]])
+  (:require [cljs.core.async :refer [>!]]
+            [cbfg.vis :refer [set-el-innerHTML]]))
+
+(defn world-replay [world-vis-init el-prefix client-hist]
+  (println "world-replay" client-hist)
+  (let [cmd-ch (world-vis-init el-prefix)]
+    (when false
+    (go (doseq [[opaque [request responses]] (sort #(compare (first %1) (first %2))
+                                                   client-hist)]
+          (>! cmd-ch request)))))
+)
 
 (defn filter-r [r] (if (map? r)
                      (-> r
@@ -9,13 +20,13 @@
                          (dissoc :fence))
                      r))
 
-(defn render-client-cmds [client-cmds]
+(defn render-client-hist [client-hist]
   (set-el-innerHTML "client"
                     (apply str
                            (flatten ["<table>"
                                      "<tr><th>op</th><th>fence</th>"
                                      "    <th>request</th><th>timeline</th></tr>"
-                                     (map (fn [[opaque [request responses]]]
+                                     (map (fn [[ts [request responses]]]
                                             ["<tr class='"
                                              (when (some #(:result (second %)) responses)
                                                "complete") "'>"
@@ -24,9 +35,9 @@
                                              " <td>" (filter-r request) "</td>"
                                              " <td class='responses'><ul>"
                                              "<li style='list-type: none; margin-left: "
-                                             opaque "em;'>request</li>"
-                                             (map (fn [[out-time response]]
-                                                    ["<li style='margin-left: " out-time "em;'>"
+                                             ts "em;'>request</li>"
+                                             (map (fn [[response-ts response]]
+                                                    ["<li style='margin-left: " response-ts "em;'>"
                                                      (-> (filter-r response)
                                                          (dissoc :lane)
                                                          (dissoc :delay))
@@ -36,7 +47,7 @@
                                              "</tr>"])
                                           (sort #(compare [(:lane (first (second %1))) (first %1)]
                                                           [(:lane (first (second %2))) (first %2)])
-                                                client-cmds))
+                                                client-hist))
                                      "</table>"]))))
 
 ;; ------------------------------------------------
