@@ -218,6 +218,19 @@ button.toggle {
     top: 0px;
     left: -10px;
     z-index: 1;
+
+    -webkit-animation: timeline-focus 1s; /* Chrome, Safari, Opera */
+    animation: timeline-focus 1s;
+}
+@-webkit-keyframes timeline-focus {
+    0% { opacity: 0; top: -20px; left: 10px; }
+    50% { opacity: 0.1; top: -20px; left: 10px; }
+    100% { opacity: 1.0; top: 0px; left: -10px; }
+}
+@keyframes timeline-focus {
+    0% { opacity: 0; top: -20px; left: 10px; }
+    50% { opacity: 0.1; top: -20px; left: 10px; }
+    100% { opacity: 1.0; top: 0px; left: -10px; }
 }
 .event {
     margin-top: 60px;
