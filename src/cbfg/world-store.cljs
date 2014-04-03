@@ -52,40 +52,39 @@
 
 (def store-max-inflight (atom 10))
 
-(defn world-vis-init-cb [world]
-  (let [store (store/make-store world)
-        store-cmd-handlers (make-store-cmd-handlers store)
-        cmd-ch (map< (fn [ev] {:op (.-id (.-target ev))})
-                     (cljs.core.async/merge (map #(listen-el (gdom/getElement %) "click")
-                                                 (keys store-cmd-handlers))))
-        client-hist (atom {}) ; Keyed by opaque -> [request, replies]
-        in-ch (achan-buf world 100)
-        out-ch (achan-buf world 0)]
-    (ago-loop client world [num-ins 0 num-outs 0]
-              (let [[v ch] (aalts client [cmd-ch out-ch])
-                    ts (+ num-ins num-outs)]
-                (cond
-                 (= ch cmd-ch) (let [op (:op v)
-                                     op-fence (= (get-el-value (str op "-fence")) "1")
-                                     [params handler] (get store-cmd-handlers op)
-                                     cmd2 (-> v
-                                              (assoc :opaque ts)
-                                              (assoc :fence op-fence))
-                                     cmd3 (reduce #(assoc %1 (keyword %2)
-                                                          (get-el-value (str op "-" %2)))
-                                                  cmd2 params)]
-                                 (render-client-hist (swap! client-hist
-                                                            #(assoc % ts [cmd3 nil])))
-                                 (aput client in-ch (merge cmd3 (handler cmd3)))
-                                 (recur (inc num-ins) num-outs))
-                 (= ch out-ch) (do (render-client-hist (swap! client-hist
-                                                              #(update-in % [(:opaque v) 1]
-                                                                          conj [ts v])))
-                                   (recur num-ins (inc num-outs))))))
-    (make-fenced-pump world in-ch out-ch @store-max-inflight)))
-
 (defn world-vis-init [el-prefix]
-  (vis-init world-vis-init-cb el-prefix nil))
+  (vis-init (fn [world]
+              (let [store (store/make-store world)
+                    store-cmd-handlers (make-store-cmd-handlers store)
+                    cmd-ch (map< (fn [ev] {:op (.-id (.-target ev))})
+                                 (cljs.core.async/merge (map #(listen-el (gdom/getElement %) "click")
+                                                             (keys store-cmd-handlers))))
+                    client-hist (atom {}) ; Keyed by opaque -> [request, replies]
+                    in-ch (achan-buf world 100)
+                    out-ch (achan-buf world 0)]
+                (ago-loop client world [num-ins 0 num-outs 0]
+                          (let [[v ch] (aalts client [cmd-ch out-ch])
+                                ts (+ num-ins num-outs)]
+                            (cond
+                             (= ch cmd-ch) (let [op (:op v)
+                                                 op-fence (= (get-el-value (str op "-fence")) "1")
+                                                 [params handler] (get store-cmd-handlers op)
+                                                 cmd2 (-> v
+                                                          (assoc :opaque ts)
+                                                          (assoc :fence op-fence))
+                                                 cmd3 (reduce #(assoc %1 (keyword %2)
+                                                                      (get-el-value (str op "-" %2)))
+                                                              cmd2 params)]
+                                             (render-client-hist (swap! client-hist
+                                                                        #(assoc % ts [cmd3 nil])))
+                                             (aput client in-ch (merge cmd3 (handler cmd3)))
+                                             (recur (inc num-ins) num-outs))
+                             (= ch out-ch) (do (render-client-hist (swap! client-hist
+                                                                          #(update-in % [(:opaque v) 1]
+                                                                                      conj [ts v])))
+                                               (recur num-ins (inc num-outs))))))
+                (make-fenced-pump world in-ch out-ch @store-max-inflight)))
+            el-prefix nil))
 
 (let [last-id (atom 0)
       gen-id #(swap! last-id inc)]
