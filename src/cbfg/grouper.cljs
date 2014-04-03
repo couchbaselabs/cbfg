@@ -13,8 +13,7 @@
    The grouper closes the take-all-ch after put-ch is closed
    and all the entries are taken."
   (ago-loop grouper actx
-            [entries {}
-             max-entries max-entries]
+            [entries {} max-entries max-entries]
             (let [n (count entries)
                   chs0 (if (>= n max-entries)
                          []        ; We're full, so ignore put'ers.
