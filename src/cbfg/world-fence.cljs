@@ -6,37 +6,13 @@
             [cbfg.vis :refer [vis-init listen-el get-el-value
                               set-el-innerHTML render-client-cmds]]
             [cbfg.fence :refer [make-fenced-pump]]
-            [cbfg.fence-test]))
-
-(defn example-add [actx c]
-  (ago example-add actx
-       (let [timeout-ch (atimeout example-add (:delay c))]
-         (atake example-add timeout-ch)
-         (assoc c :result (+ (:x c) (:y c))))))
-
-(defn example-sub [actx c]
-  (ago example-sub actx
-       (let [timeout-ch (atimeout example-sub (:delay c))]
-         (atake example-sub timeout-ch)
-         (assoc c :result (- (:x c) (:y c))))))
-
-(defn example-count [actx c]
-  (let [out (achan actx)]
-    (ago example-count actx
-         (doseq [n (range (:x c) (:y c))]
-           (let [timeout-ch (atimeout example-count (:delay c))]
-             (atake example-count timeout-ch))
-           (aput example-count out (assoc c :partial n)))
-         (let [timeout-ch (atimeout example-count (:delay c))]
-           (atake example-count timeout-ch))
-         (aput example-count out (assoc c :result (:y c)))
-         (aclose example-count out))
-    out))
+            [cbfg.fence-test]
+            [cbfg.world-base]))
 
 (def example-cmd-handlers
-  {"add"   (fn [c] (assoc c :rq #(example-add % c)))
-   "sub"   (fn [c] (assoc c :rq #(example-sub % c)))
-   "count" (fn [c] (assoc c :rq #(example-count % c)))
+  {"add"   (fn [c] (assoc c :rq #(cbfg.world-base/example-add % c)))
+   "sub"   (fn [c] (assoc c :rq #(cbfg.world-base/example-sub % c)))
+   "count" (fn [c] (assoc c :rq #(cbfg.world-base/example-count % c)))
    "test"  (fn [c] (assoc c :rq #(cbfg.fence-test/test % (:opaque c))))})
 
 (def example-max-inflight (atom 10))
