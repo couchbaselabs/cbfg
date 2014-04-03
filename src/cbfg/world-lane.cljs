@@ -1,7 +1,8 @@
 (ns cbfg.world-lane
   (:require-macros [cbfg.ago :refer [ago ago-loop aclose achan achan-buf
                                      aalts aput atake atimeout]])
-  (:require [cljs.core.async :refer [chan <! merge map< sliding-buffer]]
+  (:require [clojure.string :as string]
+            [cljs.core.async :refer [chan <! merge map< filter< sliding-buffer]]
             [goog.dom :as gdom]
             [cbfg.vis :refer [vis-init listen-el get-el-value]]
             [cbfg.fence :refer [make-fenced-pump]]
@@ -26,6 +27,10 @@
 (defn world-vis-init [el-prefix]
   (let [cmd-inject-ch (chan)
         cmd-ch (merge [cmd-inject-ch
+                       (map< #(let [[op x] (string/split (.-id (.-target %)) #"-")]
+                                {:op op :x x})
+                             (filter< #(= "BUTTON" (.-tagName (.-target %)))
+                                      (listen-el (gdom/getElement "client") "click")))
                        (map< (fn [ev] {:op (.-id (.-target ev))
                                        :x (js/parseInt (get-el-value "x"))
                                        :y (js/parseInt (get-el-value "y"))
@@ -46,7 +51,8 @@
                                                 (do (aclose client in-ch)
                                                     (doseq [vis-ch (vals vis-chs)]
                                                       (aclose client vis-ch))
-                                                    (world-replay world-vis-init el-prefix @client-hist))
+                                                    (world-replay world-vis-init el-prefix
+                                                                  @client-hist (:x v)))
                                                 (let [cmd (assoc v :opaque ts)
                                                       cmd-handler ((get cmd-handlers (:op cmd)) cmd)]
                                                   (render-client-hist (swap! client-hist

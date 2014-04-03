@@ -1,6 +1,7 @@
 (ns cbfg.world-store
   (:require-macros [cbfg.ago :refer [ago ago-loop achan-buf aclose aalts aput]])
-  (:require [cljs.core.async :refer [chan <! merge map< sliding-buffer]]
+  (:require [clojure.string :as string]
+            [cljs.core.async :refer [chan <! merge map< filter< sliding-buffer]]
             [goog.dom :as gdom]
             [cbfg.fence :refer [make-fenced-pump]]
             [cbfg.store :as store]
@@ -58,6 +59,10 @@
                 (let [store (store/make-store world)
                       store-cmd-handlers (make-store-cmd-handlers store)
                       cmd-ch (merge [cmd-inject-ch
+                                     (map< #(let [[op x] (string/split (.-id (.-target %)) #"-")]
+                                              {:op op :x x})
+                                           (filter< #(= "BUTTON" (.-tagName (.-target %)))
+                                                    (listen-el (gdom/getElement "client") "click")))
                                      (map< (fn [ev] {:op (.-id (.-target ev))})
                                            (merge (map #(listen-el (gdom/getElement %) "click")
                                                        (conj (keys store-cmd-handlers) "replay"))))])
@@ -72,7 +77,8 @@
                                                (do (aclose client in-ch)
                                                    (doseq [vis-ch (vals vis-chs)]
                                                      (aclose client vis-ch))
-                                                   (world-replay world-vis-init el-prefix @client-hist))
+                                                   (world-replay world-vis-init el-prefix
+                                                                 @client-hist (:x v)))
                                                (let [op (:op v)
                                                      op-fence (= (get-el-value (str op "-fence")) "1")
                                                      [params handler] (get store-cmd-handlers op)

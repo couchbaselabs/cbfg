@@ -4,11 +4,13 @@
   (:require [cljs.core.async :refer [>!]]
             [cbfg.vis :refer [set-el-innerHTML]]))
 
-(defn world-replay [world-vis-init el-prefix client-hist]
+(defn world-replay [world-vis-init el-prefix client-hist up-to-ts]
   (let [cmd-ch (world-vis-init el-prefix)]
-    (go (doseq [[opaque [request responses]] (sort #(compare (first %1) (first %2))
-                                                   client-hist)]
-          (>! cmd-ch request)))))
+    (go (doseq [[opaque [request responses]]
+                (sort #(compare (first %1) (first %2)) client-hist)]
+          (when (or (nil? up-to-ts)
+                    (<= opaque up-to-ts))
+            (>! cmd-ch request))))))
 
 (defn filter-r [r] (if (map? r)
                      (-> r
@@ -34,7 +36,8 @@
                                              "  <li style='list-type: none; margin-left: "
                                              ts "em;'>request"
                                              "   <div class='timeline-focus'></div>"
-                                             "   <button>&lt; replay requests to here</button>"
+                                             "   <button id='replay-" ts "'>"
+                                             "    &lt; replay requests to here</button>"
                                              "  </li>"
                                              (map (fn [[response-ts response]]
                                                     ["<li style='margin-left: " response-ts "em;'>"
