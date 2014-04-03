@@ -16,19 +16,18 @@
    for that reason should also try to not reuse lane names."
   (ago-loop lane-pump actx [lane-chs {}]
             (if-let [m (atake lane-pump in-ch)]
-              (let [n (:lane m)]
-                (if (= (:op m) :close-lane)
-                  (if-let [lane-ch (get lane-chs n)]
-                    (do (aclose lane-pump lane-ch)
-                        (aput lane-pump out-ch (assoc m :status :ok))
-                        (recur (dissoc lane-chs n)))
-                    (do (aput lane-pump out-ch (assoc m :status :not-found))
-                        (recur lane-chs)))
-                  (if-let [lane-ch (get lane-chs n)]
-                    (do (aput lane-pump lane-ch m)
-                        (recur lane-chs))
-                    (let [lane-ch (make-lane-fn lane-pump n out-ch)]
-                      (aput lane-pump lane-ch m)
-                      (recur (assoc lane-chs n lane-ch))))))
+              (if (= (:op m) :close-lane)
+                (if-let [lane-ch (get lane-chs (:lane m))]
+                  (do (aclose lane-pump lane-ch)
+                      (aput lane-pump out-ch (assoc m :status :ok))
+                      (recur (dissoc lane-chs (:lane m))))
+                  (do (aput lane-pump out-ch (assoc m :status :not-found))
+                      (recur lane-chs)))
+                (if-let [lane-ch (get lane-chs (:lane m))]
+                  (do (aput lane-pump lane-ch m)
+                      (recur lane-chs))
+                  (let [lane-ch (make-lane-fn lane-pump (:lane m) out-ch)]
+                    (aput lane-pump lane-ch m)
+                    (recur (assoc lane-chs (:lane m) lane-ch)))))
               (doseq [[n lane-ch] lane-chs] ; Close all lane-chs and exit.
                 (aclose lane-pump lane-ch)))))
