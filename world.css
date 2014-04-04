@@ -114,7 +114,7 @@ div.chs li span.msgs {
 svg.vis-svg line.arrow {
     stroke-width: 1;
     stroke: #B1F5F7;
-    stroke-dasharray: 10,2;
+    stroke-dasharray: 12,4;
     marker-end: url(#triangle);
 }
 svg.vis-svg line.delta {
