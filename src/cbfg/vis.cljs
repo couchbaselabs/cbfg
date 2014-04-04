@@ -89,30 +89,38 @@
                                    (= (count ch-names)
                                       (count ch-bindings)))]
                 (apply concat
-                       (vec (map-indexed (fn [idx [ch action & msgv]]
-                                           (swap! vis #(-> %
-                                                           (vis-add-ch ch
-                                                                       (when (= action :take) actx))
-                                                           (assoc-in [:actxs actx :wait-chs ch]
-                                                                     (if use-names
-                                                                       [action (nth ch-names idx)]
-                                                                       [action]))))
-                                           (when (= action :put)
-                                             [{:delta :put :msg (first msgv) :actx actx :ch ch}]))
-                                         ch-actions)))))
+                       (doall (map-indexed (fn [idx [ch action & msgv]]
+                                             (swap! vis #(-> %
+                                                             (vis-add-ch ch
+                                                                         (when (= action :take) actx))
+                                                             (assoc-in [:actxs actx :wait-chs ch]
+                                                                       (if use-names
+                                                                         [action (nth ch-names idx)]
+                                                                         [action]))))
+                                             (when (= action :put)
+                                               [{:delta :put :msg (first msgv) :actx actx :ch ch
+                                                 :ch-name (when use-names (nth ch-names idx))}]))
+                                           ch-actions)))))
     :after (fn [vis actx [ch-names ch-bindings [result-msg result-ch]]]
              (let [; The ch-actions will be [[ch :take] [ch :put] ...].
                    ch-actions (map #(if (seq? %) [(first %) :put (second %)] [% :take])
-                                   ch-bindings)]
-               (doseq [[ch action] ch-actions]
-                 (swap! vis #(assoc-in % [:actxs actx :wait-chs ch] [:ghost])))
+                                   ch-bindings)
+                   use-names (and (seqable? ch-names)
+                                  (= (count ch-names)
+                                     (count ch-bindings)))]
+               (doall (map-indexed (fn [idx [ch action]]
+                                     (swap! vis #(assoc-in % [:actxs actx :wait-chs ch]
+                                                           (if use-names
+                                                             [:ghost (nth ch-names idx)]
+                                                             [:ghost]))))
+                                   ch-actions))
                (swap! vis #(dissoc-in % [:chs result-ch :msgs result-msg]))
                (when (nil? result-msg) ; The ch is closed.
                  (swap! vis #(-> %
                                  (dissoc-in [:actxs actx :wait-chs result-ch])
                                  (dissoc-in [:chs result-ch]))))
                (when (some #(= % result-ch) ch-bindings)
-                 [{:delta :take :msg result-msg :ch result-ch :actx actx}])))}})
+                 [{:delta :take :msg result-msg :actx actx :ch result-ch}])))}})
 
 ;; ------------------------------------------------
 
