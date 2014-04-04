@@ -81,21 +81,24 @@
                ; looks like CLJS async always incorrectly returns nil from >!.
                nil)}
    :aalts
-   {:before (fn [vis actx [ch-bindings]]
+   {:before (fn [vis actx [ch-names ch-bindings]]
               (let [; The ch-actions will be [[ch :take] [ch :put] ...].
                     ch-actions (map #(if (seq? %) [(first %) :put (second %)] [% :take])
-                                    ch-bindings)]
+                                    ch-bindings)
+                    use-names (= (count ch-names) (count ch-bindings))]
                 (apply concat
-                       (mapv (fn [[ch action & msgv]]
-                               (swap! vis #(-> %
-                                               (vis-add-ch ch
-                                                           (when (= action :take) actx))
-                                               (assoc-in [:actxs actx :wait-chs ch]
-                                                         [action])))
-                               (when (= action :put)
-                                 [{:delta :put :msg (first msgv) :actx actx :ch ch}]))
-                             ch-actions))))
-    :after (fn [vis actx [ch-bindings [result-msg result-ch]]]
+                       (vec (map-indexed (fn [idx [ch action & msgv]]
+                                           (swap! vis #(-> %
+                                                           (vis-add-ch ch
+                                                                       (when (= action :take) actx))
+                                                           (assoc-in [:actxs actx :wait-chs ch]
+                                                                     (if use-names
+                                                                       [action (nth ch-names idx)]
+                                                                       [action]))))
+                                           (when (= action :put)
+                                             [{:delta :put :msg (first msgv) :actx actx :ch ch}]))
+                                         ch-actions)))))
+    :after (fn [vis actx [ch-names ch-bindings [result-msg result-ch]]]
              (let [; The ch-actions will be [[ch :take] [ch :put] ...].
                    ch-actions (map #(if (seq? %) [(first %) :put (second %)] [% :take])
                                    ch-bindings)]
