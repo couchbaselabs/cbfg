@@ -301,7 +301,7 @@
         gen-id #(swap! last-id inc)
         w [{:gen-id gen-id
             :event-ch event-ch}]
-        world (conj w "world-1")  ; No ago for world actx init to avoid recursion.
+        world (conj w "world-0")  ; No ago for world actx init to avoid recursion.
         vis (atom {:actxs {world {:children {} ; child-actx -> true,
                                   :wait-chs {} ; ch -> [:ghost|:take|:put optional-ch-name],
                                   ; :loop-state last-loop-bindings,
