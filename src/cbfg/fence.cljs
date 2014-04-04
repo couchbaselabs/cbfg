@@ -51,20 +51,17 @@
           (= ch in-ch) (if (nil? v)
                          (recur name inflight-chs out-ch nil)      ; using out-ch as a sentinel.
                          (let [new-inflight ((:rq v) fenced-pump)]
-                           (recur name
-                                  (conj inflight-chs new-inflight)
+                           (recur name (conj inflight-chs new-inflight)
                                   (when (:fence v) new-inflight)
                                   nil)))
           (= v nil) (let [new-inflight-chs (disj inflight-chs ch)] ; an inflight request is done.
                       (if (empty? new-inflight-chs)                ; if inflight requests are all done,
-                        (do (when fenced-ch-res                    ; finally send the fenced-ch-res
-                              (aput fenced-pump                    ; that we have been holding onto.
-                                    out-ch fenced-ch-res))
+                        (do (when fenced-ch-res                    ; finally send the held fenced-ch-res.
+                              (aput fenced-pump out-ch fenced-ch-res))
                             (recur name new-inflight-chs nil nil))
                         (recur name new-inflight-chs fenced-ch fenced-ch-res)))
-          (= ch fenced-ch) (do (when fenced-ch-res
-                                 (aput fenced-pump            ; send any previous fenced-res so
-                                       out-ch fenced-ch-res)) ; we can hold v as last fenced-ch-res.
+          (= ch fenced-ch) (do (when fenced-ch-res ; send any previous fenced-res so we can hold onto v.
+                                 (aput fenced-pump out-ch fenced-ch-res))
                                (recur name inflight-chs fenced-ch v))
           :else (do (aput fenced-pump out-ch v)
                     (recur name inflight-chs fenced-ch fenced-ch-res))))
