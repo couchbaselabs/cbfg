@@ -58,7 +58,7 @@ div.actx div.actx {
 div.actx {
     border-top: 1px solid rgb(0,100,0);
     border-radius: 6px;
-    background-color: rgba(0,100,0,0.4);
+    background-color: rgba(0,100,0,0.1);
 }
 div.actx div.loop-state {
     display: inline-block;
