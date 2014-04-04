@@ -153,13 +153,15 @@
 
 (defn vis-html-actx [vis actx actx-ch-ch-infos]
   (let [actx-id (last actx)
+        actx-idx (string/split actx-id #"-")
         actx-info (get-in vis [:actxs actx])
         children (:children actx-info)]
     ["<div id='actx-" actx-id "' class='actx'>"
      " <button class='toggle' id='toggle-" actx-id "'>"
      (if (:closed actx-info) "&#9654;" "&#9660;")
      " </button>"
-     " <span class='actx-id'>" actx-id "</span>&nbsp;"
+     " <span class='actx-id'>" (string/join "-" (butlast actx-idx))
+     "  <span class='actx-id-suffix'>"(last actx-idx) "</span></span>&nbsp;"
      " <div class='loop-state'>" (vis-html-loop-state vis (:loop-state actx-info)) "</div>"
      " <div class='chs'><ul>"
      (mapv (fn [ch-info]
