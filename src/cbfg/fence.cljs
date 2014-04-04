@@ -41,12 +41,12 @@
     inflight-chs #{}                ; chans of requests currently being processed.
     fenced-ch nil                   ; chan of last, inflight "fenced" request.
     fenced-ch-res nil]              ; last received result from last fenced request.
-   (let [chs (if (or fenced-ch      ; if we're fenced or too many inflight requests,
-                     (>= (count inflight-chs) max-inflight))
-               inflight-chs         ; then ignore in-ch & finish existing inflight requests.
-               (conj inflight-chs in-ch))]
+   (let [chs (vec (if (or fenced-ch ; if we're fenced or too many inflight requests,
+                          (>= (count inflight-chs) max-inflight))
+                    inflight-chs    ; then ignore in-ch & finish existing inflight requests.
+                    (conj inflight-chs in-ch)))]
      (if (seq chs)                  ; empty when in-ch is closed and no inflight-chs.
-       (let [[v ch] (aalts fenced-pump (vec chs))]
+       (let [[v ch] (aalts fenced-pump chs)]
          (cond
           (= ch in-ch) (if (nil? v)
                          (recur name inflight-chs out-ch nil)      ; using out-ch as a sentinel.

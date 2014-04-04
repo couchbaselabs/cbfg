@@ -85,7 +85,9 @@
               (let [; The ch-actions will be [[ch :take] [ch :put] ...].
                     ch-actions (map #(if (seq? %) [(first %) :put (second %)] [% :take])
                                     ch-bindings)
-                    use-names (= (count ch-names) (count ch-bindings))]
+                    use-names (and (seqable? ch-names)
+                                   (= (count ch-names)
+                                      (count ch-bindings)))]
                 (apply concat
                        (vec (map-indexed (fn [idx [ch action & msgv]]
                                            (swap! vis #(-> %
