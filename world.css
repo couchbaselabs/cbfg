@@ -171,35 +171,35 @@ button.toggle {
     background-color: #FFFCF1;
     padding-top: 20px;
 }
-#client { margin-left: 4em; }
-#client table.hist tr { border: 1px solid #999; }
-#client table.hist tr th {
+.client-container { margin-left: 4em; }
+.client-container table.hist tr { border: 1px solid #999; }
+.client-container table.hist tr th {
     border-top: 1px solid #FFFCF1;
     text-align: left;
 }
-#client table.hist tr td {
+.client-container table.hist tr td {
     padding-right: 10px;
     color: green;
     vertical-align: top;
     white-space: nowrap;
 }
-#client table.hist tr.complete td {
+.client-container table.hist tr.complete td {
     color: #666;
 }
-#client table.hist tr.hist-event td {
+.client-container table.hist tr.hist-event td {
     border-top: 1px solid #FFFCF1;
 }
-#client table.hist tr.hist-event:hover td {
+.client-container table.hist tr.hist-event:hover td {
     border-top: 1px solid #dde;
 }
-#client table.hist li {
+.client-container table.hist li {
     position: relative;
 }
-#client table.hist li div.timeline-focus {
+.client-container table.hist li div.timeline-focus {
     position: absolute;
     display: none;
 }
-#client table.hist li:hover div.timeline-focus {
+.client-container table.hist li:hover div.timeline-focus {
     position: absolute;
     display: block;
     top: -1000px;
@@ -209,10 +209,10 @@ button.toggle {
     z-index: -1;
     background-color: #dde;
 }
-#client table.hist li button {
+.client-container table.hist li button {
     display: none;
 }
-#client table.hist li:hover button {
+.client-container table.hist li:hover button {
     position: absolute;
     display: block;
     top: 0px;
@@ -231,6 +231,13 @@ button.toggle {
     0% { opacity: 0; top: -20px; left: 10px; }
     50% { opacity: 0.1; top: -20px; left: 10px; }
     100% { opacity: 1.0; top: 0px; left: -10px; }
+}
+.client-prev {
+    position: relative;
+}
+.client-prev .client-container {
+    position: absolute;
+    opacity: 0.2;
 }
 .event {
     margin-top: 60px;

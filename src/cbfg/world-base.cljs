@@ -4,19 +4,21 @@
   (:require [clojure.string :as string]
             [cljs.core.async :refer [chan <! >! close! merge map< filter< sliding-buffer]]
             [goog.dom :as gdom]
-            [cbfg.vis :refer [listen-el get-el-value set-el-innerHTML]]))
+            [cbfg.vis :refer [listen-el get-el-value get-el-innerHTML set-el-innerHTML]]))
 
 (defn replay-cmd-ch [cmd-inject-ch el-ids ev-to-cmd-fn]
   (merge [cmd-inject-ch
           (map< #(let [[op x] (string/split (.-id (.-target %)) #"-")]
                    {:op op :replay-to x})
                 (filter< #(= "BUTTON" (.-tagName (.-target %)))
-                         (listen-el (gdom/getElement "client") "click")))
+                         (listen-el (gdom/getElement "client-curr") "click")))
           (map< ev-to-cmd-fn
                 (merge (map #(listen-el (gdom/getElement %) "click")
                             (conj el-ids "replay"))))]))
 
 (defn world-replay [prev-in-ch prev-vis-chs world-vis-init el-prefix client-hist up-to-ts]
+  (when (nil? up-to-ts)
+    (set-el-innerHTML "client-prev" (get-el-innerHTML "client-curr")))
   (go (close! prev-in-ch)
       (doseq [prev-vis-ch (vals prev-vis-chs)]
         (close! prev-vis-ch))
@@ -36,7 +38,7 @@
                      r))
 
 (defn render-client-hist [client-hist]
-  (set-el-innerHTML "client"
+  (set-el-innerHTML "client-curr"
                     (apply str
                            (flatten ["<table class='hist'>"
                                      "<tr><th>op</th><th>fence</th>"
