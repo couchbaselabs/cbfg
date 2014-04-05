@@ -69,3 +69,6 @@
 (defmacro atimeout [actx delay]
   `(cljs.core.async/timeout ~delay))
 
+(defmacro aput-close [actx ch msg]
+  `(do (aput ~actx ~ch ~msg)
+       (aclose ~actx ~ch)))

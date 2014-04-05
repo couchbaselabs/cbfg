@@ -1,6 +1,6 @@
 (ns cbfg.world-base
   (:require-macros [cljs.core.async.macros :refer [go]]
-                   [cbfg.ago :refer [ago aclose achan aput atake atimeout]])
+                   [cbfg.ago :refer [ago aclose achan aput aput-close atake atimeout]])
   (:require [clojure.string :as string]
             [cljs.core.async :refer [chan <! >! close! merge map< filter< sliding-buffer]]
             [goog.dom :as gdom]
@@ -103,6 +103,5 @@
            (aput example-count out (assoc c :partial n)))
          (let [timeout-ch (atimeout example-count (:delay c))]
            (atake example-count timeout-ch))
-         (aput example-count out (assoc c :result (:y c)))
-         (aclose example-count out))
+         (aput-close example-count out (assoc c :result (:y c))))
     out))

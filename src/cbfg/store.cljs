@@ -1,5 +1,5 @@
 (ns cbfg.store
-  (:require-macros [cbfg.ago :refer [ago achan aclose aput]])
+  (:require-macros [cbfg.ago :refer [ago achan aput-close aput]])
   (:require [cbfg.misc :refer [dissoc-in]]))
 
 (defn gen-cas [] (rand-int 0x7fffffff))
@@ -113,8 +113,7 @@
                  (aput store-scan out
                        (merge msg {:key key :sq sq :cas (:cas change)
                                    :val (:val change)}))))))
-         (aput store-scan out {:opaque opaque :status :ok})
-         (aclose store-scan out))
+         (aput-close store-scan out {:opaque opaque :status :ok}))
     out))
 
 (defn store-changes [actx store opaque from to]
@@ -125,6 +124,5 @@
              (doseq [[sq change]
                      (subseq (into (sorted-map) (:changes s)) >= from < to)]
                (aput store-changes out (merge msg change))))
-         (aput store-changes out {:opaque opaque :status :ok})
-         (aclose store-changes out))
+         (aput-close store-changes out {:opaque opaque :status :ok}))
     out))
