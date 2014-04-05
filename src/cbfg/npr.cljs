@@ -8,6 +8,7 @@
 (defn npr-snapshot-item-msg [stream-request snapshot item])
 (defn npr-rollback-msg [stream-request rollback])
 (defn server-take-snapshot [actx server stream-request prev-snapshot])
+(defn client-rollback [actx client stream-request rollback-msg])
 (defn client-snapshot-beg [actx client stream-request snapshot-beg])
 (defn client-snapshot-end [actx client stream-request snapshot-beg snapshot-end])
 (defn client-snapshot-item [actx client stream-request snapshot-beg snapshot-item])
@@ -69,7 +70,11 @@
                                                        (recur stream-request r
                                                               (atake npr-client-loop from-server-ch)
                                                               num-snapshots num-items))
-              :else (aput-close npr-client-loop out {:status :unexpected-msg}))))
+             (and (nil? snapshot-beg)
+                  (= (:status :rollback))) (aput-close npr-client-loop out
+                                                       (client-rollback npr-client-loop client
+                                                                        stream-request r))
+             :else (aput-close npr-client-loop out {:status :unexpected-msg}))))
 
 (defn make-npr-client-session [actx client token to-server-ch from-server-ch]
   (let [out (achan-buf actx 1)
