@@ -2,6 +2,12 @@
   (:require-macros [cbfg.ago :refer [achan-buf ago ago-loop aclose
                                      aput aput-close atake]]))
 
+(defprotocol NPRSnapshot
+  (snapshot-rollback? [this])
+  (snapshot-items [this])
+  (snapshot-next-sq [this]
+    "The next snapshot after this one should start at next-sq"))
+
 (defprotocol NPRStreamRequest
   "Methods to help form NPR protocol messages"
   (stream-request-snapshot-beg-msg [this snapshot])
@@ -9,11 +15,6 @@
   (stream-request-snapshot-item-msg [this snapshot item])
   (stream-request-rollback-msg [this rollback-info])
   (stream-request-start-sq [this]))
-
-(defprotocol NPRSnapshot
-  (snapshot-rollback? [this])
-  (snapshot-items [this])
-  (snapshot-next-sq [this]))
 
 (defprotocol NPRServer
   "Methods than an NPR protocol server must implement"
