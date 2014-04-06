@@ -3,9 +3,10 @@
 (ns cbfg.core
   (:require [clojure.string :as string]
             cbfg.world-fence
-            cbfg.world-store
+            cbfg.world-lane
             cbfg.world-grouper
-            cbfg.world-lane))
+            cbfg.world-npr
+            cbfg.world-store))
 
 (enable-console-print!)
 
