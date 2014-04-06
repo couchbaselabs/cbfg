@@ -30,12 +30,10 @@
 
 (defn make-npr-server-session [actx server stream-request-in to-client-ch]
   (let [snapshot-in (server-take-snapshot server actx stream-request-in nil)]
-    (println "MAKE npr-server-session" snapshot-in)
     (ago-loop npr-server-session actx
               [stream-request stream-request-in
                snapshot snapshot-in
                num-snapshots 0]
-              (println "server-session" snapshot num-snapshots)
               (cond
                (nil? snapshot) (aput-close npr-server-session to-client-ch
                                            (assoc stream-request :status :ok))
@@ -59,7 +57,6 @@
              r snapshot-beg-in
              num-snapshots 0
              num-items 0]
-            (println "client-loop" snapshot-beg r)
             (cond
              (nil? r) (aput-close npr-client-loop out {:status :closed})
              (= (:status r) :ok) (aput-close npr-client-loop out {:status :ok})
