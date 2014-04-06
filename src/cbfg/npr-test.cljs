@@ -88,11 +88,17 @@
                                                     server-to-client-ch)
                         cresult (atake tn cs)
                         sresult (atake tn ss)]
-                    (do (println server)
-                        (println client)
-                        (and (e n nil sresult nil)
-                             (e n (:status cresult) :ok nil)
-                             (e n (:items @client-atom) [2 4 6] nil)))))
+                    (and (e n nil sresult nil)
+                         (e n (:status cresult) :ok nil)
+                         (e n (:items @client-atom) [2 4 6] nil)
+                         (e n (map (fn [x] [(:status x) (:sub-status x)])
+                                   (:hist @client-atom))
+                            [[:part :snapshot-beg]
+                             [:part :snapshot-item]
+                             [:part :snapshot-item]
+                             [:part :snapshot-item]
+                             [:part :snapshot-end]]
+                            nil))))
            "pass"
            (str "FAIL: on test-lane #" @n)))))
 
