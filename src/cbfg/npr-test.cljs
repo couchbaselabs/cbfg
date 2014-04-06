@@ -54,16 +54,18 @@
     (TestNPRStreamRequest. (merge token {:op :stream-request
                                          :start-sq (count (:items @client))})))
   (client-rollback [this actx stream-request rollback-msg]
-    (swap! client #(update-in % [:hist] conj {:rollback-msg rollback-msg}))
+    (swap! client #(update-in % [:hist] conj rollback-msg))
     nil)
   (client-snapshot-beg [this actx stream-request snapshot-beg]
-    (swap! client #(update-in % [:hist] conj {:snapshot-beg snapshot-beg}))
+    (swap! client #(update-in % [:hist] conj snapshot-beg))
     nil)
   (client-snapshot-end [this actx stream-request snapshot-beg snapshot-end]
-    (swap! client #(update-in % [:hist] conj {:snapshot-end snapshot-end}))
+    (swap! client #(update-in % [:hist] conj snapshot-end))
     nil)
   (client-snapshot-item [this actx stream-request snapshot-beg snapshot-item]
-    (swap! client #(update-in % [:hist] conj {:snapshot-item snapshot-item}))
+    (swap! client #(-> %
+                       (update-in [:hist] conj snapshot-item)
+                       (update-in [:items] conj (:item snapshot-item))))
     nil))
 
 (defn test-npr [actx]
@@ -71,8 +73,10 @@
        (let [n (atom 0)]
          (if (and (let [client-to-server-ch (achan tn)
                         server-to-client-ch (achan tn)
-                        server (TestNPRServer. (atom {:hist [] :items [2 4 6]}))
-                        client (TestNPRClient. (atom {:hist [] :items []}))
+                        server-atom (atom {:hist [] :items [2 4 6]})
+                        server (TestNPRServer. server-atom)
+                        client-atom (atom {:hist [] :items []})
+                        client (TestNPRClient. client-atom)
                         cs (make-npr-client-session tn
                                                     client {:opaque 1 :lane "a"}
                                                     client-to-server-ch
@@ -84,11 +88,11 @@
                                                     server-to-client-ch)
                         cresult (atake tn cs)
                         sresult (atake tn ss)]
-                    (do (println "client result" cresult)
-                        (println "server result" sresult)
-                        (println server)
+                    (do (println server)
                         (println client)
-                        true)))
+                        (and (e n nil sresult nil)
+                             (e n (:status cresult) :ok nil)
+                             (e n (:items @client-atom) [2 4 6] nil)))))
            "pass"
            (str "FAIL: on test-lane #" @n)))))
 
