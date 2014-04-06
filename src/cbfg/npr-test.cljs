@@ -91,10 +91,61 @@
                     (and (e n nil sresult nil)
                          (e n (:status cresult) :ok nil)
                          (e n (:items @client-atom) [2 4 6] nil)
-                         (e n (map (fn [x] [(:status x) (:sub-status x)])
-                                   (:hist @client-atom))
+                         (e n (mapv (fn [x] [(:status x) (:sub-status x)])
+                                    (:hist @client-atom))
                             [[:part :snapshot-beg]
                              [:part :snapshot-item]
+                             [:part :snapshot-item]
+                             [:part :snapshot-item]
+                             [:part :snapshot-end]]
+                            nil)))
+                  (let [client-to-server-ch (achan tn)
+                        server-to-client-ch (achan tn)
+                        server-atom (atom {:hist [] :items [2 4 6]})
+                        server (TestNPRServer. server-atom)
+                        client-atom (atom {:hist [] :items [2 4 6 8]})
+                        client (TestNPRClient. client-atom)
+                        cs (make-npr-client-session tn
+                                                    client {:opaque 1 :lane "a"}
+                                                    client-to-server-ch
+                                                    server-to-client-ch)
+                        stream-request (atake tn client-to-server-ch)
+                        ss (make-npr-server-session tn
+                                                    server
+                                                    stream-request
+                                                    server-to-client-ch)
+                        cresult (atake tn cs)
+                        sresult (atake tn ss)]
+                    (and (e n nil sresult nil)
+                         (e n (:status cresult) :ok nil)
+                         (e n (:items @client-atom) [2 4 6 8] nil)
+                         (e n (mapv (fn [x] [(:status x) (:sub-status x)])
+                                    (:hist @client-atom))
+                            []
+                            nil)))
+                  (let [client-to-server-ch (achan tn)
+                        server-to-client-ch (achan tn)
+                        server-atom (atom {:hist [] :items [2 4 6]})
+                        server (TestNPRServer. server-atom)
+                        client-atom (atom {:hist [] :items [2]})
+                        client (TestNPRClient. client-atom)
+                        cs (make-npr-client-session tn
+                                                    client {:opaque 1 :lane "a"}
+                                                    client-to-server-ch
+                                                    server-to-client-ch)
+                        stream-request (atake tn client-to-server-ch)
+                        ss (make-npr-server-session tn
+                                                    server
+                                                    stream-request
+                                                    server-to-client-ch)
+                        cresult (atake tn cs)
+                        sresult (atake tn ss)]
+                    (and (e n nil sresult nil)
+                         (e n (:status cresult) :ok nil)
+                         (e n (:items @client-atom) [2 4 6] nil)
+                         (e n (mapv (fn [x] [(:status x) (:sub-status x)])
+                                    (:hist @client-atom))
+                            [[:part :snapshot-beg]
                              [:part :snapshot-item]
                              [:part :snapshot-item]
                              [:part :snapshot-end]]
