@@ -1,8 +1,8 @@
 (ns cbfg.npr-test
   (:require-macros [cbfg.ago :refer [achan aclose ago ago-loop aput atake]])
   (:require [cbfg.npr :refer [NPRServer NPRClient NPRStreamRequest NPRSnapshot
-                              make-npr-server-session
-                              make-npr-client-session]]))
+                              handle-npr-server-stream-request
+                              start-npr-client-stream-handler]]))
 
 (defn e [n result expect result-nil]
   (let [pass (= result expect)
@@ -77,15 +77,15 @@
                         server (TestNPRServer. server-atom)
                         client-atom (atom {:hist [] :items []})
                         client (TestNPRClient. client-atom)
-                        cs (make-npr-client-session tn
-                                                    client {:opaque 1 :lane "a"}
-                                                    client-to-server-ch
-                                                    server-to-client-ch)
+                        cs (start-npr-client-stream-handler tn
+                                                            client {:opaque 1 :lane "a"}
+                                                            client-to-server-ch
+                                                            server-to-client-ch)
                         stream-request (atake tn client-to-server-ch)
-                        ss (make-npr-server-session tn
-                                                    server
-                                                    stream-request
-                                                    server-to-client-ch)
+                        ss (handle-npr-server-stream-request tn
+                                                             server
+                                                             stream-request
+                                                             server-to-client-ch)
                         cresult (atake tn cs)
                         sresult (atake tn ss)
                         _ (aclose tn client-to-server-ch)
@@ -107,15 +107,15 @@
                         server (TestNPRServer. server-atom)
                         client-atom (atom {:hist [] :items [2 4 6 8]})
                         client (TestNPRClient. client-atom)
-                        cs (make-npr-client-session tn
-                                                    client {:opaque 1 :lane "a"}
-                                                    client-to-server-ch
-                                                    server-to-client-ch)
+                        cs (start-npr-client-stream-handler tn
+                                                            client {:opaque 1 :lane "a"}
+                                                            client-to-server-ch
+                                                            server-to-client-ch)
                         stream-request (atake tn client-to-server-ch)
-                        ss (make-npr-server-session tn
-                                                    server
-                                                    stream-request
-                                                    server-to-client-ch)
+                        ss (handle-npr-server-stream-request tn
+                                                             server
+                                                             stream-request
+                                                             server-to-client-ch)
                         cresult (atake tn cs)
                         sresult (atake tn ss)
                         _ (aclose tn client-to-server-ch)
@@ -133,15 +133,15 @@
                         server (TestNPRServer. server-atom)
                         client-atom (atom {:hist [] :items [2]})
                         client (TestNPRClient. client-atom)
-                        cs (make-npr-client-session tn
-                                                    client {:opaque 1 :lane "a"}
-                                                    client-to-server-ch
-                                                    server-to-client-ch)
+                        cs (start-npr-client-stream-handler tn
+                                                            client {:opaque 1 :lane "a"}
+                                                            client-to-server-ch
+                                                            server-to-client-ch)
                         stream-request (atake tn client-to-server-ch)
-                        ss (make-npr-server-session tn
-                                                    server
-                                                    stream-request
-                                                    server-to-client-ch)
+                        ss (handle-npr-server-stream-request tn
+                                                             server
+                                                             stream-request
+                                                             server-to-client-ch)
                         cresult (atake tn cs)
                         sresult (atake tn ss)
                         _ (aclose tn client-to-server-ch)

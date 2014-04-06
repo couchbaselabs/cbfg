@@ -28,7 +28,7 @@
   (client-snapshot-end [this actx stream-request snapshot-beg snapshot-end])
   (client-snapshot-item [this actx stream-request snapshot-beg snapshot-item]))
 
-(defn make-npr-server-session [actx server stream-request-in to-client-ch]
+(defn handle-npr-server-stream-request [actx server stream-request-in to-client-ch]
   (let [snapshot-in (server-take-snapshot server actx stream-request-in nil)]
     (ago-loop npr-server-session actx
               [stream-request stream-request-in
@@ -96,12 +96,12 @@
                                                                         stream-request r))
              :else (aput-close npr-client-loop out {:status :unexpected-msg}))))
 
-(defn make-npr-client-session [actx client token to-server-ch from-server-ch]
+(defn start-npr-client-stream-handler [actx client token to-server-ch from-server-ch]
   (let [out (achan-buf actx 1)
         stream-request (client-stream-request-msg client actx token)]
-    (ago npr-client-session actx
-         (aput npr-client-session to-server-ch stream-request)
-         (npr-client-loop npr-client-session client stream-request
-                          (atake npr-client-session from-server-ch)
+    (ago npr-client-stream-handler actx
+         (aput npr-client-stream-handler to-server-ch stream-request)
+         (npr-client-loop npr-client-stream-handler client stream-request
+                          (atake npr-client-stream-handler from-server-ch)
                           out from-server-ch))
     out))
