@@ -29,8 +29,8 @@
   (client-snapshot-item [this actx stream-request snapshot-beg snapshot-item]))
 
 (defn make-npr-server-session [actx server stream-request-in to-client-ch]
-  (println "MAKE npr-server-session" snapshot num-snapshots)
-  (let [snapshot (server-take-snapshot server actx stream-request-in nil)]
+  (let [snapshot-in (server-take-snapshot server actx stream-request-in nil)]
+    (println "MAKE npr-server-session" snapshot-in)
     (ago-loop npr-server-session actx
               [stream-request stream-request-in
                snapshot snapshot-in

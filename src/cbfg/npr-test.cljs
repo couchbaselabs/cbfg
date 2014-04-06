@@ -51,7 +51,7 @@
       (when (< start-sq (count (:items @server)))
         (let [items (nthnext (:items @server) start-sq)]
           (when (> (count items) 0)
-            (println "server-take-snapshot start-sq" start-sq "items" items)
+            (println "server-take-snapshot2 start-sq" start-sq "items" items)
             (TestNPRSnapshot. {:items items
                                :next-sq (+ start-sq (count items))})))))))
 
