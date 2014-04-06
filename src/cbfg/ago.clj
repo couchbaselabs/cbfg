@@ -55,10 +55,11 @@
          result#)))
 
 (defmacro aput [actx ch msg]
-  `(do (actx-event ~actx [:aput :before '~ch ~ch ~msg])
-       (let [result# (cljs.core.async/>! ~ch ~msg)]
-         (actx-event ~actx [:aput :after '~ch ~ch ~msg result#])
-         result#)))
+  `(let [msg# ~msg]
+     (actx-event ~actx [:aput :before '~ch ~ch msg#])
+     (let [result# (cljs.core.async/>! ~ch msg#)]
+       (actx-event ~actx [:aput :after '~ch ~ch msg# result#])
+       result#)))
 
 (defmacro aalts [actx chs]
   `(do (actx-event ~actx [:aalts :before '~chs ~chs])
@@ -70,5 +71,6 @@
   `(cljs.core.async/timeout ~delay))
 
 (defmacro aput-close [actx ch msg]
-  `(do (aput ~actx ~ch ~msg)
-       (aclose ~actx ~ch)))
+  `(let [msg# ~msg]
+     (aput ~actx ~ch msg#)
+     (aclose ~actx ~ch)))
