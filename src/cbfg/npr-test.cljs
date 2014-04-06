@@ -48,28 +48,22 @@
             (TestNPRSnapshot. {:items items
                                :next-sq (+ start-sq (count items))})))))))
 
-(defrecord TestNPRClient [catom]
+(defrecord TestNPRClient [client]
   NPRClient
-  (client-stream-request-msg [client actx token]
+  (client-stream-request-msg [this actx token]
     (TestNPRStreamRequest. (merge token {:op :stream-request
-                                         :start-sq (count (:items @catom))})))
-  (client-rollback [client actx stream-request rollback-msg]
-    (swap! client #(update-in % [:hist] conj {:stream-request stream-request
-                                              :rollback-msg rollback-msg}))
+                                         :start-sq (count (:items @client))})))
+  (client-rollback [this actx stream-request rollback-msg]
+    (swap! client #(update-in % [:hist] conj {:rollback-msg rollback-msg}))
     nil)
-  (client-snapshot-beg [client actx stream-request snapshot-beg]
-    (swap! client #(update-in % [:hist] conj {:stream-request stream-request
-                                              :snapshot-beg snapshot-beg}))
+  (client-snapshot-beg [this actx stream-request snapshot-beg]
+    (swap! client #(update-in % [:hist] conj {:snapshot-beg snapshot-beg}))
     nil)
-  (client-snapshot-end [client actx stream-request snapshot-beg snapshot-end]
-    (swap! client #(update-in % [:hist] conj {:stream-request stream-request
-                                              :snapshot-beg snapshot-beg
-                                              :snapshot-end snapshot-end}))
+  (client-snapshot-end [this actx stream-request snapshot-beg snapshot-end]
+    (swap! client #(update-in % [:hist] conj {:snapshot-end snapshot-end}))
     nil)
-  (client-snapshot-item [client actx stream-request snapshot-beg snapshot-item]
-    (swap! client #(update-in % [:hist] conj {:stream-request stream-request
-                                              :snapshot-beg snapshot-beg
-                                              :snapshot-item snapshot-item}))
+  (client-snapshot-item [this actx stream-request snapshot-beg snapshot-item]
+    (swap! client #(update-in % [:hist] conj {:snapshot-item snapshot-item}))
     nil))
 
 (defn test-npr [actx]
