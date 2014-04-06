@@ -45,13 +45,11 @@
                                                               @client-hist (:replay-to v))
                                                 (let [cmd (assoc v :opaque ts)
                                                       cmd-rq ((get cmd-handlers (:op cmd)) cmd)]
-                                                  (println "in" cmd cmd-rq)
                                                   (render-client-hist (swap! client-hist
                                                                              #(assoc % ts [cmd nil])))
                                                   (aput client in-ch cmd-rq)
                                                   (recur (inc num-ins) num-outs)))
-                                (= ch out-ch) (do (println "out" v)
-                                                  (render-client-hist (swap! client-hist
+                                (= ch out-ch) (do (render-client-hist (swap! client-hist
                                                                              #(update-in % [(:opaque v) 1]
                                                                                          conj [ts v])))
                                                   (recur num-ins (inc num-outs))))))
