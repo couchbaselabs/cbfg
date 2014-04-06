@@ -1,5 +1,5 @@
 (ns cbfg.npr ; NPR stands for aNother Protocol for Replication, pronounced like UPR.
-  (:require-macros [cbfg.ago :refer [achan-buf ago ago-loop aclose
+  (:require-macros [cbfg.ago :refer [achan-buf ago ago-loop
                                      aput aput-close atake]]))
 
 (defprotocol NPRSnapshot
