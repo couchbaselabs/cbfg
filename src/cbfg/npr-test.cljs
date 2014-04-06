@@ -87,7 +87,9 @@
                                                     stream-request
                                                     server-to-client-ch)
                         cresult (atake tn cs)
-                        sresult (atake tn ss)]
+                        sresult (atake tn ss)
+                        _ (aclose tn client-to-server-ch)
+                        _ (aclose tn server-to-client-ch)]
                     (and (e n nil sresult nil)
                          (e n (:status cresult) :ok nil)
                          (e n (:items @client-atom) [2 4 6] nil)
@@ -115,7 +117,9 @@
                                                     stream-request
                                                     server-to-client-ch)
                         cresult (atake tn cs)
-                        sresult (atake tn ss)]
+                        sresult (atake tn ss)
+                        _ (aclose tn client-to-server-ch)
+                        _ (aclose tn server-to-client-ch)]
                     (and (e n nil sresult nil)
                          (e n (:status cresult) :ok nil)
                          (e n (:items @client-atom) [2 4 6 8] nil)
@@ -139,7 +143,9 @@
                                                     stream-request
                                                     server-to-client-ch)
                         cresult (atake tn cs)
-                        sresult (atake tn ss)]
+                        sresult (atake tn ss)
+                        _ (aclose tn client-to-server-ch)
+                        _ (aclose tn server-to-client-ch)]
                     (and (e n nil sresult nil)
                          (e n (:status cresult) :ok nil)
                          (e n (:items @client-atom) [2 4 6] nil)
