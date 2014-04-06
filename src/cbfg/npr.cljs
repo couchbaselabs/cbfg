@@ -50,58 +50,58 @@
                                 (server-take-snapshot server actx stream-request snapshot)
                               (inc num-snapshots))))))))
 
-(defn npr-client-loop [actx client stream-request snapshot-beg-in out from-server-ch]
-  (ago-loop npr-client-loop actx
+(defn npr-client-stream-loop [actx client stream-request snapshot-beg-in out from-server-ch]
+  (ago-loop npr-client-stream-loop actx
             [stream-request stream-request
              snapshot-beg nil
              r snapshot-beg-in
              num-snapshots 0
              num-items 0]
             (cond
-             (nil? r) (aput-close npr-client-loop out {:status :closed})
-             (= (:status r) :ok) (aput-close npr-client-loop out {:status :ok})
+             (nil? r) (aput-close npr-client-stream-loop out {:status :closed})
+             (= (:status r) :ok) (aput-close npr-client-stream-loop out {:status :ok})
              (and snapshot-beg
                   (= (:status r) :part)
                   (= (:sub-status r) :snapshot-item)) (if-let [err (client-snapshot-item client
-                                                                                         npr-client-loop
+                                                                                         npr-client-stream-loop
                                                                                          stream-request
                                                                                          snapshot-beg r)]
-                                                        (aput-close npr-client-loop out err)
+                                                        (aput-close npr-client-stream-loop out err)
                                                         (recur stream-request snapshot-beg
-                                                               (atake npr-client-loop from-server-ch)
+                                                               (atake npr-client-stream-loop from-server-ch)
                                                                num-snapshots (inc num-items)))
              (and snapshot-beg
                   (= (:status r) :part)
                   (= (:sub-status r) :snapshot-end)) (if-let [err (client-snapshot-end client
-                                                                                       npr-client-loop
+                                                                                       npr-client-stream-loop
                                                                                        stream-request
                                                                                        snapshot-beg r)]
-                                                       (aput-close npr-client-loop out err)
+                                                       (aput-close npr-client-stream-loop out err)
                                                        (recur stream-request nil
-                                                              (atake npr-client-loop from-server-ch)
+                                                              (atake npr-client-stream-loop from-server-ch)
                                                               (inc num-snapshots) num-items))
              (and (nil? snapshot-beg)
                   (= (:status r) :part)
                   (= (:sub-status r) :snapshot-beg)) (if-let [err (client-snapshot-beg client
-                                                                                       npr-client-loop
+                                                                                       npr-client-stream-loop
                                                                                        stream-request r)]
-                                                       (aput-close npr-client-loop out err)
+                                                       (aput-close npr-client-stream-loop out err)
                                                        (recur stream-request r
-                                                              (atake npr-client-loop from-server-ch)
+                                                              (atake npr-client-stream-loop from-server-ch)
                                                               num-snapshots num-items))
              (and (nil? snapshot-beg)
-                  (= (:status :rollback))) (aput-close npr-client-loop out
+                  (= (:status :rollback))) (aput-close npr-client-stream-loop out
                                                        (client-rollback client
-                                                                        npr-client-loop
+                                                                        npr-client-stream-loop
                                                                         stream-request r))
-             :else (aput-close npr-client-loop out {:status :unexpected-msg}))))
+             :else (aput-close npr-client-stream-loop out {:status :unexpected-msg}))))
 
-(defn start-npr-client-stream-handler [actx client token to-server-ch from-server-ch]
+(defn start-npr-client-stream [actx client token to-server-ch from-server-ch]
   (let [out (achan-buf actx 1)
         stream-request (client-stream-request-msg client actx token)]
-    (ago npr-client-stream-handler actx
-         (aput npr-client-stream-handler to-server-ch stream-request)
-         (npr-client-loop npr-client-stream-handler client stream-request
-                          (atake npr-client-stream-handler from-server-ch)
-                          out from-server-ch))
+    (ago npr-client-stream actx
+         (aput npr-client-stream to-server-ch stream-request)
+         (npr-client-stream-loop npr-client-stream client stream-request
+                                 (atake npr-client-stream from-server-ch)
+                                 out from-server-ch))
     out))
