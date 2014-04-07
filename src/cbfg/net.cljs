@@ -61,7 +61,6 @@
                          server-send-ch (achan-buf net end-point-buf-size)
                          server-recv-ch (achan-buf net end-point-buf-size)]
                      ; TODO: Need to model running out of ports.
-                     ; TODO: Need to model stop accepting connections / stop listening.
                      ; TODO: Need to model closing recv-ch's.
                      (recur (inc ts)
                             listens

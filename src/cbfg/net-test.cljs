@@ -5,7 +5,6 @@
 (defn e [n result expect result-nil]
   (let [pass (= result expect)
         my-n (swap! n inc)]
-    (println my-n)
     (when (not pass)
       (println (str my-n ":") "FAIL:" result expect))
     (and pass (nil? result-nil))))
