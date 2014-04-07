@@ -7,7 +7,7 @@
               [ts 0
                request-listen-ch request-listen-ch
                request-connect-ch request-connect-ch
-               listens {} ; Keyed by [addr port], value is accept-ch.
+               listens {}  ; Keyed by [addr port], value is accept-ch.
                streams {}] ; A conn is represented by dual streams, where streams
                            ; is keyed by send-ch and a value of...
                            ; {:send-addr :send-port :send-ch
