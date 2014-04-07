@@ -26,7 +26,7 @@
                         connect-ch (achan tn)
                         net (make-net tn listen-ch connect-ch)
                         accept-ch (achan tn)]
-                    (aput tn listen-ch [:host-a 1000 accept-ch])
+                    (aput tn listen-ch [:addr-a 1000 accept-ch])
                     (aclose tn listen-ch) ; Closing listen-ch should shutdown net and accept-ch's.
                     (and (e n (atake tn accept-ch) nil nil)
                          (e n (atake tn net) :done (atake tn net))))
@@ -34,10 +34,21 @@
                         connect-ch (achan tn)
                         net (make-net tn listen-ch connect-ch)
                         accept-ch (achan tn)]
-                    (aput tn listen-ch [:host-a 1000 accept-ch])
+                    (aput tn listen-ch [:addr-a 1000 accept-ch])
                     (aclose tn connect-ch) ; Closing connect-ch should shutdown net and accept-ch's.
                     (and (e n (atake tn accept-ch) nil nil)
-                         (e n (atake tn net) :done (atake tn net)))))
+                         (e n (atake tn net) :done (atake tn net))))
+                  (let [listen-ch (achan tn)
+                        connect-ch (achan tn)
+                        net (make-net tn listen-ch connect-ch)
+                        accept-ch (achan tn)
+                        accept-ch2 (achan tn)]
+                    (aput tn listen-ch [:addr-a 1000 accept-ch])
+                    (aput tn listen-ch [:addr-a 1000 accept-ch2]) ; 2nd listen on same addr/port should fail.
+                    (and (e n (atake tn accept-ch2) nil nil)
+                         (do (aclose tn listen-ch)
+                             (and (e n (atake tn accept-ch) nil nil)
+                                  (e n (atake tn net) :done (atake tn net)))))))
            "pass"
            (str "FAIL: on test-net #" @n)))))
 
