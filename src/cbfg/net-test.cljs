@@ -15,7 +15,13 @@
          (if (and (let [listen-ch (achan tn)
                         connect-ch (achan tn)
                         net (make-net tn listen-ch connect-ch)]
-                    true))
+                    (aclose tn listen-ch)
+                    (e n (atake tn net) nil nil))
+                  (let [listen-ch (achan tn)
+                        connect-ch (achan tn)
+                        net (make-net tn listen-ch connect-ch)]
+                    (aclose tn connect-ch)
+                    (e n (atake tn net) nil nil)))
            "pass"
            (str "FAIL: on test-net #" @n)))))
 
