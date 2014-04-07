@@ -5,6 +5,7 @@
             cbfg.world-fence
             cbfg.world-lane
             cbfg.world-grouper
+            cbfg.world-net
             cbfg.world-npr
             cbfg.world-store))
 

@@ -157,7 +157,7 @@
                              [:part :snapshot-end]]
                             nil))))
            "pass"
-           (str "FAIL: on test-lane #" @n)))))
+           (str "FAIL: on test-npr #" @n)))))
 
 (defn test [actx opaque]
   (ago test actx
