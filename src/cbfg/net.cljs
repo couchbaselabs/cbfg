@@ -1,5 +1,5 @@
 (ns cbfg.net
-  (:require-macros [cbfg.ago :refer [achan ago-loop aclose aalts aput]]))
+  (:require-macros [cbfg.ago :refer [achan ago-loop aclose aalts aput aput-close]]))
 
 (defn make-net [actx request-listen-ch request-connect-ch max-msgs-per-stream]
   (let [clean-up #()]
@@ -23,9 +23,8 @@
                                        (when (< (count (:msgs stream)) max-msgs-per-stream)
                                          [(:send-ch stream)]))
                                       streams)
-                    listenables (vals listens) ; TODO: Handle too many ports case.
                     [v ch] (aalts net (vec (concat [request-listen-ch request-connect-ch]
-                                                   deliveries sendables listenables)))]
+                                                   deliveries sendables)))]
                 (cond
                  (= ch request-listen-ch)
                  (when-let [[addr port accept-ch] v]
@@ -43,6 +42,7 @@
                            server-send-ch (achan net)
                            server-recv-ch (achan net)]
                        ; TODO: Need to model connection delay and running out of ports.
+                       ; TODO: Need to model stop accepting connections / stop listening.
                        (aput net result-ch [client-send-ch client-recv-ch])
                        (aput net accept-ch [server-send-ch server-recv-ch])
                        (recur (inc ts) request-listen-ch request-connect-ch listens
@@ -53,14 +53,19 @@
                                                          :to-side :send :to-addr to-addr :to-port to-port}))))
                      (do (aclose net result-ch)
                          (recur (inc ts) request-listen-ch request-connect-ch listens streams))))
-                 (contains? listenables ch)
-                 (if v
-                   (recur (inc ts) request-listen-ch request-connect-ch listens streams)
-                   (recur (inc ts) request-listen-ch request-connect-ch listens streams))
                  (contains? sendables ch)
-                 (if v
-                   (recur (inc ts) request-listen-ch request-connect-ch listens streams)
-                   (recur (inc ts) request-listen-ch request-connect-ch listens streams))
-                 :else ; Must be a deliverable.
-                 (recur (inc ts) request-listen-ch request-connect-ch listens streams))))))
+                 (let [send-ch ch]
+                   (if-let [stream (get streams send-ch)]
+                     (let [[msg result-ch] v]
+                       (when result-ch
+                         (aput-close net result-ch :ok))
+                       (recur (inc ts) request-listen-ch request-connect-ch listens
+                              (update-in streams [send-ch :msgs] conj msg)))
+                     (recur (inc ts) request-listen-ch request-connect-ch listens
+                            (dissoc streams send-ch)))) ; TODO: Handle closing recv-ch.
+                 :else ; Must be completed delivery (recv).
+                 (let [recv-ch ch
+                       stream (first (filter #(= (:recv-ch %) recv-ch) (vals streams)))]
+                   (recur (inc ts) request-listen-ch request-connect-ch listens
+                          (dissoc streams (:send-ch stream)))))))))
 
