@@ -1,8 +1,12 @@
 (ns cbfg.net
-  (:require-macros [cbfg.ago :refer [achan-buf ago-loop aclose aalts aput aput-close]]))
+  (:require-macros [cbfg.ago :refer [achan-buf ago ago-loop aclose aalts aput aput-close]]))
 
 (defn make-net [actx request-listen-ch request-connect-ch & opts]
-  (let [clean-up #()]
+  (let [clean-up (fn [listens streams results]
+                   (ago cleanup actx
+                        (doseq [[[addr port] accept-ch] listens]
+                          (aclose cleanup accept-ch)))
+                   :done)]
     (ago-loop net actx
               [ts 0
                listens {}  ; Keyed by [addr port], value is accept-ch.
@@ -38,8 +42,7 @@
                             results)
                      (do (aclose net accept-ch)
                          (recur (inc ts) listens streams results)))
-                   (doseq [[[addr port] accept-ch] listens]
-                     (aclose net accept-ch)))
+                   (clean-up listens streams results))
                  (= ch request-connect-ch)
                  (if-let [[to-addr to-port from-addr result-ch] v]
                    ; TODO: Need to model connection delay, perhaps with a generic "later".
@@ -65,8 +68,7 @@
                                   (conj [accept-ch [server-send-ch server-recv-ch]]))))
                      (do (aclose net result-ch)
                          (recur (inc ts) listens streams results)))
-                   (doseq [[[addr port] accept-ch] listens]
-                     (aclose net accept-ch)))
+                   (clean-up listens streams results))
                  (contains? sendables ch)
                  (let [send-ch ch]
                    (if-let [stream (get streams send-ch)]
