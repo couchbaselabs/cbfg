@@ -15,27 +15,31 @@
          (if (and (let [listen-ch (achan tn)
                         connect-ch (achan tn)
                         net (make-net tn listen-ch connect-ch)]
-                    (aclose tn listen-ch) ; Closing listen-ch should shutdown net.
+                    ; Closing listen-ch should shutdown net.
+                    (aclose tn listen-ch)
                     (e n (atake tn net) :done (atake tn net)))
                   (let [listen-ch (achan tn)
                         connect-ch (achan tn)
                         net (make-net tn listen-ch connect-ch)]
-                    (aclose tn connect-ch) ; Closing connect-ch should shutdown net.
+                    ; Closing connect-ch should shutdown net.
+                    (aclose tn connect-ch)
                     (e n (atake tn net) :done (atake tn net)))
                   (let [listen-ch (achan tn)
                         connect-ch (achan tn)
                         net (make-net tn listen-ch connect-ch)
                         accept-ch (achan tn)]
+                    ; Closing listen-ch should shutdown net and accept-ch's.
                     (aput tn listen-ch [:addr-a 1000 accept-ch])
-                    (aclose tn listen-ch) ; Closing listen-ch should shutdown net and accept-ch's.
+                    (aclose tn listen-ch)
                     (and (e n (atake tn accept-ch) nil nil)
                          (e n (atake tn net) :done (atake tn net))))
                   (let [listen-ch (achan tn)
                         connect-ch (achan tn)
                         net (make-net tn listen-ch connect-ch)
                         accept-ch (achan tn)]
+                    ; Closing connect-ch should shutdown net and accept-ch's.
                     (aput tn listen-ch [:addr-a 1000 accept-ch])
-                    (aclose tn connect-ch) ; Closing connect-ch should shutdown net and accept-ch's.
+                    (aclose tn connect-ch)
                     (and (e n (atake tn accept-ch) nil nil)
                          (e n (atake tn net) :done (atake tn net))))
                   (let [listen-ch (achan tn)
@@ -43,8 +47,9 @@
                         net (make-net tn listen-ch connect-ch)
                         accept-ch (achan tn)
                         accept-ch2 (achan tn)]
+                    ; 2nd listen on same addr/port should fail.
                     (aput tn listen-ch [:addr-a 1000 accept-ch])
-                    (aput tn listen-ch [:addr-a 1000 accept-ch2]) ; 2nd listen on same addr/port should fail.
+                    (aput tn listen-ch [:addr-a 1000 accept-ch2])
                     (and (e n (atake tn accept-ch2) nil nil)
                          (do (aclose tn listen-ch)
                              (aclose tn connect-ch)
@@ -54,6 +59,7 @@
                         connect-ch (achan tn)
                         net (make-net tn listen-ch connect-ch)
                         connect-result-ch (achan tn)]
+                    ; Connecting to unlistened to port should fail.
                     (aput tn connect-ch [:addr-a 1000 :addr-x connect-result-ch])
                     (and (e n (atake tn connect-result-ch) nil nil)
                          (do (aclose tn listen-ch)
