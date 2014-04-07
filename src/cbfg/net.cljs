@@ -1,6 +1,5 @@
 (ns cbfg.net
-  (:require-macros [cbfg.ago :refer [achan-buf ago ago-loop aalts
-                                     aput aput-close atake]]))
+  (:require-macros [cbfg.ago :refer [achan ago-loop aclose aalts aput]]))
 
 (defn make-net [actx request-listen-ch request-connect-ch max-msgs-per-stream]
   (let [clean-up #()]
@@ -13,7 +12,7 @@
                            ; is keyed by send-ch and a value of...
                            ; {:send-addr :send-port :send-ch
                            ;  :recv-addr :recv-port :recv-ch
-                           ;  :accept-addr :accept-port
+                           ;  :to-side :to-addr :to-port
                            ;  :msgs :tot-msgs}.
               (let [deliveries (mapcat (fn [send-ch stream]
                                          (when-let [[deliver-at msg] (first (:msgs stream))]
@@ -31,11 +30,29 @@
                  (= ch request-listen-ch)
                  (when-let [[addr port accept-ch] v]
                    (if (get listens [addr port])
-                     (recur (inc ts) request-listen-ch request-connect-ch listens streams)
-                     (recur (inc ts) request-listen-ch request-connect-ch listens streams)))
+                     (recur (inc ts) request-listen-ch request-connect-ch
+                            (assoc listens [addr port] accept-ch)
+                            streams)
+                     (do (aclose net accept-ch)
+                         (recur (inc ts) request-listen-ch request-connect-ch listens streams))))
                  (= ch request-connect-ch)
-                 (when v
-                   (recur (inc ts) request-listen-ch request-connect-ch listens streams))
+                 (when-let [[to-addr to-port from-addr result-ch] v]
+                   (if-let [accept-ch (get listens [to-addr to-port])]
+                     (let [client-send-ch (achan net)
+                           client-recv-ch (achan net)
+                           server-send-ch (achan net)
+                           server-recv-ch (achan net)]
+                       ; TODO: Need to model connection delay and running out of ports.
+                       (aput net result-ch [client-send-ch client-recv-ch])
+                       (aput net accept-ch [server-send-ch server-recv-ch])
+                       (recur (inc ts) request-listen-ch request-connect-ch listens
+                              (-> streams
+                                  (assoc client-send-ch {:send-ch client-send-ch :recv-ch server-recv-ch
+                                                         :to-side :recv :to-addr to-addr :to-port to-port})
+                                  (assoc server-send-ch {:send-ch server-send-ch :recv-ch client-recv-ch
+                                                         :to-side :send :to-addr to-addr :to-port to-port}))))
+                     (do (aclose net result-ch)
+                         (recur (inc ts) request-listen-ch request-connect-ch listens streams))))
                  (contains? listenables ch)
                  (if v
                    (recur (inc ts) request-listen-ch request-connect-ch listens streams)
