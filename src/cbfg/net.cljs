@@ -1,8 +1,7 @@
 (ns cbfg.net
   (:require-macros [cbfg.ago :refer [achan-buf ago-loop aclose aalts aput aput-close]]))
 
-(defn make-net [actx request-listen-ch request-connect-ch
-                max-msgs-per-stream delivery-delay end-point-buf-size]
+(defn make-net [actx request-listen-ch request-connect-ch & opts]
   (let [clean-up #()]
     (ago-loop net actx
               [ts 0
@@ -21,7 +20,8 @@
                                              [[(:recv-ch stream) (first (:msgs stream))]])))
                                        streams)
                     sendables (mapcat (fn [send-ch stream]
-                                       (when (< (count (:msgs stream)) max-msgs-per-stream)
+                                       (when (< (count (:msgs stream))
+                                                (get opts :max-msgs-per-stream 10))
                                          [(:send-ch stream)]))
                                       streams)
                     [v ch] (aalts net (-> [request-listen-ch request-connect-ch]
@@ -42,7 +42,8 @@
                  (when-let [[to-addr to-port from-addr result-ch] v]
                    ; TODO: Need to model connection delay, perhaps with a generic "later".
                    (if-let [accept-ch (get listens [to-addr to-port])]
-                     (let [client-send-ch (achan-buf net end-point-buf-size)
+                     (let [end-point-buf-size (get opts :end-point-buf-size 0)
+                           client-send-ch (achan-buf net end-point-buf-size)
                            client-recv-ch (achan-buf net end-point-buf-size)
                            server-send-ch (achan-buf net end-point-buf-size)
                            server-recv-ch (achan-buf net end-point-buf-size)]
@@ -69,7 +70,7 @@
                        (recur (inc ts)
                               listens
                               (update-in streams [send-ch :msgs]
-                                         conj [(+ ts delivery-delay) msg])
+                                         conj [(+ ts (get :opts :delivery-delay 0)) msg])
                               (if result-ch
                                 (conj results [result-ch :ok])
                                 result-ch)))

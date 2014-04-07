@@ -12,7 +12,10 @@
 (defn test-net [actx]
   (ago tn actx
        (let [n (atom 0)]
-         (if (and true)
+         (if (and (let [listen-ch (achan tn)
+                        connect-ch (achan tn)
+                        net (make-net tn listen-ch connect-ch)]
+                    true))
            "pass"
            (str "FAIL: on test-net #" @n)))))
 
