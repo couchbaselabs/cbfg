@@ -11,7 +11,8 @@
                            ; is keyed by send-ch and a value of...
                            ; {:send-addr :send-port :send-ch
                            ;  :recv-addr :recv-port :recv-ch
-                           ;  :to-side :to-addr :to-port
+                           ;  :side (:client|:server)
+                           ;  :server-addr :server-port
                            ;  :msgs [[deliver-at msg] ...]}.
                results []] ; A result is [ch msg].
               (let [deliverables (mapcat (fn [send-ch stream]
@@ -51,11 +52,11 @@
                               listens
                               (-> streams
                                   (assoc client-send-ch {:send-ch client-send-ch :recv-ch server-recv-ch
-                                                         :to-side :recv :to-addr to-addr :to-port to-port
-                                                         :msgs []})
+                                                         :server-addr to-addr :server-port to-port
+                                                         :side :client :msgs []})
                                   (assoc server-send-ch {:send-ch server-send-ch :recv-ch client-recv-ch
-                                                         :to-side :send :to-addr to-addr :to-port to-port
-                                                         :msgs []}))
+                                                         :server-addr to-addr :server-port to-port
+                                                         :side :server :msgs []}))
                               (-> results
                                   (conj [result-ch [client-send-ch client-recv-ch]])
                                   (conj [accept-ch [server-send-ch server-recv-ch]]))))
@@ -67,20 +68,30 @@
                      (let [[msg result-ch] v]
                        (recur (inc ts)
                               listens
-                              (update-in streams [send-ch :msgs] conj [(+ ts delivery-delay) msg])
+                              (update-in streams [send-ch :msgs]
+                                         conj [(+ ts delivery-delay) msg])
                               (if result-ch
                                 (conj results [result-ch :ok])
                                 result-ch)))
                      (recur (inc ts)
                             listens
-                            (dissoc streams send-ch) ; TODO: Need to model close better by draining then closing.
+                            (update-in streams [send-ch :send-closed] true)
                             results)))
-                 :else ; Must be completed deliverable (recv-ch aput'ed) or completed results aput.
-                 (let [stream (first (filter #(= (:recv-ch %) ch) (vals streams)))]
-                   ; TODO: Need to remove first msg from msgs.
-                   ; TODO: Handle closing recv-ch.
+                 :else ; Must be a completed deliverable (recv-ch aput'ed) or completed results aput.
+                 (if-let [stream (first (filter #(= (:recv-ch %) ch) (vals streams)))]
+                   (let [stream2 (update-in stream [:msgs] rest)]
+                     (if (and (:send-closed stream2)
+                              (empty? (:msgs stream2)))
+                       (do (aclose net (:recv-ch stream2))
+                           (recur (inc ts)
+                                  listens
+                                  (dissoc streams (:send-ch stream2))
+                                  results))
+                       (recur (inc ts)
+                              listens
+                              (assoc streams (:send-ch stream2) stream2)
+                              results)))
                    (recur (inc ts)
                           listens
-                          (dissoc streams (:send-ch stream))
+                          streams
                           (remove #(= (first %) ch) results))))))))
-
