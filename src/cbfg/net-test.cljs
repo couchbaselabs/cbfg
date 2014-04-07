@@ -47,6 +47,7 @@
                     (aput tn listen-ch [:addr-a 1000 accept-ch2]) ; 2nd listen on same addr/port should fail.
                     (and (e n (atake tn accept-ch2) nil nil)
                          (do (aclose tn listen-ch)
+                             (aclose tn connect-ch)
                              (and (e n (atake tn accept-ch) nil nil)
                                   (e n (atake tn net) :done (atake tn net))))))
                   (let [listen-ch (achan tn)
@@ -56,6 +57,7 @@
                     (aput tn connect-ch [:addr-a 1000 :addr-x connect-result-ch])
                     (and (e n (atake tn connect-result-ch) nil nil)
                          (do (aclose tn listen-ch)
+                             (aclose tn connect-ch)
                              (e n (atake tn net) :done (atake tn net))))))
            "pass"
            (str "FAIL: on test-net #" @n)))))
