@@ -1,5 +1,5 @@
 (ns cbfg.net
-  (:require-macros [cbfg.ago :refer [achan-buf ago ago-loop aclose aalts aput aput-close]]))
+  (:require-macros [cbfg.ago :refer [achan-buf ago ago-loop aclose aalts aput]]))
 
 (defn net-clean-up [actx listens streams results]
   (ago cleanup actx

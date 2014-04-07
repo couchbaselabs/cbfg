@@ -48,7 +48,15 @@
                     (and (e n (atake tn accept-ch2) nil nil)
                          (do (aclose tn listen-ch)
                              (and (e n (atake tn accept-ch) nil nil)
-                                  (e n (atake tn net) :done (atake tn net)))))))
+                                  (e n (atake tn net) :done (atake tn net))))))
+                  (let [listen-ch (achan tn)
+                        connect-ch (achan tn)
+                        net (make-net tn listen-ch connect-ch)
+                        connect-result-ch (achan tn)]
+                    (aput tn connect-ch [:addr-a 1000 :addr-x connect-result-ch])
+                    (and (e n (atake tn connect-result-ch) nil nil)
+                         (do (aclose tn listen-ch)
+                             (e n (atake tn net) :done (atake tn net))))))
            "pass"
            (str "FAIL: on test-net #" @n)))))
 
