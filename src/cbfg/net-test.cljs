@@ -15,13 +15,29 @@
          (if (and (let [listen-ch (achan tn)
                         connect-ch (achan tn)
                         net (make-net tn listen-ch connect-ch)]
-                    (aclose tn listen-ch)
+                    (aclose tn listen-ch) ; Closing listen-ch should shutdown net.
                     (e n (atake tn net) nil nil))
                   (let [listen-ch (achan tn)
                         connect-ch (achan tn)
                         net (make-net tn listen-ch connect-ch)]
-                    (aclose tn connect-ch)
-                    (e n (atake tn net) nil nil)))
+                    (aclose tn connect-ch) ; Closing connect-ch should shutdown net.
+                    (e n (atake tn net) nil nil))
+                  (let [listen-ch (achan tn)
+                        connect-ch (achan tn)
+                        net (make-net tn listen-ch connect-ch)
+                        accept-ch (achan tn)]
+                    (aput tn listen-ch [:host-a 1000 accept-ch])
+                    (aclose tn listen-ch) ; Closing listen-ch should shutdown net and accept-ch's.
+                    (and (e n (atake tn accept-ch) nil nil)
+                         (e n (atake tn net) nil nil)))
+                  (let [listen-ch (achan tn)
+                        connect-ch (achan tn)
+                        net (make-net tn listen-ch connect-ch)
+                        accept-ch (achan tn)]
+                    (aput tn listen-ch [:host-a 1000 accept-ch])
+                    (aclose tn connect-ch) ; Closing connect-ch should shutdown net and accept-ch's.
+                    (and (e n (atake tn accept-ch) nil nil)
+                         (e n (atake tn net) nil nil))))
            "pass"
            (str "FAIL: on test-net #" @n)))))
 

@@ -30,16 +30,18 @@
                                           (into results)))]
                 (cond
                  (= ch request-listen-ch)
-                 (when-let [[addr port accept-ch] v]
+                 (if-let [[addr port accept-ch] v]
                    (if (get listens [addr port])
                      (recur (inc ts)
                             (assoc listens [addr port] accept-ch)
                             streams
                             results)
                      (do (aclose net accept-ch)
-                         (recur (inc ts) listens streams results))))
+                         (recur (inc ts) listens streams results)))
+                   (doseq [[[addr port] accept-ch] listens]
+                     (aclose net accept-ch)))
                  (= ch request-connect-ch)
-                 (when-let [[to-addr to-port from-addr result-ch] v]
+                 (if-let [[to-addr to-port from-addr result-ch] v]
                    ; TODO: Need to model connection delay, perhaps with a generic "later".
                    (if-let [accept-ch (get listens [to-addr to-port])]
                      (let [end-point-buf-size (get opts :end-point-buf-size 0)
@@ -62,7 +64,9 @@
                                   (conj [result-ch [client-send-ch client-recv-ch]])
                                   (conj [accept-ch [server-send-ch server-recv-ch]]))))
                      (do (aclose net result-ch)
-                         (recur (inc ts) listens streams results))))
+                         (recur (inc ts) listens streams results)))
+                   (doseq [[[addr port] accept-ch] listens]
+                     (aclose net accept-ch)))
                  (contains? sendables ch)
                  (let [send-ch ch]
                    (if-let [stream (get streams send-ch)]
