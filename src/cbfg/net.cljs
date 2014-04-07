@@ -1,9 +1,9 @@
 (ns cbfg.net
-  (:require-macros [cbfg.ago :refer [achan-buf ago ago-loop aclose aalts aput]]))
+  (:require-macros [cbfg.ago :refer [achan achan-buf ago ago-loop aclose aalts aput]]))
 
 (defn net-clean-up [actx listens streams results]
   (ago cleanup actx
-       (doseq [[[addr port] accept-ch] listens]
+       (doseq [[[addr port] [accept-close-ch accept-ch]] listens]
          (aclose cleanup accept-ch))
        (doseq [stream (vals streams)]
          (aclose cleanup (:recv-ch stream)))
@@ -14,7 +14,7 @@
 (defn make-net [actx request-listen-ch request-connect-ch & opts]
   (ago-loop net actx
             [ts 0
-             listens {}  ; Keyed by [addr port], value is accept-ch.
+             listens {}  ; Keyed by [addr port], value is [close-accept-ch accept-ch].
              streams {}  ; A conn is represented by dual streams, where streams
                          ; is keyed by send-ch and a value of...
                          ; {:send-addr :send-port :send-ch
@@ -23,7 +23,8 @@
                          ;  :server-addr :server-port
                          ;  :msgs [[deliver-at msg] ...]}.
              results []] ; A result entry is [result-ch msg].
-            (let [deliverables (mapcat (fn [send-ch stream]
+            (let [close-accept-chs (map first (vals listens))
+                  deliverables (mapcat (fn [send-ch stream]
                                          (when-let [[deliver-at msg] (first (:msgs stream))]
                                            (when (>= ts deliver-at)
                                              [[(:recv-ch stream) (first (:msgs stream))]])))
@@ -34,24 +35,26 @@
                                         [(:send-ch stream)]))
                                     streams)
                   [v ch] (aalts net (-> [request-listen-ch request-connect-ch]
+                                        (into close-accept-chs)
                                         (into deliverables)
                                         (into sendables)
                                         (into results)))]
               (cond
                (= ch request-listen-ch)
-               (if-let [[addr port accept-ch] v]
+               (if-let [[addr port result-ch] v]
                  (if (get listens [addr port])
-                   (recur (inc ts)
-                          (assoc listens [addr port] accept-ch)
-                          streams
-                          results)
-                   (do (aclose net accept-ch)
-                       (recur (inc ts) listens streams results)))
+                   (do (aclose net result-ch)
+                       (recur (inc ts) listens streams results))
+                   (let [accept-chs [(achan net) (achan net)]]
+                     (recur (inc ts)
+                            (assoc listens [addr port] accept-chs)
+                            streams
+                            (conj results [result-ch accept-chs]))))
                  (net-clean-up net listens streams results))
                (= ch request-connect-ch)
                (if-let [[to-addr to-port from-addr result-ch] v]
                  ; TODO: Need to model connection delay, perhaps with a generic "later".
-                 (if-let [accept-ch (get listens [to-addr to-port])]
+                 (if-let [[close-accept-ch accept-ch] (get listens [to-addr to-port])]
                    (let [end-point-buf-size (get opts :end-point-buf-size 0)
                          client-send-ch (achan-buf net end-point-buf-size)
                          client-recv-ch (achan-buf net end-point-buf-size)
@@ -59,6 +62,7 @@
                          server-recv-ch (achan-buf net end-point-buf-size)]
                      ; TODO: Need to model running out of ports.
                      ; TODO: Need to model stop accepting connections / stop listening.
+                     ; TODO: Need to model closing recv-ch's.
                      (recur (inc ts)
                             listens
                             (-> streams
@@ -89,7 +93,7 @@
                           listens
                           (update-in streams [send-ch :send-closed] true)
                           results)))
-               :else ; Must be a completed deliverable (recv-ch aput'ed) or completed results aput.
+               :else ; Test if it's a completed deliverable (recv-ch aput'ed).
                (if-let [stream (first (filter #(= (:recv-ch %) ch) (vals streams)))]
                  (let [stream2 (update-in stream [:msgs] rest)]
                    (if (and (:send-closed stream2)
@@ -103,7 +107,17 @@
                             listens
                             (assoc streams (:send-ch stream2) stream2)
                             results)))
-                 (recur (inc ts) ; Handle a completed results aput.
-                        listens
-                        streams
-                        (remove #(= (first %) ch) results)))))))
+                 (if-let [[addr-port [close-accept-ch accept-ch]]
+                          (first (filter #(= ch (first (second %))) (seq listens)))]
+                   (if v
+                     (recur (inc ts) listens streams results)
+                     (do (aclose net accept-ch) ; Handle a close-accept-ch.
+                         (recur (inc ts)
+                                (dissoc listens addr-port)
+                                streams
+                                results)))
+                   (do (aclose net ch) ; Handle a completed result-ch aput.
+                       (recur (inc ts)
+                              listens
+                              streams
+                              (remove #(= (first %) ch) results)))))))))
