@@ -59,10 +59,12 @@
                             (conj results [false result-ch accept-chs]))))
                  (net-clean-up net listens streams results))
                (= ch request-connect-ch) ; Client connect request.
-               (if-let [[to-addr to-port from-addr result-ch] v]
+               (if-let [[accept-addr accept-port from-addr result-ch] v]
                  ; TODO: Need to model connection delay, perhaps with a generic "later".
-                 (if-let [[accept-ch close-accept-ch] (get listens [to-addr to-port])]
-                   (let [end-point-buf-size (get opts :end-point-buf-size 0)
+                 (if-let [[accept-ch close-accept-ch] (get listens [accept-addr accept-port])]
+                   (let [from-port (+ 10000 ts)
+                         to-port (+ 10000 ts)
+                         end-point-buf-size (get opts :end-point-buf-size 0)
                          client-send-ch (achan-buf net end-point-buf-size)
                          client-recv-ch (achan-buf net end-point-buf-size)
                          close-client-recv-ch (achan net)
@@ -75,19 +77,22 @@
                                 (assoc client-send-ch {:send-ch client-send-ch
                                                        :recv-ch server-recv-ch
                                                        :close-recv-ch close-server-recv-ch
-                                                       :server-addr to-addr :server-port to-port
+                                                       :accept-addr accept-addr :accept-port accept-port
+                                                       :server-addr accept-addr :server-port to-port
+                                                       :client-addr from-addr :client-port from-port
                                                        :side :client :msgs []})
                                 (assoc server-send-ch {:send-ch server-send-ch
                                                        :recv-ch client-recv-ch
                                                        :close-recv-ch close-client-recv-ch
-                                                       :server-addr to-addr :server-port to-port
+                                                       :accept-addr accept-addr :accept-port accept-port
+                                                       :server-addr accept-addr :server-port to-port
+                                                       :client-addr from-addr :client-port from-port
                                                        :side :server :msgs []}))
                             (-> results
                                 (conj [false result-ch [client-send-ch client-recv-ch
-                                                        close-client-recv-ch to-addr to-port]])
-                                ; TODO: assign client port.
+                                                        close-client-recv-ch accept-addr to-port]])
                                 (conj [true accept-ch [server-send-ch server-recv-ch
-                                                       close-server-recv-ch from-addr 0]]))))
+                                                       close-server-recv-ch from-addr from-port]]))))
                    (do (aclose net result-ch)
                        (recur (inc ts) listens streams results)))
                  (net-clean-up net listens streams results))
