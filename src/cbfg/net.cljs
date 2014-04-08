@@ -8,7 +8,7 @@
        (doseq [stream (vals streams)]
          (when (:recv-ch stream)
            (aclose cleanup (:recv-ch stream))))
-       (doseq [[result-ch msg] results]
+       (doseq [[keep-open-bool result-ch msg] results]
          (aclose cleanup result-ch)))
   :done)
 
@@ -21,7 +21,7 @@
                          ;  :recv-addr :recv-port :recv-ch
                          ;  :side (:client|:server) :server-addr :server-port
                          ;  :msgs [[deliver-at msg] ...]}.
-             results []] ; A result entry is [result-ch msg].
+             results []] ; A result entry is [keep-open-bool result-ch msg].
             (let [close-accept-chs (map second (vals listens))
                   close-recv-chs (mapcat (fn [[send-ch stream]]
                                            (when-let [close-recv-ch (:close-recv-ch stream)]
@@ -44,7 +44,7 @@
                           (into close-recv-chs)
                           (into deliverable-msgs)
                           (into send-chs)
-                          (into results))
+                          (into (map #(vec (rest %)) results)))
                   [v ch] (aalts net chs)]
               (cond
                (= ch request-listen-ch) ; Server listen request.
@@ -56,7 +56,7 @@
                      (recur (inc ts)
                             (assoc listens [addr port] accept-chs)
                             streams
-                            (conj results [result-ch accept-chs]))))
+                            (conj results [false result-ch accept-chs]))))
                  (net-clean-up net listens streams results))
                (= ch request-connect-ch) ; Client connect request.
                (if-let [[to-addr to-port from-addr result-ch] v]
@@ -83,10 +83,11 @@
                                                        :server-addr to-addr :server-port to-port
                                                        :side :server :msgs []}))
                             (-> results
-                                (conj [result-ch [client-send-ch
-                                                  client-recv-ch close-client-recv-ch to-addr to-port]])
-                                (conj [accept-ch [server-send-ch
-                                                  server-recv-ch close-server-recv-ch from-addr 0]]))))
+                                (conj [false result-ch [client-send-ch client-recv-ch
+                                                        close-client-recv-ch to-addr to-port]])
+                                ; TODO: assign client port.
+                                (conj [true accept-ch [server-send-ch server-recv-ch
+                                                       close-server-recv-ch from-addr 0]]))))
                    (do (aclose net result-ch)
                        (recur (inc ts) listens streams results)))
                  (net-clean-up net listens streams results))
@@ -100,7 +101,7 @@
                                        conj [(+ ts (get opts :delivery-delay 0)) msg])
                             streams)
                           (if result-ch
-                            (conj results [result-ch :ok])
+                            (conj results [true result-ch :ok])
                             results))
                    (recur (inc ts) listens
                           (if (:recv-ch stream)
@@ -140,6 +141,10 @@
                                   (dissoc listens addr-port)
                                   streams
                                   results)))
-                     (do (aclose net ch) ; Or, handle a completed result-ch aput.
-                         (recur (inc ts) listens streams
-                                (remove #(= (first %) ch) results))))))))))
+                     (if-let [[keep-open-bool result-ch result-msg] ; Or, handle result-ch aput.
+                              (first (filter #(= (second %) ch) results))]
+                       (do (when (not keep-open-bool)
+                             (aclose net ch))
+                           (recur (inc ts) listens streams
+                                  (remove #(= (second %) ch) results)))
+                       :error-unknown-ch))))))))
