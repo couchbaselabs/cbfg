@@ -83,7 +83,39 @@
                          (and (e n (atake tn connect-result-ch) nil nil)
                               (do (aclose tn listen-ch)
                                   (aclose tn connect-ch)
-                                  (e n (atake tn net) :done (atake tn net)))))))))
+                                  (e n (atake tn net) :done (atake tn net))))))))
+              ; Try sending msgs between client and server.
+              (let [listen-ch (achan tn)
+                    connect-ch (achan tn)
+                    net (make-net tn listen-ch connect-ch)
+                    listen-result-ch (achan tn)]
+                (aput tn listen-ch [:addr-a 1000 listen-result-ch])
+                (let [[close-accept-ch accept-ch] (atake tn listen-result-ch)]
+                  (and (e n (not (nil? close-accept-ch)) true nil)
+                       (e n (not (nil? accept-ch)) true nil)
+                       (e n (atake tn listen-result-ch) nil nil)
+                       (let [connect-result-ch (achan tn)]
+                         (aput tn connect-ch [:addr-a 1000 :addr-x connect-result-ch])
+                         (let [[client-send-ch client-recv-ch close-client-recv-ch] (atake tn connect-result-ch)]
+                           (and (e n (not (nil? client-send-ch)) true nil)
+                                (e n (not (nil? client-recv-ch)) true nil)
+                                (e n (not (nil? close-client-recv-ch)) true nil)
+                                (e n (atake tn connect-result-ch) nil nil)
+                                (let [[server-send-ch server-recv-ch close-server-recv-ch] (atake tn accept-ch)]
+                                  (and (e n (not (nil? server-send-ch)) true nil)
+                                       (e n (not (nil? server-recv-ch)) true nil)
+                                       (e n (not (nil? close-server-recv-ch)) true nil)
+                                       (do (aput tn client-send-ch [:hi-from-client])
+                                           (and (e n (atake tn server-recv-ch) :hi-from-client nil)
+                                                (do (aput tn server-send-ch [:hi-from-server])
+                                                    (and (e n (atake tn client-recv-ch) :hi-from-server nil)
+                                                         (do (aclose tn close-server-recv-ch)
+                                                             (aclose tn close-client-recv-ch)
+                                                             (aclose tn server-send-ch)
+                                                             (aclose tn client-send-ch)
+                                                             (aclose tn listen-ch)
+                                                             (aclose tn connect-ch)
+                                                             (e n (atake tn net) :done (atake tn net))))))))))))))))
            "pass"
            (str "FAIL: on test-net #" @n)))))
 

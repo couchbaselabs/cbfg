@@ -6,7 +6,8 @@
        (doseq [[[addr port] [accept-close-ch accept-ch]] listens]
          (aclose cleanup accept-ch))
        (doseq [stream (vals streams)]
-         (aclose cleanup (:recv-ch stream)))
+         (when (:recv-ch stream)
+           (aclose cleanup (:recv-ch stream))))
        (doseq [[result-ch msg] results]
          (aclose cleanup result-ch)))
   :done)
@@ -24,27 +25,29 @@
                          ;  :msgs [[deliver-at msg] ...]}.
              results []] ; A result entry is [result-ch msg].
             (let [close-accept-chs (map first (vals listens))
-                  closables (mapcat (fn [send-ch stream]
+                  closables (mapcat (fn [[send-ch stream]]
                                       (when-let [close-recv-ch (:close-recv-ch stream)]
                                         [close-recv-ch]))
                                     streams)
-                  deliverables (mapcat (fn [send-ch stream]
+                  deliverables (mapcat (fn [[send-ch stream]]
                                          (when-let [[deliver-at msg] (first (:msgs stream))]
                                            (when (and (:recv-ch stream)
                                                       (>= ts deliver-at))
-                                             [[(:recv-ch stream) (first (:msgs stream))]])))
+                                             [[(:recv-ch stream) msg]])))
                                        streams)
-                  sendables (mapcat (fn [send-ch stream]
-                                      (when (< (count (:msgs stream))
-                                               (get opts :max-msgs-per-stream 10))
-                                        [(:send-ch stream)]))
+                  sendables (mapcat (fn [[send-ch stream]]
+                                      (when (and (not (:send-closed stream))
+                                                 (< (count (:msgs stream))
+                                                    (get opts :max-msgs-per-stream 10)))
+                                        [send-ch]))
                                     streams)
-                  [v ch] (aalts net (-> [request-listen-ch request-connect-ch]
-                                        (into close-accept-chs)
-                                        (into closables)
-                                        (into deliverables)
-                                        (into sendables)
-                                        (into results)))]
+                  chs (-> [request-listen-ch request-connect-ch]
+                          (into close-accept-chs)
+                          (into closables)
+                          (into deliverables)
+                          (into sendables)
+                          (into results))
+                  [v ch] (aalts net chs)]
               (cond
                (= ch request-listen-ch)
                (if-let [[addr port result-ch] v]
@@ -91,11 +94,11 @@
                    (do (aclose net result-ch)
                        (recur (inc ts) listens streams results)))
                  (net-clean-up net listens streams results))
-               (contains? sendables ch)
+               (some #(= ch %) sendables)
                (let [send-ch ch
                      stream (get streams send-ch)
                      [msg result-ch] v]
-                 (if msg
+                 (if v
                    (if (:recv-ch stream)
                      (recur (inc ts)
                             listens
@@ -158,8 +161,11 @@
                                   (dissoc listens addr-port)
                                   streams
                                   results)))
-                     (do (aclose net ch) ; Handle a completed result-ch aput.
-                         (recur (inc ts)
-                                listens
-                                streams
-                                (remove #(= (first %) ch) results))))))))))
+                     (if (seq (filter #(= ch (first %)) results))
+                       (do (aclose net ch) ; Handle a completed result-ch aput.
+                           (recur (inc ts)
+                                  listens
+                                  streams
+                                  (remove #(= (first %) ch) results)))
+                       (println "UNKNOWN ch"
+                                listens :streams streams :results results)))))))))
