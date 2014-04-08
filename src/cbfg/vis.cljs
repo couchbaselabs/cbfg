@@ -82,10 +82,10 @@
                nil)}
    :aalts
    {:before (fn [vis actx [ch-names ch-bindings]]
-              (let [; The ch-actions will be [[ch :take] [ch :put] ...].
-                    ch-actions (map #(if (seq? %) [(first %) :put (second %)] [% :take])
+              (let [; The ch-actions will be [[ch :take] [ch :put msg] ...].
+                    ch-actions (map #(if (coll? %) [(first %) :put (second %)] [% :take])
                                     ch-bindings)
-                    use-names (and (seqable? ch-names)
+                    use-names (and (coll? ch-names)
                                    (= (count ch-names)
                                       (count ch-bindings)))]
                 (apply concat
@@ -103,9 +103,9 @@
                                            ch-actions)))))
     :after (fn [vis actx [ch-names ch-bindings [result-msg result-ch]]]
              (let [; The ch-actions will be [[ch :take] [ch :put] ...].
-                   ch-actions (map #(if (seq? %) [(first %) :put (second %)] [% :take])
+                   ch-actions (map #(if (coll? %) [(first %) :put (second %)] [% :take])
                                    ch-bindings)
-                   use-names (and (seqable? ch-names)
+                   use-names (and (coll? ch-names)
                                   (= (count ch-names)
                                      (count ch-bindings)))]
                (doall (map-indexed (fn [idx [ch action]]
