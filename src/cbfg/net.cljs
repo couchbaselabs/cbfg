@@ -12,11 +12,6 @@
          (aclose cleanup result-ch)))
   :done)
 
-(defn add-result [results result-ch result]
-  (if result-ch
-    (conj results [result-ch :ok])
-    results))
-
 (defn make-net [actx request-listen-ch request-connect-ch & opts]
   (ago-loop net actx
             [ts 0        ; A increasing event / time stamp counter.
@@ -99,20 +94,21 @@
                  (net-clean-up net listens streams results))
                (some #(= ch %) send-chs)
                (let [send-ch ch
-                     stream (get streams send-ch)
-                     [msg result-ch] v]
-                 (if v
+                     stream (get streams send-ch)]
+                 (if-let [[msg result-ch] v]
                    (recur (inc ts) listens
                           (if (:recv-ch stream)
                             (update-in streams [send-ch :msgs]
                                        conj [(+ ts (get opts :delivery-delay 0)) msg])
                             streams)
-                          (add-result results result-ch :ok))
+                          (if result-ch
+                            (conj results [result-ch :ok])
+                            results))
                    (recur (inc ts) listens
                           (if (:recv-ch stream)
                             (assoc-in streams [send-ch :send-closed] true)
                             (dissoc streams send-ch))
-                          (add-result results result-ch :ok))))
+                          results)))
                :else ; Test if it's a completed deliverable (recv-ch aput'ed).
                (if-let [stream (first (filter #(= (:recv-ch %) ch) (vals streams)))]
                  (let [stream2 (update-in stream [:msgs] rest)]
