@@ -113,6 +113,8 @@
                                                              (aclose tn close-client-recv-ch)
                                                              (aclose tn server-send-ch)
                                                              (aclose tn client-send-ch)
+                                                             (e n (atake tn server-recv-ch) nil nil)
+                                                             (e n (atake tn client-recv-ch) nil nil)
                                                              (aclose tn listen-ch)
                                                              (aclose tn connect-ch)
                                                              (e n (atake tn net) :done (atake tn net))))))))))))))))
