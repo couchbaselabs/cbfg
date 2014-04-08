@@ -55,7 +55,7 @@
                                                         (= (last actx) "net-1"))
                                                       (:actxs vis)))))
         addrs (atom {})
-        locs (atom {})]
+        coords (atom {})]
     (doseq [[[addr port] accept-chs] (:listens net-state)]
       (swap! addrs #(assoc-in % [addr :listens port] true)))
     (doseq [[send-ch stream] (:streams net-state)]
@@ -77,7 +77,11 @@
                                          (get (:listens addr-v) accept-port))
                                 "LISTEN")
                               (mapv (fn [[[from-port to-addr to-port] msgs]]
-                                      ["<div>" from-port " --&gt; " to-addr to-port "= " msgs "</div>"])
+                                      ["<div>" from-port " --&gt; " to-addr to-port "= "
+                                       (mapv (fn [[deliver-at msg]]
+                                               ["<div style='background-color:" (:msg msg) ";'>X</div>"])
+                                             msgs)
+                                       "</div>"])
                                     (sort-by first accept-addr-port-v))
                               "</div>"])
                            (sort-by first (:outs addr-v)))
