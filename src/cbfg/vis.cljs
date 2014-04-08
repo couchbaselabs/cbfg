@@ -362,9 +362,9 @@
                     vis-next-svg (apply str (flatten (vis-svg-actxs vis-next @vis-next-positions
                                                                     deltas true prev-deltas)))]
                 (when (not= vis-next-html vis-last-html)
-                  (set-el-innerHTML el-html vis-next-html)
-                  (when on-render-cb
-                    (on-render-cb vis-next)))
+                  (set-el-innerHTML el-html vis-next-html))
+                (when on-render-cb
+                  (on-render-cb vis-next))
                 (when (not= vis-next-svg vis-last-svg)
                   (set-el-innerHTML el-svg vis-next-svg))
                 (recur vis-next @vis-next-positions vis-next-html vis-next-svg next-deltas)))
