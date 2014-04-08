@@ -12,6 +12,11 @@
          (aclose cleanup result-ch)))
   :done)
 
+(defn add-result [results result-ch result]
+  (if result-ch
+    (conj results [result-ch :ok])
+    results))
+
 (defn make-net [actx request-listen-ch request-connect-ch & opts]
   (ago-loop net actx
             [ts 0        ; A increasing event / time stamp counter.
@@ -72,8 +77,7 @@
                          server-recv-ch (achan-buf net end-point-buf-size)
                          close-server-recv-ch (achan net)]
                      ; TODO: Need to model running out of ports.
-                     (recur (inc ts)
-                            listens
+                     (recur (inc ts) listens
                             (-> streams
                                 (assoc client-send-ch {:send-ch client-send-ch
                                                        :recv-ch server-recv-ch
@@ -98,45 +102,27 @@
                      stream (get streams send-ch)
                      [msg result-ch] v]
                  (if v
-                   (if (:recv-ch stream)
-                     (recur (inc ts)
-                            listens
+                   (recur (inc ts) listens
+                          (if (:recv-ch stream)
                             (update-in streams [send-ch :msgs]
                                        conj [(+ ts (get opts :delivery-delay 0)) msg])
-                            (if result-ch
-                              (conj results [result-ch :ok])
-                              results))
-                     (recur (inc ts)
-                            listens
-                            streams
-                            (if result-ch
-                              (conj results [result-ch :error])
-                              results)))
-                   (if (:recv-ch stream)
-                     (recur (inc ts)
-                            listens
+                            streams)
+                          (add-result results result-ch :ok))
+                   (recur (inc ts) listens
+                          (if (:recv-ch stream)
                             (assoc-in streams [send-ch :send-closed] true)
-                            (if result-ch
-                              (conj results [result-ch :ok])
-                              results))
-                     (recur (inc ts)
-                            listens
-                            (dissoc streams send-ch)
-                            (if result-ch
-                              (conj results [result-ch :ok])
-                              results)))))
+                            (dissoc streams send-ch))
+                          (add-result results result-ch :ok))))
                :else ; Test if it's a completed deliverable (recv-ch aput'ed).
                (if-let [stream (first (filter #(= (:recv-ch %) ch) (vals streams)))]
                  (let [stream2 (update-in stream [:msgs] rest)]
                    (if (and (:send-closed stream2)
                             (empty? (:msgs stream2)))
                      (do (aclose net (:recv-ch stream2))
-                         (recur (inc ts)
-                                listens
+                         (recur (inc ts) listens
                                 (dissoc streams (:send-ch stream2))
                                 results))
-                     (recur (inc ts)
-                            listens
+                     (recur (inc ts) listens
                             (assoc streams (:send-ch stream2) stream2)
                             results)))
                  (if-let [stream (first (filter #(= (:close-recv-ch %) ch) (vals streams)))]
@@ -162,9 +148,7 @@
                                   results)))
                      (if (seq (filter #(= ch (first %)) results))
                        (do (aclose net ch) ; Handle a completed result-ch aput.
-                           (recur (inc ts)
-                                  listens
-                                  streams
+                           (recur (inc ts) listens streams
                                   (remove #(= (first %) ch) results)))
                        (println "UNKNOWN ch"
                                 listens :streams streams :results results)))))))))
