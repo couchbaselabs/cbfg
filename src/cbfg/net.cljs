@@ -35,17 +35,17 @@
                                                       (>= ts deliver-at))
                                              [[(:recv-ch stream) msg]])))
                                        streams)
-                  sendables (mapcat (fn [[send-ch stream]]
-                                      (when (and (not (:send-closed stream))
-                                                 (< (count (:msgs stream))
-                                                    (get opts :max-msgs-per-stream 10)))
-                                        [send-ch]))
-                                    streams)
+                  send-chs (mapcat (fn [[send-ch stream]]
+                                     (when (and (not (:send-closed stream))
+                                                (< (count (:msgs stream))
+                                                   (get opts :max-msgs-per-stream 10)))
+                                       [send-ch]))
+                                   streams)
                   chs (-> [request-listen-ch request-connect-ch]
                           (into close-accept-chs)
                           (into close-recv-chs)
                           (into deliverables)
-                          (into sendables)
+                          (into send-chs)
                           (into results))
                   [v ch] (aalts net chs)]
               (cond
@@ -72,7 +72,6 @@
                          server-recv-ch (achan-buf net end-point-buf-size)
                          close-server-recv-ch (achan net)]
                      ; TODO: Need to model running out of ports.
-                     ; TODO: Need to model closing recv-ch's.
                      (recur (inc ts)
                             listens
                             (-> streams
@@ -94,7 +93,7 @@
                    (do (aclose net result-ch)
                        (recur (inc ts) listens streams results)))
                  (net-clean-up net listens streams results))
-               (some #(= ch %) sendables)
+               (some #(= ch %) send-chs)
                (let [send-ch ch
                      stream (get streams send-ch)
                      [msg result-ch] v]
