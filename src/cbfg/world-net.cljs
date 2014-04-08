@@ -18,13 +18,12 @@
 
 (defn server-accept-loop [actx accept-ch]
   (ago-loop server-accept-loop actx [num-accepts 0]
-            (let [a (atake server-accept-loop accept-ch)]
-              (when a
-                (let [[server-send-ch server-recv-ch close-server-recv-ch] a]
-                  (server-conn-loop server-accept-loop
-                                    server-send-ch
-                                    server-recv-ch)
-                (recur (inc num-accepts)))))))
+            (when-let [[server-send-ch server-recv-ch close-server-recv-ch]
+                       (atake server-accept-loop accept-ch)]
+              (server-conn-loop server-accept-loop
+                                server-send-ch
+                                server-recv-ch)
+              (recur (inc num-accepts)))))
 
 (defn client-loop [actx cmd-ch client-hist client-send-ch client-recv-ch vis-chs world-vis-init el-prefix]
   (ago-loop client-loop actx [num-requests 0 num-responses 0]
