@@ -13,6 +13,7 @@
 
 (def makers {"world-fence.html" cbfg.world-fence/world-vis-init
              "world-lane.html"  cbfg.world-lane/world-vis-init
+             "world-net.html"   cbfg.world-net/world-vis-init
              "world-store.html" cbfg.world-store/world-vis-init})
 
 (let [world (last (string/split (.-href (.-location js/window)) #"/"))
