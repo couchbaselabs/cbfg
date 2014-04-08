@@ -50,6 +50,28 @@
                                                         conj [ts v])))
                  (recur num-requests (inc num-responses)))))))
 
+(defn render-net [vis]
+  (let [net-state (:loop-state (second (first (filter (fn [[actx actx-info]]
+                                                        (= (last actx) "net-1"))
+                                                      (:actxs vis)))))
+        addrs (atom {})]
+    (doseq [[[addr port] accept-chs] (:listens net-state)]
+      (swap! addrs #(assoc-in % [addr :listens port] true)))
+    (doseq [[send-ch stream] (:streams net-state)]
+      (if (= (:side stream) :client)
+        (swap! addrs #(assoc-in % [(:client-addr stream) :outs
+                                   [(:accept-addr stream) (:accept-port stream)]
+                                   (:client-port stream)
+                                   (:server-addr stream)
+                                   (:server-port stream)] (:msgs stream)))
+        (swap! addrs #(assoc-in % [(:server-addr stream) :outs
+                                   [(:accept-addr stream) (:accept-port stream)]
+                                   (:server-port stream)
+                                   (:client-addr stream)
+                                   (:client-port stream)] (:msgs stream)))))
+    (set-el-innerHTML "net"
+                      (str net-state "<hr/>" @addrs))))
+
 (defn world-vis-init [el-prefix init-event-delay]
   (let [cmd-inject-ch (chan)
         cmd-ch (replay-cmd-ch cmd-inject-ch (keys cmd-handlers)
@@ -76,14 +98,7 @@
                                                client-hist
                                                client-send-ch client-recv-ch
                                                vis-chs world-vis-init el-prefix))))))))
-              el-prefix
-              (fn [vis]
-                (let [net-state (:loop-state (second (first (filter (fn [[actx actx-info]]
-                                                                      (= (last actx) "net-1"))
-                                                                    (:actxs vis)))))]
-                  (set-el-innerHTML "net"
-                                    (str "hi" net-state))))
-              init-event-delay)
+              el-prefix render-net init-event-delay)
     cmd-inject-ch))
 
 (start-test "net-test" cbfg.net-test/test)
