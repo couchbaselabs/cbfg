@@ -78,8 +78,11 @@
                                                vis-chs world-vis-init el-prefix))))))))
               el-prefix
               (fn [vis]
-                (set-el-innerHTML "net"
-                                  (first (filter (fn [[actx actx-info]] (= (last actx) "net-1")) (:actx vis)))))
+                (let [net-state (:loop-state (second (first (filter (fn [[actx actx-info]]
+                                                                      (= (last actx) "net-1"))
+                                                                    (:actxs vis)))))]
+                  (set-el-innerHTML "net"
+                                    (str "hi" net-state))))
               init-event-delay)
     cmd-inject-ch))
 
