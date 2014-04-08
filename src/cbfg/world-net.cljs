@@ -1,7 +1,7 @@
 (ns cbfg.world-net
-  (:require-macros [cbfg.ago :refer [ago ago-loop achan achan-buf aalts aput atake]])
+  (:require-macros [cbfg.ago :refer [ago ago-loop achan achan-buf aclose aalts aput atake]])
   (:require [cljs.core.async :refer [chan]]
-            [cbfg.vis :refer [vis-init get-el-value]]
+            [cbfg.vis :refer [vis-init get-el-value set-el-innerHTML]]
             [cbfg.net :refer [make-net]]
             [cbfg.net-test]
             [cbfg.world-base :refer [replay-cmd-ch world-replay
@@ -76,7 +76,11 @@
                                                client-hist
                                                client-send-ch client-recv-ch
                                                vis-chs world-vis-init el-prefix))))))))
-              el-prefix nil init-event-delay)
+              el-prefix
+              (fn [vis]
+                (set-el-innerHTML "net"
+                                  (first (filter (fn [[actx actx-info]] (= (last actx) "net-1")) (:actx vis)))))
+              init-event-delay)
     cmd-inject-ch))
 
 (start-test "net-test" cbfg.net-test/test)
