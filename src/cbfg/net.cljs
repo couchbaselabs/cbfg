@@ -13,15 +13,13 @@
   :done)
 
 (defn make-net [actx request-listen-ch request-connect-ch & opts]
-  (ago-loop net actx
+  (ago-loop net actx     ; A conn is represented by dual streams.
             [ts 0        ; A increasing event / time stamp counter.
              listens {}  ; Keyed by [addr port], value is [close-accept-ch accept-ch].
-             streams {}  ; A conn is represented by dual streams, where streams
-                         ; is keyed by send-ch and a value of...
+             streams {}  ; Keyed by send-ch and a value is...
                          ; {:send-addr :send-port :send-ch
                          ;  :recv-addr :recv-port :recv-ch
-                         ;  :side (:client|:server)
-                         ;  :server-addr :server-port
+                         ;  :side (:client|:server) :server-addr :server-port
                          ;  :msgs [[deliver-at msg] ...]}.
              results []] ; A result entry is [result-ch msg].
             (let [close-accept-chs (map first (vals listens))
@@ -29,12 +27,12 @@
                                            (when-let [close-recv-ch (:close-recv-ch stream)]
                                              [close-recv-ch]))
                                          streams)
-                  deliverables (mapcat (fn [[send-ch stream]]
-                                         (when-let [[deliver-at msg] (first (:msgs stream))]
-                                           (when (and (:recv-ch stream)
-                                                      (>= ts deliver-at))
-                                             [[(:recv-ch stream) msg]])))
-                                       streams)
+                  deliverable-msgs (mapcat (fn [[send-ch stream]]
+                                             (when-let [[deliver-at msg] (first (:msgs stream))]
+                                               (when (and (:recv-ch stream)
+                                                          (>= ts deliver-at))
+                                                 [[(:recv-ch stream) msg]])))
+                                           streams)
                   send-chs (mapcat (fn [[send-ch stream]]
                                      (when (and (not (:send-closed stream))
                                                 (< (count (:msgs stream))
@@ -44,12 +42,12 @@
                   chs (-> [request-listen-ch request-connect-ch]
                           (into close-accept-chs)
                           (into close-recv-chs)
-                          (into deliverables)
+                          (into deliverable-msgs)
                           (into send-chs)
                           (into results))
                   [v ch] (aalts net chs)]
               (cond
-               (= ch request-listen-ch)
+               (= ch request-listen-ch) ; Server listen request.
                (if-let [[addr port result-ch] v]
                  (if (get listens [addr port])
                    (do (aclose net result-ch)
@@ -60,7 +58,7 @@
                             streams
                             (conj results [result-ch accept-chs]))))
                  (net-clean-up net listens streams results))
-               (= ch request-connect-ch)
+               (= ch request-connect-ch) ; Client connect request.
                (if-let [[to-addr to-port from-addr result-ch] v]
                  ; TODO: Need to model connection delay, perhaps with a generic "later".
                  (if-let [[close-accept-ch accept-ch] (get listens [to-addr to-port])]
@@ -92,7 +90,7 @@
                    (do (aclose net result-ch)
                        (recur (inc ts) listens streams results)))
                  (net-clean-up net listens streams results))
-               (some #(= ch %) send-chs)
+               (some #(= ch %) send-chs) ; Peer aput to a send-ch.
                (let [send-ch ch
                      stream (get streams send-ch)]
                  (if-let [[msg result-ch] v]
@@ -122,9 +120,9 @@
                             (assoc streams (:send-ch stream2) stream2)
                             results)))
                  (if-let [stream (first (filter #(= (:close-recv-ch %) ch) (vals streams)))]
-                   (if v
+                   (if v ; Or, test if it's a closed close-recv-ch.
                      (recur (inc ts) listens streams results)
-                     (do (aclose net (:recv-ch stream)) ; Handle a closed close-recv-ch.
+                     (do (aclose net (:recv-ch stream))
                          (recur (inc ts)
                                 listens
                                 (assoc streams (:send-ch stream)
@@ -135,16 +133,13 @@
                                 results)))
                    (if-let [[addr-port [close-accept-ch accept-ch]]
                             (first (filter #(= ch (first (second %))) (seq listens)))]
-                     (if v
+                     (if v ; Or, test if it's a closed close-accept-ch.
                        (recur (inc ts) listens streams results)
-                       (do (aclose net accept-ch) ; Handle a closed close-accept-ch.
+                       (do (aclose net accept-ch)
                            (recur (inc ts)
                                   (dissoc listens addr-port)
                                   streams
                                   results)))
-                     (if (seq (filter #(= ch (first %)) results))
-                       (do (aclose net ch) ; Handle a completed result-ch aput.
-                           (recur (inc ts) listens streams
-                                  (remove #(= (first %) ch) results)))
-                       (println "UNKNOWN ch"
-                                listens :streams streams :results results)))))))))
+                     (do (aclose net ch) ; Or, handle a completed result-ch aput.
+                         (recur (inc ts) listens streams
+                                (remove #(= (first %) ch) results))))))))))
