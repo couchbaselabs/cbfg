@@ -54,23 +54,37 @@
   (let [net-state (:loop-state (second (first (filter (fn [[actx actx-info]]
                                                         (= (last actx) "net-1"))
                                                       (:actxs vis)))))
-        addrs (atom {})]
+        addrs (atom {})
+        locs (atom {})]
     (doseq [[[addr port] accept-chs] (:listens net-state)]
       (swap! addrs #(assoc-in % [addr :listens port] true)))
     (doseq [[send-ch stream] (:streams net-state)]
       (if (= (:side stream) :client)
         (swap! addrs #(assoc-in % [(:client-addr stream) :outs
                                    [(:accept-addr stream) (:accept-port stream)]
-                                   (:client-port stream)
-                                   (:server-addr stream)
-                                   (:server-port stream)] (:msgs stream)))
+                                   [(:client-port stream)
+                                    (:server-addr stream) (:server-port stream)]] (:msgs stream)))
         (swap! addrs #(assoc-in % [(:server-addr stream) :outs
                                    [(:accept-addr stream) (:accept-port stream)]
-                                   (:server-port stream)
-                                   (:client-addr stream)
-                                   (:client-port stream)] (:msgs stream)))))
-    (set-el-innerHTML "net"
-                      (str net-state "<hr/>" @addrs))))
+                                   [(:server-port stream)
+                                    (:client-addr stream) (:client-port stream)]] (:msgs stream)))))
+    (let [addrs @addrs
+          h (mapv (fn [[addr addr-v]]
+                    ["<div><label>addr: " addr "</label>"
+                     (mapv (fn [[[accept-addr accept-port] accept-addr-port-v]]
+                             ["<div>" accept-addr accept-port
+                              (when (and (= accept-addr addr)
+                                         (get (:listens addr-v) accept-port))
+                                "LISTEN")
+                              (mapv (fn [[[from-port to-addr to-port] msgs]]
+                                      ["<div>" from-port " --&gt; " to-addr to-port "= " msgs "</div>"])
+                                    (sort-by first accept-addr-port-v))
+                              "</div>"])
+                           (sort-by first (:outs addr-v)))
+                     "</div>"])
+                  (sort-by first addrs))]
+      (set-el-innerHTML "net"
+                        (apply str (flatten h))))))
 
 (defn world-vis-init [el-prefix init-event-delay]
   (let [cmd-inject-ch (chan)
