@@ -31,7 +31,7 @@
                     net (make-net tn listen-ch connect-ch)
                     listen-result-ch (achan tn)]
                 (aput tn listen-ch [:addr-a 1000 listen-result-ch])
-                (let [[close-accept-ch accept-ch] (atake tn listen-result-ch)]
+                (let [[accept-ch close-accept-ch] (atake tn listen-result-ch)]
                   (aclose tn listen-ch)
                   (and (e n (atake tn accept-ch) nil nil)
                        (e n (atake tn net) :done (atake tn net)))))
@@ -41,7 +41,7 @@
                     net (make-net tn listen-ch connect-ch)
                     listen-result-ch (achan tn)]
                 (aput tn listen-ch [:addr-a 1000 listen-result-ch])
-                (let [[close-accept-ch accept-ch] (atake tn listen-result-ch)]
+                (let [[accept-ch close-accept-ch] (atake tn listen-result-ch)]
                   (aclose tn connect-ch)
                   (and (e n (atake tn accept-ch) nil nil)
                        (e n (atake tn net) :done (atake tn net)))))
@@ -52,7 +52,7 @@
                     listen-result-ch (achan tn)
                     listen-result-ch2 (achan tn)]
                 (aput tn listen-ch [:addr-a 1000 listen-result-ch])
-                (let [[close-accept-ch accept-ch] (atake tn listen-result-ch)]
+                (let [[accept-ch close-accept-ch] (atake tn listen-result-ch)]
                   (aput tn listen-ch [:addr-a 1000 listen-result-ch2])
                   (and (e n (atake tn listen-result-ch2) nil nil)
                        (do (aclose tn listen-ch)
@@ -75,7 +75,7 @@
                     net (make-net tn listen-ch connect-ch)
                     listen-result-ch (achan tn)]
                 (aput tn listen-ch [:addr-a 1000 listen-result-ch])
-                (let [[close-accept-ch accept-ch] (atake tn listen-result-ch)]
+                (let [[accept-ch close-accept-ch] (atake tn listen-result-ch)]
                   (aclose tn close-accept-ch)
                   (and (e n (atake tn accept-ch) nil nil)
                        (let [connect-result-ch (achan tn)]
@@ -90,7 +90,7 @@
                     net (make-net tn listen-ch connect-ch)
                     listen-result-ch (achan tn)]
                 (aput tn listen-ch [:addr-a 1000 listen-result-ch])
-                (let [[close-accept-ch accept-ch] (atake tn listen-result-ch)]
+                (let [[accept-ch close-accept-ch] (atake tn listen-result-ch)]
                   (and (e n (not (nil? close-accept-ch)) true nil)
                        (e n (not (nil? accept-ch)) true nil)
                        (e n (atake tn listen-result-ch) nil nil)
@@ -133,7 +133,7 @@
                     net (make-net tn listen-ch connect-ch)
                     listen-result-ch (achan tn)]
                 (aput tn listen-ch [:addr-a 1001 listen-result-ch])
-                (let [[close-accept-ch accept-ch] (atake tn listen-result-ch)]
+                (let [[accept-ch close-accept-ch] (atake tn listen-result-ch)]
                   (and (e n (not (nil? close-accept-ch)) true nil)
                        (e n (not (nil? accept-ch)) true nil)
                        (e n (atake tn listen-result-ch) nil nil)

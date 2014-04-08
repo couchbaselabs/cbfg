@@ -3,7 +3,7 @@
 
 (defn net-clean-up [actx listens streams results]
   (ago cleanup actx
-       (doseq [[[addr port] [accept-close-ch accept-ch]] listens]
+       (doseq [[[addr port] [accept-ch accept-close-ch]] listens]
          (aclose cleanup accept-ch))
        (doseq [stream (vals streams)]
          (when (:recv-ch stream)
@@ -15,14 +15,14 @@
 (defn make-net [actx request-listen-ch request-connect-ch & opts]
   (ago-loop net actx     ; A conn is represented by dual streams.
             [ts 0        ; A increasing event / time stamp counter.
-             listens {}  ; Keyed by [addr port], value is [close-accept-ch accept-ch].
+             listens {}  ; Keyed by [addr port], value is [accept-ch close-accept-ch].
              streams {}  ; Keyed by send-ch and a value is...
                          ; {:send-addr :send-port :send-ch
                          ;  :recv-addr :recv-port :recv-ch
                          ;  :side (:client|:server) :server-addr :server-port
                          ;  :msgs [[deliver-at msg] ...]}.
              results []] ; A result entry is [result-ch msg].
-            (let [close-accept-chs (map first (vals listens))
+            (let [close-accept-chs (map second (vals listens))
                   close-recv-chs (mapcat (fn [[send-ch stream]]
                                            (when-let [close-recv-ch (:close-recv-ch stream)]
                                              [close-recv-ch]))
@@ -61,7 +61,7 @@
                (= ch request-connect-ch) ; Client connect request.
                (if-let [[to-addr to-port from-addr result-ch] v]
                  ; TODO: Need to model connection delay, perhaps with a generic "later".
-                 (if-let [[close-accept-ch accept-ch] (get listens [to-addr to-port])]
+                 (if-let [[accept-ch close-accept-ch] (get listens [to-addr to-port])]
                    (let [end-point-buf-size (get opts :end-point-buf-size 0)
                          client-send-ch (achan-buf net end-point-buf-size)
                          client-recv-ch (achan-buf net end-point-buf-size)
@@ -84,9 +84,9 @@
                                                        :side :server :msgs []}))
                             (-> results
                                 (conj [result-ch [client-send-ch
-                                                  client-recv-ch close-client-recv-ch]])
+                                                  client-recv-ch close-client-recv-ch to-addr to-port]])
                                 (conj [accept-ch [server-send-ch
-                                                  server-recv-ch close-server-recv-ch]]))))
+                                                  server-recv-ch close-server-recv-ch from-addr 0]]))))
                    (do (aclose net result-ch)
                        (recur (inc ts) listens streams results)))
                  (net-clean-up net listens streams results))
@@ -131,8 +131,8 @@
                                            (dissoc :recv-ch)
                                            (dissoc :close-recv-ch)))
                                 results)))
-                   (if-let [[addr-port [close-accept-ch accept-ch]]
-                            (first (filter #(= ch (first (second %))) (seq listens)))]
+                   (if-let [[addr-port [accept-ch close-accept-ch]]
+                            (first (filter #(= ch (second (second %))) (seq listens)))]
                      (if v ; Or, test if it's a closed close-accept-ch.
                        (recur (inc ts) listens streams results)
                        (do (aclose net accept-ch)
