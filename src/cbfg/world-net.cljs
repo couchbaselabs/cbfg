@@ -16,7 +16,7 @@
             (println "server is recv'ing")
             (let [msg (atake server-conn-loop server-recv-ch)]
               (println "server echoing" msg)
-              (aput server-conn-loop server-send-ch msg)
+              (aput server-conn-loop server-send-ch [msg])
               (recur (inc num-requests)))))
 
 (defn server-accept-loop [actx accept-ch]
@@ -45,7 +45,9 @@
                        cmd-rq ((get cmd-handlers (:op cmd)) cmd)]
                    (render-client-hist (swap! client-hist
                                               #(assoc % ts [cmd nil])))
-                   (aput client-loop client-send-ch cmd-rq)
+                   (println "client sending" cmd-rq)
+                   (aput client-loop client-send-ch [cmd-rq])
+                   (println "client sending done" cmd-rq)
                    (recur (inc num-requests) num-responses)))
                (= ch client-recv-ch)
                (when v
