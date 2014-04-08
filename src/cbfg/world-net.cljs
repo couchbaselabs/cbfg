@@ -45,11 +45,11 @@
                   (ago server-init world
                        (let [listen-result-ch (achan server-init)]
                          (aput server-init listen-ch [:server 8000 listen-result-ch])
-                         (let [[close-accept-ch accept-ch] (atake server-init listen-result-ch)]
+                         (when-let [[close-accept-ch accept-ch] (atake server-init listen-result-ch)]
                            (ago-loop server-accept-loop world
                                      [num-accepts 0]
-                                     (let [[server-send-ch server-recv-ch close-server-recv-ch]
-                                           (atake server-accept-loop accept-ch)]
+                                     (when-let [[server-send-ch server-recv-ch close-server-recv-ch]
+                                                (atake server-accept-loop accept-ch)]
                                        (ago-loop server-conn-loop server-accept-loop
                                                  [num-requests 0]
                                                  (aput server-conn-loop server-send-ch
