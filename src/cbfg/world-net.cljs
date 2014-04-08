@@ -10,20 +10,23 @@
 (def cmd-handlers
   {"echo" (fn [c] c)})
 
-(defn server-conn-loop [actx server-send-ch server-recv-ch]
+(defn server-conn-loop [actx server-send-ch server-recv-ch close-server-recv-ch]
   (ago-loop server-conn-loop actx [num-requests 0]
-            (let [msg (atake server-conn-loop server-recv-ch)]
-              (aput server-conn-loop server-send-ch [msg])
-              (recur (inc num-requests)))))
+            (if-let [msg (atake server-conn-loop server-recv-ch)]
+              (do (aput server-conn-loop server-send-ch [msg])
+                  (recur (inc num-requests)))
+              (do (aclose server-conn-loop server-send-ch)
+                  (aclose server-conn-loop close-server-recv-ch)))))
 
-(defn server-accept-loop [actx accept-ch]
+(defn server-accept-loop [actx accept-ch close-accept-ch]
   (ago-loop server-accept-loop actx [num-accepts 0]
-            (when-let [[server-send-ch server-recv-ch close-server-recv-ch]
-                       (atake server-accept-loop accept-ch)]
-              (server-conn-loop server-accept-loop
-                                server-send-ch
-                                server-recv-ch)
-              (recur (inc num-accepts)))))
+            (if-let [[server-send-ch server-recv-ch close-server-recv-ch]
+                     (atake server-accept-loop accept-ch)]
+              (do (server-conn-loop server-accept-loop
+                                    server-send-ch
+                                    server-recv-ch close-server-recv-ch)
+                  (recur (inc num-accepts)))
+              (aclose server-accept-loop close-accept-ch))))
 
 (defn client-loop [actx cmd-ch client-hist client-send-ch client-recv-ch vis-chs world-vis-init el-prefix]
   (ago-loop client-loop actx [num-requests 0 num-responses 0]
@@ -61,7 +64,7 @@
                   (ago init-world world
                        (aput init-world listen-ch [:server 8000 listen-result-ch])
                        (when-let [[accept-ch close-accept-ch] (atake init-world listen-result-ch)]
-                         (server-accept-loop world accept-ch)
+                         (server-accept-loop world accept-ch close-accept-ch)
                          (ago client-init world
                               (let [connect-result-ch (achan client-init)]
                                 (aput client-init connect-ch [:server 8000 :client connect-result-ch])
