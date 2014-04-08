@@ -25,10 +25,10 @@
                          ;  :msgs [[deliver-at msg] ...]}.
              results []] ; A result entry is [result-ch msg].
             (let [close-accept-chs (map first (vals listens))
-                  closables (mapcat (fn [[send-ch stream]]
-                                      (when-let [close-recv-ch (:close-recv-ch stream)]
-                                        [close-recv-ch]))
-                                    streams)
+                  close-recv-chs (mapcat (fn [[send-ch stream]]
+                                           (when-let [close-recv-ch (:close-recv-ch stream)]
+                                             [close-recv-ch]))
+                                         streams)
                   deliverables (mapcat (fn [[send-ch stream]]
                                          (when-let [[deliver-at msg] (first (:msgs stream))]
                                            (when (and (:recv-ch stream)
@@ -43,7 +43,7 @@
                                     streams)
                   chs (-> [request-listen-ch request-connect-ch]
                           (into close-accept-chs)
-                          (into closables)
+                          (into close-recv-chs)
                           (into deliverables)
                           (into sendables)
                           (into results))
