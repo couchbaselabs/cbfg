@@ -64,12 +64,14 @@
                   (ago init-world world
                        (aput init-world listen-ch [:server 8000 listen-result-ch])
                        (when-let [[accept-ch close-accept-ch] (atake init-world listen-result-ch)]
+                         (atake init-world listen-result-ch)
                          (server-accept-loop world accept-ch close-accept-ch)
                          (ago client-init world
                               (let [connect-result-ch (achan client-init)]
                                 (aput client-init connect-ch [:server 8000 :client connect-result-ch])
                                 (when-let [[client-send-ch client-recv-ch close-client-recv-ch]
                                            (atake client-init connect-result-ch)]
+                                  (atake client-init connect-result-ch)
                                   (client-loop world cmd-ch
                                                client-hist
                                                client-send-ch client-recv-ch
