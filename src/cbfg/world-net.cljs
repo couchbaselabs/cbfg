@@ -1,5 +1,6 @@
 (ns cbfg.world-net
-  (:require-macros [cbfg.ago :refer [ago ago-loop achan achan-buf aclose aalts aput atake]])
+  (:require-macros [cbfg.ago :refer [ago ago-loop achan achan-buf aclose
+                                     aalts aput atake atimeout]])
   (:require [cljs.core.async :refer [chan]]
             [cbfg.vis :refer [vis-init get-el-value set-el-innerHTML]]
             [cbfg.net :refer [make-net]]
@@ -12,7 +13,10 @@
 (defn server-conn-loop [actx server-send-ch server-recv-ch close-server-recv-ch]
   (ago-loop server-conn-loop actx [num-requests 0]
             (if-let [msg (atake server-conn-loop server-recv-ch)]
-              (do (aput server-conn-loop server-send-ch [msg])
+              (do (when (> (:sleep msg) 0)
+                    (let [sleep-ch (atimeout server-conn-loop (:sleep msg))]
+                      (atake server-conn-loop sleep-ch)))
+                  (aput server-conn-loop server-send-ch [msg])
                   (recur (inc num-requests)))
               (do (aclose server-conn-loop server-send-ch)
                   (aclose server-conn-loop close-server-recv-ch)))))
@@ -113,7 +117,8 @@
   (let [cmd-inject-ch (chan)
         cmd-ch (replay-cmd-ch cmd-inject-ch (keys cmd-handlers)
                               (fn [ev] {:op (.-id (.-target ev))
-                                        :msg (get-el-value "msg")}))
+                                        :msg (get-el-value "msg")
+                                        :sleep (js/parseInt (get-el-value "sleep"))}))
         client-hist (atom {})] ; Keyed by opaque -> [request, replies].
     (vis-init (fn [world vis-chs]
                 (let [connect-ch (achan-buf world 10)
