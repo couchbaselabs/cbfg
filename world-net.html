@@ -8,7 +8,7 @@
   <div class="client">
     <div class="client-label">client:</div>
     <div id="vis-input">
-      client-send: <input id="msg" type="text" value="hello"></input>
+      msg: <input id="msg" type="text" value="hello"></input>
       <button id="echo">echo</button>
     </div>
     <div>
@@ -17,7 +17,9 @@
       </div>
       <div class="client-curr client-container" id="client-curr"></div>
     </div>
-    <div class="net" id="net"></div>
+    <div class="net-container">
+      <div class="net" id="net"></div>
+    </div>
   </div>
   <div class="event">event: <div id="vis-event"></div></div>
   <div class="vis" style="position:relative; width:100%; height:100%;">
@@ -29,21 +31,21 @@
   </div>
 </div>
 <style>
-.net {
-  margin-top: 20px;
+.net-container {
+  margin: 20px 0 200px 0;
   border-top: 1px solid #eee;
   padding-top: 20px;
-  margin-bottom: 200px;
+}
+.net {
+  position: relative;
+  display: block;
+  left: 100px;
 }
 .net * {
   font-size: 12px;
   white-space: nowrap;
   border: 1px solid white;
   line-height: 20px;
-}
-.net {
-  position: relative;
-  display: block;
 }
 .net .addr  {
   position: absolute;
