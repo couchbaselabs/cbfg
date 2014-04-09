@@ -77,30 +77,36 @@
                           (swap! coords #(assoc % [addr from-port] idx)))
                         (sort-by first accept-addr-port-v)))))
             (sort-by first @addrs)))
-    (let [addr-width 200
-          h (mapv (fn [[addr addr-v]]
-                    ["<div class='addr' style='left:" (* addr-width 1.5 (get @coords addr)) "px;'>"
-                     "<label>" addr "</label>"
-                     (mapv (fn [[[accept-addr accept-port] accept-addr-port-v]]
-                             ["<div class='accept-addr-port'>"
-                              "<span class='accept-addr'>" accept-addr "</span>"
-                              "<span class='accept-port'>" accept-port "</span>"
-                              (when (and (= accept-addr addr)
-                                         (get (:listens addr-v) accept-port))
-                                ["<div class='listen'>" accept-port "</div>"])
-                              (mapv (fn [[[from-port to-addr to-port] msgs]]
-                                      ["<div class='port'>" from-port " --&gt; " to-addr to-port "= "
-                                       (mapv (fn [[deliver-at msg]]
-                                               ["<div class='msgs'>"
-                                                "<div class='msg' style='background-color:" (:msg msg) ";'>X</div>"
-                                                "</div>"])
-                                             msgs)
-                                       "</div>"])
-                                    (sort-by first accept-addr-port-v))
-                              "</div>"])
-                           (sort-by first (:outs addr-v)))
-                     "</div>"])
-                  (sort-by first @addrs))]
+    (let [addr-width 50
+          addr-gap 200
+          h ["<div style='height:" (apply max (map #(count (:outs %)) (vals @addrs))) "em;'>"
+             (mapv (fn [[addr addr-v]]
+                     ["<div class='addr' style='left:" (* addr-width
+                                                          (/ (+ addr-width addr-gap)
+                                                             addr-width)
+                                                          (get @coords addr)) "px;'>"
+                      "<label>" addr "</label>"
+                      (mapv (fn [[[accept-addr accept-port] accept-addr-port-v]]
+                              ["<div class='accept-addr-port'>"
+                               "<span class='accept-addr'>" accept-addr "</span>"
+                               "<span class='accept-port'>" accept-port "</span>"
+                               (when (and (= accept-addr addr)
+                                          (get (:listens addr-v) accept-port))
+                                 ["<div class='listen'>" accept-port "</div>"])
+                               (mapv (fn [[[from-port to-addr to-port] msgs]]
+                                       ["<div class='port'>" from-port " --&gt; " to-addr to-port "= "
+                                        (mapv (fn [[deliver-at msg]]
+                                                ["<div class='msgs'>"
+                                                 "<div class='msg' style='background-color:" (:msg msg) ";'>X</div>"
+                                                 "</div>"])
+                                              msgs)
+                                        "</div>"])
+                                     (sort-by first accept-addr-port-v))
+                               "</div>"])
+                            (sort-by first (:outs addr-v)))
+                      "</div>"])
+                  (sort-by first @addrs))
+             "</div>"]]
       (set-el-innerHTML "net"
                         (apply str (flatten h))))))
 
