@@ -80,36 +80,38 @@
                           (swap! coords #(assoc % [addr from-port] idx)))
                         (sort-by first accept-addr-port-v)))))
             (sort-by first @addrs)))
-    (let [addr-width 50
+    (let [coords @coords
+          addr-width 50
           addr-gap 200
+          addr-left (fn [addr] (* addr-width
+                               (/ (+ addr-width addr-gap)
+                                  addr-width)
+                               (get coords addr)))
           h ["<div style='height:" (apply max (map #(count (:outs %)) (vals @addrs))) "em;'>"
              (mapv (fn [[addr addr-v]]
-                     ["<div class='addr' style='left:" (* addr-width
-                                                          (/ (+ addr-width addr-gap)
-                                                             addr-width)
-                                                          (get @coords addr)) "px;'>"
+                     ["<div class='addr' style='left:" (addr-left addr) "px;'>"
                       "<label>" addr "</label>"
                       (mapv (fn [[[accept-addr accept-port] accept-addr-port-v]]
                               ["<div class='accept-addr-port'>"
-                               "<span class='accept-addr'>" accept-addr "</span>"
-                               "<span class='accept-port'>" accept-port "</span>"
+                               " <span class='accept-addr'>" accept-addr "</span>"
+                               " <span class='accept-port'>" accept-port "</span>"
                                (when (and (= accept-addr addr)
                                           (get (:listens addr-v) accept-port))
                                  ["<div class='listen'>" accept-port "</div>"])
                                (mapv (fn [[[from-port to-addr to-port] msgs]]
-                                       (let [deg -90]
+                                       (let [rad (- (/ Math/PI 2))]
                                          ["<div class='port'>" from-port " --&gt; " to-addr to-port "= "
-                                          "<div class='msgs' style='"
+                                          " <div class='msgs' style='"
                                           " transform-origin:top left;"
                                           " -ms-transform-origin:top left;"
                                           " -webkit-transform-origin:top left;"
-                                          " transform:rotate(" deg "deg);"
-                                          " -ms-transform:rotate(" deg "deg);"
-                                          " -webkit-transform:rotate(" deg "deg);'>"
+                                          " transform:rotate(" rad "rad);"
+                                          " -ms-transform:rotate(" rad "rad);"
+                                          " -webkit-transform:rotate(" rad "rad);'>"
                                           (mapv (fn [[deliver-at msg]]
                                                   ["<div class='msg' style='background-color:" (:msg msg) ";'>X</div>"])
                                                 msgs)
-                                          "</div>"
+                                          " </div>"
                                           "</div>"]))
                                      (sort-by first accept-addr-port-v))
                                "</div>"])
