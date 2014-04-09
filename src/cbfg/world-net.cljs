@@ -53,9 +53,9 @@
                                                         conj [ts v])))
                  (recur num-requests (inc num-responses)))))))
 
-(defn render-net [vis]
+(defn render-net [vis net-actx-id output-el-id]
   (let [net-state (:loop-state (second (first (filter (fn [[actx actx-info]]
-                                                        (= (last actx) "net-1"))
+                                                        (= (last actx) net-actx-id))
                                                       (:actxs vis)))))
         addrs (atom {})
         coords (atom {})]
@@ -110,7 +110,7 @@
                       "</div>"])
                   (sort-by first @addrs))
              "</div>"]]
-      (set-el-innerHTML "net"
+      (set-el-innerHTML output-el-id
                         (apply str (flatten h))))))
 
 (defn world-vis-init [el-prefix init-event-delay]
@@ -140,7 +140,9 @@
                                                client-hist
                                                client-send-ch client-recv-ch
                                                vis-chs world-vis-init el-prefix))))))))
-              el-prefix render-net init-event-delay)
+              el-prefix
+              #(render-net % "net-1" "net")
+              init-event-delay)
     cmd-inject-ch))
 
 (start-test "net-test" cbfg.net-test/test)
