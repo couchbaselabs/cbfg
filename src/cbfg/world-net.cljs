@@ -53,7 +53,43 @@
                                                         conj [ts v])))
                  (recur num-requests (inc num-responses)))))))
 
-(defn render-net [vis net-actx-id output-el-id render-state]
+(defn render-msgs [curr-msgs prev-msgs]
+  (loop [curr-msgs (reverse (seq curr-msgs))
+         prev-msgs (reverse (seq prev-msgs))
+         moving false
+         out []]
+    (let [[curr-deliver-at curr-msg] (first curr-msgs)
+          [prev-deliver-at prev-msg] (first prev-msgs)]
+      (cond
+       (= nil curr-msg prev-msg)
+       out
+       (= (:opaque curr-msg) (:opaque prev-msg))
+       (recur (rest curr-msgs)
+              (rest prev-msgs)
+              moving
+              (conj out
+                    ["<div class='msg"
+                     (when moving " msg-move")
+                     "' style='color:" (:msg curr-msg) ";'>&#9679;"
+                     (:result curr-msg) "</div>"]))
+       (nil? curr-msg)
+       (recur nil
+              (rest prev-msgs)
+              moving
+              (conj out
+                    ["<div class='msg msg-exit' style='color:"
+                     (:msg prev-msg) ";'>&#9679;"
+                     (:result prev-msg) "</div>"]))
+       :else
+       (recur (rest curr-msgs)
+              prev-msgs
+              true
+              (conj out
+                    ["<div class='msg msg-enter' style='color:"
+                     (:msg curr-msg) ";'>&#9679;"
+                     (:result curr-msg) "</div>"]))))))
+
+(defn render-net [vis net-actx-id output-el-id prev-addrs]
   (let [net-state (:loop-state (second (first (filter (fn [[actx actx-info]]
                                                         (= (last actx) net-actx-id))
                                                       (:actxs vis)))))
@@ -107,7 +143,10 @@
                                                dx (- from-x to-x)
                                                dy (- from-y to-y)
                                                rad (Math/atan2 dx dy)
-                                               dist (Math/abs (Math/sqrt (+ (* dx dx) (* dy dy))))]
+                                               dist (Math/abs (Math/sqrt (+ (* dx dx) (* dy dy))))
+                                               prev-msgs (get-in @prev-addrs [addr :outs
+                                                                              [accept-addr accept-port]
+                                                                              [from-port to-addr to-port]])]
                                            ["<div class='port'>" from-port " --&gt; " to-addr ":" to-port
                                             " <div class='msgs"
                                             (when (= accept-addr addr)
@@ -119,12 +158,7 @@
                                             " transform:rotate(" rad "rad);"
                                             " -ms-transform:rotate(" rad "rad);"
                                             " -webkit-transform:rotate(" rad "rad);'>"
-                                            (map-indexed (fn [idx [deliver-at msg]]
-                                                           ["<div class='msg"
-                                                            (when (= idx 0) " msg-first")
-                                                            "' style='color:" (:msg msg) ";'>&#9679;"
-                                                            "</div>"])
-                                                         msgs)
+                                            (render-msgs msgs prev-msgs)
                                             " </div>"
                                             "</div>"]))
                                        (sort-by first accept-addr-port-v))
@@ -133,8 +167,8 @@
                         "</div>"]))
                   (sort-by first @addrs))
              "</div>"]]
-      (when (not= @render-state h)
-        (reset! render-state h)
+      (when (not= @prev-addrs @addrs)
+        (reset! prev-addrs @addrs)
         (set-el-innerHTML output-el-id
                           (apply str (flatten h)))))))
 
@@ -145,7 +179,7 @@
                                         :msg (get-el-value "msg")
                                         :sleep (js/parseInt (get-el-value "sleep"))}))
         client-hist (atom {}) ; Keyed by opaque -> [request, replies].
-        render-state (atom nil)]
+        render-state (atom {})]
     (vis-init (fn [world vis-chs]
                 (let [connect-ch (achan-buf world 10)
                       listen-ch (achan-buf world 10)
