@@ -60,6 +60,10 @@
                                                         conj [ts v])))
                  (recur num-requests (inc num-responses)))))))
 
+(defn render-msg [msg class-extra]
+  ["<div class='msg " class-extra "' style='color:" (:color msg) ";'>&#9679;"
+   "<div class='result'>" (:result msg) "</div></div>"])
+
 (defn render-msgs [curr-msgs prev-msgs]
   (loop [curr-msgs (reverse (seq curr-msgs))
          prev-msgs (reverse (seq prev-msgs))
@@ -68,33 +72,22 @@
     (let [[curr-deliver-at curr-msg] (first curr-msgs)
           [prev-deliver-at prev-msg] (first prev-msgs)]
       (cond
-       (= nil curr-msg prev-msg)
-       out
+       (= nil curr-msg prev-msg) out
        (= (:opaque curr-msg) (:opaque prev-msg))
        (recur (rest curr-msgs)
               (rest prev-msgs)
               moving
-              (conj out
-                    ["<div class='msg"
-                     (when moving " msg-move")
-                     "' style='color:" (:color curr-msg) ";'>&#9679;"
-                     "<div class='result'>" (:result curr-msg) "</div></div>"]))
+              (conj out (render-msg curr-msg (when moving "msg-move"))))
        (nil? curr-msg)
        (recur nil
               (rest prev-msgs)
               moving
-              (conj out
-                    ["<div class='msg msg-exit' style='color:"
-                     (:color prev-msg) ";'>&#9679;"
-                     "<div class='result'>" (:result prev-msg) "</div></div>"]))
+              (conj out (render-msg prev-msg "msg-exit")))
        :else
        (recur (rest curr-msgs)
               prev-msgs
               true
-              (conj out
-                    ["<div class='msg msg-enter' style='color:"
-                     (:color curr-msg) ";'>&#9679;"
-                     "<div class='result'>" (:result curr-msg) "</div></div>"]))))))
+              (conj out (render-msg curr-msg "msg-enter")))))))
 
 (defn render-net [vis net-actx-id output-el-id prev-addrs]
   (let [net-state (:loop-state (second (first (filter (fn [[actx actx-info]]
