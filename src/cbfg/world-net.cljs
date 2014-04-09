@@ -77,17 +77,23 @@
                           (swap! coords #(assoc % [addr from-port] idx)))
                         (sort-by first accept-addr-port-v)))))
             (sort-by first @addrs)))
-    (let [h (mapv (fn [[addr addr-v]]
-                    ["<div><label>addr: " addr "</label>"
+    (let [addr-width 200
+          h (mapv (fn [[addr addr-v]]
+                    ["<div class='addr' style='left:" (* addr-width 2 (get @coords addr)) "px;'>"
+                     "<label>" addr "</label>"
                      (mapv (fn [[[accept-addr accept-port] accept-addr-port-v]]
-                             ["<div>" accept-addr accept-port
+                             ["<div class='accept-addr-port'>"
+                              "<span class='accept-addr'>" accept-addr "</span>"
+                              "<span class='accept-port'>" accept-port "</span>"
                               (when (and (= accept-addr addr)
                                          (get (:listens addr-v) accept-port))
-                                "LISTEN")
+                                ["<div class='listen'>" accept-port "</div>"])
                               (mapv (fn [[[from-port to-addr to-port] msgs]]
-                                      ["<div>" from-port " --&gt; " to-addr to-port "= "
+                                      ["<div class='port'>" from-port " --&gt; " to-addr to-port "= "
                                        (mapv (fn [[deliver-at msg]]
-                                               ["<div style='background-color:" (:msg msg) ";'>X</div>"])
+                                               ["<div class='msgs'>"
+                                                "<div class='msg' style='background-color:" (:msg msg) ";'>X</div>"
+                                                "</div>"])
                                              msgs)
                                        "</div>"])
                                     (sort-by first accept-addr-port-v))
@@ -96,7 +102,7 @@
                      "</div>"])
                   (sort-by first @addrs))]
       (set-el-innerHTML "net"
-                        (apply str (flatten [h @coords]))))))
+                        (apply str (flatten h))))))
 
 (defn world-vis-init [el-prefix init-event-delay]
   (let [cmd-inject-ch (chan)
