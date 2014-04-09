@@ -53,7 +53,7 @@
                                                         conj [ts v])))
                  (recur num-requests (inc num-responses)))))))
 
-(defn render-net [vis net-actx-id output-el-id]
+(defn render-net [vis net-actx-id output-el-id render-state]
   (let [net-state (:loop-state (second (first (filter (fn [[actx actx-info]]
                                                         (= (last actx) net-actx-id))
                                                       (:actxs vis)))))
@@ -133,8 +133,10 @@
                         "</div>"]))
                   (sort-by first @addrs))
              "</div>"]]
-      (set-el-innerHTML output-el-id
-                        (apply str (flatten h))))))
+      (when (not= @render-state h)
+        (reset! render-state h)
+        (set-el-innerHTML output-el-id
+                          (apply str (flatten h)))))))
 
 (defn world-vis-init [el-prefix init-event-delay]
   (let [cmd-inject-ch (chan)
@@ -142,7 +144,8 @@
                               (fn [ev] {:op (.-id (.-target ev))
                                         :msg (get-el-value "msg")
                                         :sleep (js/parseInt (get-el-value "sleep"))}))
-        client-hist (atom {})] ; Keyed by opaque -> [request, replies].
+        client-hist (atom {}) ; Keyed by opaque -> [request, replies].
+        render-state (atom nil)]
     (vis-init (fn [world vis-chs]
                 (let [connect-ch (achan-buf world 10)
                       listen-ch (achan-buf world 10)
@@ -164,7 +167,7 @@
                                                client-send-ch client-recv-ch
                                                vis-chs world-vis-init el-prefix))))))))
               el-prefix
-              #(render-net % "net-1" "net")
+              #(render-net % "net-1" "net" render-state)
               init-event-delay)
     cmd-inject-ch))
 
