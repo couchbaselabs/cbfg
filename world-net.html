@@ -8,9 +8,24 @@
   <div class="client">
     <div class="client-label">client:</div>
     <div id="vis-input">
-      msg: <input id="msg" type="text" value="red"></input>&nbsp;&nbsp;
-      sleep (ms): <input id="sleep" type="text" value="5000"></input>
-      <button id="echo">echo</button>
+      fence: <select id="fence">
+               <option value="0" selected>false</option>
+               <option value="1">true</option>
+             </select>
+      <br/>
+      x: <input id="x" type="text" value="1"></input>&nbsp;
+      y: <input id="y" type="text" value="2"></input>&nbsp;
+      delay (ms): <input id="delay" type="text" value="1000"></input>
+      <br/>
+      lane: <input id="lane" type="text" value=""></input>
+      <br/>
+      color: <input id="color" type="text" value="red"></input>
+      <br/>
+      <button id="add">add</button>
+      <button id="sub">sub</button>
+      <button id="count">count</button>
+      <button id="close-lane">close lane</button>
+      <button id="test">test</button>
     </div>
     <div>
       <div class="client-prev">
@@ -88,6 +103,11 @@
   border: none;
   padding-left: 2px;
   font-size: 20pt;
+}
+.net .msg .result {
+  display: inline-block;
+  font-size: 10px;
+  vertical-align: top;
 }
 .net .msg.msg-enter, .net .msg.msg-move, .net .msg.msg-exit {
   -webkit-animation-duration: 0.7s;

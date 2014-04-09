@@ -5,21 +5,20 @@
             [cbfg.vis :refer [vis-init get-el-value set-el-innerHTML]]
             [cbfg.net :refer [make-net]]
             [cbfg.net-test]
+            [cbfg.lane]
+            [cbfg.world-lane]
             [cbfg.world-base :refer [replay-cmd-ch world-replay
                                      render-client-hist start-test]]))
 
-(def cmd-handlers {"echo" identity})
-
 (defn server-conn-loop [actx server-send-ch server-recv-ch close-server-recv-ch]
-  (ago-loop server-conn-loop actx [num-requests 0]
-            (if-let [msg (atake server-conn-loop server-recv-ch)]
-              (do (when (> (:sleep msg) 0)
-                    (let [sleep-ch (atimeout server-conn-loop (:sleep msg))]
-                      (atake server-conn-loop sleep-ch)))
-                  (aput server-conn-loop server-send-ch [msg])
-                  (recur (inc num-requests)))
-              (do (aclose server-conn-loop server-send-ch)
-                  (aclose server-conn-loop close-server-recv-ch)))))
+  (let [fenced-pump-lane-out-ch (achan-buf actx 10)]
+    (cbfg.lane/make-lane-pump actx
+                              server-recv-ch fenced-pump-lane-out-ch
+                              cbfg.world-lane/make-fenced-pump-lane)
+    (ago-loop fenced-pump-lane-out actx [num-outs 0]
+              (aput fenced-pump-lane-out server-send-ch
+                    [(atake fenced-pump-lane-out fenced-pump-lane-out-ch)])
+              (recur (inc num-outs)))))
 
 (defn server-accept-loop [actx accept-ch close-accept-ch]
   (ago-loop server-accept-loop actx [num-accepts 0]
@@ -41,7 +40,7 @@
                  (world-replay client-send-ch vis-chs world-vis-init el-prefix
                                @client-hist (:replay-to v))
                  (let [cmd (assoc-in v [:opaque] ts)
-                       cmd-rq ((get cmd-handlers (:op cmd)) cmd)]
+                       cmd-rq ((get cbfg.world-lane/cmd-handlers (:op cmd)) cmd)]
                    (render-client-hist (swap! client-hist
                                               #(assoc % ts [cmd nil])))
                    (aput client-loop client-send-ch [cmd-rq])
@@ -70,24 +69,24 @@
               (conj out
                     ["<div class='msg"
                      (when moving " msg-move")
-                     "' style='color:" (:msg curr-msg) ";'>&#9679;"
-                     (:result curr-msg) "</div>"]))
+                     "' style='color:" (:color curr-msg) ";'>&#9679;"
+                     "<div class='result'>" (:result curr-msg) "</div></div>"]))
        (nil? curr-msg)
        (recur nil
               (rest prev-msgs)
               moving
               (conj out
                     ["<div class='msg msg-exit' style='color:"
-                     (:msg prev-msg) ";'>&#9679;"
-                     (:result prev-msg) "</div>"]))
+                     (:color prev-msg) ";'>&#9679;"
+                     "<div class='result'>" (:result prev-msg) "</div></div>"]))
        :else
        (recur (rest curr-msgs)
               prev-msgs
               true
               (conj out
                     ["<div class='msg msg-enter' style='color:"
-                     (:msg curr-msg) ";'>&#9679;"
-                     (:result curr-msg) "</div>"]))))))
+                     (:color curr-msg) ";'>&#9679;"
+                     "<div class='result'>" (:result curr-msg) "</div></div>"]))))))
 
 (defn render-net [vis net-actx-id output-el-id prev-addrs]
   (let [net-state (:loop-state (second (first (filter (fn [[actx actx-info]]
@@ -174,10 +173,14 @@
 
 (defn world-vis-init [el-prefix init-event-delay]
   (let [cmd-inject-ch (chan)
-        cmd-ch (replay-cmd-ch cmd-inject-ch (keys cmd-handlers)
+        cmd-ch (replay-cmd-ch cmd-inject-ch (keys cbfg.world-lane/cmd-handlers)
                               (fn [ev] {:op (.-id (.-target ev))
-                                        :msg (get-el-value "msg")
-                                        :sleep (js/parseInt (get-el-value "sleep"))}))
+                                        :x (js/parseInt (get-el-value "x"))
+                                        :y (js/parseInt (get-el-value "y"))
+                                        :delay (js/parseInt (get-el-value "delay"))
+                                        :fence (= (get-el-value "fence") "1")
+                                        :lane (get-el-value "lane")
+                                        :color (get-el-value "color")}))
         client-hist (atom {}) ; Keyed by opaque -> [request, replies].
         render-state (atom {})]
     (vis-init (fn [world vis-chs]
