@@ -11,13 +11,13 @@
       client-send: <input id="msg" type="text" value="hello"></input>
       <button id="echo">echo</button>
     </div>
-    <div class="net" id="net"></div>
     <div>
       <div class="client-prev">
         <div class="client-container" id="client-prev"></div>
       </div>
       <div class="client-curr client-container" id="client-curr"></div>
     </div>
+    <div class="net" id="net"></div>
   </div>
   <div class="event">event: <div id="vis-event"></div></div>
   <div class="vis" style="position:relative; width:100%; height:100%;">
@@ -29,6 +29,11 @@
   </div>
 </div>
 <style>
+.net {
+  margin-top: 20px;
+  border-top: 1px solid #eee;
+  padding-top: 20px;
+}
 .net * {
   font-size: 12px;
   white-space: nowrap;
@@ -37,7 +42,6 @@
 .net {
   position: relative;
   display: block;
-  height: 10em;
 }
 .net .addr  {
   position: absolute;

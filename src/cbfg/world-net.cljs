@@ -79,7 +79,7 @@
             (sort-by first @addrs)))
     (let [addr-width 200
           h (mapv (fn [[addr addr-v]]
-                    ["<div class='addr' style='left:" (* addr-width 2 (get @coords addr)) "px;'>"
+                    ["<div class='addr' style='left:" (* addr-width 1.5 (get @coords addr)) "px;'>"
                      "<label>" addr "</label>"
                      (mapv (fn [[[accept-addr accept-port] accept-addr-port-v]]
                              ["<div class='accept-addr-port'>"
