@@ -11,10 +11,18 @@
                                      render-client-hist start-test]]))
 
 (defn server-conn-loop [actx server-send-ch server-recv-ch close-server-recv-ch]
-  (let [fenced-pump-lane-out-ch (achan-buf actx 10)]
+  (let [fenced-pump-lane-in-ch (achan actx)
+        fenced-pump-lane-out-ch (achan actx)]
     (cbfg.lane/make-lane-pump actx
-                              server-recv-ch fenced-pump-lane-out-ch
+                              fenced-pump-lane-in-ch fenced-pump-lane-out-ch
                               cbfg.world-lane/make-fenced-pump-lane)
+    (ago-loop fenced-pump-lane-in actx [num-ins 0]
+              (let [msg (atake fenced-pump-lane-in server-recv-ch)]
+                (when (> (:sleep msg) 0)
+                  (let [sleep-ch (atimeout fenced-pump-lane-in (:sleep msg))]
+                    (atake fenced-pump-lane-in sleep-ch)))
+                (aput fenced-pump-lane-in fenced-pump-lane-in-ch msg)
+                (recur (inc num-ins))))
     (ago-loop fenced-pump-lane-out actx [num-outs 0]
               (aput fenced-pump-lane-out server-send-ch
                     [(atake fenced-pump-lane-out fenced-pump-lane-out-ch)])
@@ -180,7 +188,8 @@
                                         :delay (js/parseInt (get-el-value "delay"))
                                         :fence (= (get-el-value "fence") "1")
                                         :lane (get-el-value "lane")
-                                        :color (get-el-value "color")}))
+                                        :color (get-el-value "color")
+                                        :sleep (js/parseInt (get-el-value "sleep"))}))
         client-hist (atom {}) ; Keyed by opaque -> [request, replies].
         render-state (atom {})]
     (vis-init (fn [world vis-chs]
