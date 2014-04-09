@@ -18,10 +18,10 @@
                               cbfg.world-lane/make-fenced-pump-lane)
     (ago-loop fenced-pump-lane-in actx [num-ins 0]
               (let [msg (atake fenced-pump-lane-in server-recv-ch)]
+                (aput fenced-pump-lane-in fenced-pump-lane-in-ch msg)
                 (when (> (:sleep msg) 0)
                   (let [sleep-ch (atimeout fenced-pump-lane-in (:sleep msg))]
                     (atake fenced-pump-lane-in sleep-ch)))
-                (aput fenced-pump-lane-in fenced-pump-lane-in-ch msg)
                 (recur (inc num-ins))))
     (ago-loop fenced-pump-lane-out actx [num-outs 0]
               (aput fenced-pump-lane-out server-send-ch
