@@ -8,17 +8,18 @@
   <div class="client">
     <div class="client-label">client:</div>
     <div id="vis-input">
-      fence: <select id="fence">
-               <option value="0" selected>false</option>
-               <option value="1">true</option>
-             </select>
+      <label>fence:</label>
+        <select id="fence">
+          <option value="0" selected>false</option>
+          <option value="1">true</option>
+        </select>
       <br/>
-      x: <input id="x" type="text" value="1"></input>&nbsp;
-      y: <input id="y" type="text" value="2"></input>&nbsp;
-      delay (ms): <input id="delay" type="text" value="1000"></input>
+      <label>x:</label><input id="x" type="text" value="1"></input><br/>
+      <label>y:</label><input id="y" type="text" value="2"></input><br/>
+      <label>delay:</label><input id="delay" type="text" value="1000"></input><span class="units">(milliseconds)</span><br/>
+      <label>lane:</label><input id="lane" type="text" value=""></input>
       <br/>
-      lane: <input id="lane" type="text" value=""></input>
-      <br/>
+      <label>actions:</label>
       <button id="add">add</button>
       <button id="sub">sub</button>
       <button id="count">count</button>

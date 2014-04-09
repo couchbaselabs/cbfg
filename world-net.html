@@ -8,19 +8,29 @@
   <div class="client">
     <div class="client-label">client:</div>
     <div id="vis-input">
-      fence: <select id="fence">
-               <option value="0" selected>false</option>
-               <option value="1">true</option>
-             </select>
+      <label>fence:</label>
+        <select id="fence">
+          <option value="0" selected>false</option>
+          <option value="1">true</option>
+        </select>
       <br/>
-      x: <input id="x" type="text" value="1"></input>&nbsp;
-      y: <input id="y" type="text" value="2"></input>&nbsp;
-      task delay (ms): <input id="delay" type="text" value="1000"></input>
+      <label>x:</label><input id="x" type="text" value="1"></input>&nbsp;
+      y:<input id="y" type="text" value="2"></input>&nbsp;
+      delay: <input id="delay" type="text" value="1000"></input><span class="units">(milliseconds)</span>
       <br/>
-      lane: <input id="lane" type="text" value=""></input>
+      <label>lane:</label><input id="lane" type="text" value=""></input>
       <br/>
-      color: <input id="color" type="text" value="red"></input>&nbsp;
-      after spawn task delay (ms): <input id="sleep" type="text" value="5000"></input>
+      <label>color:</label>
+        <select id="color">
+          <option value="red" selected>red</option>
+          <option value="blue">blue</option>
+          <option value="green">green</option>
+          <option value="orange">orange</option>
+          <option value="purple">orange</option>
+          <option value="black">black</option>
+        </select>
+        &nbsp;
+      after spawn task delay: <input id="sleep" type="text" value="5000"></input><span class="units">(milliseconds)</span>
       <br/>
       <button id="add">add</button>
       <button id="sub">sub</button>

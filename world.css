@@ -16,6 +16,16 @@ input {
     background-color: #FFFCF1;
     padding-top: 10px;
 }
+#vis-input label {
+    display: inline-block;
+    width: 60px;
+    margin-right: 5px;
+    text-align: right;
+}
+#vis-input .units {
+    color: #bbb;
+    font-size: 10px;
+}
 #vis-input, #vis-event {
     min-height: 2em;
     margin-left: 2em;
