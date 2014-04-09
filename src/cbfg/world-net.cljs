@@ -7,8 +7,7 @@
             [cbfg.world-base :refer [replay-cmd-ch world-replay
                                      render-client-hist start-test]]))
 
-(def cmd-handlers
-  {"echo" (fn [c] c)})
+(def cmd-handlers {"echo" identity})
 
 (defn server-conn-loop [actx server-send-ch server-recv-ch close-server-recv-ch]
   (ago-loop server-conn-loop actx [num-requests 0]
