@@ -115,7 +115,7 @@
                           results)))
                :else ; Test if it's a completed deliverable (recv-ch aput'ed).
                (if-let [stream (first (filter #(= (:recv-ch %) ch) (vals streams)))]
-                 (let [stream2 (update-in stream [:msgs] rest)]
+                 (let [stream2 (update-in stream [:msgs] #(vec (rest %)))]
                    (if (and (:send-closed stream2)
                             (empty? (:msgs stream2)))
                      (do (aclose net (:recv-ch stream2))
