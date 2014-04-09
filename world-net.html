@@ -28,14 +28,16 @@
       <button id="close-lane">close lane</button>
       <button id="test">test</button>
     </div>
-    <div>
-      <div class="client-prev">
-        <div class="client-container" id="client-prev"></div>
+    <div class="net-client-container">
+      <div class="net-container">
+        <div class="net" id="net"></div>
       </div>
-      <div class="client-curr client-container" id="client-curr"></div>
-    </div>
-    <div class="net-container">
-      <div class="net" id="net"></div>
+      <div class="client-container">
+        <div class="client-prev">
+          <div class="client-container" id="client-prev"></div>
+        </div>
+        <div class="client-curr client-container" id="client-curr"></div>
+      </div>
     </div>
   </div>
   <div class="event">event: <div id="vis-event"></div></div>
@@ -48,10 +50,24 @@
   </div>
 </div>
 <style>
-.net-container {
-  margin: 20px 0 200px 0;
+div.net-client-container {
+  margin-top: 40px;
   border-top: 1px solid #eee;
-  padding-top: 20px;
+  padding-top: 10px;
+  white-space: nowrap;
+  vertical-align: top;
+}
+div.net-client-container div.client-container {
+  display: inline-block;
+  min-height: 300px;
+  margin-left: 20px;
+  padding-left: 0px;
+  vertical-align: top;
+}
+.net-container {
+  display: inline-block;
+  width: 500px;
+  margin: 10px 0 200px 0;
 }
 .net {
   position: relative;
