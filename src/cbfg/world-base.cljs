@@ -63,7 +63,8 @@
                                                     ["<li style='margin-left: " response-ts "em;'>"
                                                      (-> (filter-r response)
                                                          (dissoc :lane)
-                                                         (dissoc :delay))
+                                                         (dissoc :delay)
+                                                         (dissoc :sleep))
                                                      "</li>"])
                                                   (reverse responses))
                                              " </ul></td>"
