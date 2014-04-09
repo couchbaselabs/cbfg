@@ -104,18 +104,27 @@
                                                from-y (get coords [addr from-port])
                                                to-x (calc-x to-addr)
                                                to-y (get coords [to-addr to-port])
-                                               rad (Math/atan2 (- from-x to-x) (- from-y to-y))]
-                                           ["<div class='port'>" from-port " --&gt; " to-addr to-port "= "
-                                            " <div class='msgs' style='"
+                                               dx (- from-x to-x)
+                                               dy (- from-y to-y)
+                                               rad (Math/atan2 dx dy)
+                                               dist (Math/abs (Math/sqrt (+ (* dx dx) (* dy dy))))]
+                                           ["<div class='port'>" from-port " --&gt; " to-addr ":" to-port
+                                            " <div class='msgs"
+                                            (when (= accept-addr addr)
+                                              " to-client")
+                                            "' style='min-height:" (- dist 60) "px;"
                                             " transform-origin:top left;"
                                             " -ms-transform-origin:top left;"
                                             " -webkit-transform-origin:top left;"
                                             " transform:rotate(" rad "rad);"
                                             " -ms-transform:rotate(" rad "rad);"
                                             " -webkit-transform:rotate(" rad "rad);'>"
-                                            (mapv (fn [[deliver-at msg]]
-                                                    ["<div class='msg' style='background-color:" (:msg msg) ";'>X</div>"])
-                                                  msgs)
+                                            (map-indexed (fn [idx [deliver-at msg]]
+                                                           ["<div class='msg"
+                                                            (when (= idx 0) " msg-first")
+                                                            "' style='color:" (:msg msg) ";'>&#9679;"
+                                                            "</div>"])
+                                                         msgs)
                                             " </div>"
                                             "</div>"]))
                                        (sort-by first accept-addr-port-v))
