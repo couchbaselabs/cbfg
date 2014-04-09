@@ -68,8 +68,16 @@
                                    [(:accept-addr stream) (:accept-port stream)]
                                    [(:server-port stream)
                                     (:client-addr stream) (:client-port stream)]] (:msgs stream)))))
-    (let [addrs @addrs
-          h (mapv (fn [[addr addr-v]]
+    (doall (map-indexed
+            (fn [addr-idx [addr addr-v]]
+              (swap! coords #(assoc % addr addr-idx))
+              (doseq [[[accept-addr accept-port] accept-addr-port-v] (sort-by first (:outs addr-v))]
+                (doall (map-indexed
+                        (fn [idx [[from-port to-addr to-port] msgs]]
+                          (swap! coords #(assoc % [addr from-port] idx)))
+                        (sort-by first accept-addr-port-v)))))
+            (sort-by first @addrs)))
+    (let [h (mapv (fn [[addr addr-v]]
                     ["<div><label>addr: " addr "</label>"
                      (mapv (fn [[[accept-addr accept-port] accept-addr-port-v]]
                              ["<div>" accept-addr accept-port
@@ -86,9 +94,9 @@
                               "</div>"])
                            (sort-by first (:outs addr-v)))
                      "</div>"])
-                  (sort-by first addrs))]
+                  (sort-by first @addrs))]
       (set-el-innerHTML "net"
-                        (apply str (flatten h))))))
+                        (apply str (flatten [h @coords]))))))
 
 (defn world-vis-init [el-prefix init-event-delay]
   (let [cmd-inject-ch (chan)
