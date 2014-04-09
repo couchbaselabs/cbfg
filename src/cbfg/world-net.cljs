@@ -97,13 +97,20 @@
                                           (get (:listens addr-v) accept-port))
                                  ["<div class='listen'>" accept-port "</div>"])
                                (mapv (fn [[[from-port to-addr to-port] msgs]]
-                                       ["<div class='port'>" from-port " --&gt; " to-addr to-port "= "
-                                        (mapv (fn [[deliver-at msg]]
-                                                ["<div class='msgs'>"
-                                                 "<div class='msg' style='background-color:" (:msg msg) ";'>X</div>"
-                                                 "</div>"])
-                                              msgs)
-                                        "</div>"])
+                                       (let [deg -90]
+                                         ["<div class='port'>" from-port " --&gt; " to-addr to-port "= "
+                                          "<div class='msgs' style='"
+                                          " transform-origin:top left;"
+                                          " -ms-transform-origin:top left;"
+                                          " -webkit-transform-origin:top left;"
+                                          " transform:rotate(" deg "deg);"
+                                          " -ms-transform:rotate(" deg "deg);"
+                                          " -webkit-transform:rotate(" deg "deg);'>"
+                                          (mapv (fn [[deliver-at msg]]
+                                                  ["<div class='msg' style='background-color:" (:msg msg) ";'>X</div>"])
+                                                msgs)
+                                          "</div>"
+                                          "</div>"]))
                                      (sort-by first accept-addr-port-v))
                                "</div>"])
                             (sort-by first (:outs addr-v)))
