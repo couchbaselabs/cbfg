@@ -25,6 +25,7 @@
         <select id="client">
           <option value="client-0" selected>client-0</option>
           <option value="client-1">client-1</option>
+          <option value="client-2">client-2</option>
         </select>
         &nbsp;
       color:
@@ -69,28 +70,28 @@
 </div>
 <style>
 div.net-client-container {
-  margin-top: 40px;
+  margin: 40px 0 0 0;
   border-top: 1px solid #eee;
-  padding-top: 10px;
+  padding: 10px 0 10px 0;
   white-space: nowrap;
   vertical-align: top;
 }
 div.net-client-container div.client-container {
   display: inline-block;
   min-height: 300px;
-  margin-left: 20px;
+  margin-left: 0px;
   padding-left: 0px;
   vertical-align: top;
 }
 .net-container {
   display: inline-block;
-  width: 500px;
+  width: 620px;
   margin: 10px 0 200px 0;
 }
 .net {
   position: relative;
   display: block;
-  left: 100px;
+  left: 50px;
 }
 .net * {
   font-size: 12px;
@@ -116,11 +117,16 @@ div.net-client-container div.client-container {
 .net .listen {
   position: absolute;
   display: block;
-  top: -20px;
-  left: 40px;
-  border: 1px solid #888;
-  background-color: #cce;
-  padding: 0 5px 0 5px;
+  top: 2px;
+  left: -20px;
+  height: 10px;
+  border: 1px solid #aaa;
+  background-color: #dde;
+  padding: 0 2px 0 2px;
+  font-size: 8px;
+  vertical-align: top;
+  line-height: 10px;
+  opacity: 0.5;
 }
 .net .port {
   padding-left: 20px;
@@ -136,9 +142,10 @@ div.net-client-container div.client-container {
   border-left: 2px solid #bbb;
   padding-top: 60px;
   color: #333;
+  opacity: 0.8;
 }
 .net .msgs.to-client {
-  border-left: 2px solid #green;
+  border-left: 2px solid #bcc;
 }
 .net .msg {
   position: relative;

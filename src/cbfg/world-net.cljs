@@ -44,16 +44,15 @@
             (let [[v ch] (aalts cmd-loop [cmd-ch res-ch])
                   ts (+ num-requests num-responses)]
               (cond
-               (= ch cmd-ch)
-               (if (= (:op v) "replay")
-                 (world-replay req-ch vis-chs world-vis-init el-prefix
-                               @client-hist (:replay-to v))
-                 (let [cmd (assoc-in v [:opaque] ts)
-                       cmd-rq ((get cbfg.world-lane/cmd-handlers (:op cmd)) cmd)]
-                   (render-client-hist (swap! client-hist
-                                              #(assoc % ts [cmd nil])))
-                   (aput cmd-loop req-ch cmd-rq)
-                   (recur (inc num-requests) num-responses)))
+               (= ch cmd-ch) (if (= (:op v) "replay")
+                               (world-replay req-ch vis-chs world-vis-init el-prefix
+                                             @client-hist (:replay-to v))
+                               (let [cmd (assoc-in v [:opaque] ts)
+                                     cmd-rq ((get cbfg.world-lane/cmd-handlers (:op cmd)) cmd)]
+                                 (render-client-hist (swap! client-hist
+                                                            #(assoc % ts [cmd nil])))
+                                 (aput cmd-loop req-ch cmd-rq)
+                                 (recur (inc num-requests) num-responses)))
                (= ch res-ch)
                (when v
                  (render-client-hist (swap! client-hist
@@ -125,22 +124,29 @@
                                    [(:accept-addr stream) (:accept-port stream)]
                                    [(:server-port stream)
                                     (:client-addr stream) (:client-port stream)]] (:msgs stream)))))
-    (let [naddrs (count @addrs)]
-      (doall (map-indexed
-              (fn [addr-idx [addr addr-v]]
-                (swap! coords #(assoc % addr [addr-idx (rem (* (dec naddrs) addr-idx) naddrs)]))
-                (doseq [[[accept-addr accept-port] accept-addr-port-v]
-                        (sort-by first (:outs addr-v))]
-                  (doall (map-indexed
-                          (fn [idx [[from-port to-addr to-port] msgs]]
-                            (swap! coords #(assoc % [addr from-port] idx)))
-                          (sort-by first accept-addr-port-v)))))
-              (sort-by first @addrs))))
+    (let [naddrs (count @addrs) ; Assign coords.
+          conns (sort (mapcat (fn [[addr addr-v]]
+                                (mapcat (fn [[[accept-addr accept-port] accept-addr-port-v]]
+                                          (map (fn [[[from-port to-addr to-port] msgs]]
+                                                 [(not= addr accept-addr)
+                                                  addr accept-addr accept-port from-port])
+                                               accept-addr-port-v))
+                                        (:outs addr-v)))
+                              @addrs))]
+      (doall (map-indexed (fn [addr-idx [addr addr-v]]
+                            (swap! coords #(assoc % addr
+                                                  [addr-idx (rem (* (dec naddrs) addr-idx) naddrs)])))
+              (sort-by first @addrs)))
+      (reduce (fn [prev [is-client addr accept-addr accept-port port]]
+                (let [idx (if (= (first prev) addr) (second prev) 0)]
+                  (swap! coords #(assoc % [addr port] idx))
+                  [addr (inc idx)]))
+              nil conns))
     (let [coords @coords
           top-height 60
           line-height 20
           addr-width 50
-          addr-gap 100
+          addr-gap 80
           calc-xy (fn [addr] (let [[c0 c1] (get coords addr)]
                                [(* addr-width c0 (/ (+ addr-width addr-gap) addr-width))
                                 (* top-height c1)]))
@@ -213,20 +219,26 @@
     (vis-init (fn [world vis-chs]
                 (let [connect-ch (achan-buf world 10)
                       listen-ch (achan-buf world 10)
-                      listen-result-ch (achan world)]
+                      listen-result-ch0 (achan world)
+                      listen-result-ch1 (achan world)]
                   (make-net world listen-ch connect-ch)
                   (ago init-world world
-                       (aput init-world listen-ch [:server 8000 listen-result-ch])
-                       (when-let [[accept-ch close-accept-ch]
-                                  (atake init-world listen-result-ch)]
-                         (atake init-world listen-result-ch)
-                         (server-accept-loop world accept-ch close-accept-ch)
+                       (aput init-world listen-ch [:server 8000 listen-result-ch0])
+                       (aput init-world listen-ch [:server 8100 listen-result-ch1])
+                       (let [[accept-ch0 close-accept-ch0] (atake init-world listen-result-ch0)
+                             [accept-ch1 close-accept-ch1] (atake init-world listen-result-ch1)]
+                         (atake init-world listen-result-ch0)
+                         (atake init-world listen-result-ch1)
+                         (server-accept-loop world accept-ch0 close-accept-ch0)
+                         (server-accept-loop world accept-ch1 close-accept-ch1)
                          (let [req-ch (achan init-world)
                                res-ch (achan init-world)
                                client-cmd-chs {"client-0" (client-loop init-world connect-ch
                                                                        :server 8000 :client-0 res-ch)
                                                "client-1" (client-loop init-world connect-ch
-                                                                       :server 8000 :client-1 res-ch)}]
+                                                                       :server 8100 :client-1 res-ch)
+                                               "client-2" (client-loop init-world connect-ch
+                                                                       :server 8000 :client-2 res-ch)}]
                            (cmd-loop init-world cmd-ch client-hist req-ch res-ch
                                      vis-chs world-vis-init el-prefix)
                            (ago-loop cmd-dispatch-loop init-world [num-dispatches 0]
