@@ -38,27 +38,45 @@
                   (recur (inc num-accepts)))
               (aclose server-accept-loop close-accept-ch))))
 
-(defn client-loop [actx cmd-ch client-hist client-send-ch client-recv-ch vis-chs world-vis-init el-prefix]
-  (ago-loop client-loop actx [num-requests 0 num-responses 0]
-            (let [[v ch] (aalts client-loop [cmd-ch client-recv-ch])
+(defn cmd-loop [actx cmd-ch client-hist req-ch res-ch
+                vis-chs world-vis-init el-prefix]
+  (ago-loop cmd-loop actx [num-requests 0 num-responses 0]
+            (let [[v ch] (aalts cmd-loop [cmd-ch res-ch])
                   ts (+ num-requests num-responses)]
               (cond
                (= ch cmd-ch)
                (if (= (:op v) "replay")
-                 (world-replay client-send-ch vis-chs world-vis-init el-prefix
+                 (world-replay req-ch vis-chs world-vis-init el-prefix
                                @client-hist (:replay-to v))
                  (let [cmd (assoc-in v [:opaque] ts)
                        cmd-rq ((get cbfg.world-lane/cmd-handlers (:op cmd)) cmd)]
                    (render-client-hist (swap! client-hist
                                               #(assoc % ts [cmd nil])))
-                   (aput client-loop client-send-ch [cmd-rq])
+                   (aput cmd-loop req-ch cmd-rq)
                    (recur (inc num-requests) num-responses)))
-               (= ch client-recv-ch)
+               (= ch res-ch)
                (when v
                  (render-client-hist (swap! client-hist
                                             #(update-in % [(:opaque v) 1]
                                                         conj [ts v])))
                  (recur num-requests (inc num-responses)))))))
+
+(defn client-loop [actx connect-ch server-addr server-port client-addr res-ch]
+  (let [cmd-ch (achan actx)]
+    (ago client-loop actx
+         (let [connect-result-ch (achan client-loop)]
+           (aput client-loop connect-ch [server-addr server-port client-addr connect-result-ch])
+           (when-let [[client-send-ch client-recv-ch close-client-recv-ch]
+                      (atake client-loop connect-result-ch)]
+             (ago-loop client-loop-in client-loop [num-ins 0]
+                       (when-let [msg (atake client-loop-in cmd-ch)]
+                         (aput client-loop-in client-send-ch [msg])
+                         (recur (inc num-ins))))
+             (ago-loop client-loop-out client-loop [num-outs 0]
+                       (when-let [msg (atake client-loop-out client-recv-ch)]
+                         (aput client-loop-out res-ch msg)
+                         (recur (inc num-outs)))))))
+    cmd-ch))
 
 (defn render-msg [msg class-extra]
   ["<div class='msg " class-extra "' style='color:" (:color msg) ";'>&#9679;"
@@ -117,12 +135,13 @@
                         (sort-by first accept-addr-port-v)))))
             (sort-by first @addrs)))
     (let [coords @coords
+          top-height 30
           line-height 20
           addr-width 50
           addr-gap 200
           calc-xy (fn [addr] (let [c (get coords addr)]
                                [(* addr-width c (/ (+ addr-width addr-gap) addr-width))
-                                (* line-height c)]))
+                                (* top-height c)]))
           h ["<div style='height:" (apply max (map #(count (:outs %)) (vals @addrs))) "em;'>"
              (mapv (fn [[addr addr-v]]
                      (let [[addr-x addr-y] (calc-xy addr)]
@@ -149,17 +168,19 @@
                                                                               [accept-addr accept-port]
                                                                               [from-port to-addr to-port]])]
                                            ["<div class='port'>" from-port " --&gt; " to-addr ":" to-port
-                                            " <div class='msgs"
+                                            " <div class='msgs-container'>"
+                                            "  <div class='msgs"
                                             (when (= accept-addr addr)
                                               " to-client")
                                             "' style='min-height:" (- dist 60) "px;"
-                                            " transform-origin:top left;"
-                                            " -ms-transform-origin:top left;"
-                                            " -webkit-transform-origin:top left;"
-                                            " transform:rotate(" rad "rad);"
-                                            " -ms-transform:rotate(" rad "rad);"
-                                            " -webkit-transform:rotate(" rad "rad);'>"
+                                            "transform-origin:top left;"
+                                            "-ms-transform-origin:top left;"
+                                            "-webkit-transform-origin:top left;"
+                                            "transform:rotate(" rad "rad);"
+                                            "-ms-transform:rotate(" rad "rad);"
+                                            "-webkit-transform:rotate(" rad "rad);'>"
                                             (render-msgs msgs prev-msgs)
+                                            "  </div>"
                                             " </div>"
                                             "</div>"]))
                                        (sort-by first accept-addr-port-v))
@@ -182,6 +203,7 @@
                                         :delay (js/parseInt (get-el-value "delay"))
                                         :fence (= (get-el-value "fence") "1")
                                         :lane (get-el-value "lane")
+                                        :client (get-el-value "client")
                                         :color (get-el-value "color")
                                         :sleep (js/parseInt (get-el-value "sleep"))}))
         client-hist (atom {}) ; Keyed by opaque -> [request, replies].
@@ -193,19 +215,24 @@
                   (make-net world listen-ch connect-ch)
                   (ago init-world world
                        (aput init-world listen-ch [:server 8000 listen-result-ch])
-                       (when-let [[accept-ch close-accept-ch] (atake init-world listen-result-ch)]
+                       (when-let [[accept-ch close-accept-ch]
+                                  (atake init-world listen-result-ch)]
                          (atake init-world listen-result-ch)
                          (server-accept-loop world accept-ch close-accept-ch)
-                         (ago client-init world
-                              (let [connect-result-ch (achan client-init)]
-                                (aput client-init connect-ch [:server 8000 :client connect-result-ch])
-                                (when-let [[client-send-ch client-recv-ch close-client-recv-ch]
-                                           (atake client-init connect-result-ch)]
-                                  (atake client-init connect-result-ch)
-                                  (client-loop world cmd-ch
-                                               client-hist
-                                               client-send-ch client-recv-ch
-                                               vis-chs world-vis-init el-prefix))))))))
+                         (let [req-ch (achan init-world)
+                               res-ch (achan init-world)
+                               client-cmd-chs {"client-0" (client-loop init-world connect-ch
+                                                                       :server 8000 :client-0 res-ch)
+                                               "client-1" (client-loop init-world connect-ch
+                                                                       :server 8000 :client-1 res-ch)}]
+                           (cmd-loop init-world cmd-ch client-hist req-ch res-ch
+                                     vis-chs world-vis-init el-prefix)
+                           (ago-loop cmd-dispatch-loop init-world [num-dispatches 0]
+                                     (when-let [msg (atake cmd-dispatch-loop req-ch)]
+                                       (println :cmd-dispatch-loop msg)
+                                       (when-let [client-cmd-ch (get client-cmd-chs (:client msg))]
+                                         (aput cmd-dispatch-loop client-cmd-ch msg)
+                                         (recur (inc num-dispatches))))))))))
               el-prefix
               #(render-net % "net-1" "net" render-state)
               init-event-delay)

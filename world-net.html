@@ -16,11 +16,18 @@
       <br/>
       <label>x:</label><input id="x" type="text" value="1"></input>&nbsp;
       y:<input id="y" type="text" value="2"></input>&nbsp;
-      delay: <input id="delay" type="text" value="1000"></input><span class="units">(milliseconds)</span>
+      delay: <input id="delay" type="text" value="1000"></input>
+        <span class="units">(milliseconds)</span>
       <br/>
       <label>lane:</label><input id="lane" type="text" value=""></input>
       <br/>
-      <label>color:</label>
+      <label>client:</label>
+        <select id="client">
+          <option value="client-0" selected>client-0</option>
+          <option value="client-1">client-1</option>
+        </select>
+        &nbsp;
+      color:
         <select id="color">
           <option value="red" selected>red</option>
           <option value="blue">blue</option>
@@ -30,7 +37,8 @@
           <option value="black">black</option>
         </select>
         &nbsp;
-      after spawn task delay: <input id="sleep" type="text" value="5000"></input><span class="units">(milliseconds)</span>
+      after spawn task delay: <input id="sleep" type="text" value="5000"></input>
+        <span class="units">(milliseconds)</span>
       <br/>
       <button id="add">add</button>
       <button id="sub">sub</button>
@@ -87,7 +95,9 @@ div.net-client-container div.client-container {
 .net * {
   font-size: 12px;
   white-space: nowrap;
-  border: 1px solid white;
+  margin: 0 0 0 0;
+  border: none;
+  padding: 0 0 0 0;
   line-height: 20px;
 }
 .net .addr  {
@@ -115,6 +125,10 @@ div.net-client-container div.client-container {
 .net .port {
   color: #ddd;
 }
+.net .msgs-container {
+  position: relative;
+  height: 0px;
+}
 .net .msgs {
   position: relative;
   border: none;
@@ -129,7 +143,7 @@ div.net-client-container div.client-container {
   position: relative;
   border: none;
   padding-left: 2px;
-  font-size: 20pt;
+  font-size: 20px;
 }
 .net .msg .result {
   display: inline-block;
