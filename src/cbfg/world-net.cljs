@@ -138,7 +138,7 @@
           top-height 30
           line-height 20
           addr-width 50
-          addr-gap 200
+          addr-gap 100
           calc-xy (fn [addr] (let [c (get coords addr)]
                                [(* addr-width c (/ (+ addr-width addr-gap) addr-width))
                                 (* top-height c)]))
