@@ -191,7 +191,6 @@
                                         :client (get-el-value "client")
                                         :color (get-el-value "color")
                                         :sleep (js/parseInt (get-el-value "sleep"))}))
-        client-hist (atom {}) ; Keyed by opaque -> [request, replies].
         render-state (atom {})]
     (vis-init (fn [world vis-chs]
                 (let [connect-ch (achan-buf world 10)
@@ -217,7 +216,7 @@
                                                "client-2" (client-loop init-world connect-ch
                                                                        :server 8000 :client-2 res-ch)}]
                            (world-cmd-loop init-world cbfg.world-lane/cmd-handlers cmd-ch
-                                           client-hist req-ch res-ch vis-chs world-vis-init el-prefix)
+                                           req-ch res-ch vis-chs world-vis-init el-prefix)
                            (ago-loop cmd-dispatch-loop init-world [num-dispatches 0]
                                      (when-let [msg (atake cmd-dispatch-loop req-ch)]
                                        (when-let [client-cmd-ch (get client-cmd-chs (:client msg))]
