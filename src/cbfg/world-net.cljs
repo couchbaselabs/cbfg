@@ -125,23 +125,25 @@
                                    [(:accept-addr stream) (:accept-port stream)]
                                    [(:server-port stream)
                                     (:client-addr stream) (:client-port stream)]] (:msgs stream)))))
-    (doall (map-indexed
-            (fn [addr-idx [addr addr-v]]
-              (swap! coords #(assoc % addr addr-idx))
-              (doseq [[[accept-addr accept-port] accept-addr-port-v] (sort-by first (:outs addr-v))]
-                (doall (map-indexed
-                        (fn [idx [[from-port to-addr to-port] msgs]]
-                          (swap! coords #(assoc % [addr from-port] idx)))
-                        (sort-by first accept-addr-port-v)))))
-            (sort-by first @addrs)))
+    (let [naddrs (count @addrs)]
+      (doall (map-indexed
+              (fn [addr-idx [addr addr-v]]
+                (swap! coords #(assoc % addr [addr-idx (rem (* (dec naddrs) addr-idx) naddrs)]))
+                (doseq [[[accept-addr accept-port] accept-addr-port-v]
+                        (sort-by first (:outs addr-v))]
+                  (doall (map-indexed
+                          (fn [idx [[from-port to-addr to-port] msgs]]
+                            (swap! coords #(assoc % [addr from-port] idx)))
+                          (sort-by first accept-addr-port-v)))))
+              (sort-by first @addrs))))
     (let [coords @coords
-          top-height 30
+          top-height 60
           line-height 20
           addr-width 50
           addr-gap 100
-          calc-xy (fn [addr] (let [c (get coords addr)]
-                               [(* addr-width c (/ (+ addr-width addr-gap) addr-width))
-                                (* top-height c)]))
+          calc-xy (fn [addr] (let [[c0 c1] (get coords addr)]
+                               [(* addr-width c0 (/ (+ addr-width addr-gap) addr-width))
+                                (* top-height c1)]))
           h ["<div style='height:" (apply max (map #(count (:outs %)) (vals @addrs))) "em;'>"
              (mapv (fn [[addr addr-v]]
                      (let [[addr-x addr-y] (calc-xy addr)]
