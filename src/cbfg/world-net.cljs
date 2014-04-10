@@ -7,8 +7,7 @@
             [cbfg.net-test]
             [cbfg.lane]
             [cbfg.world-lane]
-            [cbfg.world-base :refer [replay-cmd-ch world-replay
-                                     render-client-hist start-test]]))
+            [cbfg.world-base :refer [replay-cmd-ch world-cmd-loop start-test]]))
 
 (defn server-conn-loop [actx server-send-ch server-recv-ch close-server-recv-ch]
   (let [fenced-pump-lane-in-ch (achan actx)
@@ -37,28 +36,6 @@
                                     server-recv-ch close-server-recv-ch)
                   (recur (inc num-accepts)))
               (aclose server-accept-loop close-accept-ch))))
-
-(defn cmd-loop [actx cmd-ch client-hist req-ch res-ch
-                vis-chs world-vis-init el-prefix]
-  (ago-loop cmd-loop actx [num-requests 0 num-responses 0]
-            (let [[v ch] (aalts cmd-loop [cmd-ch res-ch])
-                  ts (+ num-requests num-responses)]
-              (cond
-               (= ch cmd-ch) (if (= (:op v) "replay")
-                               (world-replay req-ch vis-chs world-vis-init el-prefix
-                                             @client-hist (:replay-to v))
-                               (let [cmd (assoc-in v [:opaque] ts)
-                                     cmd-rq ((get cbfg.world-lane/cmd-handlers (:op cmd)) cmd)]
-                                 (render-client-hist (swap! client-hist
-                                                            #(assoc % ts [cmd nil])))
-                                 (aput cmd-loop req-ch cmd-rq)
-                                 (recur (inc num-requests) num-responses)))
-               (= ch res-ch)
-               (when v
-                 (render-client-hist (swap! client-hist
-                                            #(update-in % [(:opaque v) 1]
-                                                        conj [ts v])))
-                 (recur num-requests (inc num-responses)))))))
 
 (defn client-loop [actx connect-ch server-addr server-port client-addr res-ch]
   (let [cmd-ch (achan actx)]
@@ -239,8 +216,8 @@
                                                                        :server 8100 :client-1 res-ch)
                                                "client-2" (client-loop init-world connect-ch
                                                                        :server 8000 :client-2 res-ch)}]
-                           (cmd-loop init-world cmd-ch client-hist req-ch res-ch
-                                     vis-chs world-vis-init el-prefix)
+                           (world-cmd-loop init-world cbfg.world-lane/cmd-handlers cmd-ch
+                                           client-hist req-ch res-ch vis-chs world-vis-init el-prefix)
                            (ago-loop cmd-dispatch-loop init-world [num-dispatches 0]
                                      (when-let [msg (atake cmd-dispatch-loop req-ch)]
                                        (when-let [client-cmd-ch (get client-cmd-chs (:client msg))]
