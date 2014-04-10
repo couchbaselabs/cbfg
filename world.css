@@ -13,8 +13,14 @@ input {
 }
 #vis-run-controls {
     margin: 0 0 0 0;
+    height: 20px;
+}
+#vis-run-controls .run-controls {
+    position: fixed;
+    width: 100%;
     background-color: #FFFCF1;
     padding-top: 10px;
+    z-index: 10;
 }
 #vis-input label {
     display: inline-block;
