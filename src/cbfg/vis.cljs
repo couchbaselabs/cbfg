@@ -317,11 +317,10 @@
         world (conj w "world-0")  ; No ago for world actx init to avoid recursion.
         vis (atom {:actxs {world {:children {} ; child-actx -> true,
                                   :wait-chs {} ; ch -> [:ghost|:take|:put optional-ch-name],
+                                  :closed true
                                   ; :loop-state last-loop-bindings,
-                                  ; :closed bool.
                                   }}
-                   :chs {} ; {ch -> {:id (gen-id),
-                           ;         :msgs {msg -> true}
+                   :chs {} ; {ch -> {:id (gen-id), :msgs {msg -> true},
                            ;         :first-taker-actx actx-or-nil}}.
                    :gen-id gen-id})
         el-event (str el-prefix "-event")
