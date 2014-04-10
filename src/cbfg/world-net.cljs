@@ -94,7 +94,7 @@
                                                         (= (last actx) net-actx-id))
                                                       (:actxs vis)))))
         addrs (atom {})
-        coords (atom {})]
+        coords (atom {})] ; Index positions.
     (doseq [[[addr port] accept-chs] (:listens net-state)]
       (swap! addrs #(assoc-in % [addr :listens port] true)))
     (doseq [[send-ch stream] (:streams net-state)]
@@ -117,16 +117,16 @@
                         (sort-by first accept-addr-port-v)))))
             (sort-by first @addrs)))
     (let [coords @coords
+          line-height 20
           addr-width 50
           addr-gap 200
-          calc-x (fn [addr] (* addr-width
-                               (/ (+ addr-width addr-gap)
-                                  addr-width)
-                               (get coords addr)))
+          calc-xy (fn [addr] (let [c (get coords addr)]
+                               [(* addr-width c (/ (+ addr-width addr-gap) addr-width))
+                                (* line-height c)]))
           h ["<div style='height:" (apply max (map #(count (:outs %)) (vals @addrs))) "em;'>"
              (mapv (fn [[addr addr-v]]
-                     (let [addr-x (calc-x addr)]
-                       ["<div class='addr' style='left:" addr-x "px;'>"
+                     (let [[addr-x addr-y] (calc-xy addr)]
+                       ["<div class='addr' style='top:" addr-y "px; left:" addr-x "px;'>"
                         "<label>" addr "</label>"
                         (mapv (fn [[[accept-addr accept-port] accept-addr-port-v]]
                                 ["<div class='accept-addr-port'>"
@@ -137,11 +137,12 @@
                                    ["<div class='listen'>" accept-port "</div>"])
                                  (mapv (fn [[[from-port to-addr to-port] msgs]]
                                          (let [from-x addr-x
-                                               from-y (get coords [addr from-port])
-                                               to-x (calc-x to-addr)
-                                               to-y (get coords [to-addr to-port])
+                                               from-y (+ addr-y (* line-height (get coords [addr from-port])))
+                                               [to-addr-x to-addr-y] (calc-xy to-addr)
+                                               to-x to-addr-x
+                                               to-y (+ to-addr-y (* line-height (get coords [to-addr to-port])))
                                                dx (- from-x to-x)
-                                               dy (- from-y to-y)
+                                               dy (- to-y from-y)
                                                rad (Math/atan2 dx dy)
                                                dist (Math/abs (Math/sqrt (+ (* dx dx) (* dy dy))))
                                                prev-msgs (get-in @prev-addrs [addr :outs
