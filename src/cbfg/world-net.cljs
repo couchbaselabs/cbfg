@@ -204,8 +204,6 @@
                        (aput init-world listen-ch [:server 8100 listen-result-ch1])
                        (let [[accept-ch0 close-accept-ch0] (atake init-world listen-result-ch0)
                              [accept-ch1 close-accept-ch1] (atake init-world listen-result-ch1)]
-                         (atake init-world listen-result-ch0)
-                         (atake init-world listen-result-ch1)
                          (server-accept-loop world accept-ch0 close-accept-ch0)
                          (server-accept-loop world accept-ch1 close-accept-ch1)
                          (let [req-ch (achan init-world)
