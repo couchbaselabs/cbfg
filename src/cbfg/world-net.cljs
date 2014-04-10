@@ -1,6 +1,6 @@
 (ns cbfg.world-net
   (:require-macros [cbfg.ago :refer [ago ago-loop achan achan-buf aclose
-                                     aalts aput atake atimeout]])
+                                     aput atake atimeout]])
   (:require [cljs.core.async :refer [chan]]
             [cbfg.vis :refer [vis-init get-el-value set-el-innerHTML]]
             [cbfg.net :refer [make-net]]
