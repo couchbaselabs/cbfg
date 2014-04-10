@@ -1,12 +1,11 @@
 (ns cbfg.world-lane
-  (:require-macros [cbfg.ago :refer [ago-loop achan-buf aalts aput]])
+  (:require-macros [cbfg.ago :refer [achan-buf]])
   (:require [cljs.core.async :refer [chan]]
             [cbfg.vis :refer [vis-init get-el-value]]
             [cbfg.fence :refer [make-fenced-pump]]
             [cbfg.lane :refer [make-lane-pump]]
             [cbfg.lane-test]
-            [cbfg.world-base :refer [replay-cmd-ch world-replay
-                                     render-client-hist start-test]]))
+            [cbfg.world-base :refer [replay-cmd-ch world-cmd-loop start-test]]))
 
 (def cmd-handlers
   {"add"   (fn [c] (assoc c :rq #(cbfg.world-base/example-add % c)))
@@ -31,28 +30,12 @@
                                         :y (js/parseInt (get-el-value "y"))
                                         :delay (js/parseInt (get-el-value "delay"))
                                         :fence (= (get-el-value "fence") "1")
-                                        :lane (get-el-value "lane")}))
-        client-hist (atom {})] ; Keyed by opaque -> [request, replies].
+                                        :lane (get-el-value "lane")}))]
     (vis-init (fn [world vis-chs]
                 (let [in-ch (achan-buf world 100)
                       out-ch (achan-buf world 0)]
-                  (ago-loop client world [num-ins 0 num-outs 0]
-                            (let [[v ch] (aalts client [cmd-ch out-ch])
-                                  ts (+ num-ins num-outs)]
-                              (cond
-                                (= ch cmd-ch) (if (= (:op v) "replay")
-                                                (world-replay in-ch vis-chs world-vis-init el-prefix
-                                                              @client-hist (:replay-to v))
-                                                (let [cmd (assoc v :opaque ts)
-                                                      cmd-rq ((get cmd-handlers (:op cmd)) cmd)]
-                                                  (render-client-hist (swap! client-hist
-                                                                             #(assoc % ts [cmd nil])))
-                                                  (aput client in-ch cmd-rq)
-                                                  (recur (inc num-ins) num-outs)))
-                                (= ch out-ch) (do (render-client-hist (swap! client-hist
-                                                                             #(update-in % [(:opaque v) 1]
-                                                                                         conj [ts v])))
-                                                  (recur num-ins (inc num-outs))))))
+                  (world-cmd-loop world cmd-handlers cmd-ch
+                                  in-ch out-ch vis-chs world-vis-init el-prefix)
                   (make-lane-pump world in-ch out-ch make-fenced-pump-lane)))
               el-prefix nil init-event-delay)
     cmd-inject-ch))
