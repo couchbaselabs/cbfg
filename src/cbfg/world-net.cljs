@@ -152,7 +152,8 @@
                                                prev-msgs (get-in @prev-addrs [addr :outs
                                                                               [accept-addr accept-port]
                                                                               [from-port to-addr to-port]])]
-                                           ["<div class='port'>" from-port " --&gt; " to-addr ":" to-port
+                                           ["<div class='port'>"
+                                            " <div class='port-info'>" from-port " --&gt; " to-addr ":" to-port "</div>"
                                             " <div class='msgs-container'>"
                                             "  <div class='msgs"
                                             (when (= accept-addr addr)

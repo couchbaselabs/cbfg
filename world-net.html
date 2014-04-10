@@ -117,7 +117,7 @@ div.net-client-container div.client-container {
 .net .listen {
   position: absolute;
   display: block;
-  top: 2px;
+  top: 4px;
   left: -20px;
   height: 10px;
   border: 1px solid #aaa;
@@ -131,6 +131,13 @@ div.net-client-container div.client-container {
 .net .port {
   padding-left: 20px;
   color: #ddd;
+}
+.net .port .port-info {
+  visibility: hidden;
+  color: #ddd;
+}
+.net .port:hover .port-info {
+  visibility: visible;
 }
 .net .msgs-container {
   position: relative;
