@@ -231,7 +231,6 @@
                                      vis-chs world-vis-init el-prefix)
                            (ago-loop cmd-dispatch-loop init-world [num-dispatches 0]
                                      (when-let [msg (atake cmd-dispatch-loop req-ch)]
-                                       (println :cmd-dispatch-loop msg)
                                        (when-let [client-cmd-ch (get client-cmd-chs (:client msg))]
                                          (aput cmd-dispatch-loop client-cmd-ch msg)
                                          (recur (inc num-dispatches))))))))))
