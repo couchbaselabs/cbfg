@@ -44,11 +44,11 @@
            (aput client-loop connect-ch [server-addr server-port client-addr connect-result-ch])
            (when-let [[client-send-ch client-recv-ch close-client-recv-ch]
                       (atake client-loop connect-result-ch)]
-             (ago-loop client-loop-in client-loop [num-ins 0]
+             (ago-loop client-loop-in actx [num-ins 0]
                        (when-let [msg (atake client-loop-in cmd-ch)]
                          (aput client-loop-in client-send-ch [msg])
                          (recur (inc num-ins))))
-             (ago-loop client-loop-out client-loop [num-outs 0]
+             (ago-loop client-loop-out actx [num-outs 0]
                        (when-let [msg (atake client-loop-out client-recv-ch)]
                          (aput client-loop-out res-ch msg)
                          (recur (inc num-outs)))))))
@@ -208,11 +208,11 @@
                          (server-accept-loop world accept-ch1 close-accept-ch1)
                          (let [req-ch (achan init-world)
                                res-ch (achan init-world)
-                               client-cmd-chs {"client-0" (client-loop init-world connect-ch
+                               client-cmd-chs {"client-0" (client-loop world connect-ch
                                                                        :server 8000 :client-0 res-ch)
-                                               "client-1" (client-loop init-world connect-ch
+                                               "client-1" (client-loop world connect-ch
                                                                        :server 8100 :client-1 res-ch)
-                                               "client-2" (client-loop init-world connect-ch
+                                               "client-2" (client-loop world connect-ch
                                                                        :server 8000 :client-2 res-ch)}]
                            (world-cmd-loop init-world cbfg.world-lane/cmd-handlers cmd-ch
                                            req-ch res-ch vis-chs world-vis-init el-prefix)
