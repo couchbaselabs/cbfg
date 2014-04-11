@@ -1,8 +1,8 @@
-(ns cbfg.togolang.core
+(ns cbfg.zgo.core
   (:gen-class))
 
 (defn -main
   "some docstring"
   []
-  (println "hello world"))
+  (println "hello world from zgo"))
 

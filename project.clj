@@ -26,6 +26,6 @@
                 :optimizations :none
                 :source-map true}}]}
 
-  :main ^:skip-aot cbfg.togolang.core
+  :main ^:skip-aot cbfg.zgo.core
   :target-path "target/%s"
   :profiles {:uberjar {:aot :all}})
