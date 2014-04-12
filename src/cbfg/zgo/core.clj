@@ -36,23 +36,23 @@
     [(or (:line (meta form)) MAX-LINE)
      (or (:end-line (meta form)) MIN-LINE)]))
 
-(defn process-top-level-form [model form]
+(defn process-top-level-form [smodel form]
   (let [[op name & rest] form]
     (case (str op)
       "ns" ["package" name (line-range form)]
       "defn" ["func" name (line-range form)]
       "UNKNOWN-TOP-LEVEL-FORM")))
 
-(defn process-top-level-forms [model]
-  (map #(process-top-level-form model %)
-       (:forms model)))
+(defn process-top-level-forms [smodel]
+  (map #(process-top-level-form smodel %)
+       (:forms smodel)))
 
 (defn -main
   "some docstring"
   []
   (println "hello world from zgo")
-  (let [model (read-model-file "src/cbfg/fence.cljs")
-        pmodel (process-top-level-forms model)]
-    (pprintm model)
+  (let [smodel (read-model-file "src/cbfg/fence.cljs")
+        pmodel (process-top-level-forms smodel)]
+    (pprintm smodel)
     (pprintm pmodel)))
 
