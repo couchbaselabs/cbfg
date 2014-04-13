@@ -43,13 +43,13 @@
 
 (defn j [v] (string/join " " (flatten v)))
 
-(defn c2g-sym [sym]
+(defn cvt-sym [sym]
   (-> (str sym)
       (string/replace "." "_")
       (string/replace "-" "_")
       (string/replace "?" "p")))
 
-(defn c2g-type [sym]
+(defn cvt-type [sym]
   (let [parts (string/split (str sym) #"-")
         plast (last parts)
         [p0 & prest] parts]
@@ -60,33 +60,33 @@
      (re-find #"\?$" plast) "bool" ; When ends with '?'.
      :default (string/capitalize plast))))
 
-(defn process-fn-params [params]
-  ["(" (interpose "," (map (fn [sym] [(c2g-sym sym) (c2g-type sym)])
+(defn cvt-fn-params [params]
+  ["(" (interpose "," (map (fn [sym] [(cvt-sym sym) (cvt-type sym)])
                            params))
    ")"])
 
-(defn process-fn-body [params forms]
+(defn cvt-fn-body [params forms]
   (map-indexed (fn [idx form]
                  [(when (= idx (dec (count forms))) "return")
                   form ";"])
                forms))
 
-(defn process-fn [params body]
-  ["func" (process-fn-params params) "{" (process-fn-body params body) "}"])
+(defn cvt-fn [params body]
+  ["func" (cvt-fn-params params) "{" (cvt-fn-body params body) "}"])
 
-(defn process-defn [name params body]
-  ["func" (c2g-sym name) (rest (process-fn params body))])
+(defn cvt-defn [name params body]
+  ["func" (cvt-sym name) (rest (cvt-fn params body))])
 
-(defn process-top-level-form [smodel form]
+(defn cvt-top-level-form [smodel form]
   (let [[op name & more] form]
     [(case (str op)
-      "ns" (j ["package" (c2g-sym name)])
-      "defn" (j (process-defn name (first more) (rest more)))
+      "ns" (j ["package" (cvt-sym name)])
+      "defn" (j (cvt-defn name (first more) (rest more)))
       "UNKNOWN-TOP-LEVEL-FORM")
      (line-range form)]))
 
-(defn process-top-level-forms [smodel]
-  (map #(process-top-level-form smodel %)
+(defn cvt-top-level-forms [smodel]
+  (map #(cvt-top-level-form smodel %)
        (:forms smodel)))
 
 (defn numbered-lines [lines beg end] ; beg and end are 1-based.
@@ -122,6 +122,6 @@
 
 (defn -main []
   (let [smodel (read-model-file "src/cbfg/fence.cljs")
-        pmodel (process-top-level-forms smodel)]
+        pmodel (cvt-top-level-forms smodel)]
     (emit (:lines smodel) pmodel)))
 
