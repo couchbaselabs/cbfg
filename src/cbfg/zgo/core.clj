@@ -43,11 +43,24 @@
 
 (defn j [v] (string/join " " (flatten v)))
 
+(defn c2g [sym]
+  (string/replace (str sym) "-" "_"))
+
+(defn process-fn-body [params body]
+  body)
+
+(defn process-fn [params body]
+  ["func" ["(" (interpose "," (map c2g params)) ")"]
+   "{" (process-fn-body params body) "}"])
+
+(defn process-defn [name params body]
+  ["func" (c2g name) (rest (process-fn params body))])
+
 (defn process-top-level-form [smodel form]
-  (let [[op name & rest] form]
+  (let [[op name & more] form]
     (case (str op)
       "ns" [(j ["package" name]) (line-range form)]
-      "defn" [(j ["func" name form]) (line-range form)]
+      "defn" [(j (process-defn name (first more) (rest more))) (line-range form)]
       "UNKNOWN-TOP-LEVEL-FORM")))
 
 (defn process-top-level-forms [smodel]
