@@ -117,12 +117,8 @@
         (recur sline-end
                (rest pmodel))))))
 
-(defn -main
-  "some docstring"
-  []
-  (println "hello world from zgo")
+(defn -main []
   (let [smodel (read-model-file "src/cbfg/fence.cljs")
         pmodel (process-top-level-forms smodel)]
-    (pprint smodel)
     (emit (:lines smodel) pmodel)))
 
