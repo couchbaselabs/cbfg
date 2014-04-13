@@ -39,13 +39,36 @@
 (defn process-top-level-form [smodel form]
   (let [[op name & rest] form]
     (case (str op)
-      "ns" ["package" name (line-range form)]
-      "defn" ["func" name (line-range form)]
+      "ns" [["package" name] (line-range form)]
+      "defn" [["func" name] (line-range form)]
       "UNKNOWN-TOP-LEVEL-FORM")))
 
 (defn process-top-level-forms [smodel]
   (map #(process-top-level-form smodel %)
        (:forms smodel)))
+
+(defn numbered-lines [lines beg end] ; beg and end are 1-based.
+  (map vector
+       (range beg (inc end))
+       (subvec lines (dec beg) end)))
+
+(defn do-lines [lines beg end f] ; beg and end are 1-based.
+  (doseq [[i curr-line] (numbered-lines lines beg end)]
+    (f i curr-line)))
+
+(defn emit [slines pmodel-in]
+  (loop [last-line 0
+         pmodel pmodel-in]
+    (when (seq pmodel)
+      (let [[out [sline-beg sline-end]] (first pmodel)]
+        (when (> sline-beg (inc last-line))
+          (do-lines slines (inc last-line) (dec sline-beg)
+                    #(println "//" %1 %2)))
+        (do-lines slines sline-beg sline-end
+                  #(println "//" %1 %2))
+        (println "out>>>" out)
+        (recur sline-end
+               (rest pmodel))))))
 
 (defn -main
   "some docstring"
@@ -54,5 +77,6 @@
   (let [smodel (read-model-file "src/cbfg/fence.cljs")
         pmodel (process-top-level-forms smodel)]
     (pprintm smodel)
-    (pprintm pmodel)))
+    (pprintm pmodel)
+    (emit (:lines smodel) pmodel)))
 
