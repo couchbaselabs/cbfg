@@ -1,8 +1,17 @@
 (ns cbfg.zgo.core
   (:gen-class)
-  (:require [clojure.tools.reader :as r]
+  (:require [clojure.string :as string]
+            [clojure.tools.reader :as r]
             [clojure.tools.reader.reader-types :as rt]
             [clojure.pprint :refer [pprint]]))
+
+(def OUT-WIDTH 50)
+
+(defn word-wrap [width s]
+  (re-seq (re-pattern (str ".{0," width "}\\s")) s))
+
+(defn ljust [width s]
+  (format (str "%-" width "s:") s))
 
 (defn pprintm [x]
   (binding [*print-meta* true]
@@ -36,11 +45,14 @@
     [(or (:line (meta form)) MAX-LINE)
      (or (:end-line (meta form)) MIN-LINE)]))
 
+(defn j [v]
+  (string/join " " (flatten v)))
+
 (defn process-top-level-form [smodel form]
   (let [[op name & rest] form]
     (case (str op)
-      "ns" [["package" name] (line-range form)]
-      "defn" [["func" name] (line-range form)]
+      "ns" [(j ["package" name]) (line-range form)]
+      "defn" [(j ["func" name form]) (line-range form)]
       "UNKNOWN-TOP-LEVEL-FORM")))
 
 (defn process-top-level-forms [smodel]
@@ -53,9 +65,19 @@
        (subvec lines (dec beg) end)))
 
 (defn emit-merged-lines [out numbered-slines]
-  (doseq [[i line] numbered-slines]
-    (println "//" i line))
-  (println "out>>>" out))
+  (loop [olines (word-wrap (dec OUT-WIDTH) out)
+         slines numbered-slines]
+    (let [oline (first olines)
+          [i sline] (first slines)]
+      (cond
+       (and oline sline) (do (println (ljust OUT-WIDTH oline) "//" i sline)
+                             (recur (rest olines) (rest slines)))
+       (seq oline) (do (println oline)
+                       (recur (rest olines) (rest slines)))
+
+       (seq sline) (do (println (ljust OUT-WIDTH "") "//" i sline)
+                       (recur (rest olines) (rest slines)))
+       :done nil))))
 
 (defn emit [slines pmodel-in]
   (loop [last-line 0
