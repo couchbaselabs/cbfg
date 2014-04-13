@@ -69,15 +69,10 @@
          slines numbered-slines]
     (let [oline (first olines)
           [i sline] (first slines)]
-      (cond
-       (and oline sline) (do (println (ljust OUT-WIDTH oline) "//" i sline)
-                             (recur (rest olines) (rest slines)))
-       (seq oline) (do (println oline)
-                       (recur (rest olines) (rest slines)))
-
-       (seq sline) (do (println (ljust OUT-WIDTH "") "//" i sline)
-                       (recur (rest olines) (rest slines)))
-       :done nil))))
+      (when (or oline sline)
+        (do (println (ljust OUT-WIDTH (or oline ""))
+                     (when sline (str "// " i " " sline)))
+            (recur (rest olines) (rest slines)))))))
 
 (defn emit [slines pmodel-in]
   (loop [last-line 0
@@ -88,7 +83,7 @@
           (doseq [[i line] (numbered-lines slines
                                            (inc last-line)
                                            (dec sline-beg))]
-            (println "///" i line)))
+            (println "//" i line)))
         (emit-merged-lines out (numbered-lines slines
                                                sline-beg
                                                sline-end))
