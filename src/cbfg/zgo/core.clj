@@ -43,8 +43,25 @@
 
 (defn j [v] (string/join " " (flatten v)))
 
-(defn c2g [sym]
-  (string/replace (str sym) "-" "_"))
+(defn c2g-sym [sym]
+  (-> (str sym)
+      (string/replace "-" "_")
+      (string/replace "?" "p")))
+
+(defn c2g-type [sym]
+  (let [parts (string/split (str sym) #"-")
+        plast (last parts)
+        [p0 & prest] parts]
+    (cond
+     (= p0 "name") "string"
+     (= p0 "max") "int"
+     (= p0 "min") "int"
+     (re-find #"\?" plast) "bool" ; When ends with '?'.
+     :default (string/capitalize plast))))
+
+(defn process-fn-params [params]
+  ["(" (interpose "," (map (fn [sym] [(c2g-sym sym) (c2g-type sym)])
+                           params)) ")"])
 
 (defn process-fn-body [params forms]
   (map-indexed (fn [idx form]
@@ -53,11 +70,10 @@
                forms))
 
 (defn process-fn [params body]
-  ["func" ["(" (interpose "," (map c2g params)) ")"]
-   "{" (process-fn-body params body) "}"])
+  ["func" (process-fn-params params) "{" (process-fn-body params body) "}"])
 
 (defn process-defn [name params body]
-  ["func" (c2g name) (rest (process-fn params body))])
+  ["func" (c2g-sym name) (rest (process-fn params body))])
 
 (defn process-top-level-form [smodel form]
   (let [[op name & more] form]
