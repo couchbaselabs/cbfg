@@ -8,7 +8,7 @@
 (def OUT-WIDTH 50)
 
 (defn word-wrap [width s] ; Returns a sequence of strings from word-wrapping s.
-  (re-seq (re-pattern (str ".{0," width "}\\s")) s))
+  (re-seq (re-pattern (str ".{0," width "}\\s")) (str s " ")))
 
 (defn ljust [width s] ; Left justify a string.
   (format (str "%-" width "s:") s))
@@ -45,6 +45,7 @@
 
 (defn c2g-sym [sym]
   (-> (str sym)
+      (string/replace "." "_")
       (string/replace "-" "_")
       (string/replace "?" "p")))
 
@@ -61,7 +62,8 @@
 
 (defn process-fn-params [params]
   ["(" (interpose "," (map (fn [sym] [(c2g-sym sym) (c2g-type sym)])
-                           params)) ")"])
+                           params))
+   ")"])
 
 (defn process-fn-body [params forms]
   (map-indexed (fn [idx form]
@@ -77,10 +79,11 @@
 
 (defn process-top-level-form [smodel form]
   (let [[op name & more] form]
-    (case (str op)
-      "ns" [(j ["package" name]) (line-range form)]
-      "defn" [(j (process-defn name (first more) (rest more))) (line-range form)]
-      "UNKNOWN-TOP-LEVEL-FORM")))
+    [(case (str op)
+      "ns" (j ["package" (c2g-sym name)])
+      "defn" (j (process-defn name (first more) (rest more)))
+      "UNKNOWN-TOP-LEVEL-FORM")
+     (line-range form)]))
 
 (defn process-top-level-forms [smodel]
   (map #(process-top-level-form smodel %)
