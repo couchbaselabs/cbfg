@@ -52,9 +52,10 @@
        (range beg (inc end))
        (subvec lines (dec beg) end)))
 
-(defn do-lines [lines beg end f] ; beg and end are 1-based.
-  (doseq [[i curr-line] (numbered-lines lines beg end)]
-    (f i curr-line)))
+(defn emit-merged-lines [out numbered-slines]
+  (doseq [[i line] numbered-slines]
+    (println "//" i line))
+  (println "out>>>" out))
 
 (defn emit [slines pmodel-in]
   (loop [last-line 0
@@ -62,11 +63,13 @@
     (when (seq pmodel)
       (let [[out [sline-beg sline-end]] (first pmodel)]
         (when (> sline-beg (inc last-line))
-          (do-lines slines (inc last-line) (dec sline-beg)
-                    #(println "//" %1 %2)))
-        (do-lines slines sline-beg sline-end
-                  #(println "//" %1 %2))
-        (println "out>>>" out)
+          (doseq [[i line] (numbered-lines slines
+                                           (inc last-line)
+                                           (dec sline-beg))]
+            (println "///" i line)))
+        (emit-merged-lines out (numbered-lines slines
+                                               sline-beg
+                                               sline-end))
         (recur sline-end
                (rest pmodel))))))
 
