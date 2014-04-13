@@ -5,7 +5,7 @@
             [clojure.tools.reader.reader-types :as rt]
             [clojure.pprint :refer [pprint]]))
 
-(def OUT-WIDTH 50)
+(def OUT-WIDTH 80)
 
 (defn word-wrap [width s] ; Returns a sequence of strings from word-wrapping s.
   (re-seq (re-pattern (str ".{0," width "}\\s")) (str s " ")))
@@ -72,7 +72,7 @@
                forms))
 
 (defn cvt-fn [params body]
-  ["func" (cvt-fn-params params) "{" (cvt-fn-body params body) "}"])
+  ["func" (cvt-fn-params params) "{\n" (cvt-fn-body params body) "}\n"])
 
 (defn cvt-defn [name params body]
   ["func" (cvt-sym name) (rest (cvt-fn params body))])
@@ -100,7 +100,7 @@
     (let [oline (first olines)
           [i sline] (first slines)]
       (when (or oline sline)
-        (do (println (ljust OUT-WIDTH (or oline ""))
+        (do (println (ljust OUT-WIDTH (string/replace (or oline "") "\n" ""))
                      (when sline (str "// " i " " sline)))
             (recur (rest olines) (rest slines)))))))
 
