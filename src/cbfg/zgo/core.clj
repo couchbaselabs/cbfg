@@ -7,15 +7,11 @@
 
 (def OUT-WIDTH 50)
 
-(defn word-wrap [width s]
+(defn word-wrap [width s] ; Returns a sequence of strings from word-wrapping s.
   (re-seq (re-pattern (str ".{0," width "}\\s")) s))
 
-(defn ljust [width s]
+(defn ljust [width s] ; Left justify a string.
   (format (str "%-" width "s:") s))
-
-(defn pprintm [x]
-  (binding [*print-meta* true]
-    (pprint x)))
 
 (defn read-model-file [fname]
     {:fname fname
@@ -34,7 +30,7 @@
 (def MAX-LINE 0x8FFFFFF)
 (def MIN-LINE -1)
 
-(defn line-range [form]
+(defn line-range [form] ; Returns the source [line-beg line-end] nums for a form.
   (if (coll? form)
     (reduce (fn [[min-line-beg max-line-end] v]
               (let [[line-beg line-end] (line-range v)]
@@ -45,8 +41,7 @@
     [(or (:line (meta form)) MAX-LINE)
      (or (:end-line (meta form)) MIN-LINE)]))
 
-(defn j [v]
-  (string/join " " (flatten v)))
+(defn j [v] (string/join " " (flatten v)))
 
 (defn process-top-level-form [smodel form]
   (let [[op name & rest] form]
@@ -96,7 +91,6 @@
   (println "hello world from zgo")
   (let [smodel (read-model-file "src/cbfg/fence.cljs")
         pmodel (process-top-level-forms smodel)]
-    (pprintm smodel)
-    (pprintm pmodel)
+    (pprint smodel)
     (emit (:lines smodel) pmodel)))
 
