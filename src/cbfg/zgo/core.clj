@@ -46,8 +46,11 @@
 (defn c2g [sym]
   (string/replace (str sym) "-" "_"))
 
-(defn process-fn-body [params body]
-  body)
+(defn process-fn-body [params forms]
+  (map-indexed (fn [idx form]
+                 [(when (= idx (dec (count forms))) "return")
+                  form ";"])
+               forms))
 
 (defn process-fn [params body]
   ["func" ["(" (interpose "," (map c2g params)) ")"]
