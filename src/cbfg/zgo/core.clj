@@ -56,7 +56,7 @@
      (= p0 "name") "string"
      (= p0 "max") "int"
      (= p0 "min") "int"
-     (re-find #"\?" plast) "bool" ; When ends with '?'.
+     (re-find #"\?$" plast) "bool" ; When ends with '?'.
      :default (string/capitalize plast))))
 
 (defn process-fn-params [params]
