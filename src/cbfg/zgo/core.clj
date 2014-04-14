@@ -68,7 +68,7 @@
 (defn cvt-ago-loop [scope name [self-actx actx bindings body]]
   (println bindings)
   ["(func() chan interface{} { result := make(chan interface{}, 1)\n"
-   "go func() chan interface{} {\n"
+   "go (func() {\n"
    (interpose "\n"
               (map-indexed (fn [idx [var-name init-val]]
                              [(str "l" idx) ":=" (cvt-expr scope init-val)])
@@ -80,7 +80,7 @@
                            (partition 2 bindings)))
    "\n"
    body
-   "\n}}()\n"
+   "\n}})()\n"
    "return result })()"])
 
 (def cvt-special-fns
