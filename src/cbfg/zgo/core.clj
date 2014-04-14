@@ -60,6 +60,36 @@
      (re-find #"\?$" plast) "bool" ; When ends with '?'.
      :default (string/capitalize plast))))
 
+(defn cvt-ago [scope name [self-actx actx body]]
+  ["go {" body "}"])
+
+(defn cvt-ago-loop [scope name [self-actx actx bindings body]]
+  [bindings ";\n"
+   "go for {" body "}"])
+
+(def cvt-special-fns
+  {"ago" cvt-ago
+   "ago-loop" cvt-ago-loop
+   })
+
+(defn cvt-normal-fn [scope name args]
+  [name "(" args ")"])
+
+(defn cvt-expr [scope expr]
+  (cond
+   (vector? expr) ["[" (interpose "," (map #(cvt-expr scope %) expr)) "]"]
+   (map? expr) ["{" (interpose "," (map (fn [[k v]]
+                                          [(cvt-expr scope k) ":"
+                                           (cvt-expr scope v)])
+                                        expr)) "}"]
+   (coll? expr) (let [[fn-name & args] expr
+                      fn-handler (get cvt-special-fns (str fn-name)
+                                      cvt-normal-fn)]
+                  (fn-handler scope fn-name args))
+   (symbol? expr) (cvt-sym expr)
+   (keyword? expr) (str expr)
+   :default ["DEFAULT-EXPR" expr]))
+
 (defn cvt-fn-params [params]
   ["(" (interpose "," (map (fn [sym] [(cvt-sym sym) (cvt-type sym)])
                            params))
@@ -68,7 +98,7 @@
 (defn cvt-fn-body [params forms]
   (map-indexed (fn [idx form]
                  [(when (= idx (dec (count forms))) "return")
-                  form ";"])
+                  (cvt-expr params form) ";"])
                forms))
 
 (defn cvt-fn [params body]
