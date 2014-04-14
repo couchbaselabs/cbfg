@@ -60,12 +60,28 @@
      (re-find #"\?$" plast) "bool" ; When ends with '?'.
      :default (string/capitalize plast))))
 
+(declare cvt-expr)
+
 (defn cvt-ago [scope name [self-actx actx body]]
   ["go {" body "}"])
 
 (defn cvt-ago-loop [scope name [self-actx actx bindings body]]
-  [bindings ";\n"
-   "go for {" body "}"])
+  (println bindings)
+  ["(func() chan interface{} { result := chan interface{}\n"
+   "go func() chan interface{} {\n"
+   (interpose "\n"
+              (map-indexed (fn [idx [var-name init-val]]
+                             [(str "l" idx) ":=" (cvt-expr scope init-val)])
+                           (partition 2 bindings)))
+   "\nfor {\n"
+   (interpose "\n"
+              (map-indexed (fn [idx [var-name init-val]]
+                             [(cvt-sym var-name) ":=" (str "l" idx)])
+                           (partition 2 bindings)))
+   "\n"
+   body
+   "\n}}()\n"
+   "return result })()"])
 
 (def cvt-special-fns
   {"ago" cvt-ago
@@ -82,12 +98,14 @@
                                           [(cvt-expr scope k) ":"
                                            (cvt-expr scope v)])
                                         expr)) "}"]
+   (set? expr) expr
    (coll? expr) (let [[fn-name & args] expr
                       fn-handler (get cvt-special-fns (str fn-name)
                                       cvt-normal-fn)]
                   (fn-handler scope fn-name args))
    (symbol? expr) (cvt-sym expr)
    (keyword? expr) (str expr)
+   (nil? expr) "nil"
    :default ["DEFAULT-EXPR" expr]))
 
 (defn cvt-fn-params [params]
