@@ -62,11 +62,23 @@
 
 (declare cvt-expr)
 
-(defn cvt-ago [scope name [self-actx actx body]]
+(defn cvt-body [scope forms]
+  (map-indexed (fn [idx form]
+                 [(cvt-expr scope form) ";"])
+               forms))
+
+(defn cvt-let [scope op [bindings body]]
+  [(interpose "\n"
+              (map (fn [[var-name init-val]]
+                     [(cvt-sym var-name) ":=" (cvt-expr scope init-val)])
+                   (partition 2 bindings)))
+   "\n"
+   (cvt-body scope body)])
+
+(defn cvt-ago [scope op [self-actx actx body]]
   ["go {" body "}"])
 
-(defn cvt-ago-loop [scope name [self-actx actx bindings body]]
-  (println bindings)
+(defn cvt-ago-loop [scope op [self-actx parent-actx bindings & body]]
   ["(func() chan interface{} { result := make(chan interface{}, 1)\n"
    "go (func() {\n"
    (interpose "\n"
@@ -79,14 +91,14 @@
                              [(cvt-sym var-name) ":=" (str "l" idx)])
                            (partition 2 bindings)))
    "\n"
-   body
+   (cvt-body scope body)
    "\n}})()\n"
    "return result })()"])
 
 (def cvt-special-fns
-  {"ago" cvt-ago
-   "ago-loop" cvt-ago-loop
-   })
+  {"let" cvt-let
+   "ago" cvt-ago
+   "ago-loop" cvt-ago-loop})
 
 (defn cvt-normal-fn [scope name args]
   [name "(" args ")"])
