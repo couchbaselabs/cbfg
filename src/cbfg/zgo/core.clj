@@ -81,6 +81,12 @@
    (cvt-expr scope else)
    "\n}"])
 
+(defn cvt-cond [scope op test-expr-forms]
+  [(interpose "else"
+              (map (fn [[test expr]]
+                     ["if (" (cvt-expr scope test) ") {\n" (cvt-expr scope expr) "\n}"])
+                   (partition 2 test-expr-forms)))])
+
 (defn cvt-ago [scope op [self-actx actx body]]
   ["go {" body "}"])
 
@@ -102,10 +108,11 @@
    "return result })()"])
 
 (def cvt-special-fns
-  {"ago" cvt-ago
+  {"ago"      cvt-ago
    "ago-loop" cvt-ago-loop
-   "if"  cvt-if
-   "let" cvt-let})
+   "cond" cvt-cond
+   "if"   cvt-if
+   "let"  cvt-let})
 
 (defn cvt-normal-fn [scope name args]
   [name "(" args ")"])
