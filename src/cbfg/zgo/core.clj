@@ -66,13 +66,20 @@
   (map (fn [form] [(cvt-expr scope form) ";"])
        forms))
 
-(defn cvt-let [scope op [bindings body]]
+(defn cvt-let [scope op [bindings & body]]
   [(interpose "\n"
               (map (fn [[var-name init-val]]
                      [(cvt-sym var-name) ":= (" (cvt-expr scope init-val) ")"])
                    (partition 2 bindings)))
    "\n"
    (cvt-body scope body)])
+
+(defn cvt-if [scope op [test then else]]
+  ["if (" (cvt-expr scope test) ") {\n"
+   (cvt-expr scope then)
+   "\n} else {\n"
+   (cvt-expr scope else)
+   "\n}"])
 
 (defn cvt-ago [scope op [self-actx actx body]]
   ["go {" body "}"])
@@ -95,9 +102,10 @@
    "return result })()"])
 
 (def cvt-special-fns
-  {"let" cvt-let
-   "ago" cvt-ago
-   "ago-loop" cvt-ago-loop})
+  {"ago" cvt-ago
+   "ago-loop" cvt-ago-loop
+   "if"  cvt-if
+   "let" cvt-let})
 
 (defn cvt-normal-fn [scope name args]
   [name "(" args ")"])
