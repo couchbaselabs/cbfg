@@ -63,14 +63,13 @@
 (declare cvt-expr)
 
 (defn cvt-body [scope forms]
-  (map-indexed (fn [idx form]
-                 [(cvt-expr scope form) ";"])
-               forms))
+  (map (fn [form] [(cvt-expr scope form) ";"])
+       forms))
 
 (defn cvt-let [scope op [bindings body]]
   [(interpose "\n"
               (map (fn [[var-name init-val]]
-                     [(cvt-sym var-name) ":=" (cvt-expr scope init-val)])
+                     [(cvt-sym var-name) ":= (" (cvt-expr scope init-val) ")"])
                    (partition 2 bindings)))
    "\n"
    (cvt-body scope body)])
