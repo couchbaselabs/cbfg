@@ -67,8 +67,9 @@
 (declare cvt-expr)
 
 (defn cvt-body [lvl scope forms]
-  (map (fn [form] [(cvt-expr (inc lvl) scope form) ";"])
-       forms))
+  (interpose (nl lvl)
+             (map (fn [form] [(cvt-expr (inc lvl) scope form) ";"])
+                  forms)))
 
 (defn cvt-cond [lvl scope op test-expr-forms]
   [(interpose "else"
@@ -90,7 +91,8 @@
 (defn cvt-let [lvl scope op [bindings & body]]
   [(interpose (nl lvl)
               (map (fn [[var-name init-val]]
-                     [(cvt-sym var-name) ":= (" (cvt-expr (inc lvl) scope init-val) ")"])
+                     [(cvt-sym var-name) ":= ("
+                      (cvt-expr (inc lvl) scope init-val) ")"])
                    (partition 2 bindings)))
    (nl lvl)
    (cvt-body (inc lvl) scope body)])
@@ -98,7 +100,8 @@
 (defn cvt-recur [lvl scope op args]
   [(interpose (nl lvl)
               (map-indexed (fn [idx arg]
-                             [(str "l" idx) "=" (cvt-expr (inc lvl) scope arg)])
+                             [(str "l" idx) "="
+                              (cvt-expr (inc lvl) scope arg)])
                            args))
    (nl lvl)
    "continue"])
@@ -116,7 +119,8 @@
    "go (func() {" (nl lvl)
    (interpose (nl lvl)
               (map-indexed (fn [idx [var-name init-val]]
-                             [(str "l" idx) ":=" (cvt-expr (inc lvl) scope init-val)])
+                             [(str "l" idx) ":="
+                              (cvt-expr (inc lvl) scope init-val)])
                            (partition 2 bindings)))
    (nl lvl)
    "for {" (nl lvl)
@@ -176,10 +180,11 @@
    ")"])
 
 (defn cvt-fn-body [lvl params forms]
-  (map-indexed (fn [idx form]
-                 [(when (= idx (dec (count forms))) "return")
-                  (cvt-expr (inc lvl) params form) ";"])
-               forms))
+  (interpose (nl lvl)
+             (map-indexed (fn [idx form]
+                            [(when (= idx (dec (count forms))) "return")
+                             (cvt-expr (inc lvl) params form) ";"])
+                          forms)))
 
 (defn cvt-fn [lvl params forms]
   ["func" (cvt-fn-params params) "{" (nl lvl)
