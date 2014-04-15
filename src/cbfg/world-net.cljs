@@ -54,11 +54,11 @@
                          (recur (inc num-outs)))))))
     cmd-ch))
 
-(defn render-msg [msg class-extra]
-  ["<div class='msg " class-extra "' style='color:" (:color msg) ";'>&#9679;"
+(defn render-msg [msg class-extra style-extra]
+  ["<div class='msg " class-extra "' style='color:" (:color msg) "; " style-extra "'>&#9679;"
    "<div class='result'>" (:result msg) "</div></div>"])
 
-(defn render-msgs [curr-msgs prev-msgs]
+(defn render-msgs [curr-msgs prev-msgs dist line-height]
   (loop [curr-msgs (reverse (seq curr-msgs))
          prev-msgs (reverse (seq prev-msgs))
          moving false
@@ -71,17 +71,18 @@
        (recur (rest curr-msgs)
               (rest prev-msgs)
               moving
-              (conj out (render-msg curr-msg (when moving "msg-move"))))
+              (conj out (render-msg curr-msg (when moving "msg-move") "")))
        (nil? curr-msg)
        (recur nil
               (rest prev-msgs)
               moving
-              (conj out (render-msg prev-msg "msg-exit")))
+              (conj out (render-msg prev-msg "msg-exit"
+                                    ["top:" (max 40 (- dist (* line-height (count out)) 70)) "px;"])))
        :else
        (recur (rest curr-msgs)
               prev-msgs
               true
-              (conj out (render-msg curr-msg "msg-enter")))))))
+              (conj out (render-msg curr-msg "msg-enter" "")))))))
 
 (defn render-net [vis net-actx-id output-el-id prev-addrs]
   (let [net-state (:loop-state (second (first (filter (fn [[actx actx-info]]
@@ -165,7 +166,7 @@
                                             "transform:rotate(" rad "rad);"
                                             "-ms-transform:rotate(" rad "rad);"
                                             "-webkit-transform:rotate(" rad "rad);'>"
-                                            (render-msgs msgs prev-msgs)
+                                            (render-msgs msgs prev-msgs dist line-height)
                                             "  </div>"
                                             " </div>"
                                             "</div>"]))
