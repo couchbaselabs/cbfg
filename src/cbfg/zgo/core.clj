@@ -121,13 +121,22 @@
    (nl lvl) "}})()" (nl lvl)
    "return result })()"])
 
+(defn make-cvt-infix [op-after]
+  (fn [lvl scope op args]
+    ["("
+     (interpose [")" op-after "("]
+                (map (fn [arg] (cvt-expr (inc lvl) scope arg))
+                     args))
+     ")"]))
+
 (def cvt-special-fns
   {"ago"      cvt-ago
    "ago-loop" cvt-ago-loop
    "cond"  cvt-cond
    "if"    cvt-if
    "let"   cvt-let
-   "recur" cvt-recur})
+   "recur" cvt-recur
+   "="     (make-cvt-infix "==")})
 
 (defn cvt-normal-fn [lvl scope name args]
   [name "(" args ")"])
