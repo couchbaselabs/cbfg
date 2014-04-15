@@ -77,6 +77,9 @@
                       (cvt-expr (inc lvl) scope expr) "}" (nl lvl)])
                    (partition 2 test-expr-forms)))])
 
+(defn cvt-do [lvl scope op [& body]]
+  ["{" (nl lvl) (cvt-body (inc lvl) scope body) (nl lvl) "}"])
+
 (defn cvt-if [lvl scope op [test then else]]
   ["if (" (cvt-expr (inc lvl) scope test) ") {" (nl lvl)
    (cvt-expr (inc lvl) scope then)
@@ -99,6 +102,11 @@
                            args))
    (nl lvl)
    "continue"])
+
+(defn cvt-when [lvl scope op [test & body]]
+  ["if (" (cvt-expr (inc lvl) scope test) ") {" (nl lvl)
+   (cvt-body (inc lvl) scope body)
+   (nl lvl) "}"])
 
 (defn cvt-ago [lvl scope op [self-actx actx body]]
   ["go {" body "}"])
@@ -133,9 +141,11 @@
   {"ago"      cvt-ago
    "ago-loop" cvt-ago-loop
    "cond"  cvt-cond
+   "do"    cvt-do
    "if"    cvt-if
    "let"   cvt-let
    "recur" cvt-recur
+   "when"  cvt-when
    "="     (make-cvt-infix "==")})
 
 (defn cvt-normal-fn [lvl scope name args]
