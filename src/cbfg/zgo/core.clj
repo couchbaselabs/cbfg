@@ -11,7 +11,7 @@
   (re-seq (re-pattern (str ".{0," width "}\\s")) (str s " ")))
 
 (defn ljust [width s] ; Left justify a string.
-  (format (str "%-" width "s:") s))
+  (format (str "%-" width "s") s))
 
 (defn read-model-file [fname]
     {:fname fname
@@ -151,17 +151,13 @@
 (defn cvt-defn [name params body]
   ["func" (cvt-sym name) (rest (cvt-fn params body))])
 
-(defn cvt-top-level-form [smodel form]
+(defn cvt-top-level-form [form]
   (let [[op name & more] form]
     [(case (str op)
       "ns" (j ["package" (cvt-sym name)])
       "defn" (j (cvt-defn name (first more) (rest more)))
       "UNKNOWN-TOP-LEVEL-FORM")
      (line-range form)]))
-
-(defn cvt-top-level-forms [smodel]
-  (map #(cvt-top-level-form smodel %)
-       (:forms smodel)))
 
 (defn numbered-lines [lines beg end] ; beg and end are 1-based.
   (map vector
@@ -175,7 +171,7 @@
           [i sline] (first slines)]
       (when (or oline sline)
         (do (println (ljust OUT-WIDTH (string/replace (or oline "") "\n" ""))
-                     (when sline (str "// " i " " sline)))
+                     (if sline (str "// " i " " sline) ""))
             (recur (rest olines) (rest slines)))))))
 
 (defn emit [slines pmodel-in]
@@ -196,6 +192,6 @@
 
 (defn -main []
   (let [smodel (read-model-file "src/cbfg/fence.cljs")
-        pmodel (cvt-top-level-forms smodel)]
+        pmodel (map cvt-top-level-form (:forms smodel))]
     (emit (:lines smodel) pmodel)))
 
