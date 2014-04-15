@@ -193,7 +193,8 @@
                                         :client (get-el-value "client")
                                         :color (get-el-value "color")
                                         :sleep (js/parseInt (get-el-value "sleep"))}))
-        render-state (atom {})]
+        render-state (atom {})
+        num-clients 3]
     (vis-init (fn [world vis-chs]
                 (let [connect-ch (achan-buf world 10)
                       listen-ch (achan-buf world 10)
@@ -209,12 +210,15 @@
                          (server-accept-loop world accept-ch1 close-accept-ch1)
                          (let [req-ch (achan init-world)
                                res-ch (achan init-world)
-                               client-cmd-chs {"client-0" (client-loop world connect-ch
-                                                                       :server 8000 :client-0 res-ch)
-                                               "client-1" (client-loop world connect-ch
-                                                                       :server 8100 :client-1 res-ch)
-                                               "client-2" (client-loop world connect-ch
-                                                                       :server 8000 :client-2 res-ch)}]
+                               server-ports (cycle [8000 8100])
+                               client-cmd-chs (reduce
+                                               (fn [acc i]
+                                                 (let [client-id (str "client-" i)]
+                                                   (assoc acc client-id
+                                                          (client-loop world connect-ch
+                                                                       :server (nth server-ports (count acc))
+                                                                       (keyword client-id) res-ch))))
+                                               {} (range num-clients))]
                            (world-cmd-loop world cbfg.world-lane/cmd-handlers cmd-ch
                                            req-ch res-ch vis-chs world-vis-init el-prefix)
                            (ago-loop cmd-dispatch-loop world [num-dispatches 0]
