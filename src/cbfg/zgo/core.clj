@@ -139,7 +139,7 @@
    "="     (make-cvt-infix "==")})
 
 (defn cvt-normal-fn [lvl scope name args]
-  [name "(" args ")"])
+  [(cvt-sym name) "(" args ")"])
 
 (defn cvt-expr [lvl scope expr]
   (cond
