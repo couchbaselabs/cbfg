@@ -89,18 +89,19 @@
                                    (= (count ch-names)
                                       (count ch-bindings)))]
                 (apply concat
-                       (doall (map-indexed (fn [idx [ch action & msgv]]
-                                             (swap! vis #(-> %
-                                                             (vis-add-ch ch
-                                                                         (when (= action :take) actx))
-                                                             (assoc-in [:actxs actx :wait-chs ch]
-                                                                       (if use-names
-                                                                         [action (nth ch-names idx)]
-                                                                         [action]))))
-                                             (when (= action :put)
-                                               [{:delta :put :msg (first msgv) :actx actx :ch ch
-                                                 :ch-name (when use-names (nth ch-names idx))}]))
-                                           ch-actions)))))
+                       (doall (map-indexed
+                               (fn [idx [ch action & msgv]]
+                                 (swap! vis #(-> %
+                                                 (vis-add-ch ch
+                                                             (when (= action :take) actx))
+                                                 (assoc-in [:actxs actx :wait-chs ch]
+                                                           (if use-names
+                                                             [action (nth ch-names idx)]
+                                                             [action]))))
+                                 (when (= action :put)
+                                   [{:delta :put :msg (first msgv) :actx actx :ch ch
+                                     :ch-name (when use-names (nth ch-names idx))}]))
+                               ch-actions)))))
     :after (fn [vis actx [ch-names ch-bindings [result-msg result-ch]]]
              (let [; The ch-actions will be [[ch :take] [ch :put] ...].
                    ch-actions (map #(if (coll? %) [(first %) :put (second %)] [% :take])
@@ -361,11 +362,11 @@
                                              (:chs vis-next))]
               (assign-positions vis-next world vis-next-positions actx-ch-ch-infos
                                 (when (get-in vis-next [:actxs world :closed]) 0))
-              (let [vis-next-html (apply str (flatten (vis-html-actx vis-next world
-                                                                     actx-ch-ch-infos)))
-                    vis-next-svg (apply str (flatten (vis-svg-actxs vis-next
-                                                                    @vis-next-positions
-                                                                    deltas true prev-deltas)))]
+              (let [vis-next-html
+                    (apply str (flatten (vis-html-actx vis-next world actx-ch-ch-infos)))
+                    vis-next-svg
+                    (apply str (flatten (vis-svg-actxs vis-next @vis-next-positions
+                                                       deltas true prev-deltas)))]
                 (when (not= vis-next-html vis-last-html)
                   (set-el-innerHTML el-html vis-next-html))
                 (when on-render-cb
@@ -373,8 +374,9 @@
                 (when (not= vis-next-svg vis-last-svg)
                   (set-el-innerHTML el-svg vis-next-svg))
                 (recur vis-next @vis-next-positions vis-next-html vis-next-svg next-deltas)))
-            (let [vis-next-svg (apply str (flatten (vis-svg-actxs vis-last vis-last-positions
-                                                                  deltas false prev-deltas)))]
+            (let [vis-next-svg
+                  (apply str (flatten (vis-svg-actxs vis-last vis-last-positions
+                                                     deltas false prev-deltas)))]
               (when (not= vis-next-svg vis-last-svg)
                 (set-el-innerHTML el-svg vis-next-svg))
               (recur vis-last vis-last-positions vis-last-html vis-next-svg next-deltas))))))

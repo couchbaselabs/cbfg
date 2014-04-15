@@ -6,7 +6,8 @@
             [cljs.core.async :refer [chan <! >! close! timeout merge
                                      map< filter< sliding-buffer]]
             [goog.dom :as gdom]
-            [cbfg.vis :refer [listen-el get-el-value get-el-innerHTML set-el-innerHTML]]))
+            [cbfg.vis :refer [listen-el get-el-value
+                              get-el-innerHTML set-el-innerHTML]]))
 
 (defn replay-cmd-ch [cmd-inject-ch el-ids ev-to-cmd-fn]
   (merge [cmd-inject-ch
@@ -41,44 +42,43 @@
                      r))
 
 (defn render-client-hist [client-hist]
-  (set-el-innerHTML "client-curr"
-                    (apply str
-                           (flatten ["<table class='hist'>"
-                                     "<tr><th>op</th><th>fence</th>"
-                                     "    <th>request</th><th>timeline</th></tr>"
-                                     (map (fn [[ts [request responses]]]
-                                            ["<tr class='hist-event"
-                                             (when (some #(or (:result (second %))
-                                                              (:status (second %)))
-                                                         responses)
-                                               " complete") "'>"
-                                             " <td>" (:op request) "</td>"
-                                             " <td>" (:fence request) "</td>"
-                                             " <td>" (filter-r request) "</td>"
-                                             " <td class='responses'><ul>"
-                                             "  <li style='list-type: none; margin-left: "
-                                             ts "em;'>request"
-                                             "   <div class='timeline-focus'></div>"
-                                             "   <button id='replay-" ts "'>"
-                                             "    &lt; replay requests to here</button>"
-                                             "  </li>"
-                                             (map (fn [[response-ts response]]
-                                                    ["<li style='margin-left: "
-                                                     response-ts "em;'>"
-                                                     (-> (filter-r response)
-                                                         (dissoc :lane)
-                                                         (dissoc :delay)
-                                                         (dissoc :sleep))
-                                                     "</li>"])
-                                                  (reverse responses))
-                                             " </ul></td>"
-                                             "</tr>"])
-                                          (sort #(compare [(:lane (first (second %1)))
-                                                           (first %1)]
-                                                          [(:lane (first (second %2)))
-                                                           (first %2)])
-                                                client-hist))
-                                     "</table>"]))))
+  (set-el-innerHTML
+   "client-curr"
+   (apply str
+          (flatten ["<table class='hist'>"
+                    "<tr><th>op</th><th>fence</th>"
+                    "    <th>request</th><th>timeline</th></tr>"
+                    (map (fn [[ts [request responses]]]
+                           ["<tr class='hist-event"
+                            (when (some #(or (:result (second %))
+                                             (:status (second %)))
+                                        responses)
+                              " complete") "'>"
+                              " <td>" (:op request) "</td>"
+                              " <td>" (:fence request) "</td>"
+                              " <td>" (filter-r request) "</td>"
+                              " <td class='responses'><ul>"
+                              "  <li style='list-type: none; margin-left: "
+                              ts "em;'>request"
+                              "   <div class='timeline-focus'></div>"
+                              "   <button id='replay-" ts "'>"
+                              "    &lt; replay requests to here</button>"
+                              "  </li>"
+                              (map (fn [[response-ts response]]
+                                     ["<li style='margin-left: "
+                                      response-ts "em;'>"
+                                      (-> (filter-r response)
+                                          (dissoc :lane)
+                                          (dissoc :delay)
+                                          (dissoc :sleep))
+                                      "</li>"])
+                                   (reverse responses))
+                              " </ul></td>"
+                              "</tr>"])
+                         (sort #(compare [(:lane (first (second %1))) (first %1)]
+                                         [(:lane (first (second %2))) (first %2)])
+                               client-hist))
+                    "</table>"]))))
 
 (defn world-cmd-loop [actx cmd-handlers cmd-ch req-ch res-ch
                       vis-chs world-vis-init el-prefix]
@@ -87,15 +87,16 @@
               (let [[v ch] (aalts cmd-loop [cmd-ch res-ch])
                     ts (+ num-requests num-responses)]
                 (cond
-                 (= ch cmd-ch) (if (= (:op v) "replay")
-                                 (world-replay req-ch vis-chs world-vis-init el-prefix
-                                               @client-hist (:replay-to v))
-                                 (let [cmd (assoc-in v [:opaque] ts)
-                                       cmd-rq ((get cmd-handlers (:op cmd)) cmd)]
-                                   (render-client-hist (swap! client-hist
-                                                              #(assoc % ts [cmd nil])))
-                                   (aput cmd-loop req-ch cmd-rq)
-                                   (recur (inc num-requests) num-responses)))
+                 (= ch cmd-ch)
+                 (if (= (:op v) "replay")
+                   (world-replay req-ch vis-chs world-vis-init el-prefix
+                                 @client-hist (:replay-to v))
+                   (let [cmd (assoc-in v [:opaque] ts)
+                         cmd-rq ((get cmd-handlers (:op cmd)) cmd)]
+                     (render-client-hist (swap! client-hist
+                                                #(assoc % ts [cmd nil])))
+                     (aput cmd-loop req-ch cmd-rq)
+                     (recur (inc num-requests) num-responses)))
                  (= ch res-ch)
                  (when v
                    (render-client-hist (swap! client-hist
