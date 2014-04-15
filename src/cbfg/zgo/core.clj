@@ -11,7 +11,11 @@
   (re-seq (re-pattern (str ".{0," width "}\\s")) (str s " ")))
 
 (defn ljust [width s] ; Left justify a string.
-  (format (str "%-" width "s") s))
+  (if (> width 0)
+    (format (str "%-" width "s") s)
+    s))
+
+(defn nl [lvl] (ljust lvl "\n")) ; Generate newline + indentation.
 
 (defn read-model-file [fname]
     {:fname fname
@@ -67,45 +71,46 @@
        forms))
 
 (defn cvt-let [lvl scope op [bindings & body]]
-  [(interpose "\n"
+  [(interpose (nl lvl)
               (map (fn [[var-name init-val]]
                      [(cvt-sym var-name) ":= (" (cvt-expr (inc lvl) scope init-val) ")"])
                    (partition 2 bindings)))
-   "\n"
+   (nl lvl)
    (cvt-body (inc lvl) scope body)])
 
 (defn cvt-if [lvl scope op [test then else]]
-  ["if (" (cvt-expr (inc lvl) scope test) ") {\n"
+  ["if (" (cvt-expr (inc lvl) scope test) ") {" (nl lvl)
    (cvt-expr (inc lvl) scope then)
-   "\n} else {\n"
+   (nl lvl) "} else {" (nl lvl)
    (cvt-expr (inc lvl) scope else)
-   "\n}"])
+   (nl lvl) "}"])
 
 (defn cvt-cond [lvl scope op test-expr-forms]
   [(interpose "else"
               (map (fn [[test expr]]
-                     ["if (" (cvt-expr (inc lvl) scope test) ") {\n"
-                      (cvt-expr (inc lvl) scope expr) "\n}"])
+                     ["if (" (cvt-expr (inc lvl) scope test) ") {" (nl lvl)
+                      (cvt-expr (inc lvl) scope expr) "}" (nl lvl)])
                    (partition 2 test-expr-forms)))])
 
 (defn cvt-ago [lvl scope op [self-actx actx body]]
   ["go {" body "}"])
 
 (defn cvt-ago-loop [lvl scope op [self-actx parent-actx bindings & body]]
-  ["(func() chan interface{} { result := make(chan interface{}, 1)\n"
-   "go (func() {\n"
-   (interpose "\n"
+  ["(func() chan interface{} { result := make(chan interface{}, 1)" (nl lvl)
+   "go (func() {" (nl lvl)
+   (interpose (nl lvl)
               (map-indexed (fn [idx [var-name init-val]]
                              [(str "l" idx) ":=" (cvt-expr (inc lvl) scope init-val)])
                            (partition 2 bindings)))
-   "\nfor {\n"
-   (interpose "\n"
+   (nl lvl)
+   "for {" (nl lvl)
+   (interpose (nl lvl)
               (map-indexed (fn [idx [var-name init-val]]
                              [(cvt-sym var-name) ":=" (str "l" idx)])
                            (partition 2 bindings)))
-   "\n"
+   (nl lvl)
    (cvt-body (inc lvl) scope body)
-   "\n}})()\n"
+   (nl lvl) "}})()" (nl lvl)
    "return result })()"])
 
 (def cvt-special-fns
@@ -120,7 +125,7 @@
 
 (defn cvt-expr [lvl scope expr]
   (cond
-   (vector? expr) ["[" (interpose "," (map #(cvt-expr scope %) expr)) "]"]
+   (vector? expr) ["[" (interpose "," (map #(cvt-expr (inc lvl) scope %) expr)) "]"]
    (map? expr) ["{" (interpose "," (map (fn [[k v]]
                                           [(cvt-expr (inc lvl) scope k) ":"
                                            (cvt-expr (inc lvl) scope v)])
@@ -147,7 +152,8 @@
                forms))
 
 (defn cvt-fn [lvl params forms]
-  ["func" (cvt-fn-params params) "{\n" (cvt-fn-body (inc lvl) params forms) "}\n"])
+  ["func" (cvt-fn-params params) "{" (nl lvl)
+   (cvt-fn-body (inc lvl) params forms) "}" (nl lvl)])
 
 (defn cvt-defn [name params forms]
   ["func" (cvt-sym name) (rest (cvt-fn 0 params forms))])
