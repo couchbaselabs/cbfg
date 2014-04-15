@@ -334,7 +334,6 @@
         run-controls-ch (vis-run-controls event-delay step-ch el-prefix)]
     (world-init-cb world {:step-ch step-ch
                           :event-ch event-ch
-                          :make-timeout-ch make-timeout-ch
                           :render-ch render-ch
                           :run-controls-ch run-controls-ch})
     (go-loop [num-events 0]      ; Process events from world / simulation.
