@@ -311,6 +311,7 @@
   (let [step-ch (chan (dropping-buffer 1))
         event-ch (chan)
         event-delay (atom init-event-delay)
+        timeouts (atom (sorted-set))
         make-timeout-ch (fn [actx delay] (timeout delay))
         render-ch (chan)
         last-id (atom 0)

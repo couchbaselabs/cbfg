@@ -25,9 +25,9 @@
   (go (close! prev-in-ch)
       (doseq [prev-vis-ch (vals prev-vis-chs)]
         (close! prev-vis-ch))
-      (let [cmd-ch (world-vis-init el-prefix
-                                   (js/parseInt (get-el-value (str el-prefix
-                                                                   "-run-delay"))))]
+      (let [cmd-ch
+            (world-vis-init el-prefix
+                            (js/parseInt (get-el-value (str el-prefix "-run-delay"))))]
         (doseq [[opaque [request responses]]
                 (sort #(compare (first %1) (first %2)) client-hist)]
           (when (or (nil? up-to-ts)
