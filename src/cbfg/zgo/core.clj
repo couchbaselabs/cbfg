@@ -70,13 +70,12 @@
   (map (fn [form] [(cvt-expr (inc lvl) scope form) ";"])
        forms))
 
-(defn cvt-let [lvl scope op [bindings & body]]
-  [(interpose (nl lvl)
-              (map (fn [[var-name init-val]]
-                     [(cvt-sym var-name) ":= (" (cvt-expr (inc lvl) scope init-val) ")"])
-                   (partition 2 bindings)))
-   (nl lvl)
-   (cvt-body (inc lvl) scope body)])
+(defn cvt-cond [lvl scope op test-expr-forms]
+  [(interpose "else"
+              (map (fn [[test expr]]
+                     ["if (" (cvt-expr (inc lvl) scope test) ") {" (nl lvl)
+                      (cvt-expr (inc lvl) scope expr) "}" (nl lvl)])
+                   (partition 2 test-expr-forms)))])
 
 (defn cvt-if [lvl scope op [test then else]]
   ["if (" (cvt-expr (inc lvl) scope test) ") {" (nl lvl)
@@ -85,12 +84,21 @@
    (cvt-expr (inc lvl) scope else)
    (nl lvl) "}"])
 
-(defn cvt-cond [lvl scope op test-expr-forms]
-  [(interpose "else"
-              (map (fn [[test expr]]
-                     ["if (" (cvt-expr (inc lvl) scope test) ") {" (nl lvl)
-                      (cvt-expr (inc lvl) scope expr) "}" (nl lvl)])
-                   (partition 2 test-expr-forms)))])
+(defn cvt-let [lvl scope op [bindings & body]]
+  [(interpose (nl lvl)
+              (map (fn [[var-name init-val]]
+                     [(cvt-sym var-name) ":= (" (cvt-expr (inc lvl) scope init-val) ")"])
+                   (partition 2 bindings)))
+   (nl lvl)
+   (cvt-body (inc lvl) scope body)])
+
+(defn cvt-recur [lvl scope op args]
+  [(interpose (nl lvl)
+              (map-indexed (fn [idx arg]
+                             [(str "l" idx) "=" (cvt-expr (inc lvl) scope arg)])
+                           args))
+   (nl lvl)
+   "continue"])
 
 (defn cvt-ago [lvl scope op [self-actx actx body]]
   ["go {" body "}"])
@@ -116,9 +124,10 @@
 (def cvt-special-fns
   {"ago"      cvt-ago
    "ago-loop" cvt-ago-loop
-   "cond" cvt-cond
-   "if"   cvt-if
-   "let"  cvt-let})
+   "cond"  cvt-cond
+   "if"    cvt-if
+   "let"   cvt-let
+   "recur" cvt-recur})
 
 (defn cvt-normal-fn [lvl scope name args]
   [name "(" args ")"])
