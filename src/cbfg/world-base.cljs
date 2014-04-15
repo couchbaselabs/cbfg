@@ -108,7 +108,8 @@
 (defn start-test [name test-fn]
   (let [last-id (atom 0)
         gen-id #(swap! last-id inc)]
-    (ago test-actx [{:gen-id gen-id :event-ch (chan (sliding-buffer 1))
+    (ago test-actx [{:gen-id gen-id
+                     :event-ch (chan (sliding-buffer 1))
                      :make-timeout-ch (fn [actx delay] (timeout delay))}]
          (println (str name ":")
                   (<! (test-fn test-actx 0))))))
