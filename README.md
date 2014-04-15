@@ -15,3 +15,6 @@ get [lein](http://github.com/technomancy/leiningen)
 
 open index.html
 
+# convert
+
+    lein run src/cbfg/fence.cljs

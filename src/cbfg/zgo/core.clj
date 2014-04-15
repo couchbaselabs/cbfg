@@ -153,9 +153,8 @@
    "="     (make-cvt-infix "==")})
 
 (defn cvt-normal-fn [lvl scope name args]
-  [(cvt-sym name) "(" (interpose ","
-                                 (map (fn [arg] (cvt-expr (inc lvl) scope arg))
-                                      args)) ")"])
+  [(cvt-sym name)
+   "(" (interpose "," (map (fn [arg] (cvt-expr (inc lvl) scope arg)) args)) ")"])
 
 (defn cvt-expr [lvl scope expr]
   (cond
@@ -176,8 +175,7 @@
 
 (defn cvt-fn-params [params]
   ["(" (interpose "," (map (fn [sym] [(cvt-sym sym) (cvt-type sym)])
-                           params))
-   ")"])
+                           params)) ")"])
 
 (defn cvt-fn-body [lvl params forms]
   (interpose (nl lvl)
@@ -232,8 +230,9 @@
         (recur sline-end
                (rest pmodel))))))
 
-(defn -main []
-  (let [smodel (read-model-file "src/cbfg/fence.cljs")
-        pmodel (map cvt-top-level-form (:forms smodel))]
-    (emit (:lines smodel) pmodel)))
+(defn -main [& fnames] ; An fname is *.cljs, like "src/cbfg/fence.cljs".
+  (doseq [fname fnames]
+    (let [smodel (read-model-file fname)
+          pmodel (map cvt-top-level-form (:forms smodel))]
+      (emit (:lines smodel) pmodel))))
 
