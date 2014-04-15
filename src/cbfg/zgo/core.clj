@@ -170,6 +170,7 @@
                   (fn-handler lvl scope fn-name args))
    (symbol? expr) (cvt-sym expr)
    (keyword? expr) (str expr)
+   (string? expr) (str "`" expr "`")
    (nil? expr) "nil"
    :default ["DEFAULT-EXPR" expr]))
 
