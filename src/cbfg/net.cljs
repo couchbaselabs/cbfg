@@ -96,7 +96,7 @@
                    (do (aclose net result-ch)
                        (recur (inc ts) listens streams results)))
                  (net-clean-up net listens streams results))
-               (some #(= ch %) send-chs) ; Peer aput to a send-ch.
+               (some #(= ch %) send-chs) ; A participant put to a send-ch or closed a send-ch.
                (let [send-ch ch
                      stream (get streams send-ch)]
                  (if-let [[msg result-ch] v]
