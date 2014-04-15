@@ -62,40 +62,41 @@
 
 (declare cvt-expr)
 
-(defn cvt-body [scope forms]
-  (map (fn [form] [(cvt-expr scope form) ";"])
+(defn cvt-body [lvl scope forms]
+  (map (fn [form] [(cvt-expr (inc lvl) scope form) ";"])
        forms))
 
-(defn cvt-let [scope op [bindings & body]]
+(defn cvt-let [lvl scope op [bindings & body]]
   [(interpose "\n"
               (map (fn [[var-name init-val]]
-                     [(cvt-sym var-name) ":= (" (cvt-expr scope init-val) ")"])
+                     [(cvt-sym var-name) ":= (" (cvt-expr (inc lvl) scope init-val) ")"])
                    (partition 2 bindings)))
    "\n"
-   (cvt-body scope body)])
+   (cvt-body (inc lvl) scope body)])
 
-(defn cvt-if [scope op [test then else]]
-  ["if (" (cvt-expr scope test) ") {\n"
-   (cvt-expr scope then)
+(defn cvt-if [lvl scope op [test then else]]
+  ["if (" (cvt-expr (inc lvl) scope test) ") {\n"
+   (cvt-expr (inc lvl) scope then)
    "\n} else {\n"
-   (cvt-expr scope else)
+   (cvt-expr (inc lvl) scope else)
    "\n}"])
 
-(defn cvt-cond [scope op test-expr-forms]
+(defn cvt-cond [lvl scope op test-expr-forms]
   [(interpose "else"
               (map (fn [[test expr]]
-                     ["if (" (cvt-expr scope test) ") {\n" (cvt-expr scope expr) "\n}"])
+                     ["if (" (cvt-expr (inc lvl) scope test) ") {\n"
+                      (cvt-expr (inc lvl) scope expr) "\n}"])
                    (partition 2 test-expr-forms)))])
 
-(defn cvt-ago [scope op [self-actx actx body]]
+(defn cvt-ago [lvl scope op [self-actx actx body]]
   ["go {" body "}"])
 
-(defn cvt-ago-loop [scope op [self-actx parent-actx bindings & body]]
+(defn cvt-ago-loop [lvl scope op [self-actx parent-actx bindings & body]]
   ["(func() chan interface{} { result := make(chan interface{}, 1)\n"
    "go (func() {\n"
    (interpose "\n"
               (map-indexed (fn [idx [var-name init-val]]
-                             [(str "l" idx) ":=" (cvt-expr scope init-val)])
+                             [(str "l" idx) ":=" (cvt-expr (inc lvl) scope init-val)])
                            (partition 2 bindings)))
    "\nfor {\n"
    (interpose "\n"
@@ -103,7 +104,7 @@
                              [(cvt-sym var-name) ":=" (str "l" idx)])
                            (partition 2 bindings)))
    "\n"
-   (cvt-body scope body)
+   (cvt-body (inc lvl) scope body)
    "\n}})()\n"
    "return result })()"])
 
@@ -114,21 +115,21 @@
    "if"   cvt-if
    "let"  cvt-let})
 
-(defn cvt-normal-fn [scope name args]
+(defn cvt-normal-fn [lvl scope name args]
   [name "(" args ")"])
 
-(defn cvt-expr [scope expr]
+(defn cvt-expr [lvl scope expr]
   (cond
    (vector? expr) ["[" (interpose "," (map #(cvt-expr scope %) expr)) "]"]
    (map? expr) ["{" (interpose "," (map (fn [[k v]]
-                                          [(cvt-expr scope k) ":"
-                                           (cvt-expr scope v)])
+                                          [(cvt-expr (inc lvl) scope k) ":"
+                                           (cvt-expr (inc lvl) scope v)])
                                         expr)) "}"]
    (set? expr) expr
    (coll? expr) (let [[fn-name & args] expr
                       fn-handler (get cvt-special-fns (str fn-name)
                                       cvt-normal-fn)]
-                  (fn-handler scope fn-name args))
+                  (fn-handler lvl scope fn-name args))
    (symbol? expr) (cvt-sym expr)
    (keyword? expr) (str expr)
    (nil? expr) "nil"
@@ -139,17 +140,17 @@
                            params))
    ")"])
 
-(defn cvt-fn-body [params forms]
+(defn cvt-fn-body [lvl params forms]
   (map-indexed (fn [idx form]
                  [(when (= idx (dec (count forms))) "return")
-                  (cvt-expr params form) ";"])
+                  (cvt-expr (inc lvl) params form) ";"])
                forms))
 
-(defn cvt-fn [params body]
-  ["func" (cvt-fn-params params) "{\n" (cvt-fn-body params body) "}\n"])
+(defn cvt-fn [lvl params forms]
+  ["func" (cvt-fn-params params) "{\n" (cvt-fn-body (inc lvl) params forms) "}\n"])
 
-(defn cvt-defn [name params body]
-  ["func" (cvt-sym name) (rest (cvt-fn params body))])
+(defn cvt-defn [name params forms]
+  ["func" (cvt-sym name) (rest (cvt-fn 0 params forms))])
 
 (defn cvt-top-level-form [form]
   (let [[op name & more] form]
