@@ -139,7 +139,9 @@
    "="     (make-cvt-infix "==")})
 
 (defn cvt-normal-fn [lvl scope name args]
-  [(cvt-sym name) "(" args ")"])
+  [(cvt-sym name) "(" (interpose ","
+                                 (map (fn [arg] (cvt-expr (inc lvl) scope arg))
+                                      args)) ")"])
 
 (defn cvt-expr [lvl scope expr]
   (cond
