@@ -310,11 +310,13 @@
   (let [step-ch (chan (dropping-buffer 1))
         event-ch (chan)
         event-delay (atom init-event-delay)
+        make-timeout-ch (fn [actx delay] (timeout delay))
         render-ch (chan)
         last-id (atom 0)
         gen-id #(swap! last-id inc)
         w [{:gen-id gen-id
-            :event-ch event-ch}]
+            :event-ch event-ch
+            :make-timeout-ch make-timeout-ch}]
         world (conj w "world-0")  ; No ago for world actx init to avoid recursion.
         vis (atom {:actxs {world {:children {} ; child-actx -> true,
                                   :wait-chs {} ; ch -> [:ghost|:take|:put optional-ch-name],
@@ -330,6 +332,7 @@
         run-controls-ch (vis-run-controls event-delay step-ch el-prefix)]
     (world-init-cb world {:step-ch step-ch
                           :event-ch event-ch
+                          :make-timeout-ch make-timeout-ch
                           :render-ch render-ch
                           :run-controls-ch run-controls-ch})
     (go-loop [num-events 0]      ; Process events from world / simulation.
@@ -354,12 +357,14 @@
           (set-el-innerHTML el-event event-str)
           (if after
             (let [vis-next-positions (atom {})
-                  actx-ch-ch-infos (group-by #(:first-taker-actx (second %)) (:chs vis-next))]
+                  actx-ch-ch-infos (group-by #(:first-taker-actx (second %))
+                                             (:chs vis-next))]
               (assign-positions vis-next world vis-next-positions actx-ch-ch-infos
                                 (when (get-in vis-next [:actxs world :closed]) 0))
               (let [vis-next-html (apply str (flatten (vis-html-actx vis-next world
                                                                      actx-ch-ch-infos)))
-                    vis-next-svg (apply str (flatten (vis-svg-actxs vis-next @vis-next-positions
+                    vis-next-svg (apply str (flatten (vis-svg-actxs vis-next
+                                                                    @vis-next-positions
                                                                     deltas true prev-deltas)))]
                 (when (not= vis-next-html vis-last-html)
                   (set-el-innerHTML el-html vis-next-html))
@@ -373,8 +378,8 @@
               (when (not= vis-next-svg vis-last-svg)
                 (set-el-innerHTML el-svg vis-next-svg))
               (recur vis-last vis-last-positions vis-last-html vis-next-svg next-deltas))))))
-    (let [toggle-ch (listen-el (gdom/getElement el-html) "click")] ; Process toggle U/I events.
-      (go-loop []
+    (let [toggle-ch (listen-el (gdom/getElement el-html) "click")]
+      (go-loop [] ; Process toggle U/I events.
         (let [actx-id (no-prefix (.-id (.-target (<! toggle-ch))))]
           (doseq [[actx actx-info] (:actxs @vis)]
             (when (= actx-id (last actx))

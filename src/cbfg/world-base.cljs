@@ -1,8 +1,10 @@
 (ns cbfg.world-base
   (:require-macros [cljs.core.async.macros :refer [go]]
-                   [cbfg.ago :refer [ago ago-loop aclose achan aalts aput aput-close atake atimeout]])
+                   [cbfg.ago :refer [ago ago-loop aclose achan aalts
+                                     aput aput-close atake atimeout]])
   (:require [clojure.string :as string]
-            [cljs.core.async :refer [chan <! >! close! merge map< filter< sliding-buffer]]
+            [cljs.core.async :refer [chan <! >! close! timeout merge
+                                     map< filter< sliding-buffer]]
             [goog.dom :as gdom]
             [cbfg.vis :refer [listen-el get-el-value get-el-innerHTML set-el-innerHTML]]))
 
@@ -23,7 +25,8 @@
       (doseq [prev-vis-ch (vals prev-vis-chs)]
         (close! prev-vis-ch))
       (let [cmd-ch (world-vis-init el-prefix
-                                   (js/parseInt (get-el-value (str el-prefix "-run-delay"))))]
+                                   (js/parseInt (get-el-value (str el-prefix
+                                                                   "-run-delay"))))]
         (doseq [[opaque [request responses]]
                 (sort #(compare (first %1) (first %2)) client-hist)]
           (when (or (nil? up-to-ts)
@@ -60,7 +63,8 @@
                                              "    &lt; replay requests to here</button>"
                                              "  </li>"
                                              (map (fn [[response-ts response]]
-                                                    ["<li style='margin-left: " response-ts "em;'>"
+                                                    ["<li style='margin-left: "
+                                                     response-ts "em;'>"
                                                      (-> (filter-r response)
                                                          (dissoc :lane)
                                                          (dissoc :delay)
@@ -69,8 +73,10 @@
                                                   (reverse responses))
                                              " </ul></td>"
                                              "</tr>"])
-                                          (sort #(compare [(:lane (first (second %1))) (first %1)]
-                                                          [(:lane (first (second %2))) (first %2)])
+                                          (sort #(compare [(:lane (first (second %1)))
+                                                           (first %1)]
+                                                          [(:lane (first (second %2)))
+                                                           (first %2)])
                                                 client-hist))
                                      "</table>"]))))
 
@@ -102,7 +108,8 @@
 (defn start-test [name test-fn]
   (let [last-id (atom 0)
         gen-id #(swap! last-id inc)]
-    (ago test-actx [{:gen-id gen-id :event-ch (chan (sliding-buffer 1))}]
+    (ago test-actx [{:gen-id gen-id :event-ch (chan (sliding-buffer 1))
+                     :make-timeout-ch (fn [actx delay] (timeout delay))}]
          (println (str name ":")
                   (<! (test-fn test-actx 0))))))
 

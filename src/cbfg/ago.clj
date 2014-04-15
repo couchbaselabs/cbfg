@@ -68,7 +68,7 @@
          result#)))
 
 (defmacro atimeout [actx delay]
-  `(cljs.core.async/timeout ~delay))
+  `((:make-timeout-ch (actx-top ~actx)) ~actx ~delay))
 
 (defmacro aput-close [actx ch msg]
   `(let [msg# ~msg]
