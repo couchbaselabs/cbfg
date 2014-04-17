@@ -61,7 +61,6 @@
                {:opaque opaque :status :ok
                 :key key :sq new-sq :cas new-cas}])))))))
 
-
 (defn store-set [actx store opaque key old-cas val op]
   (ago store-set actx
        (let [cas-check (and old-cas (not (zero? old-cas)))]
