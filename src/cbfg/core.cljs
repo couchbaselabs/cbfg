@@ -2,12 +2,12 @@
 
 (ns cbfg.core
   (:require [clojure.string :as string]
-            cbfg.world-fence
-            cbfg.world-lane
-            cbfg.world-grouper
-            cbfg.world-net
-            cbfg.world-npr
-            cbfg.world-store))
+            [cbfg.world-fence]
+            [cbfg.world-lane]
+            [cbfg.world-grouper]
+            [cbfg.world-net]
+            [cbfg.world-npr]
+            [cbfg.world-store]))
 
 (enable-console-print!)
 
