@@ -1,5 +1,5 @@
 (ns cbfg.grouper
-  (:require-macros [cbfg.ago :refer [ago-loop achan aclose aalts]]))
+  (:require-macros [cbfg.act :refer [act-loop achan aclose aalts]]))
 
 (defn make-grouper [actx put-ch take-all-ch max-entries]
   "A grouper manages a put-ch, a take-all-ch, and a set of entries.
@@ -12,7 +12,7 @@
    entries is an associative map of key to update-fn-result.
    The grouper closes the take-all-ch after put-ch is closed
    and all the entries are taken."
-  (ago-loop grouper actx
+  (act-loop grouper actx
             [entries {} max-entries max-entries]
             (let [n (count entries)
                   chs0 (if (>= n max-entries)

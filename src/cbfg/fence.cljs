@@ -1,5 +1,5 @@
 (ns cbfg.fence
-  (:require-macros [cbfg.ago :refer [aclose aalts ago-loop aput]]))
+  (:require-macros [cbfg.act :refer [aclose aalts act-loop aput]]))
 
 ;; Explaining out-of-order replies and fencing with a diagram.  Client
 ;; sends a bunch of requests (r0...r4), where r2 is fenced (F).  "pX"
@@ -36,7 +36,7 @@
 ;; {:rq function-to-call :fence true-or-false}
 
 (defn make-fenced-pump [actx name in-ch out-ch max-inflight close?]
-  (ago-loop fenced-pump actx
+  (act-loop fenced-pump actx
    [name name
     inflight-chs #{}                ; chans of requests currently being processed.
     fenced-ch nil                   ; chan of last, inflight "fenced" request.

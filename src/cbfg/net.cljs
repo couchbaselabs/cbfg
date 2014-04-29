@@ -1,8 +1,8 @@
 (ns cbfg.net
-  (:require-macros [cbfg.ago :refer [achan achan-buf ago ago-loop aclose aalts aput]]))
+  (:require-macros [cbfg.act :refer [achan achan-buf act act-loop aclose aalts aput]]))
 
 (defn net-clean-up [actx listens streams results]
-  (ago cleanup actx
+  (act cleanup actx
        (doseq [[[addr port] [accept-ch accept-close-ch]] listens]
          (aclose cleanup accept-ch))
        (doseq [stream (vals streams)]
@@ -13,7 +13,7 @@
   :done)
 
 (defn make-net [actx request-listen-ch request-connect-ch & opts]
-  (ago-loop net actx     ; A conn is represented by dual streams.
+  (act-loop net actx     ; A conn is represented by dual streams.
             [ts 0        ; A increasing event / time stamp counter.
              listens {}  ; Keyed by [addr port], value is [accept-ch close-accept-ch].
              streams {}  ; Keyed by send-ch and a value is...

@@ -2,7 +2,7 @@
 ;; and provide events.  Useful for building things like visualizations
 ;; and simulations.
 
-(ns cbfg.ago
+(ns cbfg.act
   (:require [cljs.core.async.macros :refer [go]]))
 
 (defmacro actx-top [actx]
@@ -11,29 +11,29 @@
 (defmacro actx-event [actx event]
   `(cljs.core.async/>! (:event-ch (actx-top ~actx)) [~actx ~event]))
 
-(defmacro ago [child-actx-binding-name actx & body]
-  `(let [ago-ch# (achan-buf ~actx 1)
-         ago-id# ((:gen-id (actx-top ~actx)))
+(defmacro act [child-actx-binding-name actx & body]
+  `(let [act-ch# (achan-buf ~actx 1)
+         act-id# ((:gen-id (actx-top ~actx)))
          ~child-actx-binding-name (conj ~actx
-                                        (str '~child-actx-binding-name "-" ago-id#))]
-     (go (actx-event ~actx [:ago :start ~child-actx-binding-name])
+                                        (str '~child-actx-binding-name "-" act-id#))]
+     (go (actx-event ~actx [:act :start ~child-actx-binding-name])
          (let [result# (do ~@body)]
            (when result#
-             (aput ~child-actx-binding-name ago-ch# result#))
-           (aclose ~child-actx-binding-name ago-ch#)
-           (actx-event ~actx [:ago :end ~child-actx-binding-name result#])
+             (aput ~child-actx-binding-name act-ch# result#))
+           (aclose ~child-actx-binding-name act-ch#)
+           (actx-event ~actx [:act :end ~child-actx-binding-name result#])
            result#))
-     ago-ch#))
+     act-ch#))
 
-(defmacro ago-loop [child-actx-binding-name actx bindings & body]
+(defmacro act-loop [child-actx-binding-name actx bindings & body]
   (let [m (->> bindings
                (partition 2)
                (map first)
                (mapcat (fn [sym] [(keyword (name sym)) sym])))]
-    `(ago ~child-actx-binding-name ~actx
+    `(act ~child-actx-binding-name ~actx
           (loop ~bindings
             (actx-event ~child-actx-binding-name
-                        [:ago-loop :loop-state (sorted-map ~@m)])
+                        [:act-loop :loop-state (sorted-map ~@m)])
             ~@body))))
 
 (defmacro achan [actx]

@@ -1,18 +1,18 @@
 (ns cbfg.fence-test
-  (:require-macros [cbfg.ago :refer [achan achan-buf aclose
-                                     ago ago-loop aput atake atimeout]])
+  (:require-macros [cbfg.act :refer [achan achan-buf aclose
+                                     act act-loop aput atake atimeout]])
   (:require [cljs.core.async :refer [onto-chan]]
             [cbfg.fence :refer [make-fenced-pump]]))
 
 (defn test-add-two [actx x delay]
-  (ago test-add-two actx
+  (act test-add-two actx
        (let [timeout-ch (atimeout test-add-two delay)]
          (atake test-add-two timeout-ch)
          (+ x 2))))
 
 (defn test-range-to [actx s e delay]
   (let [out (achan actx)]
-    (ago test-range-to actx
+    (act test-range-to actx
          (doseq [n (range s e)]
            (let [timeout-ch (atimeout test-range-to delay)]
              (atake test-range-to timeout-ch))
@@ -29,7 +29,7 @@
         out (achan-buf actx out-ch-size)
         fdp (make-fenced-pump actx "test" in out max-inflight true)]
     (onto-chan in in-msgs)
-    (ago-loop test-out actx [acc nil]
+    (act-loop test-out actx [acc nil]
               (let [result (atake test-out out)]
                 (if result
                   (recur (conj acc result))
@@ -45,7 +45,7 @@
               {:rq #(test-range-to % 0 2 100)}
               {:rq #(test-range-to % 6 10 5) :fence true}
               {:rq #(test-add-two % 30 100)}]]
-    (ago test actx ; TODO - revisit timing wobbles.
+    (act test actx ; TODO - revisit timing wobbles.
          {:opaque opaque
           :result (map #(cons (if (= (sort (nth % 1))
                                      (sort (nth % 2)))

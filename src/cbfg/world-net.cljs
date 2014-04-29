@@ -1,5 +1,5 @@
 (ns cbfg.world-net
-  (:require-macros [cbfg.ago :refer [ago ago-loop achan achan-buf aclose
+  (:require-macros [cbfg.act :refer [act act-loop achan achan-buf aclose
                                      aput atake atimeout]])
   (:require [cljs.core.async :refer [chan]]
             [cbfg.vis :refer [vis-init get-el-value set-el-innerHTML]]
@@ -15,20 +15,20 @@
     (cbfg.lane/make-lane-pump actx
                               fenced-pump-lane-in-ch fenced-pump-lane-out-ch
                               cbfg.world-lane/make-fenced-pump-lane)
-    (ago-loop fenced-pump-lane-in actx [num-ins 0]
+    (act-loop fenced-pump-lane-in actx [num-ins 0]
               (let [msg (atake fenced-pump-lane-in server-recv-ch)]
                 (aput fenced-pump-lane-in fenced-pump-lane-in-ch msg)
                 (when (> (:sleep msg) 0)
                   (let [sleep-ch (atimeout fenced-pump-lane-in (:sleep msg))]
                     (atake fenced-pump-lane-in sleep-ch)))
                 (recur (inc num-ins))))
-    (ago-loop fenced-pump-lane-out actx [num-outs 0]
+    (act-loop fenced-pump-lane-out actx [num-outs 0]
               (aput fenced-pump-lane-out server-send-ch
                     [(atake fenced-pump-lane-out fenced-pump-lane-out-ch)])
               (recur (inc num-outs)))))
 
 (defn server-accept-loop [actx accept-ch close-accept-ch]
-  (ago-loop server-accept-loop actx [num-accepts 0]
+  (act-loop server-accept-loop actx [num-accepts 0]
             (if-let [[server-send-ch server-recv-ch close-server-recv-ch]
                      (atake server-accept-loop accept-ch)]
               (do (server-conn-loop server-accept-loop
@@ -39,16 +39,16 @@
 
 (defn client-loop [actx connect-ch server-addr server-port client-addr res-ch]
   (let [cmd-ch (achan actx)]
-    (ago client-loop actx
+    (act client-loop actx
          (let [connect-result-ch (achan client-loop)]
            (aput client-loop connect-ch [server-addr server-port client-addr connect-result-ch])
            (when-let [[client-send-ch client-recv-ch close-client-recv-ch]
                       (atake client-loop connect-result-ch)]
-             (ago-loop client-loop-in actx [num-ins 0]
+             (act-loop client-loop-in actx [num-ins 0]
                        (when-let [msg (atake client-loop-in cmd-ch)]
                          (aput client-loop-in client-send-ch [msg])
                          (recur (inc num-ins))))
-             (ago-loop client-loop-out actx [num-outs 0]
+             (act-loop client-loop-out actx [num-outs 0]
                        (when-let [msg (atake client-loop-out client-recv-ch)]
                          (aput client-loop-out res-ch msg)
                          (recur (inc num-outs)))))))
@@ -201,7 +201,7 @@
                       listen-result-ch0 (achan world)
                       listen-result-ch1 (achan world)]
                   (make-net world listen-ch connect-ch)
-                  (ago init-world world
+                  (act init-world world
                        (aput init-world listen-ch [:server 8000 listen-result-ch0])
                        (aput init-world listen-ch [:server 8100 listen-result-ch1])
                        (let [[accept-ch0 close-accept-ch0] (atake init-world listen-result-ch0)
@@ -221,7 +221,7 @@
                                                {} (range num-clients))]
                            (world-cmd-loop world cbfg.world-lane/cmd-handlers cmd-ch
                                            req-ch res-ch vis-chs world-vis-init el-prefix)
-                           (ago-loop cmd-dispatch-loop world [num-dispatches 0]
+                           (act-loop cmd-dispatch-loop world [num-dispatches 0]
                                      (when-let [msg (atake cmd-dispatch-loop req-ch)]
                                        (when-let [client-cmd-ch (get client-cmd-chs (:client msg))]
                                          (aput cmd-dispatch-loop client-cmd-ch msg)

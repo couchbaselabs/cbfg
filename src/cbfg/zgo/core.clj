@@ -111,10 +111,10 @@
    (cvt-body (inc lvl) scope body)
    (nl lvl) "}"])
 
-(defn cvt-ago [lvl scope op [self-actx actx body]]
+(defn cvt-act [lvl scope op [self-actx actx body]]
   ["go {" body "}"])
 
-(defn cvt-ago-loop [lvl scope op [self-actx parent-actx bindings & body]]
+(defn cvt-act-loop [lvl scope op [self-actx parent-actx bindings & body]]
   ["(func() chan interface{} { result := make(chan interface{}, 1)" (nl lvl)
    "go (func() {" (nl lvl)
    (interpose (nl lvl)
@@ -142,8 +142,8 @@
      ")"]))
 
 (def cvt-special-fns
-  {"ago"      cvt-ago
-   "ago-loop" cvt-ago-loop
+  {"act"      cvt-act
+   "act-loop" cvt-act-loop
    "cond"  cvt-cond
    "do"    cvt-do
    "if"    cvt-if

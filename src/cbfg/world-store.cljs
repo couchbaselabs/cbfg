@@ -1,5 +1,5 @@
 (ns cbfg.world-store
-  (:require-macros [cbfg.ago :refer [ago ago-loop achan-buf aalts aput]])
+  (:require-macros [cbfg.act :refer [act act-loop achan-buf aalts aput]])
   (:require [cljs.core.async :refer [chan]]
             [cbfg.vis :refer [vis-init get-el-value]]
             [cbfg.fence :refer [make-fenced-pump]]
@@ -45,7 +45,7 @@
                                   (js/parseInt (:from c))
                                   (js/parseInt (:to c))))]
    "noop"
-   [[] (fn [c] #(ago store-cmd-noop %
+   [[] (fn [c] #(act store-cmd-noop %
                      {:opaque (:opaque c) :status :ok}))]
    "test"
    [[] (fn [c] #(cbfg.store-test/test % (:opaque c)))]})
@@ -62,7 +62,7 @@
                       client-hist (atom {}) ; Keyed by opaque -> [request, replies]
                       in-ch (achan-buf world 100)
                       out-ch (achan-buf world 0)]
-                  (ago-loop client world [num-ins 0 num-outs 0]
+                  (act-loop client world [num-ins 0 num-outs 0]
                             (let [[v ch] (aalts client [cmd-ch out-ch])
                                   ts (+ num-ins num-outs)]
                               (cond

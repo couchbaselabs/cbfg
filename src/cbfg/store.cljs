@@ -1,5 +1,5 @@
 (ns cbfg.store
-  (:require-macros [cbfg.ago :refer [ago achan aput-close aput]])
+  (:require-macros [cbfg.act :refer [act achan aput-close aput]])
   (:require [cbfg.misc :refer [dissoc-in]]))
 
 (defn gen-cas [] (rand-int 0x7fffffff))
@@ -15,7 +15,7 @@
          :max-deleted-sq 0}))
 
 (defn store-get [actx store opaque key]
-  (ago store-get actx
+  (act store-get actx
        (let [s @store
              sq (get (:keys s) key)
              change (get (:changes s) sq)]
@@ -62,7 +62,7 @@
                 :key key :sq new-sq :cas new-cas}])))))))
 
 (defn store-set [actx store opaque key old-cas val op]
-  (ago store-set actx
+  (act store-set actx
        (let [cas-check (and old-cas (not (zero? old-cas)))]
          (if (and cas-check (= op :add))
            {:opaque opaque :status :wrong-cas :key key}
@@ -73,7 +73,7 @@
              @res)))))
 
 (defn store-del [actx store opaque key old-cas]
-  (ago store-del actx
+  (act store-del actx
        (let [res (atom nil)]
          (swap! store
                 #(let [old-sq (get-in % [:keys key])
@@ -102,7 +102,7 @@
 (defn store-scan [actx store opaque from to]
   (let [out (achan actx)
         msg {:opaque opaque :status :part}]
-    (ago store-scan actx
+    (act store-scan actx
          (let [s @store
                changes (:changes s)]
            (doseq [[key sq]
@@ -118,7 +118,7 @@
 (defn store-changes [actx store opaque from to]
   (let [out (achan actx)
         msg {:opaque opaque :status :part}]
-    (ago store-changes actx
+    (act store-changes actx
          (let [s @store]
              (doseq [[sq change]
                      (subseq (into (sorted-map) (:changes s)) >= from < to)]

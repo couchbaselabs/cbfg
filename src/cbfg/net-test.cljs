@@ -1,5 +1,5 @@
 (ns cbfg.net-test
-  (:require-macros [cbfg.ago :refer [achan aclose ago ago-loop aput atake]])
+  (:require-macros [cbfg.act :refer [achan aclose act act-loop aput atake]])
   (:require [cbfg.net :refer [make-net]]))
 
 (defn e [n result expect result-nil]
@@ -10,7 +10,7 @@
     (and pass (nil? result-nil))))
 
 (defn test-net [actx]
-  (ago tn actx
+  (act tn actx
        (let [n (atom 0)]
          (if (and
               ; Closing listen-ch should shutdown net.
@@ -178,7 +178,7 @@
            (str "FAIL: on test-net #" @n)))))
 
 (defn test [actx opaque]
-  (ago test actx
+  (act test actx
        {:opaque opaque
         :result {"test-net"
                  (let [ch (test-net test)

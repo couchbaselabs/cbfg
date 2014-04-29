@@ -1,5 +1,5 @@
 (ns cbfg.store-test
-  (:require-macros [cbfg.ago :refer [achan aclose ago atake]])
+  (:require-macros [cbfg.act :refer [achan aclose act atake]])
   (:require [cbfg.store :as store]))
 
 (defn e [n result expect result-nil]
@@ -13,7 +13,7 @@
     (and pass (nil? result-nil))))
 
 (defn test-basic [actx]
-  (ago test-basic actx
+  (act test-basic actx
        (let [n (atom 0)
              s (store/make-store test-basic)]
          (if (and (let [c (store/store-get test-basic s @n "does-not-exist")]
@@ -186,7 +186,7 @@
            (str "FAIL: on test-basic #" @n)))))
 
 (defn test-scan [actx]
-  (ago test-scan actx
+  (act test-scan actx
        (let [n (atom 0)
              s (store/make-store test-scan)]
          (if (and (let [c (store/store-scan test-scan s @n "a" "z")]
@@ -281,7 +281,7 @@
            (str "FAIL: on test-scan #" @n)))))
 
 (defn test-changes [actx]
-  (ago test-changes actx
+  (act test-changes actx
        (let [n (atom 0)
              s (store/make-store test-changes)]
          (if (and (let [c (store/store-changes test-changes s @n 0 100)]
@@ -415,7 +415,7 @@
            (str "FAIL: on test-changes #" @n)))))
 
 (defn test [actx opaque]
-  (ago test actx
+  (act test actx
        {:opaque opaque
         :result {"test-basic"
                  (let [ch (test-basic test)

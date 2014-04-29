@@ -1,5 +1,5 @@
 (ns cbfg.lane
-  (:require-macros [cbfg.ago :refer [ago-loop achan aclose aput atake]]))
+  (:require-macros [cbfg.act :refer [act-loop achan aclose aput atake]]))
 
 (defn make-lane-pump [actx in-ch out-ch make-lane-fn]
   "Dispatches messages from in-ch to per-lane channels, based on an
@@ -15,7 +15,7 @@
    'after' the lane closing, so an out-ch consumer should be prepared
    to handle and/or drop those late messages.  To avoid confusion due
    to this, a client should also avoid reusing lane names."
-  (ago-loop lane-pump actx [lane-chs {}]
+  (act-loop lane-pump actx [lane-chs {}]
             (if-let [m (atake lane-pump in-ch)]
               (if (= (:op m) :close-lane)
                 (if-let [lane-ch (get lane-chs (:lane m))]

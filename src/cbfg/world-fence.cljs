@@ -1,5 +1,5 @@
 (ns cbfg.world-fence
-  (:require-macros [cbfg.ago :refer [achan-buf]])
+  (:require-macros [cbfg.act :refer [achan-buf]])
   (:require [cljs.core.async :refer [chan]]
             [cbfg.vis :refer [vis-init get-el-value]]
             [cbfg.fence :refer [make-fenced-pump]]

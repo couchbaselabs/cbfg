@@ -2,7 +2,7 @@
 
 (ns cbfg.vis
   (:require-macros [cljs.core.async.macros :refer [go-loop]]
-                   [cbfg.ago :refer [ago]])
+                   [cbfg.act :refer [act]])
   (:require [clojure.string :as string]
             [cljs.core.async :refer [<! >! put! chan timeout merge dropping-buffer]]
             [goog.dom :as gdom]
@@ -35,7 +35,7 @@
       (update-in [:chs ch :first-taker-actx] #(if % % first-taker-actx))))
 
 (def vis-event-handlers
-  {:ago
+  {:act
    {:start (fn [vis actx [child-actx]]
              (swap! vis #(-> %
                              (assoc-in [:actxs child-actx]
@@ -47,7 +47,7 @@
                            (dissoc-in [:actxs child-actx])
                            (dissoc-in [:actxs actx :children child-actx])))
            [{:delta :actx-end :actx actx :child-actx child-actx}])}
-   :ago-loop
+   :act-loop
    {:loop-state (fn [vis actx [loop-state]]
                   (swap! vis #(assoc-in % [:actxs actx :loop-state] loop-state))
                   nil)}
@@ -318,7 +318,7 @@
         w [{:gen-id gen-id
             :event-ch event-ch
             :make-timeout-ch make-timeout-ch}]
-        world (conj w "world-0")  ; No ago for world actx init to avoid recursion.
+        world (conj w "world-0")  ; No act for world actx init to avoid recursion.
         vis (atom {:actxs {world {:children {} ; child-actx -> true,
                                   :wait-chs {} ; ch -> [:ghost|:take|:put optional-ch-name],
                                   :closed true

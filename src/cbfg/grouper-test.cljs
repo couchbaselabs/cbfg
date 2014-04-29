@@ -1,5 +1,5 @@
 (ns cbfg.grouper-test
-  (:require-macros [cbfg.ago :refer [achan aclose ago aalts aput atake]])
+  (:require-macros [cbfg.act :refer [achan aclose act aalts aput atake]])
   (:require [cbfg.grouper :refer [make-grouper]]))
 
 (defn e [n result expect result-nil]
@@ -10,13 +10,13 @@
     (and pass (nil? result-nil))))
 
 (defn test-grouper [actx]
-  (ago tg actx
+  (act tg actx
        (let [n (atom 0)
              put-ch (achan tg)
              take-all-ch (achan tg)
              g (make-grouper tg put-ch take-all-ch 2)]
          (if (and (let [r (achan tg)]
-                    (aput tg put-ch [:a #(do (ago cb tg
+                    (aput tg put-ch [:a #(do (act cb tg
                                                   (aput cb r [%])
                                                        (aclose tg r))
                                              :A)])
@@ -25,7 +25,7 @@
                        [nil]
                        (atake tg r)))
                   (let [r (achan tg)]
-                    (aput tg put-ch [:a #(do (ago cb tg
+                    (aput tg put-ch [:a #(do (act cb tg
                                                   (aput cb r [%])
                                                   (aclose tg r))
                                              :AA)])
@@ -37,7 +37,7 @@
                      (atake tg take-all-ch)
                      {:a :AA}
                      nil)
-                  (let [r (ago take-test tg
+                  (let [r (act take-test tg
                                (atake take-test take-all-ch))]
                     (aput tg put-ch [:b (fn [_] :B)])
                     (e n
@@ -51,7 +51,7 @@
                        (atake tg take-all-ch)
                        {:a :A :b :B}
                        nil))
-                  (let [r (ago full-test0 tg
+                  (let [r (act full-test0 tg
                                (aput full-test0 put-ch [:a (fn [_] :A)])
                                (aput full-test0 put-ch [:b (fn [_] :B)])
                                :full-test0)]
@@ -60,7 +60,7 @@
                        :full-test0
                        (atake tg r)))
                   (let [puts-started-ch (achan tg)
-                        r (ago full-test1 tg
+                        r (act full-test1 tg
                                (aclose full-test1 puts-started-ch)
                                (aput full-test1 put-ch [:c (fn [_] :C)])
                                (aput full-test1 put-ch [:d (fn [_] :D)])
@@ -90,7 +90,7 @@
            (str "FAIL: on test-grouper #" @n)))))
 
 (defn test [actx opaque]
-  (ago test actx
+  (act test actx
        {:opaque opaque
         :result {"test-grouper"
                  (let [ch (test-grouper test)

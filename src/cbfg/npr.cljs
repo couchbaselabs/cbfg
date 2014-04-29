@@ -1,5 +1,5 @@
 (ns cbfg.npr ; NPR stands for aNother Protocol for Replication, pronounced like UPR.
-  (:require-macros [cbfg.ago :refer [achan-buf ago ago-loop
+  (:require-macros [cbfg.act :refer [achan-buf act act-loop
                                      aput aput-close atake]]))
 
 (defprotocol NPRSnapshot
@@ -30,7 +30,7 @@
 
 (defn handle-npr-server-stream-request [actx server stream-request-in to-client-ch]
   (let [snapshot-in (server-take-snapshot server actx stream-request-in nil)]
-    (ago-loop npr-server-session actx
+    (act-loop npr-server-session actx
               [stream-request stream-request-in
                snapshot snapshot-in
                num-snapshots 0]
@@ -51,7 +51,7 @@
                               (inc num-snapshots))))))))
 
 (defn npr-client-stream-loop [actx client stream-request snapshot-beg-in out from-server-ch]
-  (ago-loop npr-client-stream-loop actx
+  (act-loop npr-client-stream-loop actx
             [stream-request stream-request
              snapshot-beg nil
              r snapshot-beg-in
@@ -99,7 +99,7 @@
 (defn start-npr-client-stream [actx client token to-server-ch from-server-ch]
   (let [out (achan-buf actx 1)
         stream-request (client-stream-request-msg client actx token)]
-    (ago npr-client-stream actx
+    (act npr-client-stream actx
          (aput npr-client-stream to-server-ch stream-request)
          (npr-client-stream-loop npr-client-stream client stream-request
                                  (atake npr-client-stream from-server-ch)

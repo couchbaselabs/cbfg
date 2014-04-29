@@ -1,6 +1,6 @@
 (ns cbfg.world-base
   (:require-macros [cljs.core.async.macros :refer [go]]
-                   [cbfg.ago :refer [ago ago-loop aclose achan aalts
+                   [cbfg.act :refer [act act-loop aclose achan aalts
                                      aput aput-close atake atimeout]])
   (:require [clojure.string :as string]
             [cljs.core.async :refer [chan <! >! close! timeout merge
@@ -83,7 +83,7 @@
 (defn world-cmd-loop [actx cmd-handlers cmd-ch req-ch res-ch
                       vis-chs world-vis-init el-prefix]
   (let [client-hist (atom {})] ; Keyed by opaque -> [request, replies].
-    (ago-loop cmd-loop actx [num-requests 0 num-responses 0]
+    (act-loop cmd-loop actx [num-requests 0 num-responses 0]
               (let [[v ch] (aalts cmd-loop [cmd-ch res-ch])
                     ts (+ num-requests num-responses)]
                 (cond
@@ -109,27 +109,27 @@
 (defn start-test [name test-fn]
   (let [last-id (atom 0)
         gen-id #(swap! last-id inc)]
-    (ago test-actx [{:gen-id gen-id
+    (act test-actx [{:gen-id gen-id
                      :event-ch (chan (sliding-buffer 1))
                      :make-timeout-ch (fn [actx delay] (timeout delay))}]
          (println (str name ":")
                   (<! (test-fn test-actx 0))))))
 
 (defn example-add [actx c]
-  (ago example-add actx
+  (act example-add actx
        (let [timeout-ch (atimeout example-add (:delay c))]
          (atake example-add timeout-ch)
          (assoc c :result (+ (:x c) (:y c))))))
 
 (defn example-sub [actx c]
-  (ago example-sub actx
+  (act example-sub actx
        (let [timeout-ch (atimeout example-sub (:delay c))]
          (atake example-sub timeout-ch)
          (assoc c :result (- (:x c) (:y c))))))
 
 (defn example-count [actx c]
   (let [out (achan actx)]
-    (ago example-count actx
+    (act example-count actx
          (doseq [n (range (:x c) (:y c))]
            (let [timeout-ch (atimeout example-count (:delay c))]
              (atake example-count timeout-ch))

@@ -1,5 +1,5 @@
 (ns cbfg.npr-test
-  (:require-macros [cbfg.ago :refer [achan aclose ago ago-loop aput atake]])
+  (:require-macros [cbfg.act :refer [achan aclose act act-loop aput atake]])
   (:require [cbfg.npr :refer [NPRServer NPRClient NPRStreamRequest NPRSnapshot
                               handle-npr-server-stream-request
                               start-npr-client-stream]]))
@@ -69,7 +69,7 @@
     nil))
 
 (defn test-npr [actx]
-  (ago tn actx
+  (act tn actx
        (let [n (atom 0)]
          (if (and (let [client-to-server-ch (achan tn)
                         server-to-client-ch (achan tn)
@@ -160,7 +160,7 @@
            (str "FAIL: on test-npr #" @n)))))
 
 (defn test [actx opaque]
-  (ago test actx
+  (act test actx
        {:opaque opaque
         :result {"test-npr"
                  (let [ch (test-npr test)
