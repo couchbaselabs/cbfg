@@ -3,7 +3,8 @@
 ;; and simulations.
 
 (ns cbfg.act
-  (:require [cljs.core.async.macros :refer [go]]))
+  (:require [cljs.core.async.macros :refer [go]]
+            [ago.macros :refer [ago]]))
 
 (defmacro actx-top [actx]
   `(first ~actx))
