@@ -309,17 +309,18 @@
 ;; ------------------------------------------------
 
 (defn vis-init [world-init-cb el-prefix on-render-cb init-event-delay]
-  (let [agw (make-ago-world nil)
+  (let [last-id (atom 0)
+        gen-id #(swap! last-id inc)
+        agw (make-ago-world nil)
+        get-agw (fn [] agw)
         step-ch (chan (dropping-buffer 1))
         event-ch (ago-chan agw)
         event-delay (atom init-event-delay)
         make-timeout-ch (fn [actx delay]
-                          (ago-timeout (:agw (actx-top actx)) delay))
+                          (ago-timeout ((:get-agw (actx-top actx))) delay))
         render-ch (chan)
-        last-id (atom 0)
-        gen-id #(swap! last-id inc)
-        w [{:agw agw
-            :gen-id gen-id
+        w [{:gen-id gen-id
+            :get-agw get-agw
             :event-ch event-ch
             :make-timeout-ch make-timeout-ch}]
         world (conj w "world-0")  ; No act for world actx init to avoid recursion.

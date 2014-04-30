@@ -9,6 +9,9 @@
 (defmacro actx-top [actx]
   `(first ~actx))
 
+(defmacro actx-agw [actx]
+  `((:get-agw (actx-top ~actx))))
+
 (defmacro actx-event [actx event]
   `(cljs.core.async/>! (:event-ch (actx-top ~actx)) [~actx ~event]))
 
@@ -17,7 +20,7 @@
          act-id# ((:gen-id (actx-top ~actx)))
          ~child-actx-binding-name (conj ~actx
                                         (str '~child-actx-binding-name "-" act-id#))]
-     (ago (:agw (actx-top ~actx))
+     (ago (actx-agw ~actx)
           (actx-event ~actx [:act :start ~child-actx-binding-name])
           (let [result# (do ~@body)]
             (when result#
@@ -43,7 +46,7 @@
 
 (defmacro achan-buf [actx buf-or-size]
   ; No event since might be outside go block.
-  `(ago.core/ago-chan (:agw (actx-top ~actx)) ~buf-or-size))
+  `(ago.core/ago-chan (actx-agw ~actx) ~buf-or-size))
 
 (defmacro aclose [actx ch]
   `(do (actx-event ~actx [:aclose :before ~ch])

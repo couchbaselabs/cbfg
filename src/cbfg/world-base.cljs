@@ -110,12 +110,13 @@
 (defn start-test [name test-fn]
   (let [last-id (atom 0)
         gen-id #(swap! last-id inc)
-        agw (make-ago-world nil)]
-    (act test-actx [{:agw agw
-                     :gen-id gen-id
+        agw (make-ago-world nil)
+        get-agw (fn [] agw)]
+    (act test-actx [{:gen-id gen-id
+                     :get-agw get-agw
                      :event-ch (ago-chan agw -1)
                      :make-timeout-ch (fn [actx delay]
-                                        (ago-timeout (:agw (actx-top actx)) delay))}]
+                                        (ago-timeout ((:get-agw (actx-top actx))) delay))}]
          (println (str name ":")
                   (<! (test-fn test-actx 0))))))
 
