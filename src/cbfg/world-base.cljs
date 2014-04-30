@@ -1,10 +1,11 @@
 (ns cbfg.world-base
   (:require-macros [cljs.core.async.macros :refer [go]]
                    [cbfg.act :refer [act act-loop aclose achan aalts
-                                     aput aput-close atake atimeout]])
+                                     aput aput-close atake atimeout actx-top]])
   (:require [clojure.string :as string]
             [cljs.core.async :refer [chan <! >! close! timeout merge
                                      map< filter< sliding-buffer]]
+            [ago.core :refer [make-ago-world ago-chan ago-timeout]]
             [goog.dom :as gdom]
             [cbfg.vis :refer [listen-el get-el-value
                               get-el-innerHTML set-el-innerHTML]]))
@@ -108,10 +109,13 @@
 
 (defn start-test [name test-fn]
   (let [last-id (atom 0)
-        gen-id #(swap! last-id inc)]
-    (act test-actx [{:gen-id gen-id
-                     :event-ch (chan (sliding-buffer 1))
-                     :make-timeout-ch (fn [actx delay] (timeout delay))}]
+        gen-id #(swap! last-id inc)
+        agw (make-ago-world nil)]
+    (act test-actx [{:agw agw
+                     :gen-id gen-id
+                     :event-ch (ago-chan agw -1)
+                     :make-timeout-ch (fn [actx delay]
+                                        (ago-timeout (:agw (actx-top actx)) delay))}]
          (println (str name ":")
                   (<! (test-fn test-actx 0))))))
 

@@ -17,7 +17,7 @@
              "world-store.html" cbfg.world-store/world-vis-init})
 
 (let [world (last (string/split (.-href (.-location js/window)) #"/"))
-      maker (makers world 0)]
+      maker (makers world -1)]
   (if maker
     (maker "vis")
     (println "don't know a maker for world:" world)))

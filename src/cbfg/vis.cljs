@@ -2,9 +2,10 @@
 
 (ns cbfg.vis
   (:require-macros [cljs.core.async.macros :refer [go-loop]]
-                   [cbfg.act :refer [act]])
+                   [cbfg.act :refer [act actx-top]])
   (:require [clojure.string :as string]
             [cljs.core.async :refer [<! >! put! chan timeout merge dropping-buffer]]
+            [ago.core :refer [make-ago-world ago-chan ago-timeout]]
             [goog.dom :as gdom]
             [goog.events :as gevents]
             [cbfg.misc :refer [dissoc-in]]))
@@ -308,14 +309,17 @@
 ;; ------------------------------------------------
 
 (defn vis-init [world-init-cb el-prefix on-render-cb init-event-delay]
-  (let [step-ch (chan (dropping-buffer 1))
-        event-ch (chan)
+  (let [agw (make-ago-world nil)
+        step-ch (chan (dropping-buffer 1))
+        event-ch (ago-chan agw)
         event-delay (atom init-event-delay)
-        make-timeout-ch (fn [actx delay] (timeout delay))
+        make-timeout-ch (fn [actx delay]
+                          (ago-timeout (:agw (actx-top actx)) delay))
         render-ch (chan)
         last-id (atom 0)
         gen-id #(swap! last-id inc)
-        w [{:gen-id gen-id
+        w [{:agw agw
+            :gen-id gen-id
             :event-ch event-ch
             :make-timeout-ch make-timeout-ch}]
         world (conj w "world-0")  ; No act for world actx init to avoid recursion.

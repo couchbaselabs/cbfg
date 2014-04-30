@@ -17,13 +17,14 @@
          act-id# ((:gen-id (actx-top ~actx)))
          ~child-actx-binding-name (conj ~actx
                                         (str '~child-actx-binding-name "-" act-id#))]
-     (go (actx-event ~actx [:act :start ~child-actx-binding-name])
-         (let [result# (do ~@body)]
-           (when result#
-             (aput ~child-actx-binding-name act-ch# result#))
-           (aclose ~child-actx-binding-name act-ch#)
-           (actx-event ~actx [:act :end ~child-actx-binding-name result#])
-           result#))
+     (ago (:agw (actx-top ~actx))
+          (actx-event ~actx [:act :start ~child-actx-binding-name])
+          (let [result# (do ~@body)]
+            (when result#
+              (aput ~child-actx-binding-name act-ch# result#))
+            (aclose ~child-actx-binding-name act-ch#)
+            (actx-event ~actx [:act :end ~child-actx-binding-name result#])
+            result#))
      act-ch#))
 
 (defmacro act-loop [child-actx-binding-name actx bindings & body]
@@ -41,7 +42,8 @@
   `(achan-buf ~actx nil))
 
 (defmacro achan-buf [actx buf-or-size]
-  `(cljs.core.async/chan ~buf-or-size)) ; No event since might be outside go block.
+  ; No event since might be outside go block.
+  `(ago.core/ago-chan (:agw (actx-top ~actx)) ~buf-or-size))
 
 (defmacro aclose [actx ch]
   `(do (actx-event ~actx [:aclose :before ~ch])
