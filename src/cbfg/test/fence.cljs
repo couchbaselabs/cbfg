@@ -1,4 +1,4 @@
-(ns cbfg.fence-test
+(ns cbfg.test.fence
   (:require-macros [cbfg.act :refer [achan achan-buf aclose
                                      act act-loop aput atake atimeout]])
   (:require [cljs.core.async :refer [onto-chan]]

@@ -1,16 +1,16 @@
-(ns cbfg.world-fence
+(ns cbfg.world.fence
   (:require-macros [cbfg.act :refer [achan-buf]])
   (:require [cljs.core.async :refer [chan]]
             [cbfg.vis :refer [vis-init get-el-value]]
             [cbfg.fence :refer [make-fenced-pump]]
-            [cbfg.fence-test]
-            [cbfg.world-base :refer [replay-cmd-ch world-cmd-loop start-test]]))
+            [cbfg.test.fence]
+            [cbfg.world.base :refer [replay-cmd-ch world-cmd-loop start-test]]))
 
 (def cmd-handlers
-  {"add"    (fn [c] (assoc c :rq #(cbfg.world-base/example-add % c)))
-   "sub"    (fn [c] (assoc c :rq #(cbfg.world-base/example-sub % c)))
-   "count"  (fn [c] (assoc c :rq #(cbfg.world-base/example-count % c)))
-   "test"   (fn [c] (assoc c :rq #(cbfg.fence-test/test % (:opaque c))))})
+  {"add"    (fn [c] (assoc c :rq #(cbfg.world.base/example-add % c)))
+   "sub"    (fn [c] (assoc c :rq #(cbfg.world.base/example-sub % c)))
+   "count"  (fn [c] (assoc c :rq #(cbfg.world.base/example-count % c)))
+   "test"   (fn [c] (assoc c :rq #(cbfg.test.fence/test % (:opaque c))))})
 
 (def max-inflight (atom 10))
 
@@ -31,4 +31,4 @@
               el-prefix nil init-event-delay)
     cmd-inject-ch))
 
-(start-test "fence-test" cbfg.fence-test/test)
+(start-test "fence" cbfg.test.fence/test)

@@ -1,4 +1,4 @@
-(ns cbfg.net-test
+(ns cbfg.test.net
   (:require-macros [cbfg.act :refer [achan aclose act act-loop aput atake]])
   (:require [cbfg.net :refer [make-net]]))
 

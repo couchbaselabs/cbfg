@@ -1,4 +1,4 @@
-(ns cbfg.world-base
+(ns cbfg.world.base
   (:require-macros [cljs.core.async.macros :refer [go]]
                    [cbfg.act :refer [act act-loop aclose achan aalts
                                      aput aput-close atake atimeout actx-top]])

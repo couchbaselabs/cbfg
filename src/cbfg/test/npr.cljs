@@ -1,4 +1,4 @@
-(ns cbfg.npr-test
+(ns cbfg.test.npr
   (:require-macros [cbfg.act :refer [achan aclose act act-loop aput atake]])
   (:require [cbfg.npr :refer [NPRServer NPRClient NPRStreamRequest NPRSnapshot
                               handle-npr-server-stream-request

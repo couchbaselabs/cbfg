@@ -1,11 +1,11 @@
-(ns cbfg.world-store
+(ns cbfg.world.store
   (:require-macros [cbfg.act :refer [act act-loop achan-buf aalts aput]])
   (:require [cljs.core.async :refer [chan]]
             [cbfg.vis :refer [vis-init get-el-value]]
             [cbfg.fence :refer [make-fenced-pump]]
             [cbfg.store :as store]
-            [cbfg.store-test]
-            [cbfg.world-base :refer [replay-cmd-ch world-replay
+            [cbfg.test.store]
+            [cbfg.world.base :refer [replay-cmd-ch world-replay
                                      render-client-hist start-test]]))
 
 (defn make-store-cmd-handlers [store]
@@ -48,7 +48,7 @@
    [[] (fn [c] #(act store-cmd-noop %
                      {:opaque (:opaque c) :status :ok}))]
    "test"
-   [[] (fn [c] #(cbfg.store-test/test % (:opaque c)))]})
+   [[] (fn [c] #(cbfg.test.store/test % (:opaque c)))]})
 
 (def store-max-inflight (atom 10))
 
@@ -93,4 +93,4 @@
               el-prefix nil init-event-delay)
     cmd-inject-ch))
 
-(start-test "store-test" cbfg.store-test/test)
+(start-test "store" cbfg.test.store/test)

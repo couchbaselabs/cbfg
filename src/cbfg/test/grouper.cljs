@@ -1,4 +1,4 @@
-(ns cbfg.grouper-test
+(ns cbfg.test.grouper
   (:require-macros [cbfg.act :refer [achan aclose act aalts aput atake]])
   (:require [cbfg.grouper :refer [make-grouper]]))
 

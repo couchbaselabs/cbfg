@@ -1,18 +1,18 @@
-(ns cbfg.world-lane
+(ns cbfg.world.lane
   (:require-macros [cbfg.act :refer [achan-buf]])
   (:require [cljs.core.async :refer [chan]]
             [cbfg.vis :refer [vis-init get-el-value]]
             [cbfg.fence :refer [make-fenced-pump]]
             [cbfg.lane :refer [make-lane-pump]]
-            [cbfg.lane-test]
-            [cbfg.world-base :refer [replay-cmd-ch world-cmd-loop start-test]]))
+            [cbfg.test.lane]
+            [cbfg.world.base :refer [replay-cmd-ch world-cmd-loop start-test]]))
 
 (def cmd-handlers
-  {"add"   (fn [c] (assoc c :rq #(cbfg.world-base/example-add % c)))
-   "sub"   (fn [c] (assoc c :rq #(cbfg.world-base/example-sub % c)))
-   "count" (fn [c] (assoc c :rq #(cbfg.world-base/example-count % c)))
+  {"add"   (fn [c] (assoc c :rq #(cbfg.world.base/example-add % c)))
+   "sub"   (fn [c] (assoc c :rq #(cbfg.world.base/example-sub % c)))
+   "count" (fn [c] (assoc c :rq #(cbfg.world.base/example-count % c)))
    "close-lane" (fn [c] (assoc c :op :close-lane))
-   "test"  (fn [c] (assoc c :rq #(cbfg.lane-test/test % (:opaque c))))})
+   "test"  (fn [c] (assoc c :rq #(cbfg.test.lane/test % (:opaque c))))})
 
 (def max-inflight (atom 10))
 (def lane-buf-size (atom 20))
@@ -40,4 +40,4 @@
               el-prefix nil init-event-delay)
     cmd-inject-ch))
 
-(start-test "lane-test" cbfg.lane-test/test)
+(start-test "lane" cbfg.test.lane/test)

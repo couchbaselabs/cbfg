@@ -1,4 +1,4 @@
-(ns cbfg.store-test
+(ns cbfg.test.store
   (:require-macros [cbfg.act :refer [achan aclose act atake]])
   (:require [cbfg.store :as store]))
 

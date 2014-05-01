@@ -1,20 +1,20 @@
-(ns cbfg.world-net
+(ns cbfg.world.net
   (:require-macros [cbfg.act :refer [act act-loop achan achan-buf aclose
                                      aput atake atimeout]])
   (:require [cljs.core.async :refer [chan]]
             [cbfg.vis :refer [vis-init get-el-value set-el-innerHTML]]
             [cbfg.net :refer [make-net]]
-            [cbfg.net-test]
+            [cbfg.test.net]
             [cbfg.lane]
-            [cbfg.world-lane]
-            [cbfg.world-base :refer [replay-cmd-ch world-cmd-loop start-test]]))
+            [cbfg.world.lane]
+            [cbfg.world.base :refer [replay-cmd-ch world-cmd-loop start-test]]))
 
 (defn server-conn-loop [actx server-send-ch server-recv-ch close-server-recv-ch]
   (let [fenced-pump-lane-in-ch (achan actx)
         fenced-pump-lane-out-ch (achan actx)]
     (cbfg.lane/make-lane-pump actx
                               fenced-pump-lane-in-ch fenced-pump-lane-out-ch
-                              cbfg.world-lane/make-fenced-pump-lane)
+                              cbfg.world.lane/make-fenced-pump-lane)
     (act-loop fenced-pump-lane-in actx [num-ins 0]
               (let [msg (atake fenced-pump-lane-in server-recv-ch)]
                 (aput fenced-pump-lane-in fenced-pump-lane-in-ch msg)
@@ -183,7 +183,7 @@
 
 (defn world-vis-init [el-prefix init-event-delay]
   (let [cmd-inject-ch (chan)
-        cmd-ch (replay-cmd-ch cmd-inject-ch (keys cbfg.world-lane/cmd-handlers)
+        cmd-ch (replay-cmd-ch cmd-inject-ch (keys cbfg.world.lane/cmd-handlers)
                               (fn [ev] {:op (.-id (.-target ev))
                                         :x (js/parseInt (get-el-value "x"))
                                         :y (js/parseInt (get-el-value "y"))
@@ -219,7 +219,7 @@
                                                                        :server (nth server-ports (count acc))
                                                                        (keyword client-id) res-ch))))
                                                {} (range num-clients))]
-                           (world-cmd-loop world cbfg.world-lane/cmd-handlers cmd-ch
+                           (world-cmd-loop world cbfg.world.lane/cmd-handlers cmd-ch
                                            req-ch res-ch vis-chs world-vis-init el-prefix)
                            (act-loop cmd-dispatch-loop world [num-dispatches 0]
                                      (when-let [msg (atake cmd-dispatch-loop req-ch)]
@@ -231,4 +231,4 @@
               init-event-delay)
     cmd-inject-ch))
 
-(start-test "net-test" cbfg.net-test/test)
+(start-test "net" cbfg.test.net/test)

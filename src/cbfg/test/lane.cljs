@@ -1,4 +1,4 @@
-(ns cbfg.lane-test
+(ns cbfg.test.lane
   (:require-macros [cbfg.act :refer [achan aclose act act-loop aput atake]])
   (:require [cbfg.lane :refer [make-lane-pump]]))
 
