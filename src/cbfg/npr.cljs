@@ -29,26 +29,25 @@
   (client-snapshot-item [this actx stream-request snapshot-beg snapshot-item]))
 
 (defn handle-npr-server-stream-request [actx server stream-request-in to-client-ch]
-  (let [snapshot-in (server-take-snapshot server actx stream-request-in nil)]
-    (act-loop npr-server-session actx
-              [stream-request stream-request-in
-               snapshot snapshot-in
-               num-snapshots 0]
-              (cond
-               (nil? snapshot) (aput-close npr-server-session to-client-ch
-                                           (assoc stream-request :status :ok))
-               (snapshot-rollback? snapshot) (aput-close npr-server-session to-client-ch
-                                                         (stream-request-rollback-msg stream-request snapshot))
-               :else (when (aput npr-server-session to-client-ch
-                                 (stream-request-snapshot-beg-msg stream-request snapshot))
-                       (doseq [item (snapshot-items snapshot)]
-                         (aput npr-server-session to-client-ch
-                               (stream-request-snapshot-item-msg stream-request snapshot item)))
-                       (when (aput npr-server-session to-client-ch
-                                   (stream-request-snapshot-end-msg stream-request snapshot))
-                         (recur stream-request
-                                (server-take-snapshot server actx stream-request snapshot)
-                              (inc num-snapshots))))))))
+  (act-loop npr-server-session actx
+            [stream-request stream-request-in
+             snapshot (server-take-snapshot server actx stream-request-in nil)
+             num-snapshots 0]
+            (cond
+             (nil? snapshot) (aput-close npr-server-session to-client-ch
+                                         (assoc stream-request :status :ok))
+             (snapshot-rollback? snapshot) (aput-close npr-server-session to-client-ch
+                                                       (stream-request-rollback-msg stream-request snapshot))
+             :else (when (aput npr-server-session to-client-ch
+                               (stream-request-snapshot-beg-msg stream-request snapshot))
+                     (doseq [item (snapshot-items snapshot)]
+                       (aput npr-server-session to-client-ch
+                             (stream-request-snapshot-item-msg stream-request snapshot item)))
+                     (when (aput npr-server-session to-client-ch
+                                 (stream-request-snapshot-end-msg stream-request snapshot))
+                       (recur stream-request
+                              (server-take-snapshot server actx stream-request snapshot)
+                              (inc num-snapshots)))))))
 
 (defn npr-client-stream-loop [actx client stream-request snapshot-beg-in out from-server-ch]
   (act-loop npr-client-stream-loop actx
