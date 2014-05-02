@@ -4,13 +4,29 @@
             [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]))
 
-(def app-state (atom {:text "hello"
-                      :list ["Lion" "Zebra" "Buffalo" "Antelope"]}))
+(def app-state
+  (atom
+   {:text "hello"
+    :controls ["play" "step" "pause"]
+    :speed 1.0
+    :curr-time 0
+    :inputs []
+    :snapshots []
+    :list ["Lion" "Zebra" "Buffalo" "Antelope"]}))
+
+(def transient-state
+  (atom nil))
+
+(def preview-state
+  (atom nil))
+
+(def ghost-state
+  (atom nil))
 
 (defn vinit [el-id]
   (om/root
    (fn [app owner]
-     (dom/h2 nil (:text app)))
+     (dom/div nil (:text app)))
    app-state
    {:target (. js/document (getElementById el-id))}))
 
