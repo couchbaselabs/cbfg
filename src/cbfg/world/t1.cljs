@@ -11,7 +11,22 @@
    {:text "hello"
     :controls ["play" "step" "pause"]
     :speed 1.0
-    :events [1 2 3 4]
+    :snapshots {0 {}
+                10 {:a 1 :b 2 :c 3 :d 4}
+                20 {:a 11 :b 22 :c 33 :d 44}}
+    :events [[0 :snapshot]
+             [1 :event [:a 1]]
+             [2 :event [:b 2]]
+             [3 :event [:c 3]]
+             [4 :event [:d 4]]
+             [10 :snapshot]
+             [11 :event [:a 11]]
+             [12 :event [:b 22]]
+             [13 :event [:c 33]]
+             [14 :event [:d 44]]
+             [20 :snapshot]
+             [21 :event [:a 11]]
+             [22 :event [:b 22]]]
     :world {:a 11 :b 22 :c 33}
     :hover nil}))
 
@@ -35,6 +50,11 @@
          (map (fn [[k v]] (dom/li nil (str k ":" v)))
               (:world app))))
 
+(defn render-snapshot [app owner ss-ts]
+  (apply dom/ul nil
+         (map (fn [[k v]] (dom/li nil (str k "=" v)))
+              (get-in app [:snapshots ss-ts] nil))))
+
 (defn init-roots [app-state]
   (om/root
    (fn [app owner]
@@ -43,13 +63,20 @@
                  (:controls app))))
    app-state
    {:target (. js/document (getElementById "controls"))})
+
   (om/root
    (fn [app owner]
      (apply dom/ul nil
-            (map (fn [x] (dom/li nil x))
+            (map (fn [[ts kind & rest]]
+                   (dom/li nil
+                           (str ts)
+                           (str kind)
+                           (when (= kind :snapshot)
+                             (render-snapshot app owner ts))))
                  (:events app))))
    app-state
    {:target (. js/document (getElementById "events"))})
+
   (om/root render-world app-state
            {:target (. js/document (getElementById "world"))})
   (om/root render-world app-state
