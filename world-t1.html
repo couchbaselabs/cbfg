@@ -1,8 +1,30 @@
 <html>
 <body>
 <div class="container">
-  <div id="preview"></div>
-  <div id="vis"></div>
+  <div class="header">
+    <div class="controls" id="controls">controls</div>
+    <div class="filters" id="filters">filters</div>
+    <div class="watches" id="watches">watches</div>
+  </div>
+  <div class="user" id="user">user</div>
+  <div id="vis">vis</div>
+  </div>
+  <table>
+    <tr>
+      <td class="events-container">
+        <div class="events-ghost" id="events-ghost">events-ghost</div>
+        <div class="events" id="events">events go here</div>
+      </td>
+      <td class="world-container">
+        <div class="world" id="world">world</div>
+        <div class="world-hover" id="world-hover">world-hover</div>
+      </td>
+      <td class="world-map-container">
+        <div class="world-map" id="world-map">world-map</div>
+        <div class="world-map-hover" id="world-map-hover">world-map-hover</div>
+      </td>
+    </tr>
+  </table>
 </div>
 <style>
 body {
@@ -14,6 +36,41 @@ body {
 }
 .container {
   padding: 0 10px 0 15px;
+}
+.header > * {
+  display: inline-block;
+  vertical-align: top;
+}
+.controls ul li {
+  display: inline;
+  margin-right: 3em;
+}
+.events-container {
+  position: relative;
+  width: 300px;
+}
+.events-container .events, .events-container .events-ghost {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+.world-container {
+  position: relative;
+  width: 80%;
+}
+.world-container .world, .world-container .world-hover {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+.world-map-container {
+  position: relative;
+  width: 100px;
+}
+.world-map-container .world-map, .world-map-container .world-map-hover {
+  position: absolute;
+  top: 0;
+  left: 0;
 }
 </style>
 <script src="out/goog/base.js" type="text/javascript"></script>
