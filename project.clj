@@ -11,9 +11,7 @@
 
                  [ago "0.1.0-SNAPSHOT"]
 
-                 [om "0.2.3"]
-                 [sablono "0.2.1"]
-                 [com.facebook/react "0.8.0.1"]]
+                 [om "0.6.2"]]
 
   :plugins [[lein-cljsbuild "1.0.3"]]
 
