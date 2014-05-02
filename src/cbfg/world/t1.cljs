@@ -25,7 +25,7 @@
              [13 :event [:c 33]]
              [14 :event [:d 44]]
              [20 :snapshot]
-             [21 :event [:a 11]]
+             [21 :event [:a 21]]
              [22 :event [:b 22]]]
     :world {:a 11 :b 22 :c 33}
     :hover nil}))
