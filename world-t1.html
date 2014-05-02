@@ -13,10 +13,10 @@
     <tr>
       <td class="events-container">
         <div class="events-ghost" id="events-ghost">events-ghost</div>
-        <div class="events" id="events">events go here</div>
+        <div class="events" id="events"></div>
       </td>
       <td class="world-container">
-        <div class="world" id="world">world</div>
+        <div class="world" id="world"></div>
         <div class="world-hover" id="world-hover">world-hover</div>
       </td>
       <td class="world-map-container">
@@ -37,13 +37,13 @@ body {
 .container {
   padding: 0 10px 0 15px;
 }
+.container ul {
+  margin: 0 0 0 0;
+  padding: 0 0 0 0;
+}
 .header > * {
   display: inline-block;
   vertical-align: top;
-}
-.controls ul {
-  margin: 0 0 0 0;
-  padding: 0 0 0 0;
 }
 .controls ul li {
   display: inline;
@@ -70,6 +70,9 @@ body {
 .world-map-container {
   position: relative;
   width: 100px;
+
+  -webkit-transform: scale(0.2,0.2);
+  transform: scale(0.2,0.2);
 }
 .world-map-container .world-map, .world-map-container .world-map-hover {
   position: absolute;
