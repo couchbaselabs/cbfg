@@ -1,0 +1,183 @@
+<html>
+<head>
+  <link href="world.css" rel="stylesheet" type="text/css">
+</head>
+<body>
+<div class="container">
+  <div id="vis-run-controls"></div>
+  <div class="client">
+    <div class="client-label">client:</div>
+    <div id="vis-input">
+      <div class="cmds">
+        <div class="cmd">
+          <label>get</label>
+          fence:
+          <select id="get-fence">
+            <option value="0" selected>false</option>
+            <option value="1">true</option>
+          </select>
+          <div class="kv">
+            key: <input id="get-key" type="text" value="a"></input>
+          </div>
+          <button id="get">get</button>
+        </div>
+        <div class="cmd">
+          <label>set</label>
+          fence:
+          <select id="set-fence">
+            <option value="0" selected>false</option>
+            <option value="1">true</option>
+          </select>
+          <div class="kv">
+            key: <input id="set-key" type="text" value="a"></input>
+            val: <input id="set-val" type="text" value="hello"></input>
+          </div>
+          <button id="set">set</button>
+        </div>
+        <div class="cmd">
+          <label>del</label>
+          fence:
+          <select id="del-fence">
+            <option value="0" selected>false</option>
+            <option value="1">true</option>
+          </select>
+          <div class="kv">
+            key: <input id="del-key" type="text" value="a"></input>
+          </div>
+          <button id="del">del</button>
+        </div>
+        <div class="cmd">
+          <label>add</label>
+          fence:
+          <select id="add-fence">
+            <option value="0" selected>false</option>
+            <option value="1">true</option>
+          </select>
+          <div class="kv">
+            key: <input id="add-key" type="text" value="a"></input>
+            val: <input id="add-val" type="text" value="hi"></input>
+          </div>
+          <button id="add">add</button>
+        </div>
+        <div class="cmd">
+          <label>replace</label>
+          fence:
+          <select id="replace-fence">
+            <option value="0" selected>false</option>
+            <option value="1">true</option>
+          </select>
+          <div class="kv">
+            key: <input id="replace-key" type="text" value="a"></input>
+            val: <input id="replace-val" type="text" value="bye"></input>
+          </div>
+          <button id="replace">replace</button>
+        </div>
+        <div class="cmd">
+          <label>append</label>
+          fence:
+          <select id="append-fence">
+            <option value="0" selected>false</option>
+            <option value="1">true</option>
+          </select>
+          <div class="kv">
+            key: <input id="append-key" type="text" value="a"></input>
+            val: <input id="append-val" type="text" value="you"></input>
+          </div>
+          <button id="append">append</button>
+        </div>
+        <div class="cmd">
+          <label>prepend</label>
+          fence:
+          <select id="prepend-fence">
+            <option value="0" selected>false</option>
+            <option value="1">true</option>
+          </select>
+          <div class="kv">
+            key: <input id="prepend-key" type="text" value="a"></input>
+            val: <input id="prepend-val" type="text" value="ah"></input>
+          </div>
+          <button id="prepend">prepend</button>
+        </div>
+        <div class="cmd">
+          <label>scan</label>
+          fence:
+          <select id="scan-fence">
+            <option value="0" selected>false</option>
+            <option value="1">true</option>
+          </select>
+          <div class="kv">
+            from: <input id="scan-from" type="text" value="a"></input>
+            to: <input id="scan-to" type="text" value="c"></input>
+          </div>
+          <button id="scan">scan</button>
+        </div>
+        <div class="cmd">
+          <label>changes</label>
+          fence:
+          <select id="changes-fence">
+            <option value="0" selected>false</option>
+            <option value="1">true</option>
+          </select>
+          <div class="kv">
+            from: <input id="changes-from" type="text" value="0"></input>
+            to: <input id="changes-to" type="text" value="100"></input>
+          </div>
+          <button id="changes">changes</button>
+        </div>
+        <div class="cmd">
+          <label>noop</label>
+          fence:
+          <select id="noop-fence">
+            <option value="0" selected>false</option>
+            <option value="1">true</option>
+          </select>
+          <div class="kv"></div>
+          <button id="noop">noop</button>
+        </div>
+        <div class="cmd">
+          <label>test</label>
+          fence:
+          <select id="test-fence">
+            <option value="0" selected>false</option>
+            <option value="1">true</option>
+          </select>
+          <div class="kv"></div>
+          <button id="test">test</button>
+        </div>
+      </div>
+    </div>
+    <div class="client-prev">
+      <div class="client-container" id="client-prev"></div>
+    </div>
+    <div class="client-curr client-container" id="client-curr"></div>
+  </div>
+  <div class="event">event: <div id="vis-event"></div></div>
+  <div class="vis" style="position:relative; width:100%; height:100%;">
+    <div class="vis-html" id="vis-html"
+         style="position:absolute; top:0; left:0; width:100%;"></div>
+    <svg class="vis-svg" id="vis-svg"
+         style="position:absolute; top:0; left:500px; width:120px; height:100%;">
+    </svg>
+  </div>
+</div>
+<style>
+  #vis-input div.cmds {
+    display: inline-block;
+    margin-bottom: 20px;
+    border-right: 1px solid #ddd;
+    padding-right: 20px;
+  }
+  #vis-input div.cmd { padding: 5px 5px 5px 5px; }
+  #vis-input div.cmd:hover { background-color: #D3F6FF; }
+  #vis-input div.cmd label { display: inline-block; width: 80px; }
+  #vis-input div.cmd input { width: 80px; }
+  #vis-input div.kv { display: inline-block; min-width: 250px; }
+  #vis-input button { display: inline-block; width: 60px; }
+  #client table.hist tr.hist-event td { color: #666; }
+</style>
+<script src="out/goog/base.js" type="text/javascript"></script>
+<script src="vendor/fb-react-0.9.0.js" type="text/javascript"></script>
+<script src="cbfg.js" type="text/javascript"></script>
+<script type="text/javascript">goog.require("cbfg.core");</script>
+</body>
+</html>
