@@ -67,13 +67,21 @@
   (om/root
    (fn [app owner]
      (apply dom/ul nil
-            (map (fn [[ts kind & rest]]
-                   (dom/li nil
-                           (str ts)
-                           (str kind)
-                           (when (= kind :snapshot)
-                             (render-snapshot app owner ts))))
-                 (:events app))))
+            (loop [events (:events app)
+                   last-snapshot-ts nil
+                   acc []]
+              (if-let [[ts kind args] (first events)]
+                (if (= kind :snapshot)
+                  (recur (rest events) ts
+                         (conj acc
+                               (dom/li nil
+                                       (str ts)
+                                       (render-snapshot app owner ts))))
+                  (recur (rest events) last-snapshot-ts
+                         (conj acc
+                               (dom/li nil
+                                       (str ts (pr-str args))))))
+                acc))))
    app-state
    {:target (. js/document (getElementById "events"))})
 
