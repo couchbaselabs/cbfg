@@ -31,7 +31,7 @@
 (def app-world
   (atom {:a 11 :b 22 :c 33 :d 44}))
 
-(def app-world-ghost
+(def app-world-hover
   (atom nil))
 
 (defn render-world [app owner]
@@ -44,9 +44,13 @@
               (get-in app [:snapshots ss-ts] nil))))
 
 (defn event-focus [snapshot-ts event-ts]
-  (println :event-focus snapshot-ts event-ts))
+  (println :event-focus snapshot-ts event-ts)
+  (when-let [ss (get-in @app-history [:snapshots snapshot-ts])]
+    (reset! app-world-hover ss)))
+
 (defn event-blur [snapshot-ts event-ts]
-  (println :event-blur snapshot-ts event-ts))
+  (println :event-blur snapshot-ts event-ts)
+  (reset! app-world-hover nil))
 
 (defn init-roots []
   (om/root
@@ -85,7 +89,10 @@
   (om/root render-world app-world
            {:target (. js/document (getElementById "world"))})
   (om/root render-world app-world
-           {:target (. js/document (getElementById "world-map"))}))
+           {:target (. js/document (getElementById "world-map"))})
+
+  (om/root render-world app-world-hover
+           {:target (. js/document (getElementById "world-hover"))}))
 
 (defn world-vis-init [el-prefix init-event-delay]
   (init-roots))
