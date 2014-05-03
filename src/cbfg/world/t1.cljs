@@ -55,6 +55,11 @@
          (map (fn [[k v]] (dom/li nil (str k "=" v)))
               (get-in app [:snapshots ss-ts] nil))))
 
+(defn event-focus [snapshot-ts event-ts]
+  (println :event-focus snapshot-ts event-ts))
+(defn event-blur [snapshot-ts event-ts]
+  (println :event-blur snapshot-ts event-ts))
+
 (defn init-roots [app-state]
   (om/root
    (fn [app owner]
@@ -67,21 +72,25 @@
   (om/root
    (fn [app owner]
      (apply dom/ul nil
-            (loop [events (:events app)
-                   last-snapshot-ts nil
-                   acc []]
-              (if-let [[ts kind args] (first events)]
+            (second
+             (reduce
+              (fn [[last-snapshot-ts res] [ts kind args]]
                 (if (= kind :snapshot)
-                  (recur (rest events) ts
-                         (conj acc
-                               (dom/li nil
-                                       (str ts)
-                                       (render-snapshot app owner ts))))
-                  (recur (rest events) last-snapshot-ts
-                         (conj acc
-                               (dom/li nil
-                                       (str ts (pr-str args))))))
-                acc))))
+                  [ts
+                   (conj res
+                         (dom/li #js {:onMouseEnter #(event-focus ts nil)
+                                      :onMouseLeave #(event-blur ts nil)}
+                                 (str ts)
+                                 (render-snapshot app owner ts)))]
+                  [last-snapshot-ts
+                   (conj res
+                         (dom/li #js {:onMouseEnter
+                                      #(event-focus last-snapshot-ts ts)
+                                      :onMouseLeave
+                                      #(event-blur last-snapshot-ts ts)}
+                                 (str ts (pr-str args))))]))
+              [nil []]
+              (:events app)))))
    app-state
    {:target (. js/document (getElementById "events"))})
 
