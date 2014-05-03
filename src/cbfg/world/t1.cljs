@@ -6,49 +6,37 @@
 
 ;; How to assign locations to world entities before rendering?
 
-(def app-state
-  (atom
-   {:text "hello"
-    :controls ["play" "step" "pause"]
-    :speed 1.0
-    :snapshots {0 {}
-                10 {:a 1 :b 2 :c 3 :d 4}
-                20 {:a 11 :b 22 :c 33 :d 44}}
-    :events [[0 :snapshot]
-             [1 :event [:a 1]]
-             [2 :event [:b 2]]
-             [3 :event [:c 3]]
-             [4 :event [:d 4]]
-             [10 :snapshot]
-             [11 :event [:a 11]]
-             [12 :event [:b 22]]
-             [13 :event [:c 33]]
-             [14 :event [:d 44]]
-             [20 :snapshot]
-             [21 :event [:a 21]]
-             [22 :event [:b 22]]]
-    :world {:a 11 :b 22 :c 33}
-    :hover nil}))
+(def app-controls
+  (atom {:controls ["play" "step" "pause"]
+         :speed 1.0}))
 
 (def app-history
-  (atom []))
+  (atom {:snapshots {0 {}
+                     10 {:a 1 :b 2 :c 3 :d 4}
+                     20 {:a 11 :b 22 :c 33 :d 44}}
+         :events [[0 :snapshot]
+                  [1 :event [:a 1]]
+                  [2 :event [:b 2]]
+                  [3 :event [:c 3]]
+                  [4 :event [:d 4]]
+                  [10 :snapshot]
+                  [11 :event [:a 11]]
+                  [12 :event [:b 22]]
+                  [13 :event [:c 33]]
+                  [14 :event [:d 44]]
+                  [20 :snapshot]
+                  [21 :event [:a 21]]
+                  [22 :event [:b 22]]]}))
 
-(def app-future
-  (atom []))
+(def app-world
+  (atom {:a 11 :b 22 :c 33 :d 44}))
 
-(def transient-state
-  (atom nil))
-
-(def preview-state
-  (atom {:focus nil}))
-
-(def ghost-state
+(def app-world-ghost
   (atom nil))
 
 (defn render-world [app owner]
   (apply dom/ul nil
-         (map (fn [[k v]] (dom/li nil (str k ":" v)))
-              (:world app))))
+         (map (fn [[k v]] (dom/li nil (str k ":" v))) app)))
 
 (defn render-snapshot [app owner ss-ts]
   (apply dom/ul nil
@@ -60,13 +48,13 @@
 (defn event-blur [snapshot-ts event-ts]
   (println :event-blur snapshot-ts event-ts))
 
-(defn init-roots [app-state]
+(defn init-roots []
   (om/root
    (fn [app owner]
      (apply dom/ul nil
             (map (fn [x] (dom/li nil (dom/button nil x)))
                  (:controls app))))
-   app-state
+   app-controls
    {:target (. js/document (getElementById "controls"))})
 
   (om/root
@@ -91,13 +79,13 @@
                                  (str ts (pr-str args))))]))
               [nil []]
               (:events app)))))
-   app-state
+   app-history
    {:target (. js/document (getElementById "events"))})
 
-  (om/root render-world app-state
+  (om/root render-world app-world
            {:target (. js/document (getElementById "world"))})
-  (om/root render-world app-state
+  (om/root render-world app-world
            {:target (. js/document (getElementById "world-map"))}))
 
 (defn world-vis-init [el-prefix init-event-delay]
-  (init-roots app-state))
+  (init-roots))
