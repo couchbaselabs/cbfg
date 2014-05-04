@@ -6,48 +6,65 @@
     <div class="filters" id="filters">filters</div>
     <div class="watches" id="watches">watches</div>
   </div>
-  <div class="user" id="user">user</div>
-  <div id="vis">vis</div>
+  <div class="main">
+    <div class="user" id="user">user</div>
+    <div id="vis">vis</div>
+    </div>
+    <table style="width:90%;">
+      <tr>
+        <td class="events-container">
+          <div class="events-ghost" id="events-ghost">events-ghost</div>
+          <div class="events" id="events"></div>
+        </td>
+        <td class="world-container">
+          <div class="world-hover" id="world-hover">world-hover</div>
+          <div class="world" id="world"></div>
+        </td>
+        <td class="world-map-container">
+          <div class="world-map-hover" id="world-map-hover">world-map-hover</div>
+          <div class="world-map" id="world-map">world-map</div>
+        </td>
+      </tr>
+    </table>
   </div>
-  <table style="width: 100%;">
-    <tr>
-      <td class="events-container">
-        <div class="events-ghost" id="events-ghost">events-ghost</div>
-        <div class="events" id="events"></div>
-      </td>
-      <td class="world-container">
-        <div class="world-hover" id="world-hover">world-hover</div>
-        <div class="world" id="world"></div>
-      </td>
-      <td class="world-map-container">
-        <div class="world-map-hover" id="world-map-hover">world-map-hover</div>
-        <div class="world-map" id="world-map">world-map</div>
-      </td>
-    </tr>
-  </table>
 </div>
 <style>
 body {
   margin: 0 0 0 0;
-  padding: 0 0 0 0;
   background-color: #2a2a2a;
+  padding: 0 0 0 0;
   font-family: Tahoma, Geneva, sans-serif;
   color: #a2a2a2;
 }
 .container {
-  padding: 0 10px 0 15px;
-}
-.container ul {
   margin: 0 0 0 0;
-  padding: 0 0 0 0;
+  padding: 0 10px 0 15px;
 }
 .header > * {
   display: inline-block;
   vertical-align: top;
 }
+.controls {
+  margin: 0 0 0 0;
+  background-color: #2a2a2a;
+  padding: 0 0 0 0;
+  position: fixed;
+  z-index: 1;
+}
+.controls ul {
+  margin: 0 0 0 0;
+  padding: 0 0 0 0;
+}
 .controls ul li {
   display: inline;
   margin-right: 10px;
+}
+.filters {
+  margin-left: 200px;
+}
+.main ul {
+  margin: 0 0 0 0;
+  padding: 0 0 0 0;
 }
 .events-container {
   position: relative;
