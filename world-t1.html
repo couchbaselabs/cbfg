@@ -12,9 +12,7 @@
     <div class="main-body">
       <div class="prog-container">
         <div class="pane">
-          <div class="prog" id="prog">
-            <textarea>hello prog</textarea>
-          </div>
+          <textarea class="prog" id="prog">hello prog</textarea>
         </div>
       </div>
       <div class="events-container">
@@ -97,8 +95,13 @@ body {
 .prog-container {
   width: 400px;
 }
-.prog-container textarea {
+textarea.prog {
   width: 380px;
+  height: 80%;
+  background-color: #e2e2e2;
+  white-space: pre;
+  word-wrap: normal;
+  overflow-x: scroll;
 }
 .events-container {
   width: 100px;
