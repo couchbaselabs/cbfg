@@ -6,11 +6,11 @@
 
 ;; How to assign locations to world entities before rendering?
 
-(def app-controls
+(def run-controls
   (atom {:controls ["play" "step" "pause"]
          :speed 1.0}))
 
-(def app-history
+(def run-history
   (atom {:snapshots {0 {}
                      10 {:a 1 :b 2 :c 3 :d 4}
                      20 {:a 11 :b 22 :c 33 :d 44}}
@@ -140,10 +140,10 @@
                   [21 :event [:a 21]]
                   [22 :event [:b 22]]]}))
 
-(def app-world
+(def run-world
   (atom {:a 10 :b 20 :c 30 :d 40}))
 
-(def app-world-hover
+(def run-world-hover
   (atom nil))
 
 (defn render-world [app owner]
@@ -154,11 +154,11 @@
   (render-world (get-in app [:snapshots ss-ts] nil) owner))
 
 (defn event-focus [snapshot-ts event-ts]
-  (when-let [ss (get-in @app-history [:snapshots snapshot-ts])]
-    (reset! app-world-hover ss)))
+  (when-let [ss (get-in @run-history [:snapshots snapshot-ts])]
+    (reset! run-world-hover ss)))
 
 (defn event-blur [snapshot-ts event-ts]
-  (reset! app-world-hover nil))
+  (reset! run-world-hover nil))
 
 (defn render-events [app owner]
   (apply dom/ul nil
@@ -187,17 +187,17 @@
             (map (fn [x] (dom/li nil (dom/button nil x)))
                  (:controls app))))
 (defn init-roots []
-  (om/root render-controls app-controls
+  (om/root render-controls run-controls
            {:target (. js/document (getElementById "controls"))})
-  (om/root render-events app-history
+  (om/root render-events run-history
            {:target (. js/document (getElementById "events"))})
-  (om/root render-world app-world
+  (om/root render-world run-world
            {:target (. js/document (getElementById "world"))})
-  (om/root render-world app-world
+  (om/root render-world run-world
            {:target (. js/document (getElementById "world-map"))})
-  (om/root render-world app-world-hover
+  (om/root render-world run-world-hover
            {:target (. js/document (getElementById "world-hover"))})
-  (om/root render-world app-world-hover
+  (om/root render-world run-world-hover
            {:target (. js/document (getElementById "world-map-hover"))}))
 
 (defn world-vis-init [el-prefix init-event-delay]
