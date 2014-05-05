@@ -72,10 +72,10 @@
              (if (= kind :snapshot)
                [ts
                 (conj res
-                      (dom/li #js {:onMouseEnter #(on-event-focus ts nil)
+                      (dom/li #js {:className "snapshot"
+                                   :onMouseEnter #(on-event-focus ts nil)
                                    :onMouseLeave #(on-event-blur ts nil)}
-                              (str ts)
-                              (render-snapshot app owner ts)))]
+                              (str ts)))]
                [(or last-snapshot-ts ts)
                 (conj res
                       (dom/li #js {:onMouseEnter
