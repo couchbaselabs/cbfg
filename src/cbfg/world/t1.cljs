@@ -146,6 +146,8 @@
 (def run-world-hover
   (atom nil))
 
+; -------------------------------------------------------------------
+
 (defn render-world [app owner]
   (apply dom/ul nil
          (map (fn [[k v]] (dom/li nil (str k ":" v))) app)))
@@ -153,11 +155,11 @@
 (defn render-snapshot [app owner ss-ts]
   (render-world (get-in app [:snapshots ss-ts] nil) owner))
 
-(defn event-focus [snapshot-ts event-ts]
+(defn on-event-focus [snapshot-ts event-ts]
   (when-let [ss (get-in @run-history [:snapshots snapshot-ts])]
     (reset! run-world-hover ss)))
 
-(defn event-blur [snapshot-ts event-ts]
+(defn on-event-blur [snapshot-ts event-ts]
   (reset! run-world-hover nil))
 
 (defn render-events [app owner]
@@ -168,16 +170,16 @@
              (if (= kind :snapshot)
                [ts
                 (conj res
-                      (dom/li #js {:onMouseEnter #(event-focus ts nil)
-                                   :onMouseLeave #(event-blur ts nil)}
+                      (dom/li #js {:onMouseEnter #(on-event-focus ts nil)
+                                   :onMouseLeave #(on-event-blur ts nil)}
                               (str ts)
                               (render-snapshot app owner ts)))]
                [(or last-snapshot-ts ts)
                 (conj res
                       (dom/li #js {:onMouseEnter
-                                   #(event-focus last-snapshot-ts ts)
+                                   #(on-event-focus last-snapshot-ts ts)
                                    :onMouseLeave
-                                   #(event-blur last-snapshot-ts ts)}
+                                   #(on-event-blur last-snapshot-ts ts)}
                               (str ts (pr-str args))))]))
            [nil []]
            (:events app)))))
