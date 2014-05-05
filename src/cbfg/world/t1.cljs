@@ -111,5 +111,11 @@
   (init-roots)
   (let [go-ch (listen-el (gdom/getElement "prog-go") "click")]
     (go-loop []
-      (println (.-id (.-target (<! go-ch))))
+      (<! go-ch)
+      (let [prog (get-el-value "prog")]
+        (println :prog prog)
+        (let [res (try (js/eval (str "with (cbfg) {" prog "}"))
+                       (catch js/Object ex ex))]
+          (println :res res)))
       (recur))))
+
