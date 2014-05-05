@@ -156,13 +156,10 @@
               (get-in app [:snapshots ss-ts] nil))))
 
 (defn event-focus [snapshot-ts event-ts]
-  (println :event-focus snapshot-ts event-ts)
   (when-let [ss (get-in @app-history [:snapshots snapshot-ts])]
-    (println "AAAAAAA" ss)
     (reset! app-world-hover ss)))
 
 (defn event-blur [snapshot-ts event-ts]
-  (println :event-blur snapshot-ts event-ts)
   (reset! app-world-hover nil))
 
 (defn render-events [app owner]
