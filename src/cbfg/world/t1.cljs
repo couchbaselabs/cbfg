@@ -151,9 +151,7 @@
          (map (fn [[k v]] (dom/li nil (str k ":" v))) app)))
 
 (defn render-snapshot [app owner ss-ts]
-  (apply dom/ul nil
-         (map (fn [[k v]] (dom/li nil (str k "=" v)))
-              (get-in app [:snapshots ss-ts] nil))))
+  (render-world (get-in app [:snapshots ss-ts] nil) owner))
 
 (defn event-focus [snapshot-ts event-ts]
   (when-let [ss (get-in @app-history [:snapshots snapshot-ts])]
