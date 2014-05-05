@@ -114,7 +114,7 @@
       (<! go-ch)
       (let [prog (get-el-value "prog")]
         (println :prog prog)
-        (let [res (try (js/eval (str "with (cbfg) {" prog "}"))
+        (let [res (try (js/eval (str "with (cbfg.world.t1) {" prog "}"))
                        (catch js/Object ex ex))]
           (println :res res)))
       (recur))))
