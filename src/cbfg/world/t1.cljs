@@ -1,8 +1,11 @@
 (ns cbfg.world.t1
-  (:require-macros [cbfg.act :refer [act act-loop achan-buf aalts aput]])
+  (:require-macros [cljs.core.async.macros :refer [go-loop]]
+                   [cbfg.act :refer [act act-loop achan-buf aalts aput]])
   (:require [cljs.core.async :refer [chan]]
+            [goog.dom :as gdom]
             [om.core :as om :include-macros true]
-            [om.dom :as dom :include-macros true]))
+            [om.dom :as dom :include-macros true]
+            [cbfg.vis :refer [listen-el get-el-value]]))
 
 ;; How to assign locations to world entities before rendering?
 
@@ -105,4 +108,8 @@
            {:target (. js/document (getElementById "world-map-hover"))}))
 
 (defn world-vis-init [el-prefix init-event-delay]
-  (init-roots))
+  (init-roots)
+  (let [go-ch (listen-el (gdom/getElement "prog-go") "click")]
+    (go-loop []
+      (println (.-id (.-target (<! go-ch))))
+      (recur))))
