@@ -8,23 +8,21 @@
   </div>
   <div class="main">
     <div class="user" id="user">user</div>
-    <div id="vis">vis</div>
-    <table style="width:90%;">
-      <tr>
-        <td class="events-container">
-          <div class="events-ghost" id="events-ghost">events-ghost</div>
-          <div class="events" id="events"></div>
-        </td>
-        <td class="world-container">
-          <div class="world" id="world"></div>
-          <div class="world-hover" id="world-hover">world-hover</div>
-        </td>
-        <td class="world-map-container">
-          <div class="world-map" id="world-map">world-map</div>
-          <div class="world-map-hover" id="world-map-hover">world-map-hover</div>
-        </td>
-      </tr>
-    </table>
+    <div class="vis" id="vis">vis</div>
+    <div class="main-body">
+      <div class="events-container">
+        <div class="events-ghost" id="events-ghost">events-ghost</div>
+        <div class="events" id="events"></div>
+      </div>
+      <div class="world-container">
+        <div class="world" id="world"></div>
+        <div class="world-hover" id="world-hover">world-hover</div>
+      </div>
+      <div class="world-map-container">
+        <div class="world-map" id="world-map">world-map</div>
+        <div class="world-map-hover" id="world-map-hover">world-map-hover</div>
+      </div>
+    </div>
   </div>
 </div>
 <style>
@@ -63,8 +61,14 @@ body {
 }
 .main ul {
   margin: 0 0 0 0;
-  padding: 0 0 0 0;
+  padding: 0 0 0 10px;
   list-style-type: none;
+}
+.main-body {
+  white-space: nowrap;
+}
+.main-body > div {
+  display: inline-block;
 }
 .events-container {
   position: relative;
