@@ -112,10 +112,10 @@
   (let [go-ch (listen-el (gdom/getElement "prog-go") "click")]
     (go-loop []
       (<! go-ch)
-      (let [prog (get-el-value "prog")]
-        (println :prog prog)
-        (let [res (try (js/eval (str "with (cbfg.world.t1) {" prog "}"))
+      (let [prog (get-el-value "prog")
+            prog-js (str "with (cbfg.world.t1) {" prog "}")]
+        (let [res (try (js/eval prog-js)
                        (catch js/Object ex ex))]
-          (println :res res)))
+          ))
       (recur))))
 
