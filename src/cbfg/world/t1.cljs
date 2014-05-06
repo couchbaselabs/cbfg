@@ -64,6 +64,14 @@
 
 ; -------------------------------------------------------------------
 
+(defn render-controls[app owner]
+     (apply dom/ul nil
+            (map (fn [[k v]]
+                   (dom/li nil
+                           (dom/button #js {:onClick v}
+                                       k)))
+                 (:controls app))))
+
 (defn render-world [app owner]
   (apply dom/ul nil
          (map (fn [[k v]] (dom/li nil (str k ":" v))) app)))
@@ -100,19 +108,9 @@
            [nil []]
            (:events app)))))
 
-(defn render-controls[app owner]
-     (apply dom/ul nil
-            (map (fn [[k v]]
-                   (dom/li nil
-                           (dom/button #js {:onClick v}
-                                       k)))
-                 (:controls app))))
-
 (defn init-roots []
   (om/root render-controls run-controls
            {:target (. js/document (getElementById "controls"))})
-  (om/root render-events run-history
-           {:target (. js/document (getElementById "events"))})
   (om/root render-world run-world
            {:target (. js/document (getElementById "world"))})
   (om/root render-world run-world
@@ -120,7 +118,9 @@
   (om/root render-world run-world-hover
            {:target (. js/document (getElementById "world-hover"))})
   (om/root render-world run-world-hover
-           {:target (. js/document (getElementById "world-map-hover"))}))
+           {:target (. js/document (getElementById "world-map-hover"))})
+  (om/root render-events run-history
+           {:target (. js/document (getElementById "events"))}))
 
 (defn world-vis-init [el-prefix init-event-delay]
   (init-roots)
