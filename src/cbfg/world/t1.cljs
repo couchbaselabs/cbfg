@@ -5,12 +5,23 @@
             [goog.dom :as gdom]
             [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
-            [cbfg.vis :refer [listen-el get-el-value]]))
+            [cbfg.vis :refer [listen-el get-el-value get-el-innerHTML]]))
 
 ;; How to assign locations to world entities before rendering?
 
 (def run-controls
-  (atom {:controls ["play" "step" "pause"]
+  (atom {:controls
+         {"play" #(println :play)
+          "step" #(println :step)
+          "pause" #(println :pause)
+          "spawn" #(let [w (.open js/window "")
+                         h (get-el-innerHTML "main")
+                         s (get-el-innerHTML "style")]
+                     (.write (aget w "document")
+                             (str "<html><body>"
+                                  "  <div class='main'>" h "</div>"
+                                  "  <style>" s "</style>"
+                                  "</body></html>")))}
          :speed 1.0}))
 
 (def run-history
@@ -91,8 +102,12 @@
 
 (defn render-controls[app owner]
      (apply dom/ul nil
-            (map (fn [x] (dom/li nil (dom/button nil x)))
+            (map (fn [[k v]]
+                   (dom/li nil
+                           (dom/button #js {:onClick v}
+                                       k)))
                  (:controls app))))
+
 (defn init-roots []
   (om/root render-controls run-controls
            {:target (. js/document (getElementById "controls"))})
@@ -116,6 +131,6 @@
             prog-js (str "with (cbfg.world.t1) {" prog "}")]
         (let [res (try (js/eval prog-js)
                        (catch js/Object ex ex))]
-          ))
+          (println :prog-res res)))
       (recur))))
 

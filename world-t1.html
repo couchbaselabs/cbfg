@@ -29,7 +29,7 @@ after(8000).
   <div class="header">
     <div class="controls" id="controls">controls</div>
   </div>
-  <div class="main">
+  <div class="main" id="main">
     <div class="vis" id="vis">vis</div>
     <div class="main-body">
       <div class="events-container">
@@ -53,7 +53,7 @@ after(8000).
     </div>
   </div>
 </div>
-<style>
+<style id="style">
 body {
   margin: 0 0 0 0;
   background-color: #2a2a2a;
@@ -106,50 +106,52 @@ body {
 .run .filters {
   margin-left: 200px;
 }
-.run .main ul {
+.main ul {
   margin: 0 0 0 0;
   padding: 0 0 0 10px;
   list-style-type: none;
 }
-.run .main-body {
+.main-body {
   white-space: nowrap;
   vertical-align: top;
 }
-.run .main-body > div {
+.main-body > div {
   display: inline-block;
   height: 100%;
   overflow: scroll;
 }
-.run .main-body .pane {
+.main-body .pane {
   position: relative;
 }
-.run .main-body .pane > div {
+.main-body .pane > div {
   position: absolute;
   top: 0;
   left: 0;
 }
-.run .events-container {
+.main .events-container {
   float: right;
   width: 100px;
+  z-index: 1;
   font-size: 7px;
 }
-.run .events-container li.snapshot {
+.main .events-container li.snapshot {
   background-color: #a2a2d2;
 }
-.run .events-container li:hover {
+.main .events-container li:hover {
   background-color: #a2a2a2;
   color: #2a2a2a;
 }
-.run .world-map-container {
+.main .world-map-container {
   float: right;
   width: 200px;
+  z-index: 1;
 }
-.run .world-map-container .pane {
+.main .world-map-container .pane {
   -webkit-transform: scale(0.2,0.2);
   transform: scale(0.2,0.2);
 }
-.run .world-container {
-  width: 100%;
+.main .world-container {
+  width: 80%;
 }
 </style>
 <script src="out/goog/base.js" type="text/javascript"></script>
