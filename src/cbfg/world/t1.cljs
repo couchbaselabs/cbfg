@@ -7,7 +7,7 @@
             [om.dom :as dom :include-macros true]
             [cbfg.vis :refer [listen-el get-el-value get-el-innerHTML]]))
 
-;; How to assign locations to world entities before rendering?
+;; TODO: How to assign locations to world entities before rendering?
 
 (def run-controls
   (atom {:controls
@@ -67,9 +67,7 @@
 (defn render-controls[app owner]
      (apply dom/ul nil
             (map (fn [[k v]]
-                   (dom/li nil
-                           (dom/button #js {:onClick v}
-                                       k)))
+                   (dom/li nil (dom/button #js {:onClick v} k)))
                  (:controls app))))
 
 (defn render-world [app owner]
