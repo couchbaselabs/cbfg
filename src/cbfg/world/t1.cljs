@@ -79,10 +79,12 @@
 
 (defn on-event-focus [snapshot-ts event-ts]
   (when-let [ss (get-in @run-history [:snapshots snapshot-ts])]
-    (reset! run-world-hover ss)))
+    (reset! run-world-hover ss)
+    (.add gdom/classes (gdom/getElement "world-container") "hover")))git g
 
 (defn on-event-blur [snapshot-ts event-ts]
-  (reset! run-world-hover nil))
+  (reset! run-world-hover nil)
+  (.remove gdom/classes (gdom/getElement "world-container") "hover"))
 
 (defn render-events [app owner]
   (apply dom/ul nil

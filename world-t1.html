@@ -37,13 +37,13 @@ after(8000).
           <div class="events" id="events"></div>
         </div>
       </div>
-      <div class="world-map-container">
+      <div class="world-map-container" id="world-map-container">
         <div class="pane">
           <div class="world-map" id="world-map"></div>
           <div class="world-map-hover" id="world-map-hover"></div>
         </div>
       </div>
-      <div class="world-container">
+      <div class="world-container" id="world-container">
         <div class="pane">
           <div class="world" id="world"></div>
           <div class="world-hover" id="world-hover"></div>
@@ -151,6 +151,12 @@ body {
 }
 .main .world-container {
   width: 80%;
+}
+.main .hover .world, .main .hover .world-map {
+  opacity: 0.5;
+}
+.main .world-hover {
+  color: #8282a2;
 }
 </style>
 <script src="out/goog/base.js" type="text/javascript"></script>
