@@ -5,7 +5,10 @@
             [goog.dom :as gdom]
             [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
-            [cbfg.vis :refer [listen-el get-el-value get-el-innerHTML]]))
+            [cbfg.vis :refer [listen-el get-el-value get-el-innerHTML]]
+            [cbfg.net :refer [make-net]]
+            [cbfg.world.net]
+            [cbfg.lane]))
 
 ;; TODO: How to assign locations to world entities before rendering?
 
@@ -134,3 +137,5 @@
           (println :prog-res res)))
       (recur))))
 
+(defn server [name & ports]
+  (println :server name ports))

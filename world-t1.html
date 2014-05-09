@@ -2,10 +2,10 @@
 <body>
 <div class="prog">
   <textarea id="prog">
-server("serverA:8000")
-server("serverA:8100")
-server("serverB:8000")
-
+server("serverA", 8000, 8100)
+server("serverB", 8000)
+  </textarea>
+<!--
 client("clientX", "serverA:8000")
 client("clientY", "serverA:8100")
 client("clientZ", "serverB:8000")
@@ -18,8 +18,7 @@ after(5000).
   pause("serverA")
 
 after(8000).
-  unpause("serverA")
-  </textarea>
+  unpause("serverA")-->
   <br/>
   <button id="prog-go">go</button>
   <div class="filters" id="filters">filters</div>
