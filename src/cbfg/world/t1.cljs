@@ -60,7 +60,7 @@
                   [22 :event [:b 22]]]}))
 
 (def run-world
-  (atom {:a 10 :b 20 :c 30 :d 40}))
+  (atom {:a 10}))
 
 (def run-world-hover
   (atom nil))
@@ -137,5 +137,11 @@
           (println :prog-res res)))
       (recur))))
 
-(defn server [name & ports]
-  (println :server name ports))
+; --------------------------------------------
+
+(defn kv-server [name & ports]
+  (doseq [port ports]
+    (println :kv-server name port)))
+
+(defn kv-client [name & ports]
+  (println :kv-client name ports))

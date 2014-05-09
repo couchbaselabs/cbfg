@@ -2,17 +2,17 @@
 <body>
 <div class="prog">
   <textarea id="prog">
-server("serverA", 8000, 8100)
-server("serverB", 8000)
+kv_server("serverA", 8000, 8100)
+kv_server("serverB", 8000)
   </textarea>
 <!--
-client("clientX", "serverA:8000")
-client("clientY", "serverA:8100")
-client("clientZ", "serverB:8000")
-client("clientW", "serverB:8000")
+kv_client("clientX", "serverA:8000")
+kv_client("clientY", "serverA:8100")
+kv_client("clientZ", "serverB:8000")
+kv_client("clientW", "serverB:8000")
 
 after(1000).
-  workload("clientX")
+  kv_workload("clientX")
 
 after(5000).
   pause("serverA")
