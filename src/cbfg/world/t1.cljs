@@ -1,10 +1,11 @@
 (ns cbfg.world.t1
   (:require-macros [cljs.core.async.macros :refer [go-loop]]
-                   [cbfg.act :refer [act act-loop achan-buf aalts aput]])
-  (:require [cljs.core.async :refer [chan]]
+                   [cbfg.act :refer [act actx-top]])
+  (:require [cljs.core.async :refer [<! >! chan timeout dropping-buffer]]
             [goog.dom :as gdom]
             [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
+            [ago.core :refer [make-ago-world ago-chan ago-timeout]]
             [cbfg.vis :refer [listen-el get-el-value get-el-innerHTML]]
             [cbfg.net :refer [make-net]]
             [cbfg.world.net]
@@ -125,9 +126,49 @@
   (om/root render-events run-history
            {:target (. js/document (getElementById "events"))}))
 
+(def vis-event-handlers {})
+
 (defn world-vis-init [el-prefix init-event-delay]
-  (init-roots)
-  (let [go-ch (listen-el (gdom/getElement "prog-go") "click")]
+  (let [last-id (atom 0)
+        gen-id #(swap! last-id inc)
+        agw (make-ago-world nil)
+        get-agw (fn [] agw)
+        step-ch (chan (dropping-buffer 1))
+        event-ch (ago-chan agw)
+        event-delay (atom init-event-delay)
+        make-timeout-ch (fn [actx delay]
+                          (ago-timeout ((:get-agw (actx-top actx))) delay))
+        render-ch (chan)
+        w [{:gen-id gen-id
+            :get-agw get-agw
+            :event-ch event-ch
+            :make-timeout-ch make-timeout-ch}]
+        world (conj w "world-0")  ; No act for world actx init to avoid recursion.
+        vis (atom {:actxs {world {:children {} ; child-actx -> true,
+                                  :wait-chs {} ; ch -> [:ghost|:take|:put optional-ch-name],
+                                  :collapsed true
+                                  ; :loop-state last-loop-bindings,
+                                  }}
+                   :chs {} ; {ch -> {:id (gen-id), :msgs {msg -> true},
+                           ;         :first-taker-actx actx-or-nil}}.
+                   :gen-id gen-id})
+        go-ch (listen-el (gdom/getElement "prog-go") "click")]
+    (init-roots)
+    (go-loop [num-events 0]      ; Process events from world / simulation.
+      (when-let [[actx [verb step & args]] (<! event-ch)]
+        (let [deltas ((get (get vis-event-handlers verb) step) vis actx args)
+              event-str (str num-events ": " (last actx) " " verb " " step " " args)]
+          (when (and (not (zero? @event-delay)) (some #(not (:after %)) deltas))
+            (>! render-ch [@vis deltas false event-str])
+            (when (> @event-delay 0) (<! (timeout @event-delay)))
+            (when (< @event-delay 0) (<! step-ch)))
+          (>! render-ch [@vis deltas true event-str])
+          (when (> @event-delay 0) (<! (timeout @event-delay)))
+          (when (< @event-delay 0) (<! step-ch)))
+        (recur (inc num-events))))
+    (go-loop []
+      (when-let [[vis-next deltas after event-str] (<! render-ch)]
+        (recur)))
     (go-loop []
       (<! go-ch)
       (let [prog (get-el-value "prog")
