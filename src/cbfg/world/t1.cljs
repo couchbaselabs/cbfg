@@ -168,6 +168,7 @@
         (recur (inc num-events))))
     (go-loop []
       (when-let [[vis-next deltas after event-str] (<! render-ch)]
+        (println :render-ch event-str)
         (recur)))
     (go-loop []
       (<! go-ch)

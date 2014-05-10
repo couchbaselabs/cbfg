@@ -40,7 +40,7 @@
    {:start (fn [vis actx [child-actx]]
              (swap! vis #(-> %
                              (assoc-in [:actxs child-actx]
-                                       {:children {} :wait-chs {} :closed false})
+                                       {:children {} :wait-chs {} :collapsed false})
                              (assoc-in [:actxs actx :children child-actx] true)))
              [{:delta :actx-start :actx actx :child-actx child-actx :after true}])
     :end (fn [vis actx [child-actx result]]
@@ -143,7 +143,7 @@
                              (keys (:children actx-info)))]
       (assign-positions vis child-actx positions actx-ch-ch-infos
                         (if override override
-                            (when (:closed actx-info)
+                            (when (:collapsed actx-info)
                               (get-in @positions [actx-id])))))))
 
 ;; ------------------------------------------------
@@ -173,7 +173,7 @@
         children (:children actx-info)]
     ["<div id='actx-" actx-id "' class='actx'>"
      " <button class='toggle' id='toggle-" actx-id "'>"
-     (if (:closed actx-info) "&#9654;" "&#9660;")
+     (if (:collapsed actx-info) "&#9654;" "&#9660;")
      " </button>"
      " <span class='actx-id'>" (string/join "-" (butlast actx-idx))
      "  <span class='actx-id-suffix'>"(last actx-idx) "</span></span>&nbsp;"
@@ -185,7 +185,7 @@
                 "<span class='msgs'>" (keys (:msgs ch-info)) "</span></li>"]))
            (sort-by :id (vals (get actx-ch-ch-infos actx))))
      " </ul></div>"
-     (when (not (:closed actx-info))
+     (when (not (:collapsed actx-info))
        ["<ul class='children'>"
         (mapv (fn [child-actx]
                 ["<li>" (vis-html-actx vis child-actx actx-ch-ch-infos) "</li>"])
@@ -326,7 +326,7 @@
         world (conj w "world-0")  ; No act for world actx init to avoid recursion.
         vis (atom {:actxs {world {:children {} ; child-actx -> true,
                                   :wait-chs {} ; ch -> [:ghost|:take|:put optional-ch-name],
-                                  :closed true
+                                  :collapsed true
                                   ; :loop-state last-loop-bindings,
                                   }}
                    :chs {} ; {ch -> {:id (gen-id), :msgs {msg -> true},
@@ -365,7 +365,7 @@
                   actx-ch-ch-infos (group-by #(:first-taker-actx (second %))
                                              (:chs vis-next))]
               (assign-positions vis-next world vis-next-positions actx-ch-ch-infos
-                                (when (get-in vis-next [:actxs world :closed]) 0))
+                                (when (get-in vis-next [:actxs world :collapsed]) 0))
               (let [vis-next-html
                     (apply str (flatten (vis-html-actx vis-next world actx-ch-ch-infos)))
                     vis-next-svg
@@ -389,6 +389,7 @@
         (let [actx-id (no-prefix (.-id (.-target (<! toggle-ch))))]
           (doseq [[actx actx-info] (:actxs @vis)]
             (when (= actx-id (last actx))
-              (swap! vis #(assoc-in % [:actxs actx :closed] (not (:closed actx-info))))
+              (swap! vis #(assoc-in % [:actxs actx :collapsed]
+                                    (not (:collapsed actx-info))))
               (>! render-ch [@vis nil true nil])))
           (recur))))))
