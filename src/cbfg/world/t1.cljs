@@ -133,11 +133,11 @@
         gen-id #(swap! last-id inc)
         agw (make-ago-world nil)
         get-agw (fn [] agw)
-        step-ch (chan (dropping-buffer 1))
         event-ch (ago-chan agw)
         event-delay (atom init-event-delay)
         make-timeout-ch (fn [actx delay]
                           (ago-timeout ((:get-agw (actx-top actx))) delay))
+        step-ch (chan (dropping-buffer 1))
         render-ch (chan)
         w [{:gen-id gen-id
             :get-agw get-agw
