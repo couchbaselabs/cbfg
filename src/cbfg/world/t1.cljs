@@ -184,6 +184,7 @@
                   :chs {} ; {ch -> {:id (gen-id), :msgs {msg -> true},
                           ;         :first-taker-actx actx-or-nil}}.
                   :gen-id gen-id})]
+        (reset! run-world {:world world})
         (reset! run-net {:net-listen-ch (achan-buf world 10)
                          :net-connect-ch (achan-buf world 10)})
         (process-events vis event-delay event-ch step-ch render-ch)
