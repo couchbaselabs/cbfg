@@ -60,11 +60,11 @@
                   [21 :event [:a 21]]
                   [22 :event [:b 22]]]}))
 
-(def run-world
-  (atom {:a 10}))
+(def run-world (atom {:a 10}))
 
-(def run-world-hover
-  (atom nil))
+(def run-world-hover (atom nil))
+
+(def run-net (atom nil))
 
 ; -------------------------------------------------------------------
 
@@ -183,11 +183,13 @@
                                  }}
                   :chs {} ; {ch -> {:id (gen-id), :msgs {msg -> true},
                           ;         :first-taker-actx actx-or-nil}}.
-                  :gen-id gen-id})
-            net-listen-ch (achan-buf world 10)
-            net-connect-ch (achan-buf world 10)]
+                  :gen-id gen-id})]
+        (reset! run-net {:net-listen-ch (achan-buf world 10)
+                         :net-connect-ch (achan-buf world 10)})
         (process-events vis event-delay event-ch step-ch render-ch)
-        (make-net world net-listen-ch net-connect-ch)
+        (make-net world
+                  (:net-listen-ch @run-net)
+                  (:net-connect-ch @run-net))
         (let [prog (get-el-value "prog")
               prog-js (str "with (cbfg.world.t1) {" prog "}")
               prog-res (try (js/eval prog-js) (catch js/Object ex ex))]
