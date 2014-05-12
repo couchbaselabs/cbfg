@@ -1,7 +1,7 @@
 (ns cbfg.world.t1
   (:require-macros [cljs.core.async.macros :refer [go-loop]]
                    [cbfg.act :refer [act actx-top]])
-  (:require [cljs.core.async :refer [<! >! chan timeout dropping-buffer]]
+  (:require [cljs.core.async :refer [<! >! close! chan timeout dropping-buffer]]
             [goog.dom :as gdom]
             [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
@@ -130,6 +130,12 @@
 
 (def vis-event-handlers {})
 
+(defn process-render [render-ch]
+  (go-loop []
+    (when-let [[vis-next deltas after event-str] (<! render-ch)]
+      (println :render-ch event-str)
+      (recur))))
+
 (defn process-events [vis event-delay event-ch step-ch render-ch]
   (go-loop [num-events 0]
     (when-let [[actx [verb step & args]] (<! event-ch)]
@@ -145,44 +151,41 @@
       (recur (inc num-events)))))
 
 (defn world-vis-init [el-prefix init-event-delay]
-  (let [last-id (atom 0)
-        gen-id #(swap! last-id inc)
-        agw (make-ago-world nil)
-        get-agw (fn [] agw)
-        event-ch (ago-chan agw)
-        event-delay (atom init-event-delay)
-        make-timeout-ch (fn [actx delay]
-                          (ago-timeout ((:get-agw (actx-top actx))) delay))
+  (init-roots)
+  (let [prog-ch (listen-el (gdom/getElement "prog-go") "click")
         step-ch (chan (dropping-buffer 1))
-        render-ch (chan)
-        w [{:gen-id gen-id
-            :get-agw get-agw
-            :event-ch event-ch
-            :make-timeout-ch make-timeout-ch}]
-        world (conj w "world-0")  ; No act for world actx init to avoid recursion.
-        vis (atom {:actxs {world {:children {} ; child-actx -> true,
-                                  :wait-chs {} ; ch -> [:ghost|:take|:put optional-ch-name],
-                                  :collapsed true
-                                  ; :loop-state last-loop-bindings,
-                                  }}
-                   :chs {} ; {ch -> {:id (gen-id), :msgs {msg -> true},
-                           ;         :first-taker-actx actx-or-nil}}.
-                   :gen-id gen-id})
-        go-ch (listen-el (gdom/getElement "prog-go") "click")]
-    (init-roots)
-    (process-events vis event-delay event-ch step-ch render-ch)
-    (go-loop []
-      (when-let [[vis-next deltas after event-str] (<! render-ch)]
-        (println :render-ch event-str)
-        (recur)))
-    (go-loop []
-      (let [prog (get-el-value "prog")
-            prog-js (str "with (cbfg.world.t1) {" prog "}")]
-        (let [res (try (js/eval prog-js)
-                       (catch js/Object ex ex))]
-          (println :prog-res res)))
-      (<! go-ch)
-      (recur))))
+        render-ch (chan)]
+    (process-render render-ch)
+    (go-loop [num-worlds 0]
+      (let [last-id (atom 0)
+            gen-id #(swap! last-id inc)
+            agw (make-ago-world num-worlds)
+            get-agw (fn [] agw)
+            event-ch (ago-chan agw)
+            event-delay (atom init-event-delay)
+            make-timeout-ch (fn [actx delay]
+                              (ago-timeout ((:get-agw (actx-top actx))) delay))
+            w [{:gen-id gen-id
+                :get-agw get-agw
+                :event-ch event-ch
+                :make-timeout-ch make-timeout-ch}]
+            world (conj w "world-0")  ; No act for world actx init to avoid recursion.
+            vis (atom {:actxs {world {:children {} ; child-actx -> true,
+                                      :wait-chs {} ; ch -> [:ghost|:take|:put optional-ch-name],
+                                      :collapsed true
+                                      ; :loop-state last-loop-bindings,
+                                      }}
+                       :chs {} ; {ch -> {:id (gen-id), :msgs {msg -> true},
+                               ;         :first-taker-actx actx-or-nil}}.
+                       :gen-id gen-id})]
+        (process-events vis event-delay event-ch step-ch render-ch)
+        (let [prog (get-el-value "prog")
+              prog-js (str "with (cbfg.world.t1) {" prog "}")
+              prog-res (try (js/eval prog-js) (catch js/Object ex ex))]
+          (println :prog-res prog-res))
+        (<! prog-ch)
+        (close! event-ch)
+        (recur (inc num-worlds))))))
 
 ; --------------------------------------------
 
