@@ -1,6 +1,6 @@
 (ns cbfg.world.t1
   (:require-macros [cljs.core.async.macros :refer [go-loop]]
-                   [cbfg.act :refer [act actx-top achan-buf]])
+                   [cbfg.act :refer [act actx-top achan achan-buf aput atake]])
   (:require [cljs.core.async :refer [<! >! close! chan timeout dropping-buffer]]
             [goog.dom :as gdom]
             [om.core :as om :include-macros true]
@@ -60,13 +60,14 @@
                   [21 :event [:a 21]]
                   [22 :event [:b 22]]]}))
 
-(def run-world (atom {:a 10}))
+(def run-world       (atom {:a 10}))
 (def run-world-hover (atom nil))
 
 ; -------------------------------------------------------------------
 
-(def curr-world (atom nil))
-(def curr-net (atom nil))
+(def curr-world (atom nil)) ; { :world => world-actx
+                            ;   :net-listen-ch => ch
+                            ;   :net-connect-ch => ch }
 
 ; -------------------------------------------------------------------
 
@@ -186,13 +187,13 @@
                   :chs {} ; {ch -> {:id (gen-id), :msgs {msg -> true},
                           ;         :first-taker-actx actx-or-nil}}.
                   :gen-id gen-id})]
-        (reset! curr-world {:world world})
-        (reset! curr-net {:net-listen-ch (achan-buf world 10)
-                          :net-connect-ch (achan-buf world 10)})
+        (reset! curr-world {:world world
+                            :net-listen-ch (achan-buf world 10)
+                            :net-connect-ch (achan-buf world 10)})
         (process-events vis event-delay event-ch step-ch render-ch)
         (make-net world
-                  (:net-listen-ch @curr-net)
-                  (:net-connect-ch @curr-net))
+                  (:net-listen-ch @curr-world)
+                  (:net-connect-ch @curr-world))
         (let [prog (get-el-value "prog")
               prog-js (str "with (cbfg.world.t1) {" prog "}")
               prog-res (try (js/eval prog-js) (catch js/Object ex ex))]
@@ -203,9 +204,28 @@
 
 ; --------------------------------------------
 
+(defn wait-done [done]
+  (loop []
+    (when (not @done)
+      (cljs.core.async.impl.dispatch/process-messages)
+      (recur))))
+
 (defn kv-server [name & ports]
-  (doseq [port ports]
-    (println :kv-server name port)))
+  (let [world (:world @curr-world)
+        done (atom false)]
+    (act server-init world
+         (doseq [port ports]
+           (println :kv-server name port)
+           (when-let [listen-result-ch (achan server-init)]
+             (aput server-init (:net-listen-ch @curr-world) [name port listen-result-ch])
+             (when-let [[accept-ch close-accept-ch] (atake server-init listen-result-ch)]
+               (cbfg.world.net/server-accept-loop world accept-ch close-accept-ch))))
+         (reset! done true))
+    (wait-done done)))
 
 (defn kv-client [name & ports]
-  (println :kv-client name ports))
+  (println :kv-client name ports)
+  (let [world (:world @curr-world)
+        done (atom false)]
+    ; TODO.
+    ))
