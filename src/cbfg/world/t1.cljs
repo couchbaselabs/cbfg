@@ -176,12 +176,12 @@
         (println :render-ch event-str)
         (recur)))
     (go-loop []
-      (<! go-ch)
       (let [prog (get-el-value "prog")
             prog-js (str "with (cbfg.world.t1) {" prog "}")]
         (let [res (try (js/eval prog-js)
                        (catch js/Object ex ex))]
           (println :prog-res res)))
+      (<! go-ch)
       (recur))))
 
 ; --------------------------------------------
