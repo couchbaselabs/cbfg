@@ -1,6 +1,6 @@
 (ns cbfg.world.t1
   (:require-macros [cljs.core.async.macros :refer [go-loop]]
-                   [cbfg.act :refer [act actx-top]])
+                   [cbfg.act :refer [act actx-top achan-buf]])
   (:require [cljs.core.async :refer [<! >! close! chan timeout dropping-buffer]]
             [goog.dom :as gdom]
             [om.core :as om :include-macros true]
@@ -140,6 +140,10 @@
   (go-loop [num-events 0]
     (when-let [[actx [verb step & args]] (<! event-ch)]
       (println :event-ch (last actx) verb step)
+
+      (when true
+        (recur (inc num-events)))
+
       (let [deltas ((get (get vis-event-handlers verb) step) vis actx args)
             event-str (str num-events ": " (last actx) " " verb " " step " " args)]
         (when (and (not (zero? @event-delay)) (some #(not (:after %)) deltas))
@@ -179,8 +183,11 @@
                                  }}
                   :chs {} ; {ch -> {:id (gen-id), :msgs {msg -> true},
                           ;         :first-taker-actx actx-or-nil}}.
-                  :gen-id gen-id})]
+                  :gen-id gen-id})
+            net-listen-ch (achan-buf world 10)
+            net-connect-ch (achan-buf world 10)]
         (process-events vis event-delay event-ch step-ch render-ch)
+        (make-net world net-listen-ch net-connect-ch)
         (let [prog (get-el-value "prog")
               prog-js (str "with (cbfg.world.t1) {" prog "}")
               prog-res (try (js/eval prog-js) (catch js/Object ex ex))]
