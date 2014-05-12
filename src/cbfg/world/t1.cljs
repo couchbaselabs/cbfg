@@ -139,6 +139,7 @@
 (defn process-events [vis event-delay event-ch step-ch render-ch]
   (go-loop [num-events 0]
     (when-let [[actx [verb step & args]] (<! event-ch)]
+      (println :event-ch (last actx) verb step)
       (let [deltas ((get (get vis-event-handlers verb) step) vis actx args)
             event-str (str num-events ": " (last actx) " " verb " " step " " args)]
         (when (and (not (zero? @event-delay)) (some #(not (:after %)) deltas))
@@ -170,22 +171,23 @@
                 :event-ch event-ch
                 :make-timeout-ch make-timeout-ch}]
             world (conj w "world-0")  ; No act for world actx init to avoid recursion.
-            vis (atom {:actxs {world {:children {} ; child-actx -> true,
-                                      :wait-chs {} ; ch -> [:ghost|:take|:put optional-ch-name],
-                                      :collapsed true
-                                      ; :loop-state last-loop-bindings,
-                                      }}
-                       :chs {} ; {ch -> {:id (gen-id), :msgs {msg -> true},
-                               ;         :first-taker-actx actx-or-nil}}.
-                       :gen-id gen-id})]
+            vis (atom
+                 {:actxs {world {:children {} ; child-actx -> true,
+                                 :wait-chs {} ; ch -> [:ghost|:take|:put optional-ch-name],
+                                 :collapsed true
+                                 ; :loop-state last-loop-bindings,
+                                 }}
+                  :chs {} ; {ch -> {:id (gen-id), :msgs {msg -> true},
+                          ;         :first-taker-actx actx-or-nil}}.
+                  :gen-id gen-id})]
         (process-events vis event-delay event-ch step-ch render-ch)
         (let [prog (get-el-value "prog")
               prog-js (str "with (cbfg.world.t1) {" prog "}")
               prog-res (try (js/eval prog-js) (catch js/Object ex ex))]
-          (println :prog-res prog-res))
-        (<! prog-ch)
-        (close! event-ch)
-        (recur (inc num-worlds))))))
+          (println :prog-res prog-res)
+          (<! prog-ch)
+          (close! event-ch)
+          (recur (inc num-worlds)))))))
 
 ; --------------------------------------------
 
