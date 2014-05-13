@@ -322,39 +322,10 @@
         (when (< @event-delay 0) (<! step-ch)))
       (recur (inc num-events)))))
 
-(defn vis-init [world-init-cb el-prefix on-render-cb init-event-delay]
-  (let [last-id (atom 0)
-        gen-id #(swap! last-id inc)
-        agw (make-ago-world nil)
-        get-agw (fn [] agw)
-        step-ch (chan (dropping-buffer 1))
-        event-ch (ago-chan agw)
-        event-delay (atom init-event-delay)
-        make-timeout-ch (fn [actx delay]
-                          (ago-timeout ((:get-agw (actx-top actx))) delay))
-        render-ch (chan)
-        w [{:gen-id gen-id
-            :get-agw get-agw
-            :event-ch event-ch
-            :make-timeout-ch make-timeout-ch}]
-        world (conj w "world-0")  ; No act for world actx init to avoid recursion.
-        vis (atom {:actxs {world {:children {} ; child-actx -> true,
-                                  :wait-chs {} ; ch -> [:ghost|:take|:put optional-ch-name],
-                                  :collapsed true
-                                  ; :loop-state last-loop-bindings,
-                                  }}
-                   :chs {} ; {ch -> {:id (gen-id), :msgs {msg -> true},
-                           ;         :first-taker-actx actx-or-nil}}.
-                   :gen-id gen-id})
-        el-event (str el-prefix "-event")
+(defn process-render [el-prefix world render-ch on-render-cb]
+  (let [el-event (str el-prefix "-event")
         el-html (str el-prefix "-html")
-        el-svg (str el-prefix "-svg")
-        run-controls-ch (vis-run-controls event-delay step-ch el-prefix)]
-    (world-init-cb world {:step-ch step-ch
-                          :event-ch event-ch
-                          :render-ch render-ch
-                          :run-controls-ch run-controls-ch})
-    (process-events vis event-delay event-ch step-ch render-ch)
+        el-svg (str el-prefix "-svg")]
     (go-loop [vis-last nil       ; Process render-ch, updating U/I.
               vis-last-positions nil
               vis-last-html nil
@@ -380,14 +351,49 @@
                   (on-render-cb vis-next))
                 (when (not= vis-next-svg vis-last-svg)
                   (set-el-innerHTML el-svg vis-next-svg))
-                (recur vis-next @vis-next-positions vis-next-html vis-next-svg next-deltas)))
+                (recur vis-next @vis-next-positions vis-next-html vis-next-svg
+                       next-deltas)))
             (let [vis-next-svg
                   (apply str (flatten (vis-svg-actxs vis-last vis-last-positions
                                                      deltas false prev-deltas)))]
               (when (not= vis-next-svg vis-last-svg)
                 (set-el-innerHTML el-svg vis-next-svg))
-              (recur vis-last vis-last-positions vis-last-html vis-next-svg next-deltas))))))
-    (let [toggle-ch (listen-el (gdom/getElement el-html) "click")]
+              (recur vis-last vis-last-positions vis-last-html vis-next-svg
+                     next-deltas))))))))
+
+(defn vis-init [world-init-cb el-prefix on-render-cb init-event-delay]
+  (let [last-id (atom 0)
+        gen-id #(swap! last-id inc)
+        agw (make-ago-world nil)
+        get-agw (fn [] agw)
+        step-ch (chan (dropping-buffer 1))
+        event-ch (ago-chan agw)
+        event-delay (atom init-event-delay)
+        make-timeout-ch (fn [actx delay]
+                          (ago-timeout ((:get-agw (actx-top actx))) delay))
+        render-ch (chan)
+        w [{:gen-id gen-id
+            :get-agw get-agw
+            :event-ch event-ch
+            :make-timeout-ch make-timeout-ch}]
+        world (conj w "world-0")  ; No act for world actx init to avoid recursion.
+        vis (atom {:actxs {world {:children {} ; child-actx -> true,
+                                  :wait-chs {} ; ch -> [:ghost|:take|:put optional-ch-name],
+                                  :collapsed true
+                                  ; :loop-state last-loop-bindings,
+                                  }}
+                   :chs {} ; {ch -> {:id (gen-id), :msgs {msg -> true},
+                           ;         :first-taker-actx actx-or-nil}}.
+                   :gen-id gen-id})
+        run-controls-ch (vis-run-controls event-delay step-ch el-prefix)]
+    (world-init-cb world {:step-ch step-ch
+                          :event-ch event-ch
+                          :render-ch render-ch
+                          :run-controls-ch run-controls-ch})
+    (process-events vis event-delay event-ch step-ch render-ch)
+    (process-render el-prefix world render-ch on-render-cb)
+    (let [el-html (str el-prefix "-html")
+          toggle-ch (listen-el (gdom/getElement el-html) "click")]
       (go-loop [] ; Process toggle U/I events.
         (let [actx-id (no-prefix (.-id (.-target (<! toggle-ch))))]
           (doseq [[actx actx-info] (:actxs @vis)]

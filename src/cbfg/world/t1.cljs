@@ -192,6 +192,8 @@
       (cljs.core.async.impl.dispatch/process-messages)
       (recur))))
 
+; --------------------------------------------
+
 (defn kv-server [name & ports]
   (let [world (:world @curr-world)
         done (atom false)]

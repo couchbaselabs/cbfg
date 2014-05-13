@@ -41,6 +41,15 @@ after(8000).
         <div class="pane">
           <div class="world-map" id="world-map"></div>
           <div class="world-map-hover" id="world-map-hover"></div>
+          <div class="event">event: <div id="vis-event"></div></div>
+          <div class="vis" style="position:relative; width:100%; height:100%;">
+            <div class="vis-html" id="vis-html"
+             style="position:absolute; top:0; left:0; width:100%;">
+            </div>
+            <svg class="vis-svg" id="vis-svg"
+             style="position:absolute; top:0; left:500px; width:120px; height:100%;">
+            </svg>
+          </div>
         </div>
       </div>
       <div class="world-container" id="world-container">
