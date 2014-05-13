@@ -226,9 +226,20 @@
          (reset! done true))
     (wait-done done)))
 
-(defn kv-client [name & ports]
-  (println :kv-client name ports)
+(defn kv-client [client-addr server-addr server-port]
+  (println :kv-client client-addr server-addr server-port)
   (let [world (:world @curr-world)
         done (atom false)]
-    ; TODO.
-    ))
+    (act client-init world
+         (let [res-ch (achan client-init)
+               req-ch (cbfg.world.net/client-loop world (:net-connect-ch @curr-world)
+                                                  server-addr server-port
+                                                  client-addr res-ch)]
+           (swap! curr-world #(assoc-in % [:clients client-addr]
+                                        {:client-addr client-addr
+                                         :server-addr server-addr
+                                         :server-port server-port
+                                         :req-ch req-ch
+                                         :res-ch res-ch}))
+           (reset! done true)))
+    (wait-done done)))
