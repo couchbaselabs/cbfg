@@ -140,9 +140,7 @@
 (defn world-vis-init [el-prefix init-event-delay]
   (init-roots)
   (let [prog-ch (listen-el (gdom/getElement "prog-go") "click")
-        step-ch (chan (dropping-buffer 1))
-        render-ch (chan)]
-    (process-render render-ch)
+        step-ch (chan (dropping-buffer 1))]
     (go-loop [num-worlds 0]
       (let [last-id (atom 0)
             gen-id #(swap! last-id inc)
@@ -165,13 +163,15 @@
                                  }}
                   :chs {} ; {ch -> {:id (gen-id), :msgs {msg -> true},
                           ;         :first-taker-actx actx-or-nil}}.
-                  :gen-id gen-id})]
+                  :gen-id gen-id})
+            render-ch (chan)]
         (reset! curr-world {:world world
                             :net-listen-ch (achan-buf world 10)
                             :net-connect-ch (achan-buf world 10)
                             :servers {}
                             :clients {}})
         (cbfg.vis/process-events vis event-delay event-ch step-ch render-ch)
+        (cbfg.vis/process-render el-prefix world render-ch nil)
         (make-net world
                   (:net-listen-ch @curr-world)
                   (:net-connect-ch @curr-world))
@@ -182,6 +182,7 @@
           (println :curr-world @curr-world)
           (<! prog-ch)
           (close! event-ch)
+          (close! render-ch)
           (recur (inc num-worlds)))))))
 
 ; --------------------------------------------
