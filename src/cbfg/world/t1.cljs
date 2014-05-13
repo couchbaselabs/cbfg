@@ -131,32 +131,11 @@
 
 ; ------------------------------------------------
 
-(def vis-event-handlers {})
-
 (defn process-render [render-ch]
   (go-loop []
     (when-let [[vis-next deltas after event-str] (<! render-ch)]
       (println :render-ch event-str)
       (recur))))
-
-(defn process-events [vis event-delay event-ch step-ch render-ch]
-  (go-loop [num-events 0]
-    (when-let [[actx [verb step & args]] (<! event-ch)]
-      (println :event-ch (last actx) verb step)
-
-      (when true
-        (recur (inc num-events)))
-
-      (let [deltas ((get (get vis-event-handlers verb) step) vis actx args)
-            event-str (str num-events ": " (last actx) " " verb " " step " " args)]
-        (when (and (not (zero? @event-delay)) (some #(not (:after %)) deltas))
-          (>! render-ch [@vis deltas false event-str])
-          (when (> @event-delay 0) (<! (timeout @event-delay)))
-          (when (< @event-delay 0) (<! step-ch)))
-        (>! render-ch [@vis deltas true event-str])
-        (when (> @event-delay 0) (<! (timeout @event-delay)))
-        (when (< @event-delay 0) (<! step-ch)))
-      (recur (inc num-events)))))
 
 (defn world-vis-init [el-prefix init-event-delay]
   (init-roots)
@@ -192,7 +171,7 @@
                             :net-connect-ch (achan-buf world 10)
                             :servers {}
                             :clients {}})
-        (process-events vis event-delay event-ch step-ch render-ch)
+        (cbfg.vis/process-events vis event-delay event-ch step-ch render-ch)
         (make-net world
                   (:net-listen-ch @curr-world)
                   (:net-connect-ch @curr-world))

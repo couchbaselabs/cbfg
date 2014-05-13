@@ -308,6 +308,20 @@
 
 ;; ------------------------------------------------
 
+(defn process-events [vis event-delay event-ch step-ch render-ch]
+  (go-loop [num-events 0]
+    (when-let [[actx [verb step & args]] (<! event-ch)]
+      (let [deltas ((get (get vis-event-handlers verb) step) vis actx args)
+            event-str (str num-events ": " (last actx) " " verb " " step " " args)]
+        (when (and (not (zero? @event-delay)) (some #(not (:after %)) deltas))
+          (>! render-ch [@vis deltas false event-str])
+          (when (> @event-delay 0) (<! (timeout @event-delay)))
+          (when (< @event-delay 0) (<! step-ch)))
+        (>! render-ch [@vis deltas true event-str])
+        (when (> @event-delay 0) (<! (timeout @event-delay)))
+        (when (< @event-delay 0) (<! step-ch)))
+      (recur (inc num-events)))))
+
 (defn vis-init [world-init-cb el-prefix on-render-cb init-event-delay]
   (let [last-id (atom 0)
         gen-id #(swap! last-id inc)
@@ -340,18 +354,7 @@
                           :event-ch event-ch
                           :render-ch render-ch
                           :run-controls-ch run-controls-ch})
-    (go-loop [num-events 0]      ; Process events from world / simulation.
-      (when-let [[actx [verb step & args]] (<! event-ch)]
-        (let [deltas ((get (get vis-event-handlers verb) step) vis actx args)
-              event-str (str num-events ": " (last actx) " " verb " " step " " args)]
-          (when (and (not (zero? @event-delay)) (some #(not (:after %)) deltas))
-            (>! render-ch [@vis deltas false event-str])
-            (when (> @event-delay 0) (<! (timeout @event-delay)))
-            (when (< @event-delay 0) (<! step-ch)))
-          (>! render-ch [@vis deltas true event-str])
-          (when (> @event-delay 0) (<! (timeout @event-delay)))
-          (when (< @event-delay 0) (<! step-ch)))
-        (recur (inc num-events))))
+    (process-events vis event-delay event-ch step-ch render-ch)
     (go-loop [vis-last nil       ; Process render-ch, updating U/I.
               vis-last-positions nil
               vis-last-html nil
