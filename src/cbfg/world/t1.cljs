@@ -65,9 +65,9 @@
 
 ; -------------------------------------------------------------------
 
-(def curr-world (atom nil)) ; { :world => world-actx
-                            ;   :net-listen-ch => ch
-                            ;   :net-connect-ch => ch }
+(def curr-world (atom {})) ; { :world => world-actx
+                           ;   :net-listen-ch => ch
+                           ;   :net-connect-ch => ch }
 
 ; -------------------------------------------------------------------
 
@@ -189,7 +189,9 @@
                   :gen-id gen-id})]
         (reset! curr-world {:world world
                             :net-listen-ch (achan-buf world 10)
-                            :net-connect-ch (achan-buf world 10)})
+                            :net-connect-ch (achan-buf world 10)
+                            :servers {}
+                            :clients {}})
         (process-events vis event-delay event-ch step-ch render-ch)
         (make-net world
                   (:net-listen-ch @curr-world)
@@ -198,6 +200,7 @@
               prog-js (str "with (cbfg.world.t1) {" prog "}")
               prog-res (try (js/eval prog-js) (catch js/Object ex ex))]
           (println :prog-res prog-res)
+          (println :curr-world @curr-world)
           (<! prog-ch)
           (close! event-ch)
           (recur (inc num-worlds)))))))
@@ -215,11 +218,11 @@
         done (atom false)]
     (act server-init world
          (doseq [port ports]
-           (println :kv-server name port)
            (when-let [listen-result-ch (achan server-init)]
              (aput server-init (:net-listen-ch @curr-world) [name port listen-result-ch])
              (when-let [[accept-ch close-accept-ch] (atake server-init listen-result-ch)]
-               (cbfg.world.net/server-accept-loop world accept-ch close-accept-ch))))
+               (cbfg.world.net/server-accept-loop world accept-ch close-accept-ch)
+               (swap! curr-world #(update-in % [:servers name] conj port)))))
          (reset! done true))
     (wait-done done)))
 
