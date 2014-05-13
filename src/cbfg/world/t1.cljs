@@ -170,7 +170,8 @@
                             :net-connect-ch (achan-buf world 10)
                             :servers {}
                             :clients {}})
-        (cbfg.vis/process-events vis event-delay event-ch step-ch render-ch)
+        (cbfg.vis/process-events vis event-delay cbfg.vis/vis-event-handlers
+                                 event-ch step-ch render-ch)
         (cbfg.vis/process-render el-prefix world render-ch nil)
         (make-net world
                   (:net-listen-ch @curr-world)
