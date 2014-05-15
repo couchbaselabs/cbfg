@@ -67,7 +67,9 @@
 
 (def prog-world (atom {})) ; { :world => world-actx
                            ;   :net-listen-ch => ch
-                           ;   :net-connect-ch => ch }
+                           ;   :net-connect-ch => ch
+                           ;   :servers => { server-addr => ports }
+                           ;   :clients => client-info }
 
 ; -------------------------------------------------------------------
 
@@ -190,16 +192,17 @@
 
 ; --------------------------------------------
 
-(defn kv-server [name & ports]
+(defn kv-server [server-addr & ports]
   (let [world (:world @prog-world)
         done (atom false)]
     (act server-init world
          (doseq [port ports]
            (when-let [listen-result-ch (achan server-init)]
-             (aput server-init (:net-listen-ch @prog-world) [name port listen-result-ch])
+             (aput server-init (:net-listen-ch @prog-world)
+                   [server-addr port listen-result-ch])
              (when-let [[accept-ch close-accept-ch] (atake server-init listen-result-ch)]
                (cbfg.world.net/server-accept-loop world accept-ch close-accept-ch)
-               (swap! prog-world #(update-in % [:servers name] conj port)))))
+               (swap! prog-world #(update-in % [:servers server-addr] conj port)))))
          (reset! done true))
     (wait-done done)))
 
