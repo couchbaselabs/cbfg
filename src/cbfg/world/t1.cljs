@@ -210,7 +210,6 @@
     (wait-done done)))
 
 (defn kv-client [client-addr server-addr server-port]
-  (println :kv-client client-addr server-addr server-port)
   (let [world (:world @curr-world)
         done (atom false)]
     (act client-init world
