@@ -65,7 +65,7 @@
 
 ; -------------------------------------------------------------------
 
-(def curr-world (atom {})) ; { :world => world-actx
+(def prog-world (atom {})) ; { :world => world-actx
                            ;   :net-listen-ch => ch
                            ;   :net-connect-ch => ch }
 
@@ -159,7 +159,7 @@
                           ;         :first-taker-actx actx-or-nil}}.
                   :gen-id gen-id})
             render-ch (chan)]
-        (reset! curr-world {:world world
+        (reset! prog-world {:world world
                             :net-listen-ch (achan-buf world 10)
                             :net-connect-ch (achan-buf world 10)
                             :servers {}
@@ -168,13 +168,13 @@
                                  event-ch step-ch render-ch)
         (cbfg.vis/process-render el-prefix world render-ch nil)
         (make-net world
-                  (:net-listen-ch @curr-world)
-                  (:net-connect-ch @curr-world))
+                  (:net-listen-ch @prog-world)
+                  (:net-connect-ch @prog-world))
         (let [prog (get-el-value "prog")
               prog-js (str "with (cbfg.world.t1) {" prog "}")
               prog-res (try (js/eval prog-js) (catch js/Object ex ex))]
           (println :prog-res prog-res)
-          (println :curr-world @curr-world)
+          (println :prog-world @prog-world)
           (<! prog-ch)
           (close! event-ch)
           (close! render-ch)
@@ -191,27 +191,27 @@
 ; --------------------------------------------
 
 (defn kv-server [name & ports]
-  (let [world (:world @curr-world)
+  (let [world (:world @prog-world)
         done (atom false)]
     (act server-init world
          (doseq [port ports]
            (when-let [listen-result-ch (achan server-init)]
-             (aput server-init (:net-listen-ch @curr-world) [name port listen-result-ch])
+             (aput server-init (:net-listen-ch @prog-world) [name port listen-result-ch])
              (when-let [[accept-ch close-accept-ch] (atake server-init listen-result-ch)]
                (cbfg.world.net/server-accept-loop world accept-ch close-accept-ch)
-               (swap! curr-world #(update-in % [:servers name] conj port)))))
+               (swap! prog-world #(update-in % [:servers name] conj port)))))
          (reset! done true))
     (wait-done done)))
 
 (defn kv-client [client-addr server-addr server-port]
-  (let [world (:world @curr-world)
+  (let [world (:world @prog-world)
         done (atom false)]
     (act client-init world
          (let [res-ch (achan client-init)
-               req-ch (cbfg.world.net/client-loop world (:net-connect-ch @curr-world)
+               req-ch (cbfg.world.net/client-loop world (:net-connect-ch @prog-world)
                                                   server-addr server-port
                                                   client-addr res-ch)]
-           (swap! curr-world #(assoc-in % [:clients client-addr]
+           (swap! prog-world #(assoc-in % [:clients client-addr]
                                         {:client-addr client-addr
                                          :server-addr server-addr
                                          :server-port server-port
