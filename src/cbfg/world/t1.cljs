@@ -131,12 +131,6 @@
 
 ; ------------------------------------------------
 
-(defn process-render [render-ch]
-  (go-loop []
-    (when-let [[vis-next deltas after event-str] (<! render-ch)]
-      (println :render-ch event-str)
-      (recur))))
-
 (defn world-vis-init [el-prefix init-event-delay]
   (init-roots)
   (let [prog-ch (listen-el (gdom/getElement "prog-go") "click")
