@@ -33,7 +33,6 @@ after(8000).
     <div class="controls" id="controls">controls</div>
   </div>
   <div class="main" id="main">
-    <div class="vis" id="vis">vis</div>
     <div class="main-body">
       <div class="events-container">
         <div class="pane">
@@ -44,15 +43,18 @@ after(8000).
         <div class="pane">
           <div class="world-map" id="world-map"></div>
           <div class="world-map-hover" id="world-map-hover"></div>
-          <div class="event">event: <div id="vis-event"></div></div>
-          <div class="vis" style="position:relative; width:100%; height:100%;">
-            <div class="vis-html" id="vis-html"
-             style="position:absolute; top:0; left:0; width:100%;">
-            </div>
-            <svg class="vis-svg" id="vis-svg"
-             style="position:absolute; top:0; left:500px; width:120px; height:100%;">
-            </svg>
+        </div>
+      </div>
+      <div class="vis-container" id="vis-container">
+        <div class="vis-event" id="vis-event"></div>
+        <div class="vis" id="vis"
+            style="position:relative; width:100%; height:100%;">
+          <div class="vis-html" id="vis-html"
+              style="position:absolute; top:0; left:0; width:100%;">
           </div>
+          <svg class="vis-svg" id="vis-svg"
+              style="position:absolute; top:0; left:500px; width:120px; height:100%;">
+          </svg>
         </div>
       </div>
       <div class="world-container" id="world-container">
@@ -117,6 +119,9 @@ body {
 .run .filters {
   margin-left: 200px;
 }
+.main {
+  margin-top: 40px;
+}
 .main ul {
   margin: 0 0 0 0;
   padding: 0 0 0 10px;
@@ -157,6 +162,11 @@ body {
   width: 200px;
   z-index: 1;
 }
+.main .vis-container {
+  float: right;
+  width: 40%;
+  z-index: 1;
+}
 .main .world-map-container .pane {
   -webkit-transform: scale(0.2,0.2);
   transform: scale(0.2,0.2);
@@ -173,13 +183,7 @@ body {
 .main .vis {
     background-color: #2a2a2a;
 }
-.main .chs li {
-    background-color: #2a2a2a;
-}
-.main .event {
-    background-color: #2a2a2a;
-}
-#vis-event {
+.main .vis-container #vis-event {
     background-color: #2a2a2a;
 }
 </style>
