@@ -13,21 +13,6 @@
 
 ;; TODO: How to assign locations to world entities before rendering?
 
-(def run-controls
-  (atom {:controls
-         {"play" #(println :play)
-          "step" #(println :step)
-          "pause" #(println :pause)
-          "spawn" #(let [w (.open js/window "")
-                         h (get-el-innerHTML "main")
-                         s (get-el-innerHTML "style")]
-                     (.write (aget w "document")
-                             (str "<html><body>"
-                                  "  <div class='main'>" h "</div>"
-                                  "  <style>" s "</style>"
-                                  "</body></html>")))}
-         :speed 1.0}))
-
 (def run-history
   (atom {:snapshots {0 {}
                      10 {:a 1 :b 2 :c 3 :d 4}
@@ -73,12 +58,6 @@
 
 ; -------------------------------------------------------------------
 
-(defn render-controls[app owner]
-     (apply dom/ul nil
-            (map (fn [[k v]]
-                   (dom/li nil (dom/button #js {:onClick v} k)))
-                 (:controls app))))
-
 (defn render-world [app owner]
   (apply dom/ul nil
          (map (fn [[k v]] (dom/li nil (str k ":" v))) app)))
@@ -118,8 +97,6 @@
            (:events app)))))
 
 (defn init-roots []
-  (om/root render-controls run-controls
-           {:target (. js/document (getElementById "controls"))})
   (om/root render-world run-world
            {:target (. js/document (getElementById "world"))})
   (om/root render-world run-world
@@ -136,14 +113,15 @@
 (defn world-vis-init [el-prefix init-event-delay]
   (init-roots)
   (let [prog-ch (listen-el (gdom/getElement "prog-go") "click")
-        step-ch (chan (dropping-buffer 1))]
+        step-ch (chan (dropping-buffer 1))
+        event-delay (atom init-event-delay)]
+    (cbfg.vis/vis-run-controls event-delay step-ch "header")
     (go-loop [num-worlds 0]
       (let [last-id (atom 0)
             gen-id #(swap! last-id inc)
             agw (make-ago-world num-worlds)
             get-agw (fn [] agw)
             event-ch (ago-chan agw)
-            event-delay (atom init-event-delay)
             make-timeout-ch (fn [actx delay]
                               (ago-timeout ((:get-agw (actx-top actx))) delay))
             w [{:gen-id gen-id
