@@ -1,7 +1,8 @@
-/target
-/classes
 /checkouts
+/classes
 /out
+/target
+/tmp
 cbfg.js
 pom.xml
 pom.xml.asc
