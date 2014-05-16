@@ -31,6 +31,45 @@ after(8000).
 <div class="run">
   <div class="header">
     <div class="controls" id="header-run-controls">controls</div>
+    <div class="controls-input">
+      <label>client:</label>
+        <select id="client">
+          <option value="client-0" selected>client-0</option>
+          <option value="client-1">client-1</option>
+          <option value="client-2">client-2</option>
+        </select>
+      <br/>
+      <label>fence:</label>
+        <select id="fence">
+          <option value="0" selected>false</option>
+          <option value="1">true</option>
+        </select>
+      <br/>
+      <label>x:</label><input id="x" type="text" value="1"></input>&nbsp;
+      y:<input id="y" type="text" value="2"></input>&nbsp;
+      delay: <input id="delay" type="text" value="1000"></input>
+        <span class="units">(milliseconds)</span>
+      <br/>
+      <label>lane:</label><input id="lane" type="text" value=""></input>
+      <br/>
+      <label>color:</label>
+        <select id="color">
+          <option value="red" selected>red</option>
+          <option value="blue">blue</option>
+          <option value="green">green</option>
+          <option value="orange">orange</option>
+          <option value="purple">purple</option>
+          <option value="black">black</option>
+        </select>
+        &nbsp;
+      server next msg delay: <input id="sleep" type="text" value="5000"></input>
+        <span class="units">(milliseconds)</span>
+      <br/>
+      <button id="add">add</button>
+      <button id="sub">sub</button>
+      <button id="count">count</button>
+      <button id="close-lane">close lane</button>
+    </div>
   </div>
   <div class="main" id="main">
     <div class="main-body">
@@ -116,11 +155,22 @@ body {
   display: inline;
   margin-right: 10px;
 }
-.run .filters {
-  margin-left: 200px;
+.run .controls-input {
+  margin-top: 40px;
+  background-color: #4a4a4a;
+  padding: 20px 15px 20px 15px;
+}
+.run .controls-input label {
+  display: inline-block;
+  min-width: 3.5em;
+  text-align: right;
+}
+.run .controls-input .units {
+  color: #7a7a7a;
+  font-size: 10px;
 }
 .main {
-  margin-top: 40px;
+  margin-top: 20px;
 }
 .main ul {
   margin: 0 0 0 0;
