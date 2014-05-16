@@ -133,3 +133,5 @@ stuff to look at / learn
 - engelberge/instaparse for clojure
 - total programing
 - idris
+- brett victor
+- lighttable
