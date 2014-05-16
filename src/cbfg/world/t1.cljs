@@ -96,6 +96,12 @@
            [nil []]
            (:events app)))))
 
+(defn render-clients [app owner]
+  (apply dom/select #js {:id "client"}
+         (map (fn [client-addr]
+                (dom/option #js {:value client-addr} (str client-addr)))
+              (keys (:clients app)))))
+
 (defn init-roots []
   (om/root render-world run-world
            {:target (. js/document (getElementById "world"))})
@@ -106,7 +112,9 @@
   (om/root render-world run-world-hover
            {:target (. js/document (getElementById "world-map-hover"))})
   (om/root render-events run-history
-           {:target (. js/document (getElementById "events"))}))
+           {:target (. js/document (getElementById "events"))})
+  (om/root render-clients prog-world
+           {:target (. js/document (getElementById "controls-clients"))}))
 
 ; ------------------------------------------------
 
