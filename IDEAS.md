@@ -135,3 +135,4 @@ stuff to look at / learn
 - idris
 - brett victor
 - lighttable
+-- http://www.lighttable.com/2014/05/16/pain-we-forgot/
