@@ -13,6 +13,12 @@
 
 ;; TODO: How to assign locations to world entities before rendering?
 
+(def prog-world (atom {})) ; { :world => world-actx
+                           ;   :net-listen-ch => ch
+                           ;   :net-connect-ch => ch
+                           ;   :servers => { server-addr => ports }
+                           ;   :clients => client-info }
+
 (def run-history
   (atom {:snapshots {0 {}
                      10 {:a 1 :b 2 :c 3 :d 4}
@@ -50,14 +56,6 @@
 
 ; -------------------------------------------------------------------
 
-(def prog-world (atom {})) ; { :world => world-actx
-                           ;   :net-listen-ch => ch
-                           ;   :net-connect-ch => ch
-                           ;   :servers => { server-addr => ports }
-                           ;   :clients => client-info }
-
-; -------------------------------------------------------------------
-
 (defn render-world [app owner]
   (apply dom/ul nil
          (map (fn [[k v]] (dom/li nil (str k ":" v))) app)))
@@ -80,12 +78,11 @@
           (reduce
            (fn [[last-snapshot-ts res] [ts kind args]]
              (if (= kind :snapshot)
-               [ts
-                (conj res
-                      (dom/li #js {:className "snapshot"
-                                   :onMouseEnter #(on-event-focus ts nil)
-                                   :onMouseLeave #(on-event-blur ts nil)}
-                              (str ts)))]
+               [ts (conj res
+                         (dom/li #js {:className "snapshot"
+                                      :onMouseEnter #(on-event-focus ts nil)
+                                      :onMouseLeave #(on-event-blur ts nil)}
+                                 (str ts)))]
                [(or last-snapshot-ts ts)
                 (conj res
                       (dom/li #js {:onMouseEnter
