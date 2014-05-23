@@ -161,7 +161,6 @@
               prog-js (str "with (cbfg.world.t1) {" prog "}")
               prog-res (try (js/eval prog-js) (catch js/Object ex ex))]
           (println :prog-res prog-res)
-          (println :prog-world @prog-world)
           (<! prog-ch)
           (close! event-ch)
           (close! render-ch)
