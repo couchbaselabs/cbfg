@@ -1,15 +1,17 @@
 (ns cbfg.world.t1
   (:require-macros [cljs.core.async.macros :refer [go-loop]]
                    [cbfg.act :refer [act actx-top achan achan-buf aput atake]])
-  (:require [cljs.core.async :refer [<! >! close! chan timeout dropping-buffer]]
+  (:require [cljs.core.async :refer [<! >! close! chan map< merge timeout dropping-buffer]]
             [goog.dom :as gdom]
             [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
             [ago.core :refer [make-ago-world ago-chan ago-timeout]]
             [cbfg.vis :refer [listen-el get-el-value get-el-innerHTML]]
             [cbfg.net :refer [make-net]]
+            [cbfg.lane]
             [cbfg.world.net]
-            [cbfg.lane]))
+            [cbfg.world.lane]
+            [cbfg.world.base :refer [world-cmd-loop]]))
 
 ;; TODO: How to assign locations to world entities before rendering?
 
@@ -17,7 +19,7 @@
                            ;   :net-listen-ch => ch
                            ;   :net-connect-ch => ch
                            ;   :servers => { server-addr => ports }
-                           ;   :clients => client-info }
+                           ;   :clients => { client-addr => client-info } }
 
 (def run-history
   (atom {:snapshots {0 {}
@@ -157,11 +159,28 @@
         (make-net world
                   (:net-listen-ch @prog-world)
                   (:net-connect-ch @prog-world))
-        (let [prog (get-el-value "prog")
+        (let [req-ch (achan world)
+              res-ch (achan world)
+              vis-chs {}
+              cmd-ch (map< (fn [ev] {:op (.-id (.-target ev))
+                                     :x (js/parseInt (get-el-value "x"))
+                                     :y (js/parseInt (get-el-value "y"))
+                                     :delay (js/parseInt (get-el-value "delay"))
+                                     :fence (= (get-el-value "fence") "1")
+                                     :lane (get-el-value "lane")
+                                     :client (get-el-value "client")
+                                     :color (get-el-value "color")
+                                     :sleep (js/parseInt (get-el-value "sleep"))})
+                           (merge (map #(listen-el (gdom/getElement %) "click")
+                                       (keys cbfg.world.lane/cmd-handlers))))
+              prog (get-el-value "prog")
               prog-js (str "with (cbfg.world.t1) {" prog "}")
               prog-res (try (js/eval prog-js) (catch js/Object ex ex))]
+          (world-cmd-loop world cbfg.world.lane/cmd-handlers cmd-ch
+                          req-ch res-ch vis-chs world-vis-init el-prefix)
           (println :prog-res prog-res)
           (<! prog-ch)
+          (close! cmd-ch)
           (close! event-ch)
           (close! render-ch)
           (recur (inc num-worlds)))))))
