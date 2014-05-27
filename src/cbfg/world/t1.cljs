@@ -19,7 +19,8 @@
                            ;   :net-listen-ch => ch
                            ;   :net-connect-ch => ch
                            ;   :servers => { server-addr => ports }
-                           ;   :clients => { client-addr => client-info } }
+                           ;   :clients => { client-addr => client-info }
+                           ;   :res-ch => ch }
 
 (def run-history
   (atom {:snapshots {0 {}
@@ -152,7 +153,8 @@
                             :net-listen-ch (achan-buf world 10)
                             :net-connect-ch (achan-buf world 10)
                             :servers {}
-                            :clients {}})
+                            :clients {}
+                            :res-ch (achan-buf world 10)})
         (cbfg.vis/process-events vis event-delay cbfg.vis/vis-event-handlers
                                  event-ch step-ch render-ch)
         (cbfg.vis/process-render el-prefix world render-ch render-cb)
@@ -213,15 +215,13 @@
   (let [world (:world @prog-world)
         done (atom false)]
     (act client-init world
-         (let [res-ch (achan client-init)
-               req-ch (cbfg.world.net/client-loop world (:net-connect-ch @prog-world)
+         (let [req-ch (cbfg.world.net/client-loop world (:net-connect-ch @prog-world)
                                                   server-addr server-port
-                                                  client-addr res-ch)]
+                                                  client-addr (:res-ch @prog-world))]
            (swap! prog-world #(assoc-in % [:clients client-addr]
                                         {:client-addr client-addr
                                          :server-addr server-addr
                                          :server-port server-port
-                                         :req-ch req-ch
-                                         :res-ch res-ch}))
+                                         :req-ch req-ch}))
            (reset! done true)))
     (wait-done done)))
