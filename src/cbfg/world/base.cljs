@@ -87,23 +87,23 @@
     (act-loop cmd-loop actx [num-requests 0 num-responses 0]
               (let [[v ch] (aalts cmd-loop [cmd-ch res-ch])
                     ts (+ num-requests num-responses)]
-                (cond
-                 (= ch cmd-ch)
-                 (if (= (:op v) "replay")
-                   (world-replay req-ch vis-chs world-vis-init el-prefix
-                                 @client-hist (:replay-to v))
-                   (let [cmd (assoc-in v [:opaque] ts)
-                         cmd-rq ((get cmd-handlers (:op cmd)) cmd)]
-                     (render-client-hist (swap! client-hist
-                                                #(assoc % ts [cmd nil])))
-                     (aput cmd-loop req-ch cmd-rq)
-                     (recur (inc num-requests) num-responses)))
-                 (= ch res-ch)
-                 (when v
-                   (render-client-hist (swap! client-hist
-                                              #(update-in % [(:opaque v) 1]
-                                                          conj [ts v])))
-                   (recur num-requests (inc num-responses))))))))
+                (when v
+                  (cond
+                   (= ch cmd-ch)
+                   (if (= (:op v) "replay")
+                     (world-replay req-ch vis-chs world-vis-init el-prefix
+                                   @client-hist (:replay-to v))
+                     (let [cmd (assoc-in v [:opaque] ts)
+                           cmd-rq ((get cmd-handlers (:op cmd)) cmd)]
+                       (render-client-hist (swap! client-hist
+                                                  #(assoc % ts [cmd nil])))
+                       (aput cmd-loop req-ch cmd-rq)
+                       (recur (inc num-requests) num-responses)))
+                   (= ch res-ch)
+                   (do (render-client-hist (swap! client-hist
+                                                  #(update-in % [(:opaque v) 1]
+                                                              conj [ts v])))
+                       (recur num-requests (inc num-responses)))))))))
 
 ;; ------------------------------------------------
 
