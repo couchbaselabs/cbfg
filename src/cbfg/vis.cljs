@@ -206,7 +206,7 @@
         actx-y (fn [actx] (* line-height (+ 0.5 (get positions (last actx)))))]
     ["<defs>"
      "<marker id='triangle' viewBox='0 0 10 10' refX='0' refY='5' orient='auto'"
-     " markerUnits='1' markerWidth='4' markerHeight='3'>"
+     " markerWidth='4' markerHeight='3'>"
      " <path d='M 0 0 L 10 5 L 0 10 z'/></marker>"
      "</defs>"
      (mapv (fn [[after deltas]] ; First paint old trails so they're underneath new lines.
