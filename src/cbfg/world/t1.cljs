@@ -145,7 +145,7 @@
                   :chs {} ; {ch -> {:id (gen-id), :msgs {msg -> true},
                           ;         :first-taker-actx actx-or-nil}}.
                   :gen-id gen-id})
-            render-ch (chan)
+            delayed-event-ch (chan)
             render-cb (fn [vis-next]
                         (println :on-render-cb @last-id))]
         (reset! prog-world {:world world
@@ -155,8 +155,8 @@
                             :clients {}
                             :res-ch (achan-buf world 10)})
         (cbfg.vis/process-events vis event-delay cbfg.vis/vis-event-handlers
-                                 event-ch step-ch render-ch)
-        (cbfg.vis/process-render el-prefix world render-ch render-cb)
+                                 event-ch step-ch delayed-event-ch)
+        (cbfg.vis/process-render el-prefix world delayed-event-ch render-cb)
         (make-net world
                   (:net-listen-ch @prog-world)
                   (:net-connect-ch @prog-world))
@@ -183,7 +183,7 @@
           (<! prog-ch)
           (close! cmd-ch)
           (close! event-ch)
-          (close! render-ch)
+          (close! delayed-event-ch)
           (recur (inc num-worlds)))))))
 
 ; --------------------------------------------
