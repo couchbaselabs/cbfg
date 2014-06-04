@@ -1,6 +1,6 @@
-;; Wrappers around core.async that track parent-child relationships
-;; and provide events.  Useful for building things like visualizations
-;; and simulations.
+;; These "act" wrappers around ago provide parent-child tracking and
+;; event hooks.  Useful for building things like visualizations and
+;; simulations.  (ago ehances core.async with snapshots/rollback.)
 
 (ns cbfg.act
   (:require [cljs.core.async.macros :refer [go]]
@@ -10,12 +10,12 @@
   `(first ~actx))
 
 (defmacro actx-agw [actx]
-  `((:get-agw (actx-top ~actx))))
+  `((:get-agw (actx-top ~actx)))) ; The 'agw' means 'ago world'.
 
 (defmacro actx-event [actx event]
   `(cljs.core.async/>! (:event-ch (actx-top ~actx)) [~actx ~event]))
 
-(defmacro act [child-actx-binding-name actx & body]
+(defmacro act [child-actx-binding-name actx & body] ; Use 'act' instead of 'go'.
   `(let [act-ch# (achan-buf ~actx 1)
          act-id# ((:gen-id (actx-top ~actx)))
          ~child-actx-binding-name (conj ~actx
@@ -31,6 +31,7 @@
      act-ch#))
 
 (defmacro act-loop [child-actx-binding-name actx bindings & body]
+  ; Use 'act-loop' instead of 'go-loop'.
   (let [m (->> bindings
                (partition 2)
                (map first)
@@ -41,7 +42,7 @@
                         [:act-loop :loop-state (sorted-map ~@m)])
             ~@body))))
 
-(defmacro achan [actx]
+(defmacro achan [actx] ; Use 'achan' instead of 'chan'.
   `(achan-buf ~actx nil))
 
 (defmacro achan-buf [actx buf-or-size]
