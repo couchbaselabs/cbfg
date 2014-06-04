@@ -122,8 +122,8 @@
   (init-roots)
   (let [prog-ch (listen-el (gdom/getElement "prog-go") "click")
         step-ch (chan (dropping-buffer 1))
-        event-delay (atom init-event-delay)]
-    (cbfg.vis/vis-run-controls event-delay step-ch "header")
+        event-delay (atom init-event-delay)
+        run-controls-ch (cbfg.vis/vis-run-controls event-delay step-ch "header")]
     (go-loop [num-worlds 0]
       (let [last-id (atom 0)
             gen-id #(swap! last-id inc)
