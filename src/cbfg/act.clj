@@ -1,6 +1,6 @@
 ;; These "act" wrappers around ago provide parent-child tracking and
 ;; event hooks.  Useful for building things like visualizations and
-;; simulations.  (ago ehances core.async with snapshots/rollback.)
+;; simulations.  (ago enhances core.async with snapshots/rollback.)
 
 (ns cbfg.act
   (:require [cljs.core.async.macros :refer [go]]
