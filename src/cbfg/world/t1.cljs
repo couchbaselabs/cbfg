@@ -130,8 +130,7 @@
             agw (make-ago-world num-worlds)
             get-agw (fn [] agw)
             event-ch (ago-chan agw)
-            make-timeout-ch (fn [actx delay]
-                              (ago-timeout ((:get-agw (actx-top actx))) delay))
+            make-timeout-ch (fn [actx delay] (ago-timeout agw delay))
             w [{:gen-id gen-id
                 :get-agw get-agw
                 :event-ch event-ch
