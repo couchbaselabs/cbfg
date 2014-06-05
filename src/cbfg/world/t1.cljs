@@ -130,6 +130,7 @@
             agw (make-ago-world num-worlds)
             get-agw (fn [] agw)
             event-ch (ago-chan agw)
+            event-run-ch (chan)
             make-timeout-ch (fn [actx delay] (ago-timeout agw delay))
             ; Init the top actx manually to avoid act recursion.
             w [{:gen-id gen-id
@@ -146,7 +147,6 @@
                   :chs {} ; {ch -> {:id (gen-id), :msgs {msg -> true},
                           ;         :first-taker-actx actx-or-nil}}.
                   :gen-id gen-id})
-            delayed-event-ch (chan)
             delayed-event-cb (fn [vis-next]
                                (println :on-delayed-event-cb @last-id))]
         (reset! prog-world {:world world
@@ -156,8 +156,8 @@
                             :clients {}
                             :res-ch (achan-buf world 10)})
         (cbfg.vis/process-events vis event-delay cbfg.vis/vis-event-handlers
-                                 event-ch step-ch delayed-event-ch)
-        (cbfg.vis/process-render el-prefix world delayed-event-ch delayed-event-cb)
+                                 event-ch step-ch event-run-ch)
+        (cbfg.vis/process-render el-prefix world event-run-ch delayed-event-cb)
         (make-net world
                   (:net-listen-ch @prog-world)
                   (:net-connect-ch @prog-world))
@@ -194,14 +194,14 @@
                 (when (= actx-id (last actx))
                   (swap! vis #(assoc-in % [:actxs actx :collapsed]
                                         (not (:collapsed actx-info))))
-                  (>! delayed-event-ch [@vis nil true nil])))
+                  (>! event-run-ch [@vis nil true nil])))
               (recur)))
           (<! prog-ch)
           (close! expand-ch)
           (close! cmd-ch)
           (close! req-ch)
           (close! event-ch)
-          (close! delayed-event-ch)
+          (close! event-run-ch)
           (recur (inc num-worlds)))))))
 
 ; --------------------------------------------
