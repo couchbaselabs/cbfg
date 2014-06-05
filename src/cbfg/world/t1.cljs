@@ -174,6 +174,7 @@
                                      :sleep (js/parseInt (get-el-value "sleep"))})
                            (merge (map #(listen-el (gdom/getElement %) "click")
                                        (keys cbfg.world.lane/cmd-handlers))))
+              expand-ch (listen-el (gdom/getElement (str el-prefix "-html")) "click")
               prog (get-el-value "prog")
               prog-js (str "with (cbfg.world.t1) {" prog "}")
               prog-res (try (js/eval prog-js) (catch js/Object ex ex))]
@@ -187,7 +188,16 @@
                         (aput cmd-dispatch-loop client-req-ch msg))
                       (recur (inc num-dispatches))))
           (println :prog-res prog-res)
+          (go-loop [] ; Process expand/collapse UI events.
+            (let [actx-id (cbfg.vis/no-prefix (.-id (.-target (<! expand-ch))))]
+              (doseq [[actx actx-info] (:actxs @vis)]
+                (when (= actx-id (last actx))
+                  (swap! vis #(assoc-in % [:actxs actx :collapsed]
+                                        (not (:collapsed actx-info))))
+                  (>! delayed-event-ch [@vis nil true nil])))
+              (recur)))
           (<! prog-ch)
+          (close! expand-ch)
           (close! cmd-ch)
           (close! req-ch)
           (close! event-ch)
