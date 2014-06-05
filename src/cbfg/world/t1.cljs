@@ -131,11 +131,12 @@
             get-agw (fn [] agw)
             event-ch (ago-chan agw)
             make-timeout-ch (fn [actx delay] (ago-timeout agw delay))
+            ; Init the top actx manually to avoid act recursion.
             w [{:gen-id gen-id
                 :get-agw get-agw
                 :event-ch event-ch
                 :make-timeout-ch make-timeout-ch}]
-            world (conj w "world-0")  ; No act for world actx init to avoid recursion.
+            world (conj w "world-0")
             vis (atom
                  {:actxs {world {:children {} ; child-actx -> true,
                                  :wait-chs {} ; ch -> [:ghost|:take|:put optional-ch-name],
@@ -146,8 +147,8 @@
                           ;         :first-taker-actx actx-or-nil}}.
                   :gen-id gen-id})
             delayed-event-ch (chan)
-            render-cb (fn [vis-next]
-                        (println :on-render-cb @last-id))]
+            delayed-event-cb (fn [vis-next]
+                               (println :on-delayed-event-cb @last-id))]
         (reset! prog-world {:world world
                             :net-listen-ch (achan-buf world 10)
                             :net-connect-ch (achan-buf world 10)
@@ -156,7 +157,7 @@
                             :res-ch (achan-buf world 10)})
         (cbfg.vis/process-events vis event-delay cbfg.vis/vis-event-handlers
                                  event-ch step-ch delayed-event-ch)
-        (cbfg.vis/process-render el-prefix world delayed-event-ch render-cb)
+        (cbfg.vis/process-render el-prefix world delayed-event-ch delayed-event-cb)
         (make-net world
                   (:net-listen-ch @prog-world)
                   (:net-connect-ch @prog-world))
