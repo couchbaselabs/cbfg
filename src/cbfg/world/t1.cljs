@@ -1,6 +1,6 @@
 (ns cbfg.world.t1
   (:require-macros [cljs.core.async.macros :refer [go-loop]]
-                   [cbfg.act :refer [act actx-top achan achan-buf aput atake]])
+                   [cbfg.act :refer [act act-loop actx-top achan achan-buf aput atake]])
   (:require [cljs.core.async :refer [<! >! close! chan map< merge timeout dropping-buffer]]
             [goog.dom :as gdom]
             [om.core :as om :include-macros true]
@@ -161,9 +161,8 @@
         (make-net world
                   (:net-listen-ch @prog-world)
                   (:net-connect-ch @prog-world))
-        (let [req-ch (achan world)
-              res-ch (achan world)
-              vis-chs {}
+        (let [vis-chs {}
+              req-ch (achan world)
               cmd-ch (map< (fn [ev] {:op (.-id (.-target ev))
                                      :x (js/parseInt (get-el-value "x"))
                                      :y (js/parseInt (get-el-value "y"))
@@ -179,10 +178,18 @@
               prog-js (str "with (cbfg.world.t1) {" prog "}")
               prog-res (try (js/eval prog-js) (catch js/Object ex ex))]
           (world-cmd-loop world cbfg.world.lane/cmd-handlers cmd-ch
-                          req-ch res-ch vis-chs world-vis-init el-prefix)
+                          req-ch (:res-ch @prog-world)
+                          vis-chs world-vis-init el-prefix)
+          (act-loop cmd-dispatch-loop world [num-dispatches 0]
+                    (when-let [msg (atake cmd-dispatch-loop req-ch)]
+                      (when-let [client-req-ch
+                                 (get-in @prog-world [:clients (:client msg) :req-ch])]
+                        (aput cmd-dispatch-loop client-req-ch msg))
+                      (recur (inc num-dispatches))))
           (println :prog-res prog-res)
           (<! prog-ch)
           (close! cmd-ch)
+          (close! req-ch)
           (close! event-ch)
           (close! delayed-event-ch)
           (recur (inc num-worlds)))))))
