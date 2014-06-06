@@ -184,6 +184,13 @@
 
 ; --------------------------------------------
 
+(defn prog-event [f]
+  (swap! prog-history #(let [ph (f %)]
+                         (update-in ph [:prog-events]
+                                    conj [(count (:prog-events ph))
+                                          :event
+                                          (:prog-peers ph)]))))
+
 (defn kv-server [server-addr & ports]
   (let [world (:world @prog-base)
         done (atom false)]
@@ -194,13 +201,8 @@
                    [server-addr port listen-result-ch])
              (when-let [[accept-ch close-accept-ch] (atake server-init listen-result-ch)]
                (cbfg.world.net/server-accept-loop world accept-ch close-accept-ch)
-               (swap! prog-history
-                      #(let [ph (update-in % [:prog-peers :servers server-addr]
-                                           conj port)]
-                         (update-in ph [:prog-events] conj
-                                    [(count (:prog-events ph))
-                                     :event
-                                     (:prog-peers ph)]))))))
+               (prog-event #(update-in % [:prog-peers :servers server-addr]
+                                       conj port)))))
          (reset! done true))
     (wait-done done)))
 
@@ -211,15 +213,10 @@
          (let [req-ch (cbfg.world.net/client-loop world (:net-connect-ch @prog-base)
                                                   server-addr server-port
                                                   client-addr (:res-ch @prog-base))]
-           (swap! prog-history
-                  #(let [ph (assoc-in % [:prog-peers :clients client-addr]
-                                      {:client-addr client-addr
-                                       :server-addr server-addr
-                                       :server-port server-port
-                                       :req-ch req-ch})]
-                     (update-in ph [:prog-events] conj
-                                [(count (:prog-events ph))
-                                 :event
-                                 (:prog-peers ph)]))))
-           (reset! done true))
+           (prog-event #(assoc-in % [:prog-peers :clients client-addr]
+                                  {:client-addr client-addr
+                                   :server-addr server-addr
+                                   :server-port server-port
+                                   :req-ch req-ch})))
+         (reset! done true))
     (wait-done done)))
