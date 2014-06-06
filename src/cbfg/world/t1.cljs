@@ -19,52 +19,35 @@
                           ;   :res-ch => ch }
 
 (def prog-history
-  (atom {:snapshots {0 {}
-                     10 {:a 1 :b 2 :c 3 :d 4}
-                     20 {:a 11 :b 22 :c 33 :d 44}}
-         :prog-peers {:servers {}  ; { server-addr => ports }
-                      :clients {}} ; { client-addr => client-info }
-         :prog-events []}))
+  (atom {:prog-peers {:servers {}  ; { server-addr => ports }.
+                      :clients {}} ; { client-addr => client-info }.
+         :prog-events []})) ; Each event is [ts label args].
 
-(def run-world       (atom {:a 10}))
+(def run-world       (atom nil))
 (def run-world-hover (atom nil))
 
 ; -------------------------------------------------------------------
 
 (defn render-world [app owner]
   (apply dom/ul nil
-         (map (fn [[k v]] (dom/li nil (str k ":" v))) app)))
+         (map (fn [[k v]] (dom/li nil (str k ":" v)))
+              (:prog-peers app))))
 
-(defn on-event-focus [snapshot-ts event-ts]
-  (when-let [ss (get-in @prog-history [:snapshots snapshot-ts])]
-    (reset! run-world-hover ss)
-    (.add gdom/classes (gdom/getElement "world-container") "hover")))
+(defn on-event-focus [ts label args]
+  (reset! run-world-hover args)
+  (.add gdom/classes (gdom/getElement "world-container") "hover"))
 
-(defn on-event-blur [snapshot-ts event-ts]
+(defn on-event-blur []
   (reset! run-world-hover nil)
   (.remove gdom/classes (gdom/getElement "world-container") "hover"))
 
 (defn render-events [app owner]
   (apply dom/ul nil
-         (second
-          (reduce
-           (fn [[last-snapshot-ts res] [ts kind args]]
-             (if (= kind :snapshot)
-               [ts (conj res
-
-                         (dom/li #js {:className "snapshot"
-                                      :onMouseEnter #(on-event-focus ts nil)
-                                      :onMouseLeave #(on-event-blur ts nil)}
-                                 (str ts)))]
-               [(or last-snapshot-ts ts)
-                (conj res
-                      (dom/li #js {:onMouseEnter
-                                   #(on-event-focus last-snapshot-ts ts)
-                                   :onMouseLeave
-                                   #(on-event-blur last-snapshot-ts ts)}
-                              (str ts (pr-str args))))]))
-           [nil []]
-           (:prog-events app)))))
+         (map (fn [[ts label args]]
+                (dom/li #js {:onMouseEnter #(on-event-focus ts label args)
+                             :onMouseLeave #(on-event-blur)}
+                        (str ts label args)))
+              (:prog-events app))))
 
 (defn render-clients [app owner]
   (apply dom/select #js {:id "client"}
@@ -184,12 +167,12 @@
 
 ; --------------------------------------------
 
-(defn prog-event [f]
+(defn prog-event [label f]
   (swap! prog-history #(let [ph (f %)]
                          (update-in ph [:prog-events]
                                     conj [(count (:prog-events ph))
-                                          :event
-                                          (:prog-peers ph)]))))
+                                          label
+                                          {:prog-peers (:prog-peers ph)}]))))
 
 (defn kv-server [server-addr & ports]
   (let [world (:world @prog-base)
@@ -201,7 +184,8 @@
                    [server-addr port listen-result-ch])
              (when-let [[accept-ch close-accept-ch] (atake server-init listen-result-ch)]
                (cbfg.world.net/server-accept-loop world accept-ch close-accept-ch)
-               (prog-event #(update-in % [:prog-peers :servers server-addr]
+               (prog-event :kv-server
+                           #(update-in % [:prog-peers :servers server-addr]
                                        conj port)))))
          (reset! done true))
     (wait-done done)))
@@ -213,7 +197,8 @@
          (let [req-ch (cbfg.world.net/client-loop world (:net-connect-ch @prog-base)
                                                   server-addr server-port
                                                   client-addr (:res-ch @prog-base))]
-           (prog-event #(assoc-in % [:prog-peers :clients client-addr]
+           (prog-event :kv-client
+                       #(assoc-in % [:prog-peers :clients client-addr]
                                   {:client-addr client-addr
                                    :server-addr server-addr
                                    :server-port server-port
