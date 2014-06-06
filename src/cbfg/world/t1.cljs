@@ -30,7 +30,7 @@
 
 (defn render-world [app owner]
   (apply dom/ul nil
-         (map (fn [[k v]] (dom/li nil (str k ":" v)))
+         (map (fn [[k v]] (dom/li nil (str k ":" (count v))))
               (:prog-peers app))))
 
 (defn on-event-focus [ts label args]
@@ -46,7 +46,7 @@
          (map (fn [[ts label args]]
                 (dom/li #js {:onMouseEnter #(on-event-focus ts label args)
                              :onMouseLeave #(on-event-blur)}
-                        (str ts label args)))
+                        (str ts (apply str label) args)))
               (:prog-events app))))
 
 (defn render-clients [app owner]
@@ -184,7 +184,7 @@
                    [server-addr port listen-result-ch])
              (when-let [[accept-ch close-accept-ch] (atake server-init listen-result-ch)]
                (cbfg.world.net/server-accept-loop world accept-ch close-accept-ch)
-               (prog-event :kv-server
+               (prog-event [:kv-server server-addr port]
                            #(update-in % [:prog-peers :servers server-addr]
                                        conj port)))))
          (reset! done true))
@@ -197,7 +197,7 @@
          (let [req-ch (cbfg.world.net/client-loop world (:net-connect-ch @prog-base)
                                                   server-addr server-port
                                                   client-addr (:res-ch @prog-base))]
-           (prog-event :kv-client
+           (prog-event [:kv-client client-addr server-addr server-port]
                        #(assoc-in % [:prog-peers :clients client-addr]
                                   {:client-addr client-addr
                                    :server-addr server-addr
