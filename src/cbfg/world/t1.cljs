@@ -15,44 +15,21 @@
 
 ;; TODO: How to assign locations to world entities before rendering?
 
-(def prog-world (atom {})) ; { :world => world-actx
-                           ;   :net-listen-ch => ch
-                           ;   :net-connect-ch => ch
-                           ;   :servers => { server-addr => ports }
-                           ;   :clients => { client-addr => client-info }
-                           ;   :res-ch => ch }
-
-(def run-history
+(def prog-history
   (atom {:snapshots {0 {}
                      10 {:a 1 :b 2 :c 3 :d 4}
                      20 {:a 11 :b 22 :c 33 :d 44}}
-         :events [[0 :snapshot]
-                  [1 :event [:a 1]]
-                  [2 :event [:b 2]]
-                  [3 :event [:c 3]]
-                  [4 :event [:d 4]]
-                  [10 :snapshot]
-                  [11 :event [:a 11]]
-                  [12 :event [:b 22]]
-                  [13 :event [:c 33]]
-                  [14 :event [:d 44]]
-                  [20 :snapshot]
-                  [21 :event [:a 21]]
-                  [22 :event [:b 22]]
-
-                  [0 :snapshot]
-                  [1 :event [:a 1]]
-                  [2 :event [:b 2]]
-                  [3 :event [:c 3]]
-                  [4 :event [:d 4]]
-                  [10 :snapshot]
-                  [11 :event [:a 11]]
-                  [12 :event [:b 22]]
-                  [13 :event [:c 33]]
-                  [14 :event [:d 44]]
-                  [20 :snapshot]
-                  [21 :event [:a 21]]
-                  [22 :event [:b 22]]]}))
+         :prog-world {} ; { :world => world-actx
+                        ;   :net-listen-ch => ch
+                        ;   :net-connect-ch => ch
+                        ;   :servers => { server-addr => ports }
+                        ;   :clients => { client-addr => client-info }
+                        ;   :res-ch => ch }
+         :prog-events [[0 :snapshot]
+                       [1 :event [:a 1]]
+                       [2 :event [:b 2]]
+                       [3 :event [:c 3]]
+                       [4 :event [:d 4]]]}))
 
 (def run-world       (atom {:a 10}))
 (def run-world-hover (atom nil))
@@ -64,7 +41,7 @@
          (map (fn [[k v]] (dom/li nil (str k ":" v))) app)))
 
 (defn on-event-focus [snapshot-ts event-ts]
-  (when-let [ss (get-in @run-history [:snapshots snapshot-ts])]
+  (when-let [ss (get-in @prog-history [:snapshots snapshot-ts])]
     (reset! run-world-hover ss)
     (.add gdom/classes (gdom/getElement "world-container") "hover")))
 
@@ -91,13 +68,13 @@
                                    #(on-event-blur last-snapshot-ts ts)}
                               (str ts (pr-str args))))]))
            [nil []]
-           (:events app)))))
+           (:prog-events app)))))
 
 (defn render-clients [app owner]
   (apply dom/select #js {:id "client"}
          (map (fn [client-addr]
                 (dom/option #js {:value client-addr} (str client-addr)))
-              (keys (:clients app)))))
+              (keys (:clients (:prog-world app))))))
 
 (defn init-roots []
   (om/root render-world run-world
@@ -108,9 +85,9 @@
            {:target (. js/document (getElementById "world-hover"))})
   (om/root render-world run-world-hover
            {:target (. js/document (getElementById "world-map-hover"))})
-  (om/root render-events run-history
+  (om/root render-events prog-history
            {:target (. js/document (getElementById "events"))})
-  (om/root render-clients prog-world
+  (om/root render-clients prog-history
            {:target (. js/document (getElementById "controls-clients"))}))
 
 ; ------------------------------------------------
@@ -146,21 +123,20 @@
                   :gen-id gen-id})
             delayed-event-cb (fn [vis-next]
                                (println :on-delayed-event-cb @last-id))]
-        (reset! prog-world {:world world
-                            :net-listen-ch (achan-buf world 10)
-                            :net-connect-ch (achan-buf world 10)
-                            :servers {}
-                            :clients {}
-                            :res-ch (achan-buf world 10)})
+        (swap! prog-history
+               #(assoc % :prog-world
+                       {:world world
+                        :net-listen-ch (achan-buf world 10)
+                        :net-connect-ch (achan-buf world 10)
+                        :servers {}
+                        :clients {}
+                        :res-ch (achan-buf world 10)}))
         (cbfg.vis/process-events vis event-delay cbfg.vis/vis-event-handlers
                                  event-ch step-ch event-run-ch)
         (cbfg.vis/process-render el-prefix world event-run-ch delayed-event-cb)
-        ;;; (go-loop [vis-ts]
-        ;;; (when-let [[vis-next deltas after event-str] (<! event-run-ch)]
-        ;;; (recur (inc vis-ts))))
         (make-net world
-                  (:net-listen-ch @prog-world)
-                  (:net-connect-ch @prog-world))
+                  (:net-listen-ch (:prog-world @prog-history))
+                  (:net-connect-ch (:prog-world @prog-history)))
         (let [vis-chs {}
               req-ch (achan world)
               cmd-ch (map< (fn [ev] {:op (.-id (.-target ev))
@@ -179,12 +155,13 @@
               prog-js (str "with (cbfg.world.t1) {" prog "}")
               prog-res (try (js/eval prog-js) (catch js/Object ex ex))]
           (world-cmd-loop world cbfg.world.lane/cmd-handlers cmd-ch
-                          req-ch (:res-ch @prog-world)
+                          req-ch (:res-ch (:prog-world @prog-history))
                           vis-chs world-vis-init el-prefix)
           (act-loop cmd-dispatch-loop world [num-dispatches 0]
                     (when-let [msg (atake cmd-dispatch-loop req-ch)]
                       (when-let [client-req-ch
-                                 (get-in @prog-world [:clients (:client msg) :req-ch])]
+                                 (get-in @prog-history
+                                         [:prog-world :clients (:client msg) :req-ch])]
                         (aput cmd-dispatch-loop client-req-ch msg))
                       (recur (inc num-dispatches))))
           (println :prog-res prog-res)
@@ -215,30 +192,43 @@
 ; --------------------------------------------
 
 (defn kv-server [server-addr & ports]
-  (let [world (:world @prog-world)
+  (let [prog-world (:prog-world @prog-history)
+        world (:world prog-world)
         done (atom false)]
     (act server-init world
          (doseq [port ports]
            (when-let [listen-result-ch (achan server-init)]
-             (aput server-init (:net-listen-ch @prog-world)
+             (aput server-init (:net-listen-ch prog-world)
                    [server-addr port listen-result-ch])
              (when-let [[accept-ch close-accept-ch] (atake server-init listen-result-ch)]
                (cbfg.world.net/server-accept-loop world accept-ch close-accept-ch)
-               (swap! prog-world #(update-in % [:servers server-addr] conj port)))))
+               (swap! prog-history
+                      #(let [ph (update-in % [:prog-world :servers server-addr]
+                                           conj port)]
+                         (update-in ph [:prog-events] conj
+                                    [(count (:prog-events ph))
+                                     :event
+                                     (:prog-world ph)]))))))
          (reset! done true))
     (wait-done done)))
 
 (defn kv-client [client-addr server-addr server-port]
-  (let [world (:world @prog-world)
+  (let [prog-world (:prog-world @prog-history)
+        world (:world prog-world)
         done (atom false)]
     (act client-init world
-         (let [req-ch (cbfg.world.net/client-loop world (:net-connect-ch @prog-world)
+         (let [req-ch (cbfg.world.net/client-loop world (:net-connect-ch prog-world)
                                                   server-addr server-port
-                                                  client-addr (:res-ch @prog-world))]
-           (swap! prog-world #(assoc-in % [:clients client-addr]
-                                        {:client-addr client-addr
-                                         :server-addr server-addr
-                                         :server-port server-port
-                                         :req-ch req-ch}))
-           (reset! done true)))
+                                                  client-addr (:res-ch prog-world))]
+           (swap! prog-history
+                  #(let [ph (assoc-in % [:prog-world :clients client-addr]
+                                      {:client-addr client-addr
+                                       :server-addr server-addr
+                                       :server-port server-port
+                                       :req-ch req-ch})]
+                     (update-in ph [:prog-events] conj
+                                [(count (:prog-events ph))
+                                 :event
+                                 (:prog-world ph)]))))
+           (reset! done true))
     (wait-done done)))
