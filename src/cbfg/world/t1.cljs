@@ -63,9 +63,6 @@
   (apply dom/ul nil
          (map (fn [[k v]] (dom/li nil (str k ":" v))) app)))
 
-(defn render-snapshot [app owner ss-ts]
-  (render-world (get-in app [:snapshots ss-ts] nil) owner))
-
 (defn on-event-focus [snapshot-ts event-ts]
   (when-let [ss (get-in @run-history [:snapshots snapshot-ts])]
     (reset! run-world-hover ss)
@@ -158,6 +155,9 @@
         (cbfg.vis/process-events vis event-delay cbfg.vis/vis-event-handlers
                                  event-ch step-ch event-run-ch)
         (cbfg.vis/process-render el-prefix world event-run-ch delayed-event-cb)
+        ;;; (go-loop [vis-ts]
+        ;;; (when-let [[vis-next deltas after event-str] (<! event-run-ch)]
+        ;;; (recur (inc vis-ts))))
         (make-net world
                   (:net-listen-ch @prog-world)
                   (:net-connect-ch @prog-world))
