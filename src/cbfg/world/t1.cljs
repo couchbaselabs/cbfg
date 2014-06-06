@@ -13,23 +13,18 @@
             [cbfg.world.lane]
             [cbfg.world.base :refer [world-cmd-loop]]))
 
-;; TODO: How to assign locations to world entities before rendering?
+(def prog-base (atom {})) ; { :world => world-actx
+                          ;   :net-listen-ch => ch
+                          ;   :net-connect-ch => ch
+                          ;   :res-ch => ch }
 
 (def prog-history
   (atom {:snapshots {0 {}
                      10 {:a 1 :b 2 :c 3 :d 4}
                      20 {:a 11 :b 22 :c 33 :d 44}}
-         :prog-world {} ; { :world => world-actx
-                        ;   :net-listen-ch => ch
-                        ;   :net-connect-ch => ch
-                        ;   :servers => { server-addr => ports }
-                        ;   :clients => { client-addr => client-info }
-                        ;   :res-ch => ch }
-         :prog-events [[0 :snapshot]
-                       [1 :event [:a 1]]
-                       [2 :event [:b 2]]
-                       [3 :event [:c 3]]
-                       [4 :event [:d 4]]]}))
+         :prog-peers {:servers {}  ; { server-addr => ports }
+                      :clients {}} ; { client-addr => client-info }
+         :prog-events []}))
 
 (def run-world       (atom {:a 10}))
 (def run-world-hover (atom nil))
@@ -56,6 +51,7 @@
            (fn [[last-snapshot-ts res] [ts kind args]]
              (if (= kind :snapshot)
                [ts (conj res
+
                          (dom/li #js {:className "snapshot"
                                       :onMouseEnter #(on-event-focus ts nil)
                                       :onMouseLeave #(on-event-blur ts nil)}
@@ -74,7 +70,7 @@
   (apply dom/select #js {:id "client"}
          (map (fn [client-addr]
                 (dom/option #js {:value client-addr} (str client-addr)))
-              (keys (:clients (:prog-world app))))))
+              (keys (:clients (:prog-peers app))))))
 
 (defn init-roots []
   (om/root render-world run-world
@@ -123,20 +119,16 @@
                   :gen-id gen-id})
             delayed-event-cb (fn [vis-next]
                                (println :on-delayed-event-cb @last-id))]
-        (swap! prog-history
-               #(assoc % :prog-world
-                       {:world world
-                        :net-listen-ch (achan-buf world 10)
-                        :net-connect-ch (achan-buf world 10)
-                        :servers {}
-                        :clients {}
-                        :res-ch (achan-buf world 10)}))
+        (reset! prog-base {:world world
+                           :net-listen-ch (achan-buf world 10)
+                           :net-connect-ch (achan-buf world 10)
+                           :res-ch (achan-buf world 10)})
         (cbfg.vis/process-events vis event-delay cbfg.vis/vis-event-handlers
                                  event-ch step-ch event-run-ch)
         (cbfg.vis/process-render el-prefix world event-run-ch delayed-event-cb)
         (make-net world
-                  (:net-listen-ch (:prog-world @prog-history))
-                  (:net-connect-ch (:prog-world @prog-history)))
+                  (:net-listen-ch @prog-base)
+                  (:net-connect-ch @prog-base))
         (let [vis-chs {}
               req-ch (achan world)
               cmd-ch (map< (fn [ev] {:op (.-id (.-target ev))
@@ -155,16 +147,17 @@
               prog-js (str "with (cbfg.world.t1) {" prog "}")
               prog-res (try (js/eval prog-js) (catch js/Object ex ex))]
           (world-cmd-loop world cbfg.world.lane/cmd-handlers cmd-ch
-                          req-ch (:res-ch (:prog-world @prog-history))
+                          req-ch (:res-ch @prog-base)
                           vis-chs world-vis-init el-prefix)
           (act-loop cmd-dispatch-loop world [num-dispatches 0]
                     (when-let [msg (atake cmd-dispatch-loop req-ch)]
                       (when-let [client-req-ch
                                  (get-in @prog-history
-                                         [:prog-world :clients (:client msg) :req-ch])]
+                                         [:prog-peers :clients (:client msg) :req-ch])]
                         (aput cmd-dispatch-loop client-req-ch msg))
                       (recur (inc num-dispatches))))
           (println :prog-res prog-res)
+          (println :prog-history prog-history)
           (go-loop [] ; Process expand/collapse UI events.
             (let [actx-id (cbfg.vis/no-prefix (.-id (.-target (<! expand-ch))))]
               (doseq [[actx actx-info] (:actxs @vis)]
@@ -192,36 +185,34 @@
 ; --------------------------------------------
 
 (defn kv-server [server-addr & ports]
-  (let [prog-world (:prog-world @prog-history)
-        world (:world prog-world)
+  (let [world (:world @prog-base)
         done (atom false)]
     (act server-init world
          (doseq [port ports]
            (when-let [listen-result-ch (achan server-init)]
-             (aput server-init (:net-listen-ch prog-world)
+             (aput server-init (:net-listen-ch @prog-base)
                    [server-addr port listen-result-ch])
              (when-let [[accept-ch close-accept-ch] (atake server-init listen-result-ch)]
                (cbfg.world.net/server-accept-loop world accept-ch close-accept-ch)
                (swap! prog-history
-                      #(let [ph (update-in % [:prog-world :servers server-addr]
+                      #(let [ph (update-in % [:prog-peers :servers server-addr]
                                            conj port)]
                          (update-in ph [:prog-events] conj
                                     [(count (:prog-events ph))
                                      :event
-                                     (:prog-world ph)]))))))
+                                     (:prog-peers ph)]))))))
          (reset! done true))
     (wait-done done)))
 
 (defn kv-client [client-addr server-addr server-port]
-  (let [prog-world (:prog-world @prog-history)
-        world (:world prog-world)
+  (let [world (:world @prog-base)
         done (atom false)]
     (act client-init world
-         (let [req-ch (cbfg.world.net/client-loop world (:net-connect-ch prog-world)
+         (let [req-ch (cbfg.world.net/client-loop world (:net-connect-ch @prog-base)
                                                   server-addr server-port
-                                                  client-addr (:res-ch prog-world))]
+                                                  client-addr (:res-ch @prog-base))]
            (swap! prog-history
-                  #(let [ph (assoc-in % [:prog-world :clients client-addr]
+                  #(let [ph (assoc-in % [:prog-peers :clients client-addr]
                                       {:client-addr client-addr
                                        :server-addr server-addr
                                        :server-port server-port
@@ -229,6 +220,6 @@
                      (update-in ph [:prog-events] conj
                                 [(count (:prog-events ph))
                                  :event
-                                 (:prog-world ph)]))))
+                                 (:prog-peers ph)]))))
            (reset! done true))
     (wait-done done)))
