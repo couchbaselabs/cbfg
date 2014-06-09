@@ -18,13 +18,13 @@
                           ;   :net-connect-ch => ch
                           ;   :res-ch => ch }
 
-(def prog-frame ; The last / current prog-frame.
+(def prog-curr ; The current prog-frame.
   (atom {:servers {}    ; { server-addr => ports }.
          :clients {}})) ; { client-addr => client-info }.
 
-(def prog-frame-hover (atom nil))
+(def prog-hover (atom nil)) ; A past prog-frame while hovering over prog-history.
 
-(def prog-history (atom [])) ; Each event is [ts label @prog-frame].
+(def prog-history (atom [])) ; Each event is [ts label prog-frame].
 
 ; -------------------------------------------------------------------
 
@@ -34,11 +34,11 @@
               prog-frame)))
 
 (defn on-event-focus [ts label prog-frame]
-  (reset! prog-frame-hover prog-frame)
+  (reset! prog-hover prog-frame)
   (.add gdom/classes (gdom/getElement "world-container") "hover"))
 
 (defn on-event-blur []
-  (reset! prog-frame-hover nil)
+  (reset! prog-hover nil)
   (.remove gdom/classes (gdom/getElement "world-container") "hover"))
 
 (defn render-events [app owner]
@@ -56,17 +56,17 @@
               (keys (:clients app)))))
 
 (defn init-roots []
-  (om/root render-prog-frame prog-frame
+  (om/root render-prog-frame prog-curr
            {:target (. js/document (getElementById "world"))})
-  (om/root render-prog-frame prog-frame
+  (om/root render-prog-frame prog-curr
            {:target (. js/document (getElementById "world-map"))})
-  (om/root render-prog-frame prog-frame-hover
+  (om/root render-prog-frame prog-hover
            {:target (. js/document (getElementById "world-hover"))})
-  (om/root render-prog-frame prog-frame-hover
+  (om/root render-prog-frame prog-hover
            {:target (. js/document (getElementById "world-map-hover"))})
   (om/root render-events prog-history
            {:target (. js/document (getElementById "events"))})
-  (om/root render-clients prog-frame
+  (om/root render-clients prog-curr
            {:target (. js/document (getElementById "controls-clients"))}))
 
 ; ------------------------------------------------
@@ -135,7 +135,7 @@
           (act-loop cmd-dispatch-loop world [num-dispatches 0]
                     (when-let [msg (atake cmd-dispatch-loop req-ch)]
                       (when-let [client-req-ch
-                                 (get-in @prog-frame [:clients (:client msg) :req-ch])]
+                                 (get-in @prog-curr [:clients (:client msg) :req-ch])]
                         (aput cmd-dispatch-loop client-req-ch msg))
                       (recur (inc num-dispatches))))
           (println :prog-res prog-res)
@@ -166,8 +166,8 @@
 
 ; --------------------------------------------
 
-(defn prog-event [label f]
-  (let [pc (swap! prog-frame f)]
+(defn prog-event [label fn]
+  (let [pc (swap! prog-curr fn)]
     (swap! prog-history #(conj % [(count %) label pc]))))
 
 (defn kv-server [server-addr & ports]
