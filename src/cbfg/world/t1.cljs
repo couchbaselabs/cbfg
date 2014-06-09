@@ -33,19 +33,19 @@
          (map (fn [[k v]] (dom/li nil (str k ":" (count v))))
               prog-frame)))
 
-(defn on-event-focus [ts label prog-frame]
+(defn on-prog-frame-focus [ts label prog-frame]
   (reset! prog-hover prog-frame)
   (.add gdom/classes (gdom/getElement "world-container") "hover"))
 
-(defn on-event-blur []
+(defn on-prog-frame-blur []
   (reset! prog-hover nil)
   (.remove gdom/classes (gdom/getElement "world-container") "hover"))
 
 (defn render-events [app owner]
   (apply dom/ul nil
          (map (fn [[ts label prog-frame]]
-                (dom/li #js {:onMouseEnter #(on-event-focus ts label prog-frame)
-                             :onMouseLeave #(on-event-blur)}
+                (dom/li #js {:onMouseEnter #(on-prog-frame-focus ts label prog-frame)
+                             :onMouseLeave #(on-prog-frame-blur)}
                         (str ts (apply str label) prog-frame)))
               app)))
 
