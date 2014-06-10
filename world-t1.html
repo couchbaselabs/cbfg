@@ -4,11 +4,14 @@
 </head>
 <body>
 <div class="prog">
-  <textarea id="prog">
+  <textarea id="prog-in">
 kv_server("serverA", 8000, 8100)
 kv_server("serverB", 8000)
 
-kv_client("client-0", "serverA", 8000)</textarea>
+kv_client("client-0", "serverA", 8000)
+kv_client("client-1", "serverA", 8000)
+kv_client("client-2", "serverA", 8000)
+</textarea>
 <!--
 kv_client("clientX", "serverA:8000")
 kv_client("clientY", "serverA:8100")
@@ -82,10 +85,10 @@ after(8000).
           <div class="events" id="events"></div>
         </div>
       </div>
-      <div class="world-map-container" id="world-map-container">
+      <div class="prog-map-container" id="prog-map-container">
         <div class="pane">
-          <div class="world-map" id="world-map"></div>
-          <div class="world-map-hover" id="world-map-hover"></div>
+          <div class="prog-map" id="prog-map"></div>
+          <div class="prog-map-hover" id="prog-map-hover"></div>
         </div>
       </div>
       <div class="vis-container" id="vis-container">
@@ -101,10 +104,10 @@ after(8000).
           </svg>
         </div>
       </div>
-      <div class="world-container" id="world-container">
+      <div class="prog-container" id="prog-container">
         <div class="pane">
-          <div class="world" id="world"></div>
-          <div class="world-hover" id="world-hover"></div>
+          <div class="prog" id="prog"></div>
+          <div class="prog-hover" id="prog-hover"></div>
         </div>
       </div>
     </div>
@@ -214,7 +217,7 @@ body {
   background-color: #a2a2a2;
   color: #2a2a2a;
 }
-.main .world-map-container {
+.main .prog-map-container {
   float: right;
   width: 200px;
   z-index: 1;
@@ -224,17 +227,17 @@ body {
   width: 40%;
   z-index: 1;
 }
-.main .world-map-container .pane {
+.main .prog-map-container .pane {
   -webkit-transform: scale(0.2,0.2);
   transform: scale(0.2,0.2);
 }
-.main .world-container {
+.main .prog-container {
   width: 80%;
 }
-.main .hover .world, .main .hover .world-map {
+.main .hover .prog, .main .hover .prog-map {
   opacity: 0.5;
 }
-.main .world-hover {
+.main .prog-hover {
   color: #8282a2;
 }
 .main .vis {
