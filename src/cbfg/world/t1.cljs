@@ -1,6 +1,7 @@
 (ns cbfg.world.t1
   (:require-macros [cljs.core.async.macros :refer [go-loop]]
-                   [cbfg.act :refer [act act-loop actx-top achan achan-buf aput atake]])
+                   [cbfg.act :refer [act act-loop actx-top achan achan-buf
+                                     aalts aput atake]])
   (:require [cljs.core.async :refer [<! >! close! chan map< merge timeout dropping-buffer]]
             [goog.dom :as gdom]
             [om.core :as om :include-macros true]
@@ -24,9 +25,14 @@
                      :net-connect-ch (achan-buf world 10)
                      :res-ch (achan-buf world 10)})
   (reset! prog-curr {:servers {}   ; { server-addr => ports }.
-                     :clients {}}) ; { client-addr => client-info }.
+                     :clients {}   ; { client-addr => client-info }.
+                     :reqs    {}}) ; { opaque-ts => [req, [[reply-ts reply] ...] }.
   (reset! prog-hover nil)
   (reset! prog-history []))
+
+(defn prog-event [label fn]
+  (let [pc (swap! prog-curr fn)]
+    (swap! prog-history #(conj % [(count %) label pc]))))
 
 ; -------------------------------------------------------------------
 
@@ -75,10 +81,8 @@
 
 (defn world-vis-init [el-prefix init-event-delay]
   (init-roots)
-  (let [event-delay (atom init-event-delay)
-        step-ch (chan (dropping-buffer 1))
-        prog-ch (listen-el (gdom/getElement "prog-go") "click")
-        cmd-ch (map< (fn [ev] {:op (.-id (.-target ev))
+  (let [req-handlers cbfg.world.lane/cmd-handlers
+        req-ch (map< (fn [ev] {:op (.-id (.-target ev))
                                :x (js/parseInt (get-el-value "x"))
                                :y (js/parseInt (get-el-value "y"))
                                :delay (js/parseInt (get-el-value "delay"))
@@ -88,7 +92,10 @@
                                :color (get-el-value "color")
                                :sleep (js/parseInt (get-el-value "sleep"))})
                      (merge (map #(listen-el (gdom/getElement %) "click")
-                                 (keys cbfg.world.lane/cmd-handlers))))
+                                 (keys req-handlers))))
+        event-delay (atom init-event-delay)
+        step-ch (chan (dropping-buffer 1))
+        prog-ch (listen-el (gdom/getElement "prog-go") "click")
         run-controls-ch (cbfg.vis/vis-run-controls event-delay step-ch "header")]
     (go-loop [num-worlds 0]
       (let [last-id (atom 0)
@@ -122,22 +129,31 @@
         (make-net world
                   (:net-listen-ch @prog-base)
                   (:net-connect-ch @prog-base))
-        (let [vis-chs {}
-              req-ch (achan world)
+        (let [res-ch (:res-ch @prog-base)
               expand-ch (listen-el (gdom/getElement (str el-prefix "-html")) "click")
               prog-in (get-el-value "prog-in")
               prog-js (str "with (cbfg.world.t1) {" prog-in "}")
               prog-res (try (js/eval prog-js) (catch js/Object ex ex))]
           (println :prog-res prog-res)
-          (world-cmd-loop world cbfg.world.lane/cmd-handlers cmd-ch
-                          req-ch (:res-ch @prog-base)
-                          vis-chs world-vis-init el-prefix)
-          (act-loop cmd-dispatch-loop world [num-dispatches 0]
-                    (when-let [msg (atake cmd-dispatch-loop req-ch)]
-                      (when-let [client-req-ch
-                                 (get-in @prog-curr [:clients (:client msg) :req-ch])]
-                        (aput cmd-dispatch-loop client-req-ch msg))
-                      (recur (inc num-dispatches))))
+          (act-loop main-loop world [num-requests 0 num-responses 0]
+                    (let [[v ch] (aalts main-loop [req-ch res-ch])
+                          ts (+ num-requests num-responses)]
+                      (when v
+                        (if (= ch req-ch)
+                          (if (= (:op v) "replay")
+                            (println "TODO-REPLAY-IMPL")
+                            (let [req ((get req-handlers (:op v)) (assoc v :opaque ts))]
+                              (when-let [client-req-ch
+                                         (get-in @prog-curr
+                                                 [:clients (:client req) :req-ch])]
+                                (prog-event [:req] #(assoc-in % [:reqs ts] [req nil]))
+                                (cbfg.world.base/render-client-hist (:reqs @prog-curr))
+                                (aput main-loop client-req-ch req)
+                                (recur (inc num-requests) num-responses))))
+                          (do (prog-event [:res] #(update-in % [:reqs (:opaque v) 1]
+                                                             conj [ts v]))
+                              (cbfg.world.base/render-client-hist (:reqs @prog-curr))
+                              (recur num-requests (inc num-responses)))))))
           (go-loop [] ; Process expand/collapse UI events.
             (when-let [ev (<! expand-ch)]
               (let [actx-id (cbfg.vis/no-prefix (.-id (.-target ev)))]
@@ -148,11 +164,10 @@
                     (>! event-run-ch [@vis nil true nil])))
                 (recur))))
           (<! prog-ch)
-          (close! req-ch)
           (close! expand-ch)
           (close! event-run-ch)
           (close! event-ch)
-          (close! (:res-ch @prog-base))
+          (close! res-ch)
           (recur (inc num-worlds)))))))
 
 ; --------------------------------------------
@@ -164,10 +179,6 @@
       (recur))))
 
 ; --------------------------------------------
-
-(defn prog-event [label fn]
-  (let [pc (swap! prog-curr fn)]
-    (swap! prog-history #(conj % [(count %) label pc]))))
 
 (defn kv-server [server-addr & ports]
   (let [world (:world @prog-base)
