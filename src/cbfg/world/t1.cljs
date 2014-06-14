@@ -6,7 +6,7 @@
             [goog.dom :as gdom]
             [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
-            [ago.core :refer [make-ago-world ago-chan ago-timeout]]
+            [ago.core :refer [make-ago-world ago-chan ago-timeout ago-snapshot]]
             [cbfg.vis :refer [listen-el get-el-value get-el-innerHTML]]
             [cbfg.net :refer [make-net]]
             [cbfg.lane]
@@ -17,7 +17,7 @@
 (def prog-base    (atom {}))  ; Stable parts of prog.
 (def prog-curr    (atom {}))  ; The current prog-frame.
 (def prog-hover   (atom nil)) ; A past prog-frame while hovering over prog-history.
-(def prog-history (atom []))  ; Each event is [ts label prog-frame].
+(def prog-history (atom []))  ; Each event is [ts label prog-frame agw-snapshot].
 
 (defn prog-init [world]
   (reset! prog-base {:world world
@@ -30,9 +30,10 @@
   (reset! prog-hover nil)
   (reset! prog-history []))
 
-(defn prog-event [label fn]
-  (let [pc (swap! prog-curr fn)]
-    (swap! prog-history #(conj % [(count %) label pc]))))
+(defn prog-event [world label fn]
+  (let [prog-frame (swap! prog-curr fn)
+        ago-ss (ago-snapshot ((:get-agw (first world))))]
+    (swap! prog-history #(conj % [(count %) label prog-frame ago-ss]))))
 
 ; -------------------------------------------------------------------
 
@@ -40,6 +41,9 @@
   (apply dom/ul nil
          (map (fn [[k v]] (dom/li nil (str k ":" (count v))))
               prog-frame)))
+
+(defn on-prog-frame-click [ts label prog-frame]
+  (println :on-prog-frame-click ts label))
 
 (defn on-prog-frame-focus [ts label prog-frame]
   (reset! prog-hover prog-frame)
@@ -51,8 +55,9 @@
 
 (defn render-events [app owner]
   (apply dom/ul nil
-         (map (fn [[ts label prog-frame]]
-                (dom/li #js {:onMouseEnter #(on-prog-frame-focus ts label prog-frame)
+         (map (fn [[ts label prog-frame ago-ss]]
+                (dom/li #js {:onClick #(on-prog-frame-click ts label prog-frame)
+                             :onMouseEnter #(on-prog-frame-focus ts label prog-frame)
                              :onMouseLeave #(on-prog-frame-blur)}
                         (str ts (apply str label) prog-frame)))
               app)))
@@ -146,12 +151,12 @@
                               (when-let [client-req-ch
                                          (get-in @prog-curr
                                                  [:clients (:client req) :req-ch])]
-                                (prog-event [:req] #(assoc-in % [:reqs ts] [req nil]))
+                                (prog-event world [:req] #(assoc-in % [:reqs ts] [req nil]))
                                 (cbfg.world.base/render-client-hist (:reqs @prog-curr))
                                 (aput main-loop client-req-ch req)
                                 (recur (inc num-requests) num-responses))))
-                          (do (prog-event [:res] #(update-in % [:reqs (:opaque v) 1]
-                                                             conj [ts v]))
+                          (do (prog-event world [:res] #(update-in % [:reqs (:opaque v) 1]
+                                                                   conj [ts v]))
                               (cbfg.world.base/render-client-hist (:reqs @prog-curr))
                               (recur num-requests (inc num-responses)))))))
           (go-loop [] ; Process expand/collapse UI events.
@@ -190,7 +195,7 @@
                    [server-addr port listen-result-ch])
              (when-let [[accept-ch close-accept-ch] (atake server-init listen-result-ch)]
                (cbfg.world.net/server-accept-loop world accept-ch close-accept-ch)
-               (prog-event [:kv-server server-addr port]
+               (prog-event world [:kv-server server-addr port]
                            #(update-in % [:servers server-addr]
                                        conj port)))))
          (reset! done true))
@@ -203,7 +208,7 @@
          (let [req-ch (cbfg.world.net/client-loop world (:net-connect-ch @prog-base)
                                                   server-addr server-port
                                                   client-addr (:res-ch @prog-base))]
-           (prog-event [:kv-client client-addr server-addr server-port]
+           (prog-event world [:kv-client client-addr server-addr server-port]
                        #(assoc-in % [:clients client-addr]
                                   {:client-addr client-addr
                                    :server-addr server-addr
