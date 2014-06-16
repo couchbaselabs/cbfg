@@ -6,7 +6,8 @@
             [goog.dom :as gdom]
             [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
-            [ago.core :refer [make-ago-world ago-chan ago-timeout ago-snapshot]]
+            [ago.core :refer [make-ago-world ago-chan ago-timeout
+                              ago-snapshot ago-restore]]
             [cbfg.vis :refer [listen-el get-el-value get-el-innerHTML]]
             [cbfg.net :refer [make-net]]
             [cbfg.lane]
@@ -14,10 +15,11 @@
             [cbfg.world.lane]
             [cbfg.world.base :refer [world-cmd-loop]]))
 
-(def prog-base    (atom {}))  ; Stable parts of prog.
+(def prog-base    (atom {}))  ; Stable parts of prog, even during time-travel.
 (def prog-curr    (atom {}))  ; The current prog-frame.
 (def prog-hover   (atom nil)) ; A past prog-frame while hovering over prog-history.
-(def prog-history (atom []))  ; Each event is [ts label prog-frame agw-snapshot].
+(def prog-history (atom []))  ; Each event is [ts label prog-frame].
+(def prog-ss      (atom {}))  ; ts => agw-snapshot.
 
 (defn prog-init [world]
   (reset! prog-base {:world world
@@ -30,10 +32,11 @@
   (reset! prog-hover nil)
   (reset! prog-history []))
 
-(defn prog-event [world label fn]
-  (let [prog-frame (swap! prog-curr fn)
-        ago-ss (ago-snapshot ((:get-agw (first world))))]
-    (swap! prog-history #(conj % [(count %) label prog-frame ago-ss]))))
+(defn prog-event [world label prog-frame-fn]
+  (let [prog-next (swap! prog-curr prog-frame-fn)
+        ts (count @prog-history)]
+    (swap! prog-history #(conj % [ts label prog-next]))
+    (swap! prog-ss #(assoc % ts (ago-snapshot ((:get-agw (first world))))))))
 
 ; -------------------------------------------------------------------
 
@@ -42,8 +45,12 @@
          (map (fn [[k v]] (dom/li nil (str k ":" (count v))))
               prog-frame)))
 
-(defn on-prog-frame-click [ts label prog-frame]
-  (println :on-prog-frame-click ts label))
+(defn on-prog-frame-restore [ts label prog-frame]
+  ; Time-travel to the past if snapshot is available.
+  (when-let [ago-ss (get @prog-ss ts)]
+    (reset! prog-curr prog-frame)
+    (swap! prog-history #(vec (take (+ ts 1) %)))
+    (ago-restore ((:get-agw (first (:world @prog-base)))) ago-ss)))
 
 (defn on-prog-frame-focus [ts label prog-frame]
   (reset! prog-hover prog-frame)
@@ -55,8 +62,8 @@
 
 (defn render-events [app owner]
   (apply dom/ul nil
-         (map (fn [[ts label prog-frame ago-ss]]
-                (dom/li #js {:onClick #(on-prog-frame-click ts label prog-frame)
+         (map (fn [[ts label prog-frame]]
+                (dom/li #js {:onClick #(on-prog-frame-restore ts label prog-frame)
                              :onMouseEnter #(on-prog-frame-focus ts label prog-frame)
                              :onMouseLeave #(on-prog-frame-blur)}
                         (str ts (apply str label) prog-frame)))
