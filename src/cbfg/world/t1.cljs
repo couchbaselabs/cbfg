@@ -2,7 +2,8 @@
   (:require-macros [cljs.core.async.macros :refer [go-loop]]
                    [cbfg.act :refer [act act-loop actx-top achan achan-buf
                                      aalts aput atake]])
-  (:require [cljs.core.async :refer [<! >! close! chan map< merge timeout dropping-buffer]]
+  (:require [cljs.core.async :refer [<! >! close! chan map< merge timeout
+                                     dropping-buffer]]
             [goog.dom :as gdom]
             [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
@@ -200,7 +201,8 @@
            (when-let [listen-result-ch (achan server-init)]
              (aput server-init (:net-listen-ch @prog-base)
                    [server-addr port listen-result-ch])
-             (when-let [[accept-ch close-accept-ch] (atake server-init listen-result-ch)]
+             (when-let [[accept-ch close-accept-ch]
+                        (atake server-init listen-result-ch)]
                (cbfg.world.net/server-accept-loop world accept-ch close-accept-ch)
                (prog-event world [:kv-server server-addr port]
                            #(update-in % [:servers server-addr]
