@@ -51,9 +51,12 @@
 (defn on-prog-frame-restore [ts label prog-frame]
   ; Time-travel to the past if snapshot is available.
   (when-let [ago-ss (get @prog-ss ts)]
-    (reset! prog-curr prog-frame)
+    (ago-restore (actx-agw (:world @prog-base)) ago-ss)
     (swap! prog-history #(vec (take (+ ts 1) %)))
-    (ago-restore (actx-agw (:world @prog-base)) ago-ss)))
+    ; TODO: This prog-frame deref is strange, as it turned into a
+    ; om.core/MapCursor somehow during the event handler rather
+    ; an the expected prog-frame dict.
+    (reset! prog-curr @prog-frame)))
 
 (defn on-prog-frame-focus [ts label prog-frame]
   (reset! prog-hover prog-frame)
