@@ -153,8 +153,8 @@
               prog-js (str "with (cbfg.world.t1) {" prog-in "}")
               prog-res (try (js/eval prog-js) (catch js/Object ex ex))]
           (println :prog-res prog-res)
-          (act-loop main-loop world [num-requests 0 num-responses 0]
-                    (let [[v ch] (aalts main-loop [req-ch res-ch])
+          (go-loop [num-requests 0 num-responses 0]
+                    (let [[v ch] (alts! [req-ch res-ch])
                           ts (+ num-requests num-responses)]
                       (when v
                         (if (= ch req-ch)
@@ -166,7 +166,7 @@
                                                  [:clients (:client req) :req-ch])]
                                 (prog-event world [:req] #(assoc-in % [:reqs ts] [req nil]))
                                 (cbfg.world.base/render-client-hist (:reqs @prog-curr))
-                                (aput main-loop client-req-ch req)
+                                (>! client-req-ch req)
                                 (recur (inc num-requests) num-responses))))
                           (do (prog-event world [:res] #(update-in % [:reqs (:opaque v) 1]
                                                                    conj [ts v]))
