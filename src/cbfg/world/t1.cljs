@@ -16,6 +16,8 @@
             [cbfg.world.lane]
             [cbfg.world.base :refer [world-cmd-loop]]))
 
+(defn actx-agw [actx] ((:get-agw (first actx))))
+
 (def prog-base    (atom {}))  ; Stable parts of prog, even during time-travel.
 (def prog-curr    (atom {}))  ; The current prog-frame.
 (def prog-hover   (atom nil)) ; A past prog-frame while hovering over prog-history.
@@ -37,7 +39,7 @@
   (let [prog-next (swap! prog-curr prog-frame-fn)
         ts (count @prog-history)]
     (swap! prog-history #(conj % [ts label prog-next]))
-    (swap! prog-ss #(assoc % ts (ago-snapshot ((:get-agw (first world))))))))
+    (swap! prog-ss #(assoc % ts (ago-snapshot (actx-agw world))))))
 
 ; -------------------------------------------------------------------
 
@@ -51,7 +53,7 @@
   (when-let [ago-ss (get @prog-ss ts)]
     (reset! prog-curr prog-frame)
     (swap! prog-history #(vec (take (+ ts 1) %)))
-    (ago-restore ((:get-agw (first (:world @prog-base)))) ago-ss)))
+    (ago-restore (actx-agw (:world @prog-base)) ago-ss)))
 
 (defn on-prog-frame-focus [ts label prog-frame]
   (reset! prog-hover prog-frame)
