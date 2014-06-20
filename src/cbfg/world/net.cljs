@@ -17,6 +17,7 @@
                               cbfg.world.lane/make-fenced-pump-lane)
     (act-loop fenced-pump-lane-in actx [num-ins 0]
               (let [msg (atake fenced-pump-lane-in server-recv-ch)]
+                (println :fenced-pump-lane-in msg)
                 (aput fenced-pump-lane-in fenced-pump-lane-in-ch msg)
                 (when (> (:sleep msg) 0)
                   (let [sleep-ch (atimeout fenced-pump-lane-in (:sleep msg))]
@@ -41,11 +42,13 @@
   (let [cmd-ch (achan actx)]
     (act client-loop actx
          (let [connect-result-ch (achan client-loop)]
-           (aput client-loop connect-ch [server-addr server-port client-addr connect-result-ch])
+           (aput client-loop connect-ch [server-addr server-port
+                                         client-addr connect-result-ch])
            (when-let [[client-send-ch client-recv-ch close-client-recv-ch]
                       (atake client-loop connect-result-ch)]
              (act-loop client-loop-in actx [num-ins 0]
                        (when-let [msg (atake client-loop-in cmd-ch)]
+                         (println :client-loop-in-msg msg)
                          (aput client-loop-in client-send-ch [msg])
                          (recur (inc num-ins))))
              (act-loop client-loop-out actx [num-outs 0]
@@ -55,7 +58,8 @@
     cmd-ch))
 
 (defn render-msg [msg class-extra style-extra]
-  ["<div class='msg " class-extra "' style='color:" (:color msg) "; " style-extra "'>&#9679;"
+  ["<div class='msg " class-extra
+   "' style='color:" (:color msg) "; " style-extra "'>&#9679;"
    "<div class='result'>" (:result msg) "</div></div>"])
 
 (defn render-msgs [curr-msgs prev-msgs dist line-height]
@@ -77,7 +81,9 @@
               (rest prev-msgs)
               moving
               (conj out (render-msg prev-msg "msg-exit"
-                                    ["top:" (max 40 (- dist (* line-height (count out)) 70)) "px;"])))
+                                    ["top:" (max 40 (- dist (* line-height
+                                                               (count out)) 70))
+                                     "px;"])))
        :else
        (recur (rest curr-msgs)
               prev-msgs
@@ -97,23 +103,29 @@
         (swap! addrs #(assoc-in % [(:client-addr stream) :outs
                                    [(:accept-addr stream) (:accept-port stream)]
                                    [(:client-port stream)
-                                    (:server-addr stream) (:server-port stream)]] (:msgs stream)))
+                                    (:server-addr stream) (:server-port stream)]]
+                                (:msgs stream)))
         (swap! addrs #(assoc-in % [(:server-addr stream) :outs
                                    [(:accept-addr stream) (:accept-port stream)]
                                    [(:server-port stream)
-                                    (:client-addr stream) (:client-port stream)]] (:msgs stream)))))
+                                    (:client-addr stream) (:client-port stream)]]
+                                (:msgs stream)))))
     (let [naddrs (count @addrs) ; Assign coords.
           conns (sort (mapcat (fn [[addr addr-v]]
-                                (mapcat (fn [[[accept-addr accept-port] accept-addr-port-v]]
+                                (mapcat (fn [[[accept-addr accept-port]
+                                              accept-addr-port-v]]
                                           (map (fn [[[from-port to-addr to-port] msgs]]
                                                  [(not= addr accept-addr)
-                                                  addr accept-addr accept-port from-port])
+                                                  addr accept-addr accept-port
+                                                  from-port])
                                                accept-addr-port-v))
                                         (:outs addr-v)))
                               @addrs))]
       (doall (map-indexed (fn [addr-idx [addr addr-v]]
-                            (swap! coords #(assoc % addr
-                                                  [addr-idx (rem (* (dec naddrs) addr-idx) naddrs)])))
+                            (swap! coords
+                                   #(assoc % addr
+                                           [addr-idx (rem (* (dec naddrs) addr-idx)
+                                                          naddrs)])))
               (sort-by first @addrs)))
       (reduce (fn [prev [is-client addr accept-addr accept-port port]]
                 (let [idx (if (= (first prev) addr) (second prev) 0)]
@@ -128,7 +140,8 @@
           calc-xy (fn [addr] (let [[c0 c1] (get coords addr)]
                                [(* addr-width c0 (/ (+ addr-width addr-gap) addr-width))
                                 (* top-height c1)]))
-          h ["<div style='height:" (apply max (map #(count (:outs %)) (vals @addrs))) "em;'>"
+          h ["<div style='height:" (apply max (map #(count (:outs %))
+                                                   (vals @addrs))) "em;'>"
              (mapv (fn [[addr addr-v]]
                      (let [[addr-x addr-y] (calc-xy addr)]
                        ["<div class='addr' style='top:" addr-y "px; left:" addr-x "px;'>"
@@ -140,37 +153,47 @@
                                  (when (and (= accept-addr addr)
                                             (get (:listens addr-v) accept-port))
                                    ["<div class='listen'>" accept-port "</div>"])
-                                 (mapv (fn [[[from-port to-addr to-port] msgs]]
-                                         (let [from-x addr-x
-                                               from-y (+ addr-y (* line-height (get coords [addr from-port])))
-                                               [to-addr-x to-addr-y] (calc-xy to-addr)
-                                               to-x to-addr-x
-                                               to-y (+ to-addr-y (* line-height (get coords [to-addr to-port])))
-                                               dx (- from-x to-x)
-                                               dy (- to-y from-y)
-                                               rad (Math/atan2 dx dy)
-                                               dist (Math/abs (Math/sqrt (+ (* dx dx) (* dy dy))))
-                                               prev-msgs (get-in @prev-addrs [addr :outs
-                                                                              [accept-addr accept-port]
-                                                                              [from-port to-addr to-port]])]
-                                           ["<div class='port'>"
-                                            " <div class='port-info'>" from-port " --&gt; " to-addr ":" to-port "</div>"
-                                            " <div class='msgs-container'>"
-                                            "  <div class='msgs"
-                                            (when (= accept-addr addr)
-                                              " to-client")
-                                            "' style='min-height:" (- dist 60) "px;"
-                                            "transform-origin:top left;"
-                                            "-ms-transform-origin:top left;"
-                                            "-webkit-transform-origin:top left;"
-                                            "transform:rotate(" rad "rad);"
-                                            "-ms-transform:rotate(" rad "rad);"
-                                            "-webkit-transform:rotate(" rad "rad);'>"
-                                            (render-msgs msgs prev-msgs dist line-height)
-                                            "  </div>"
-                                            " </div>"
-                                            "</div>"]))
-                                       (sort-by first accept-addr-port-v))
+                                 (mapv
+                                  (fn [[[from-port to-addr to-port] msgs]]
+                                    (let [from-x addr-x
+                                          from-y (+ addr-y
+                                                    (* line-height
+                                                       (get coords [addr from-port])))
+                                          [to-addr-x to-addr-y] (calc-xy to-addr)
+                                          to-x to-addr-x
+                                          to-y (+ to-addr-y
+                                                  (* line-height
+                                                     (get coords [to-addr to-port])))
+                                          dx (- from-x to-x)
+                                          dy (- to-y from-y)
+                                          rad (Math/atan2 dx dy)
+                                          dist (Math/abs (Math/sqrt (+ (* dx dx)
+                                                                       (* dy dy))))
+                                          prev-msgs (get-in
+                                                     @prev-addrs
+                                                     [addr :outs
+                                                      [accept-addr accept-port]
+                                                      [from-port to-addr to-port]])]
+                                      ["<div class='port'>"
+                                       " <div class='port-info'>"
+                                       from-port " --&gt; "
+                                       to-addr ":" to-port "</div>"
+                                       " <div class='msgs-container'>"
+                                       "  <div class='msgs"
+                                       (when (= accept-addr addr)
+                                         " to-client")
+                                       "' style='min-height:" (- dist 60) "px;"
+                                       "transform-origin:top left;"
+                                       "-ms-transform-origin:top left;"
+                                       "-webkit-transform-origin:top left;"
+                                       "transform:rotate(" rad "rad);"
+                                       "-ms-transform:rotate(" rad "rad);"
+                                       "-webkit-transform:rotate(" rad "rad);'>"
+                                       (render-msgs msgs prev-msgs dist line-height)
+                                       "  </div>"
+                                       " </div>"
+                                       "</div>"]))
+                                  (sort-by first accept-addr-port-v))
                                  "</div>"])
                               (sort-by first (:outs addr-v)))
                         "</div>"]))
@@ -184,15 +207,16 @@
 (defn world-vis-init [el-prefix init-event-delay]
   (let [cmd-inject-ch (chan)
         cmd-ch (replay-cmd-ch cmd-inject-ch (keys cbfg.world.lane/cmd-handlers)
-                              (fn [ev] {:op (.-id (.-target ev))
-                                        :x (js/parseInt (get-el-value "x"))
-                                        :y (js/parseInt (get-el-value "y"))
-                                        :delay (js/parseInt (get-el-value "delay"))
-                                        :fence (= (get-el-value "fence") "1")
-                                        :lane (get-el-value "lane")
-                                        :client (get-el-value "client")
-                                        :color (get-el-value "color")
-                                        :sleep (js/parseInt (get-el-value "sleep"))}))
+                              (fn [ev]
+                                {:op (.-id (.-target ev))
+                                 :x (js/parseInt (get-el-value "x"))
+                                 :y (js/parseInt (get-el-value "y"))
+                                 :delay (js/parseInt (get-el-value "delay"))
+                                 :fence (= (get-el-value "fence") "1")
+                                 :lane (get-el-value "lane")
+                                 :client (get-el-value "client")
+                                 :color (get-el-value "color")
+                                 :sleep (js/parseInt (get-el-value "sleep"))}))
         render-state (atom {})
         num-clients 3]
     (vis-init (fn [world vis-chs]
@@ -204,26 +228,31 @@
                   (act init-world world
                        (aput init-world listen-ch [:server 8000 listen-result-ch0])
                        (aput init-world listen-ch [:server 8100 listen-result-ch1])
-                       (let [[accept-ch0 close-accept-ch0] (atake init-world listen-result-ch0)
-                             [accept-ch1 close-accept-ch1] (atake init-world listen-result-ch1)]
+                       (let [[accept-ch0 close-accept-ch0]
+                             (atake init-world listen-result-ch0)
+                             [accept-ch1 close-accept-ch1]
+                             (atake init-world listen-result-ch1)]
                          (server-accept-loop world accept-ch0 close-accept-ch0)
                          (server-accept-loop world accept-ch1 close-accept-ch1)
                          (let [req-ch (achan init-world)
                                res-ch (achan init-world)
                                server-ports (cycle [8000 8100])
-                               client-cmd-chs (reduce
-                                               (fn [acc i]
-                                                 (let [client-id (str "client-" i)]
-                                                   (assoc acc client-id
-                                                          (client-loop world connect-ch
-                                                                       :server (nth server-ports (count acc))
-                                                                       (keyword client-id) res-ch))))
-                                               {} (range num-clients))]
+                               client-cmd-chs
+                               (reduce
+                                (fn [acc i]
+                                  (let [client-id (str "client-" i)]
+                                    (assoc acc client-id
+                                           (client-loop world connect-ch
+                                                        :server (nth server-ports
+                                                                     (count acc))
+                                                        (keyword client-id) res-ch))))
+                                {} (range num-clients))]
                            (world-cmd-loop world cbfg.world.lane/cmd-handlers cmd-ch
                                            req-ch res-ch vis-chs world-vis-init el-prefix)
                            (act-loop cmd-dispatch-loop world [num-dispatches 0]
                                      (when-let [msg (atake cmd-dispatch-loop req-ch)]
-                                       (when-let [client-cmd-ch (get client-cmd-chs (:client msg))]
+                                       (when-let [client-cmd-ch
+                                                  (get client-cmd-chs (:client msg))]
                                          (aput cmd-dispatch-loop client-cmd-ch msg)
                                          (recur (inc num-dispatches))))))))))
               el-prefix
