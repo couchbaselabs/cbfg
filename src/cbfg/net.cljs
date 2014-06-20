@@ -1,5 +1,5 @@
 (ns cbfg.net
-  (:require-macros [cbfg.act :refer [achan achan-buf act act-loop aclose aalts aput]]))
+  (:require-macros [cbfg.act :refer [achan achan-buf act act-loop aclose aalts]]))
 
 (defn net-clean-up [actx listens streams results]
   (act cleanup actx
@@ -24,11 +24,13 @@
              results []] ; A result entry is [keep-open-bool result-ch msg].
             (let [close-accept-chs (map second (vals listens))
                   close-recv-chs (mapcat (fn [[send-ch stream]]
-                                           (when-let [close-recv-ch (:close-recv-ch stream)]
+                                           (when-let [close-recv-ch
+                                                      (:close-recv-ch stream)]
                                              [close-recv-ch]))
                                          streams)
                   deliverable-msgs (mapcat (fn [[send-ch stream]]
-                                             (when-let [[deliver-at msg] (first (:msgs stream))]
+                                             (when-let [[deliver-at msg]
+                                                        (first (:msgs stream))]
                                                (when (and (:recv-ch stream)
                                                           (>= ts deliver-at))
                                                  [[(:recv-ch stream) msg]])))
@@ -60,8 +62,9 @@
                  (net-clean-up net listens streams results))
                (= ch request-connect-ch) ; Client connect request.
                (if-let [[accept-addr accept-port from-addr result-ch] v]
-                 ; TODO: Need to model connection delay, perhaps with a generic "later".
-                 (if-let [[accept-ch close-accept-ch] (get listens [accept-addr accept-port])]
+                 ; TODO: Need to model connect delay, perhaps with a generic "later".
+                 (if-let [[accept-ch close-accept-ch]
+                          (get listens [accept-addr accept-port])]
                    (let [from-port (+ 10000 ts)
                          to-port (+ 10000 ts)
                          end-point-buf-size (get opts :end-point-buf-size 0)
@@ -74,29 +77,33 @@
                      ; TODO: Need to model running out of ports.
                      (recur (inc ts) listens
                             (-> streams
-                                (assoc client-send-ch {:send-ch client-send-ch
-                                                       :recv-ch server-recv-ch
-                                                       :close-recv-ch close-server-recv-ch
-                                                       :accept-addr accept-addr :accept-port accept-port
-                                                       :server-addr accept-addr :server-port to-port
-                                                       :client-addr from-addr :client-port from-port
-                                                       :side :client :msgs []})
-                                (assoc server-send-ch {:send-ch server-send-ch
-                                                       :recv-ch client-recv-ch
-                                                       :close-recv-ch close-client-recv-ch
-                                                       :accept-addr accept-addr :accept-port accept-port
-                                                       :server-addr accept-addr :server-port to-port
-                                                       :client-addr from-addr :client-port from-port
-                                                       :side :server :msgs []}))
+                                (assoc client-send-ch
+                                  {:send-ch client-send-ch
+                                   :recv-ch server-recv-ch
+                                   :close-recv-ch close-server-recv-ch
+                                   :accept-addr accept-addr :accept-port accept-port
+                                   :server-addr accept-addr :server-port to-port
+                                   :client-addr from-addr :client-port from-port
+                                   :side :client :msgs []})
+                                (assoc server-send-ch
+                                  {:send-ch server-send-ch
+                                   :recv-ch client-recv-ch
+                                   :close-recv-ch close-client-recv-ch
+                                   :accept-addr accept-addr :accept-port accept-port
+                                   :server-addr accept-addr :server-port to-port
+                                   :client-addr from-addr :client-port from-port
+                                   :side :server :msgs []}))
                             (-> results
-                                (conj [false result-ch [client-send-ch client-recv-ch
-                                                        close-client-recv-ch accept-addr to-port]])
-                                (conj [true accept-ch [server-send-ch server-recv-ch
-                                                       close-server-recv-ch from-addr from-port]]))))
+                                (conj [false result-ch
+                                       [client-send-ch client-recv-ch
+                                        close-client-recv-ch accept-addr to-port]])
+                                (conj [true accept-ch
+                                       [server-send-ch server-recv-ch
+                                        close-server-recv-ch from-addr from-port]]))))
                    (do (aclose net result-ch)
                        (recur (inc ts) listens streams results)))
                  (net-clean-up net listens streams results))
-               (some #(= ch %) send-chs) ; A participant put to a send-ch or closed a send-ch.
+               (some #(= ch %) send-chs) ; A peer put to a send-ch or closed a send-ch.
                (let [send-ch ch
                      stream (get streams send-ch)]
                  (if-let [[msg result-ch] v]
@@ -146,7 +153,7 @@
                                   (dissoc listens addr-port)
                                   streams
                                   results)))
-                     (if-let [[keep-open-bool result-ch result-msg] ; Or, handle result-ch aput.
+                     (if-let [[keep-open-bool result-ch result-msg] ; Or, was result-ch aput.
                               (first (filter #(= (second %) ch) results))]
                        (do (when (not keep-open-bool)
                              (aclose net ch))
