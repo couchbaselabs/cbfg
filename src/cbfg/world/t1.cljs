@@ -43,10 +43,13 @@
 
 ; -------------------------------------------------------------------
 
-(defn render-prog-frame [prog-frame owner]
-  (apply dom/ul nil
-         (map (fn [[k v]] (dom/li nil (str k ":" (count v))))
-              prog-frame)))
+(defn on-prog-frame-focus [ts label prog-frame]
+  (reset! prog-hover prog-frame)
+  (.add gdom/classes (gdom/getElement "prog-container") "hover"))
+
+(defn on-prog-frame-blur []
+  (reset! prog-hover nil)
+  (.remove gdom/classes (gdom/getElement "prog-container") "hover"))
 
 (defn on-prog-frame-restore [ts label prog-frame]
   ; Time-travel to the past if snapshot is available.
@@ -56,15 +59,15 @@
     ; TODO: This prog-frame deref is strange, as it turned into a
     ; om.core/MapCursor somehow during the event handler rather
     ; an the expected prog-frame dict.
-    (reset! prog-curr @prog-frame)))
+    (reset! prog-curr @prog-frame)
+    (cbfg.world.base/render-client-hist (:reqs @prog-curr))))
 
-(defn on-prog-frame-focus [ts label prog-frame]
-  (reset! prog-hover prog-frame)
-  (.add gdom/classes (gdom/getElement "prog-container") "hover"))
+; -------------------------------------------------------------------
 
-(defn on-prog-frame-blur []
-  (reset! prog-hover nil)
-  (.remove gdom/classes (gdom/getElement "prog-container") "hover"))
+(defn render-prog-frame [prog-frame owner]
+  (apply dom/ul nil
+         (map (fn [[k v]] (dom/li nil (str k ":" (count v))))
+              prog-frame)))
 
 (defn render-events [app owner]
   (apply dom/ul nil
@@ -121,7 +124,7 @@
             agw (make-ago-world num-worlds)
             get-agw (fn [] agw)
             event-ch (ago-chan agw)
-            event-run-ch (chan)
+            event-run-ch (ago-chan agw)
             make-timeout-ch (fn [actx delay] (ago-timeout agw delay))
             ; Init the top actx manually to avoid act recursion.
             w [{:gen-id gen-id
@@ -152,7 +155,6 @@
               prog-in (get-el-value "prog-in")
               prog-js (str "with (cbfg.world.t1) {" prog-in "}")
               prog-res (try (js/eval prog-js) (catch js/Object ex ex))]
-          (println :prog-res prog-res)
           (go-loop [num-requests 0 num-responses 0]
                     (let [[v ch] (alts! [req-ch res-ch])
                           ts (+ num-requests num-responses)]
@@ -192,41 +194,48 @@
 
 (defn wait-done [done]
   (loop []
-    (when (not @done)
+    (when (or (> (.-length cljs.core.async.impl.dispatch/tasks) 0)
+              (not @done))
       (cljs.core.async.impl.dispatch/process-messages)
       (recur))))
 
 ; --------------------------------------------
 
 (defn kv-server [server-addr & ports]
-  (let [world (:world @prog-base)
-        done (atom false)]
-    (act server-init world
-         (doseq [port ports]
+  (doseq [port ports]
+    (let [world (:world @prog-base)
+          done (atom false)]
+      (act server-init world
            (when-let [listen-result-ch (achan server-init)]
              (aput server-init (:net-listen-ch @prog-base)
                    [server-addr port listen-result-ch])
              (when-let [[accept-ch close-accept-ch]
                         (atake server-init listen-result-ch)]
                (cbfg.world.net/server-accept-loop world accept-ch close-accept-ch)
-               (prog-event world [:kv-server server-addr port]
-                           #(update-in % [:servers server-addr]
-                                       conj port)))))
-         (reset! done true))
-    (wait-done done)))
+           (reset! done true))
+      (wait-done done)
+      (prog-event world [:kv-server server-addr port]
+                  #(update-in % [:servers server-addr]
+                              conj port)))))))
 
 (defn kv-client [client-addr server-addr server-port]
   (let [world (:world @prog-base)
-        done (atom false)]
-    (act client-init world
-         (let [req-ch (cbfg.world.net/client-loop world (:net-connect-ch @prog-base)
-                                                  server-addr server-port
-                                                  client-addr (:res-ch @prog-base))]
-           (prog-event world [:kv-client client-addr server-addr server-port]
-                       #(assoc-in % [:clients client-addr]
-                                  {:client-addr client-addr
-                                   :server-addr server-addr
-                                   :server-port server-port
-                                   :req-ch req-ch})))
-         (reset! done true))
-    (wait-done done)))
+        ; req-ch (cbfg.world.net/client-loop world (:net-connect-ch @prog-base)
+        ;                                    server-addr server-port
+        ;                                    client-addr (:res-ch @prog-base))
+        req-ch (achan world)
+        ready (atom false)]
+    (act simple-client world
+         (reset! ready true)
+         (loop [n 0]
+           (let [req (atake simple-client req-ch)]
+             (aput simple-client (:res-ch @prog-base)
+                   (assoc req :result :FOO))
+             (recur (inc n)))))
+    (wait-done ready)
+    (prog-event world [:kv-client client-addr server-addr server-port]
+                #(assoc-in % [:clients client-addr]
+                           {:client-addr client-addr
+                            :server-addr server-addr
+                            :server-port server-port
+                            :req-ch req-ch}))))
