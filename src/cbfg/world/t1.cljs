@@ -38,8 +38,10 @@
 (defn prog-event [world label prog-frame-fn]
   (let [prog-next (swap! prog-curr prog-frame-fn)
         ts (count @prog-history)]
-    (swap! prog-history #(conj % [ts label prog-next]))
-    (swap! prog-ss #(assoc % ts (ago-snapshot (actx-agw world))))))
+    ; Only snapshot when we're quiescent.
+    (when (<= (.-length cljs.core.async.impl.dispatch/tasks) 0)
+      (swap! prog-history #(conj % [ts label prog-next]))
+      (swap! prog-ss #(assoc % ts (ago-snapshot (actx-agw world)))))))
 
 ; -------------------------------------------------------------------
 
@@ -57,8 +59,8 @@
     (ago-restore (actx-agw (:world @prog-base)) ago-ss)
     (swap! prog-history #(vec (take (+ ts 1) %)))
     ; TODO: This prog-frame deref is strange, as it turned into a
-    ; om.core/MapCursor somehow during the event handler rather
-    ; an the expected prog-frame dict.
+    ; om.core/MapCursor somehow during the event handler rather than
+    ; an expected prog-frame dict.
     (reset! prog-curr @prog-frame)
     (cbfg.world.base/render-client-hist (:reqs @prog-curr))))
 
@@ -146,7 +148,8 @@
                                  event-ch step-ch event-run-ch)
         (cbfg.vis/process-render el-prefix world event-run-ch
                                  (fn [vis-next]
-                                   (println :on-delayed-event-cb @last-id)))
+                                   ; (println :on-delayed-event-cb @last-id)
+                                   ))
         (make-net world
                   (:net-listen-ch @prog-base)
                   (:net-connect-ch @prog-base))
