@@ -38,9 +38,11 @@
                   (recur (inc num-accepts)))
               (aclose server-accept-loop close-accept-ch))))
 
-(defn client-loop [actx connect-ch server-addr server-port client-addr res-ch]
+(defn client-loop [actx connect-ch server-addr server-port client-addr res-ch
+                   & {:keys [start-cb]}]
   (let [cmd-ch (achan actx)]
     (act client-loop actx
+         (when start-cb (start-cb))
          (let [connect-result-ch (achan client-loop)]
            (aput client-loop connect-ch [server-addr server-port
                                          client-addr connect-result-ch])

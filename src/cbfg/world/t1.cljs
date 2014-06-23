@@ -220,18 +220,11 @@
 
 (defn kv-client [client-addr server-addr server-port]
   (let [world (:world @prog-base)
-        ; req-ch (cbfg.world.net/client-loop world (:net-connect-ch @prog-base)
-        ;                                    server-addr server-port
-        ;                                    client-addr (:res-ch @prog-base))
-        req-ch (achan world)
-        ready (atom false)]
-    (act simple-client world
-         (reset! ready true)
-         (loop [n 0]
-           (let [req (atake simple-client req-ch)]
-             (aput simple-client (:res-ch @prog-base)
-                   (assoc req :result :FOO))
-             (recur (inc n)))))
+        ready (atom false)
+        req-ch (cbfg.world.net/client-loop world (:net-connect-ch @prog-base)
+                                           server-addr server-port
+                                           client-addr (:res-ch @prog-base)
+                                           :start-cb #(reset! ready true))]
     (wait-done ready)
     (prog-event world [:kv-client client-addr server-addr server-port]
                 #(assoc-in % [:clients client-addr]
