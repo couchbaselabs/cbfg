@@ -211,12 +211,12 @@
                    [server-addr port listen-result-ch])
              (when-let [[accept-ch close-accept-ch]
                         (atake server-init listen-result-ch)]
-               (cbfg.world.net/server-accept-loop world accept-ch close-accept-ch)
+               (cbfg.world.net/server-accept-loop world accept-ch close-accept-ch)))
            (reset! done true))
       (wait-done done)
       (prog-event world [:kv-server server-addr port]
                   #(update-in % [:servers server-addr]
-                              conj port)))))))
+                              conj port)))))
 
 (defn kv-client [client-addr server-addr server-port]
   (let [world (:world @prog-base)
