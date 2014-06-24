@@ -1,0 +1,106 @@
+<html>
+<head>
+</head>
+<body>
+<div class="ribbon">
+  <div class="ribbon-part">
+    <div class="ribbon-top">
+      <button onclick="toggle('ribbon-bottom')">A<br/>V</button>
+    </div>
+  </div>
+  <div class="ribbon-part">
+    <div class="ribbon-top">
+      <input type="text"/>
+      <button>&lt;&gt;</button>
+    </div>
+    <div class="ribbon-bottom">
+      <textarea id="prog-in">
+kv_server("serverA", 8000, 8100)
+kv_server("serverB", 8000)
+
+kv_client("client-0", "serverA", 8000)
+kv_client("client-1", "serverA", 8000)
+kv_client("client-2", "serverA", 8000)
+</textarea>
+      <button id="prog-go">go</button>
+    </div>
+  </div>
+  <div class="ribbon-part">
+    <div class="ribbon-top">
+      filters / watches
+    </div>
+    <div class="ribbon-bottom">
+      <div class="filters" id="filters">todo filters</div>
+      <div class="watches" id="watches">todo watches</div>
+    </div>
+  </div>
+  <div class="ribbon-part">
+    <div class="ribbon-top">
+      vcr controls
+    </div>
+    <div class="ribbon-bottom">
+      input controls
+    </div>
+  </div>
+</div>
+
+<div class="diagram">
+  <div class="diagram-top">network diagram here</div>
+  <div class="diagram-main">
+    hi there hi<br/> hi there hi<br/> hi there hi<br/>
+    hi there hi<br/> hi there hi<br/> hi there hi<br/>
+    hi there hi<br/> hi there hi<br/> hi there hi<br/>
+    hi there hi<br/> hi there hi<br/> hi there hi<br/>
+    hi there hi<br/> hi there hi<br/> hi there hi<br/>
+    hi there hi<br/> hi there hi<br/> hi there hi<br/>
+    hi there hi<br/> hi there hi<br/> hi there hi<br/>
+    hi there hi<br/> hi there hi<br/> hi there hi<br/>
+    hi there hi<br/> hi there hi<br/> hi there hi<br/>
+    hi there hi<br/> hi there hi<br/> hi there hi<br/>
+    hi there hi<br/> hi there hi<br/> hi there hi<br/>
+    hi there hi<br/> hi there hi<br/> hi there hi<br/>
+    hi there hi<br/> hi there hi<br/> hi there hi<br/>
+    hi there hi<br/> hi there hi<br/> hi there hi<br/>
+    hi there hi<br/> hi there hi<br/> hi there hi<br/>
+    hi there hi<br/> hi there hi<br/> hi there hi<br/>
+    hi there hi<br/> hi there hi<br/> hi there hi<br/>
+    hi there hi<br/> hi there hi<br/> hi there hi<br/>
+    hi there hi<br/> hi there hi<br/> hi there hi<br/>
+    hi there hi<br/> hi there hi<br/> hi there hi<br/>
+  </div>
+</div>
+
+<div class="events">
+  <div class="event">
+    <div>00:01</div> <div>label</div> <div>190</div> <div>20</div>
+  </div>
+  <div class="event">
+    <div>00:01</div> <div>label</div> <div>190</div> <div>20</div>
+  </div>
+</div>
+
+<style>
+div {
+  border: 1px solid #666;
+}
+* {
+ vertical-align: top;
+}
+.ribbon .ribbon-part {
+  display: inline-block;
+}
+.event div {
+  display: inline-block;
+}
+</style>
+
+<script>
+function toggle(className) {
+  var els = document.getElementsByClassName(className);
+  for (var i = 0; i < els.length; i++) {
+    els[i].style.display = (els[i].style.display == "none") ? "" : "none";
+  }
+}
+</script>
+</body>
+</html>
