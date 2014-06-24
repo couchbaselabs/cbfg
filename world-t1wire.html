@@ -5,13 +5,12 @@
 <div class="ribbon">
   <div class="ribbon-part">
     <div class="ribbon-top">
-      <button onclick="toggle('ribbon-bottom')">A<br/>V</button>
+      <button onclick="toggle('ribbon-bottom')">&#8597;</button>
     </div>
   </div>
-  <div class="ribbon-part">
+  <div class="ribbon-part ribbon-prog">
     <div class="ribbon-top">
       <input type="text"/>
-      <button>&lt;&gt;</button>
     </div>
     <div class="ribbon-bottom">
       <textarea id="prog-in">
@@ -27,11 +26,21 @@ kv_client("client-2", "serverA", 8000)
   </div>
   <div class="ribbon-part">
     <div class="ribbon-top">
+      <button onclick="toggle('ribbon-prog')">&#8596;</button>
+    </div>
+  </div>
+  <div class="ribbon-part ribbon-filters">
+    <div class="ribbon-top">
       filters / watches
     </div>
     <div class="ribbon-bottom">
       <div class="filters" id="filters">todo filters</div>
       <div class="watches" id="watches">todo watches</div>
+    </div>
+  </div>
+  <div class="ribbon-part">
+    <div class="ribbon-top">
+      <button onclick="toggle('ribbon-filters')">&#8596;</button>
     </div>
   </div>
   <div class="ribbon-part">
@@ -85,6 +94,9 @@ div {
 }
 * {
  vertical-align: top;
+}
+.ribbon {
+  position: fixed;
 }
 .ribbon .ribbon-part {
   display: inline-block;
