@@ -56,10 +56,8 @@ kv_client("client-2", "serverA", 8000)
   <div class="ribbon ribbon-space">
     <div class="ribbon-part">
       <div class="ribbon-top">
-        &nbsp;
       </div>
       <div class="ribbon-bottom">
-        &nbsp;<br/>&nbsp;<br/>&nbsp;
       </div>
     </div>
   </div>
@@ -139,27 +137,37 @@ body, div {
   white-space: nowrap;
 }
 .header, .main, .footer {
-  padding-left: 20px;
+  margin-left: 20px;
   width: 95%;
 }
 .header {
   background: white;
 }
-.ribbon-fixed {
+.header .ribbon {
+  width: 95%;
+  border-bottom: 1px solid #999;
+  padding-top: 10px;
+  padding-bottom: 5px;
+}
+.header .ribbon-fixed {
   position: fixed;
   background: white;
-  padding-top: 10px;
   z-index: 10;
 }
-.ribbon-space {
+.header .ribbon-space {
   visibility: hidden;
 }
-.ribbon .ribbon-part {
+.header .ribbon .ribbon-part {
   display: inline-block;
+}
+.header .ribbon .ribbon-top {
+  min-height: 1.5em;
+}
+.header .ribbon .ribbon-bottom {
+  min-height: 2.5em;
 }
 .main {
   overflow: scroll;
-  position: relative;
 }
 .footer-space {
   height: 40%;
@@ -169,13 +177,13 @@ body, div {
   position: fixed;
   top: 60%;
   height: 40%;
+  border-top: 1px solid #999;
+  padding-top: 5px;
   background: white;
   overflow: scroll;
   z-index: 1;
 }
-.events {
-}
-.events .event div {
+.footer .events .event div {
   display: inline-block;
 }
 </style>
