@@ -93,99 +93,9 @@ kv_client("client-2", "serverA", 8000)
 </div>
 
 <div class="footer">
-  <div class="events">
-    <div class="event">
-      <div>00:01</div> <div>label</div> <div>190</div> <div>20</div>
-    </div>
-    <div class="event">
-      <div>00:01</div> <div>label</div> <div>190</div> <div>20</div>
-    </div>
-    <div class="event">
-      <div>00:01</div> <div>label</div> <div>190</div> <div>20</div>
-    </div>
-    <div class="event">
-      <div>00:01</div> <div>label</div> <div>190</div> <div>20</div>
-    </div>
-    <div class="event">
-      <div>00:02</div> <div>label</div> <div>190</div> <div>20</div>
-    </div>
-    <div class="event">
-      <div>00:03</div> <div>label</div> <div>190</div> <div>20</div>
-    </div>
-    <div class="event">
-      <div>00:04</div> <div>label</div> <div>190</div> <div>20</div>
-    </div>
-    <div class="event">
-      <div>00:05</div> <div>label</div> <div>190</div> <div>20</div>
-    </div>
-    <div class="event">
-      <div>00:06</div> <div>label</div> <div>190</div> <div>20</div>
-    </div>
-    <div class="event">
-      <div>00:07</div> <div>label</div> <div>190</div> <div>20</div>
-    </div>
+  <div class="events" id="events-0">
   </div>
-  <div class="events">
-    <div class="event">
-      <div>00:01</div> <div>label</div> <div>190</div> <div>20</div>
-    </div>
-    <div class="event">
-      <div>00:01</div> <div>label</div> <div>190</div> <div>20</div>
-    </div>
-    <div class="event">
-      <div>00:01</div> <div>label</div> <div>190</div> <div>20</div>
-    </div>
-    <div class="event">
-      <div>00:01</div> <div>label</div> <div>190</div> <div>20</div>
-    </div>
-    <div class="event">
-      <div>00:02</div> <div>label</div> <div>190</div> <div>20</div>
-    </div>
-    <div class="event">
-      <div>00:03</div> <div>label</div> <div>190</div> <div>20</div>
-    </div>
-    <div class="event">
-      <div>00:04</div> <div>label</div> <div>190</div> <div>20</div>
-    </div>
-    <div class="event">
-      <div>00:05</div> <div>label</div> <div>190</div> <div>20</div>
-    </div>
-    <div class="event">
-      <div>00:06</div> <div>label</div> <div>190</div> <div>20</div>
-    </div>
-    <div class="event">
-      <div>00:07</div> <div>label</div> <div>190</div> <div>20</div>
-    </div>
-    <div class="event">
-      <div>00:01</div> <div>label</div> <div>190</div> <div>20</div>
-    </div>
-    <div class="event">
-      <div>00:01</div> <div>label</div> <div>190</div> <div>20</div>
-    </div>
-    <div class="event">
-      <div>00:01</div> <div>label</div> <div>190</div> <div>20</div>
-    </div>
-    <div class="event">
-      <div>00:01</div> <div>label</div> <div>190</div> <div>20</div>
-    </div>
-    <div class="event">
-      <div>00:02</div> <div>label</div> <div>190</div> <div>20</div>
-    </div>
-    <div class="event">
-      <div>00:03</div> <div>label</div> <div>190</div> <div>20</div>
-    </div>
-    <div class="event">
-      <div>00:04</div> <div>label</div> <div>190</div> <div>20</div>
-    </div>
-    <div class="event">
-      <div>00:05</div> <div>label</div> <div>190</div> <div>20</div>
-    </div>
-    <div class="event">
-      <div>00:06</div> <div>label</div> <div>190</div> <div>20</div>
-    </div>
-    <div class="event">
-      <div>00:07</div> <div>label</div> <div>190</div> <div>20</div>
-    </div>
+  <div class="events" id="events-1">
   </div>
 </div>
 
@@ -255,6 +165,8 @@ body, div {
 }
 </style>
 
+<style id="hover-style"></style>
+
 <script>
 function toggle(className) {
   var els = document.getElementsByClassName(className);
@@ -262,6 +174,25 @@ function toggle(className) {
     els[i].style.display = (els[i].style.display == "none") ? "" : "none";
   }
 }
+
+var e0 = [];
+var e1 = [];
+
+for (var i = 0; i < 2000; i++) {
+  e0.push('<div class="e-' + i + '" onmouseenter="onHover(this);">' + i + '</div>');
+  for (var j = 0; j < 10; j++) {
+    e1.push('<div class="e-' + i + '" onmouseenter="onHover(this);">' + i + ':' + j + '</div>');
+  }
+}
+
+document.getElementById("events-0").innerHTML = e0.join('');
+document.getElementById("events-1").innerHTML = e1.join('');
+
+function onHover(el) {
+  document.getElementById("hover-style").innerText =
+    "div." + el.className + " { background: #eee; }";
+}
 </script>
+
 </body>
 </html>
