@@ -4,14 +4,9 @@
 <body>
 <div class="header">
   <div class="ribbon ribbon-fixed">
-    <div class="ribbon-part">
-      <div class="ribbon-top">
-        <button onclick="toggle('ribbon-bottom')">&#8597;</button>
-      </div>
-    </div>
     <div class="ribbon-part ribbon-prog">
       <div class="ribbon-top">
-        <input type="text"/>
+        <input type="text" value="simulation-name-here"/>
       </div>
       <div class="ribbon-bottom">
         <textarea id="prog-in">
@@ -22,12 +17,26 @@ kv_client("client-0", "serverA", 8000)
 kv_client("client-1", "serverA", 8000)
 kv_client("client-2", "serverA", 8000)
 </textarea>
-        <button id="prog-go">go</button>
+        <button id="prog-go">restart</button>
       </div>
     </div>
     <div class="ribbon-part">
       <div class="ribbon-top">
-        <button onclick="toggle('ribbon-prog')">&#8596;</button>
+        vcr controls
+      </div>
+      <div class="ribbon-bottom ribbon-inputs">
+        input controls
+        <button onclick="toggle('inputs')">&#8597;</button>
+        <div class="ribbon-popup inputs">
+          lots<br/>
+          of&nbsp;input controls&nbsp;here&nbsp;placeholder&nbsp;<br/>
+          and<br/>
+          more<br/>
+          more<br/>
+          more<br/>
+          more<br/>
+          more<br/>
+        </div>
       </div>
     </div>
     <div class="ribbon-part ribbon-filters">
@@ -35,21 +44,17 @@ kv_client("client-2", "serverA", 8000)
         filters / watches
       </div>
       <div class="ribbon-bottom">
-        <div class="filters" id="filters">todo filters</div>
-        <div class="watches" id="watches">todo watches</div>
-      </div>
-    </div>
-    <div class="ribbon-part">
-      <div class="ribbon-top">
-        <button onclick="toggle('ribbon-filters')">&#8596;</button>
-      </div>
-    </div>
-    <div class="ribbon-part">
-      <div class="ribbon-top">
-        vcr controls
-      </div>
-      <div class="ribbon-bottom">
-        input controls
+        <button onclick="toggle('filters')">&#8597;</button>
+        <div class="ribbon-popup filters">
+          lots<br/>
+          of&nbsp;filters&nbsp;here&nbsp;placeholder&nbsp;<br/>
+          and<br/>
+          more<br/>
+          more<br/>
+          more<br/>
+          more<br/>
+          more<br/>
+        </div>
       </div>
     </div>
   </div>
@@ -141,12 +146,26 @@ body, div {
 }
 .header .ribbon .ribbon-part {
   display: inline-block;
+  padding-right: 20px;
 }
 .header .ribbon .ribbon-top {
   min-height: 1.5em;
 }
 .header .ribbon .ribbon-bottom {
   min-height: 2.5em;
+}
+.header .ribbon .ribbon-popup {
+  position: absolute;
+  border: 1px solid #999;
+  background: white;
+  z-index: 20;
+}
+.header .ribbon .ribbon-prog input,
+.header .ribbon .ribbon-prog textarea{
+  min-width: 300px;
+}
+.header .ribbon .ribbon-inputs {
+  min-width: 300px;
 }
 .main {
   overflow: scroll;
