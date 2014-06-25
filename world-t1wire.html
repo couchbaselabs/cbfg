@@ -209,7 +209,6 @@ function toggle(className) {
 
 var e0 = [];
 var e1 = [];
-
 for (var i = 0; i < 2000; i++) {
   e0.push('<div class="event event-' + i +
     '" onmouseenter="onHover(this);">' + i + '</div>');
@@ -218,12 +217,10 @@ for (var i = 0; i < 2000; i++) {
       '" onmouseenter="onHover(this);">' + i + ':' + j + '</div>');
   }
 }
-
 document.getElementById("events-0").innerHTML = e0.join('');
 document.getElementById("events-1").innerHTML = e1.join('');
 
 var onHoverPrev;
-
 function onHover(el) {
   var c = el.className.split(' ')[1];
   console.log(c);
