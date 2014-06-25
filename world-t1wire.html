@@ -2,18 +2,19 @@
 <head>
 </head>
 <body>
-<div class="ribbon">
-  <div class="ribbon-part">
-    <div class="ribbon-top">
-      <button onclick="toggle('ribbon-bottom')">&#8597;</button>
+<div class="header">
+  <div class="ribbon ribbon-fixed">
+    <div class="ribbon-part">
+      <div class="ribbon-top">
+        <button onclick="toggle('ribbon-bottom')">&#8597;</button>
+      </div>
     </div>
-  </div>
-  <div class="ribbon-part ribbon-prog">
-    <div class="ribbon-top">
-      <input type="text"/>
-    </div>
-    <div class="ribbon-bottom">
-      <textarea id="prog-in">
+    <div class="ribbon-part ribbon-prog">
+      <div class="ribbon-top">
+        <input type="text"/>
+      </div>
+      <div class="ribbon-bottom">
+        <textarea id="prog-in">
 kv_server("serverA", 8000, 8100)
 kv_server("serverB", 8000)
 
@@ -21,41 +22,54 @@ kv_client("client-0", "serverA", 8000)
 kv_client("client-1", "serverA", 8000)
 kv_client("client-2", "serverA", 8000)
 </textarea>
-      <button id="prog-go">go</button>
+        <button id="prog-go">go</button>
+      </div>
+    </div>
+    <div class="ribbon-part">
+      <div class="ribbon-top">
+        <button onclick="toggle('ribbon-prog')">&#8596;</button>
+      </div>
+    </div>
+    <div class="ribbon-part ribbon-filters">
+      <div class="ribbon-top">
+        filters / watches
+      </div>
+      <div class="ribbon-bottom">
+        <div class="filters" id="filters">todo filters</div>
+        <div class="watches" id="watches">todo watches</div>
+      </div>
+    </div>
+    <div class="ribbon-part">
+      <div class="ribbon-top">
+        <button onclick="toggle('ribbon-filters')">&#8596;</button>
+      </div>
+    </div>
+    <div class="ribbon-part">
+      <div class="ribbon-top">
+        vcr controls
+      </div>
+      <div class="ribbon-bottom">
+        input controls
+      </div>
     </div>
   </div>
-  <div class="ribbon-part">
-    <div class="ribbon-top">
-      <button onclick="toggle('ribbon-prog')">&#8596;</button>
-    </div>
-  </div>
-  <div class="ribbon-part ribbon-filters">
-    <div class="ribbon-top">
-      filters / watches
-    </div>
-    <div class="ribbon-bottom">
-      <div class="filters" id="filters">todo filters</div>
-      <div class="watches" id="watches">todo watches</div>
-    </div>
-  </div>
-  <div class="ribbon-part">
-    <div class="ribbon-top">
-      <button onclick="toggle('ribbon-filters')">&#8596;</button>
-    </div>
-  </div>
-  <div class="ribbon-part">
-    <div class="ribbon-top">
-      vcr controls
-    </div>
-    <div class="ribbon-bottom">
-      input controls
+  <div class="ribbon ribbon-space">
+    <div class="ribbon-part">
+      <div class="ribbon-top">
+        &nbsp;
+      </div>
+      <div class="ribbon-bottom">
+        &nbsp;<br/>&nbsp;<br/>&nbsp;
+      </div>
     </div>
   </div>
 </div>
 
-<div class="diagram">
-  <div class="diagram-top">network diagram here</div>
-  <div class="diagram-main">
+<div class="main">
+  <div class="diagram">
+    <div class="diagram-top">network diagram here</div>
+    <div class="diagram-main">
+    hi FIRST!<br/> hi there hi<br/> hi there hi<br/>
     hi there hi<br/> hi there hi<br/> hi there hi<br/>
     hi there hi<br/> hi there hi<br/> hi there hi<br/>
     hi there hi<br/> hi there hi<br/> hi there hi<br/>
@@ -74,34 +88,93 @@ kv_client("client-2", "serverA", 8000)
     hi there hi<br/> hi there hi<br/> hi there hi<br/>
     hi there hi<br/> hi there hi<br/> hi there hi<br/>
     hi there hi<br/> hi there hi<br/> hi there hi<br/>
-    hi there hi<br/> hi there hi<br/> hi there hi<br/>
-    hi there hi<br/> hi there hi<br/> hi there hi<br/>
+    hi there hi<br/> hi there hi<br/> hi LAST!<br/>
+    </div>
   </div>
+  <div class="footer-space"></div>
 </div>
 
-<div class="events">
-  <div class="event">
-    <div>00:01</div> <div>label</div> <div>190</div> <div>20</div>
-  </div>
-  <div class="event">
-    <div>00:01</div> <div>label</div> <div>190</div> <div>20</div>
+<div class="footer">
+  <div class="events">
+    <div class="event">
+      <div>00:01</div> <div>label</div> <div>190</div> <div>20</div>
+    </div>
+    <div class="event">
+      <div>00:01</div> <div>label</div> <div>190</div> <div>20</div>
+    </div>
+    <div class="event">
+      <div>00:01</div> <div>label</div> <div>190</div> <div>20</div>
+    </div>
+    <div class="event">
+      <div>00:01</div> <div>label</div> <div>190</div> <div>20</div>
+    </div>
+    <div class="event">
+      <div>00:02</div> <div>label</div> <div>190</div> <div>20</div>
+    </div>
+    <div class="event">
+      <div>00:03</div> <div>label</div> <div>190</div> <div>20</div>
+    </div>
+    <div class="event">
+      <div>00:04</div> <div>label</div> <div>190</div> <div>20</div>
+    </div>
+    <div class="event">
+      <div>00:05</div> <div>label</div> <div>190</div> <div>20</div>
+    </div>
+    <div class="event">
+      <div>00:06</div> <div>label</div> <div>190</div> <div>20</div>
+    </div>
+    <div class="event">
+      <div>00:07</div> <div>label</div> <div>190</div> <div>20</div>
+    </div>
   </div>
 </div>
 
 <style>
-div {
-  border: 1px solid #666;
+body, div {
+  margin: 0 0 0 0;
+  padding: 0 0 0 0;
 }
 * {
  vertical-align: top;
 }
-.ribbon {
+.header, .main, .footer {
+  padding-left: 20px;
+  width: 100%;
+}
+.header {
+  background: white;
+}
+.ribbon-fixed {
   position: fixed;
+  background: white;
+  padding-top: 10px;
+  z-index: 10;
+}
+.ribbon-space {
+  visibility: hidden;
 }
 .ribbon .ribbon-part {
   display: inline-block;
 }
-.event div {
+.main {
+  overflow: scroll;
+  position: relative;
+}
+.footer-space {
+  height: 40%;
+  visibility: hidden;
+}
+.footer {
+  position: fixed;
+  top: 60%;
+  height: 40%;
+  background: white;
+  overflow: scroll;
+  z-index: 1;
+}
+.events {
+}
+.events .event div {
   display: inline-block;
 }
 </style>
