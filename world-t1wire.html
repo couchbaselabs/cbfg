@@ -68,7 +68,7 @@ kv_client("client-2", "serverA", 8000)
   </div>
 </div>
 
-<div class="main">
+<div class="main" id="main">
   <div class="diagram">
     <div class="diagram-top">network diagram here</div>
     <div class="diagram-main">
@@ -104,10 +104,11 @@ kv_client("client-2", "serverA", 8000)
     hi there hi<br/> hi there hi<br/> hi LAST!<br/>
     </div>
   </div>
-  <div class="footer-space"></div>
+  <div class="footer-space" id="footer-space" style="height: 20%";></div>
 </div>
 
-<div class="footer">
+<div class="footer" id="footer" style="top: 80%; height: 20%;">
+  <div class="splitter" onmousedown="return onSplitterStart(this);"></div>
   <div class="events" id="events-0">
   </div>
   <div class="events" id="events-1">
@@ -171,15 +172,10 @@ body, div {
   overflow: scroll;
 }
 .footer-space {
-  height: 20%;
   visibility: hidden;
 }
 .footer {
   position: fixed;
-  top: 80%;
-  height: 20%;
-  border-top: 1px solid #999;
-  padding-top: 5px;
   background: white;
   z-index: 1;
 }
@@ -195,11 +191,34 @@ body, div {
 .footer .events .event:hover {
   background: #dfd;
 }
+.splitter {
+  width: 100%;
+  height: 3px;
+  border-top: 1px solid #999;
+  cursor: ns-resize;
+}
 </style>
 
 <style id="hover-style"></style>
 
 <script>
+function onSplitterStart(el) {
+  var footer = document.getElementById("footer");
+  var footerSpace = document.getElementById("footer-space");
+  window.onmousemove = function(ev) {
+    var pct = Math.max(10, Math.min(95, Math.round(100 * ((1.0 * ev.clientY) /
+                                                          window.innerHeight))));
+    footer.style.top = pct + "%";
+    footer.style.height = (100 - pct) + "%";
+    footerSpace.style.height = (100 - pct) + "%";
+    return false;
+  }
+  window.onmouseup = function(ev) {
+    window.onmouseup = window.onmousemove = null;
+  }
+  return false;
+}
+
 function toggle(className) {
   var els = document.getElementsByClassName(className);
   for (var i = 0; i < els.length; i++) {
@@ -223,7 +242,6 @@ document.getElementById("events-1").innerHTML = e1.join('');
 var onHoverPrev;
 function onHover(el) {
   var c = el.className.split(' ')[1];
-  console.log(c);
   if (c != onHoverPrev) {
     document.getElementById("hover-style").innerText =
       "div." + c + " { background: #eee; }";
