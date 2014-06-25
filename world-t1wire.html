@@ -173,6 +173,9 @@ body, div {
 .footer .events .event div {
   display: inline-block;
 }
+.footer .events .event:hover {
+  background: #dfd;
+}
 </style>
 
 <style id="hover-style"></style>
@@ -189,18 +192,27 @@ var e0 = [];
 var e1 = [];
 
 for (var i = 0; i < 2000; i++) {
-  e0.push('<div class="e-' + i + '" onmouseenter="onHover(this);">' + i + '</div>');
+  e0.push('<div class="event event-' + i +
+    '" onmouseenter="onHover(this);">' + i + '</div>');
   for (var j = 0; j < 10; j++) {
-    e1.push('<div class="e-' + i + '" onmouseenter="onHover(this);">' + i + ':' + j + '</div>');
+    e1.push('<div class="event event-' + i +
+      '" onmouseenter="onHover(this);">' + i + ':' + j + '</div>');
   }
 }
 
 document.getElementById("events-0").innerHTML = e0.join('');
 document.getElementById("events-1").innerHTML = e1.join('');
 
+var onHoverPrev;
+
 function onHover(el) {
-  document.getElementById("hover-style").innerText =
-    "div." + el.className + " { background: #eee; }";
+  var c = el.className.split(' ')[1];
+  console.log(c);
+  if (c != onHoverPrev) {
+    document.getElementById("hover-style").innerText =
+      "div." + c + " { background: #eee; }";
+    onHoverPrev = c;
+  }
 }
 </script>
 
