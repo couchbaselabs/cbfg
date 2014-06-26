@@ -1,16 +1,10 @@
 <html>
-<head>
-  <link href="world.css" rel="stylesheet" type="text/css">
-</head>
 <body>
 <div class="header">
   <div class="ribbon ribbon-fixed">
     <div class="ribbon-part ribbon-prog">
-      <div class="ribbon-top">
-        <input id="prog-name" type="text" value="simulation-name-here"/>
-      </div>
-      <div class="ribbon-bottom">
-        <textarea id="prog-in">
+      <input id="prog-name" type="text" value="simulation-name-here"/><br/>
+      <textarea id="prog-in">
 kv_server("serverA", 8000, 8100)
 kv_server("serverB", 8000)
 
@@ -18,14 +12,11 @@ kv_client("client-0", "serverA", 8000)
 kv_client("client-1", "serverA", 8000)
 kv_client("client-2", "serverA", 8000)
 </textarea>
-        <button id="prog-go">restart</button>
-      </div>
+      <button id="prog-go">restart</button>
     </div>
     <div class="ribbon-part">
-      <div class="ribbon-top">
-        <div class="controls" id="header-run-controls">run controls</div>
-      </div>
-      <div class="ribbon-bottom ribbon-inputs">
+      <div id="header-run-controls">run controls</div>
+      <div class="ribbon-inputs">
         input controls
         <button onclick="toggle('inputs')">&#8597;</button>
         <div class="ribbon-popup inputs">
@@ -86,12 +77,8 @@ kv_client("client-2", "serverA", 8000)
           <button id="test">test</button>
         </div>
       </div>
-    </div>
-    <div class="ribbon-part ribbon-filters">
-      <div class="ribbon-top">
+      <div class="ribbon-filters">
         filters / watches
-      </div>
-      <div class="ribbon-bottom">
         <button onclick="toggle('filters')">&#8597;</button>
         <div class="ribbon-popup filters">
           lots<br/>
@@ -106,14 +93,7 @@ kv_client("client-2", "serverA", 8000)
       </div>
     </div>
   </div>
-  <div class="ribbon ribbon-space">
-    <div class="ribbon-part">
-      <div class="ribbon-top">
-      </div>
-      <div class="ribbon-bottom">
-      </div>
-    </div>
-  </div>
+  <div class="ribbon ribbon-space"></div>
 </div>
 
 <div class="main" id="main">
@@ -184,6 +164,7 @@ body, div {
 }
 .header .ribbon {
   width: 95%;
+  min-height: 4em;
   border-bottom: 1px solid #999;
   padding-top: 10px;
   padding-bottom: 5px;
@@ -198,18 +179,13 @@ body, div {
 }
 .header .ribbon .ribbon-part {
   display: inline-block;
-  padding-right: 20px;
-}
-.header .ribbon .ribbon-top {
-  min-height: 1.5em;
-}
-.header .ribbon .ribbon-bottom {
-  min-height: 2.5em;
+  padding-right: 40px;
 }
 .header .ribbon .ribbon-popup {
   position: absolute;
   border: 1px solid #999;
   background: #2a2a2a;
+  padding: 10px 10px 10px 10px;
   z-index: 20;
 }
 .header .ribbon .ribbon-prog input,
@@ -217,7 +193,11 @@ body, div {
   min-width: 300px;
 }
 .header .ribbon .ribbon-inputs {
-  min-width: 300px;
+  min-width: 350px;
+}
+.header .ribbon .ribbon-inputs,
+.header .ribbon .ribbon-filters {
+  display: inline-block;
 }
 .field label {
   display: inline-block;
