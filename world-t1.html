@@ -18,8 +18,8 @@ kv_client("client-2", "serverA", 8000)
       <div id="header-run-controls">run controls</div>
       <div class="ribbon-inputs">
         input controls
-        <button onclick="toggle('inputs')">&#9660;</button>
-        <div class="ribbon-popup inputs">
+        <button class="toggle" onclick="toggle('inputs')">&#9660;</button>
+        <div class="ribbon-popup inputs" style="display: none;">
           <div class="field">
             <label>client:</label>
             <span id="controls-clients">
@@ -79,8 +79,8 @@ kv_client("client-2", "serverA", 8000)
       </div>
       <div class="ribbon-filters">
         filters / watches
-        <button onclick="toggle('filters')">&#9660;</button>
-        <div class="ribbon-popup filters">
+        <button class="toggle" onclick="toggle('filters')">&#9660;</button>
+        <div class="ribbon-popup filters" style="display: none;">
           lots<br/>
           of&nbsp;filters&nbsp;here&nbsp;placeholder&nbsp;<br/>
           and<br/>
@@ -192,12 +192,11 @@ body, div {
 .header .ribbon .ribbon-prog textarea{
   min-width: 300px;
 }
-.header .ribbon .ribbon-inputs {
-  min-width: 350px;
-}
 .header .ribbon .ribbon-inputs,
 .header .ribbon .ribbon-filters {
   display: inline-block;
+  margin-top: 10px;
+  margin-left: 30px;
 }
 .field label {
   display: inline-block;
@@ -235,6 +234,9 @@ body, div {
   height: 3px;
   border-top: 1px solid #999;
   cursor: ns-resize;
+}
+.toggle {
+  font-size: 5px;
 }
 </style>
 
