@@ -1,0 +1,139 @@
+.vis {
+    padding-top: 20px;
+    background-color: #FFFCF1;
+}
+.vis, .vis * {
+    font-size: 20px;
+    white-space: nowrap;
+    line-height: 1;
+}
+.vis .actx,
+.vis .actx ul,
+.vis .actx li {
+    width: 100%;
+    margin-top: 0;
+    margin-bottom: 0;
+    border: none;
+    padding-top: 0;
+    padding-bottom: 0;
+    list-style: none;
+}
+.vis .actx .actx {
+    width: 95%;
+}
+.vis .actx {
+    border-top: 1px solid rgb(0,100,0);
+    border-radius: 6px;
+    background-color: rgba(0,100,0,0.1);
+}
+.vis .actx div.loop-state {
+    display: inline-block;
+    margin-left: 10px;
+    padding-top: 3px;
+    white-space: nowrap;
+    vertical-align: top;
+    font-size: 10px;
+    color: #bbb;
+}
+.vis span.actx-id,
+.vis span.actx-id-suffix {
+    display: inline-block;
+    padding-top: 1px;
+    vertical-align: top;
+    font-size: 15px;
+}
+.vis span.actx-id-suffix {
+    font-size: 12px;
+    color: #bbb;
+}
+.vis div.chs {
+    display: block;
+    position: relative;
+    left: 520px;
+    margin: 0 0 0 0;
+    border: none;
+    padding: 0 0 0 0;
+    white-space: nowrap;
+}
+.vis div.chs li {
+    width: 37%;
+    height: 21px;
+    margin-top: 0;
+    margin-bottom: 0;
+    border: none;
+    border-top: 1px solide #B1F5F7;
+    border-radius: 6px;
+    background-color: #B1F5F7;
+    padding-top: 0;
+    padding-bottom: 0;
+    padding-left: 0.5em;
+    font-size: 20px;
+}
+.vis div.chs li * {
+    display: inline-block;
+    padding-top: 4px;
+    vertical-align: top;
+    font-size: 12px;
+}
+.vis div.chs li span.msgs {
+    color: blue;
+}
+.vis svg.vis-svg line.arrow {
+    stroke-width: 1;
+    stroke: #B1F5F7;
+    stroke-dasharray: 12,4;
+    marker-end: url(#triangle);
+}
+.vis svg.vis-svg line.delta {
+    stroke-width: 2;
+    stroke: blue;
+    stroke-dasharray: none;
+}
+.vis svg.vis-svg line.close {
+    stroke: black;
+    stroke-dasharray: none;
+}
+.vis svg.vis-svg line.delta {
+    -webkit-animation-name: delta-move;
+    -webkit-animation-duration: 0.7s;
+    -webkit-animation-iteration-count: 1;
+    -webkit-animation-timing-function: ease-out;
+
+    animation-name: delta-move;
+    animation-duration: 0.7s;
+    animation-iteration-count: 1;
+    animation-timing-function: ease-out;
+}
+.vis svg.vis-svg line.ghost {
+    stroke-width: 0.8;
+    stroke: #aaa;
+    stroke-dasharray: none;
+}
+.vis svg.vis-svg line.trail {
+    stroke-width: 0.5;
+    stroke: #fbb;
+    stroke-dasharray: none;
+}
+.vis svg.vis-svg text.ch-name {
+    font-size: 10px;
+    stroke-color: #bbb;
+}
+@-webkit-keyframes delta-move {
+    0% { -webkit-transform: scale(0,0); }
+    100% { -webkit-transform: scale(1,1); }
+}
+@keyframes delta-move {
+    0% { transform: scale(0,0); }
+    100% { transform: scale(1,1); }
+}
+.vis button.toggle {
+    font-size: 8px;
+    width: 14px;
+    height: 12px;
+    margin: 2px 4px 0 6px;
+    border: none;
+    padding: 0 0 0 0;
+    vertical-align: top;
+    color: #666;
+    background-color: rgba(0,0,0,0);
+}
