@@ -1,4 +1,7 @@
 <html>
+<head>
+  <link href="world.css" rel="stylesheet" type="text/css">
+</head>
 <body>
 <div class="header">
   <div class="ribbon ribbon-fixed">
@@ -18,7 +21,7 @@ kv_client("client-2", "serverA", 8000)
       <div id="header-run-controls">run controls</div>
       <div class="ribbon-inputs">
         input controls
-        <button class="toggle" onclick="toggle('inputs')">&#9660;</button>
+        <button class="popup" onclick="popup('inputs')">&#9660;</button>
         <div class="ribbon-popup inputs" style="display: none;">
           <div class="field">
             <label>client:</label>
@@ -79,7 +82,7 @@ kv_client("client-2", "serverA", 8000)
       </div>
       <div class="ribbon-filters">
         filters / watches
-        <button class="toggle" onclick="toggle('filters')">&#9660;</button>
+        <button class="popup" onclick="popup('filters')">&#9660;</button>
         <div class="ribbon-popup filters" style="display: none;">
           lots<br/>
           of&nbsp;filters&nbsp;here&nbsp;placeholder&nbsp;<br/>
@@ -134,9 +137,9 @@ kv_client("client-2", "serverA", 8000)
 
 <div class="footer" id="footer" style="top: 80%; height: 20%;">
   <div class="splitter" onmousedown="return onSplitterStart(this);"></div>
-  <div class="events" id="events-0">
+  <div class="evts" id="evts-0">
   </div>
-  <div class="events" id="events-1">
+  <div class="evts" id="evts-1">
   </div>
 </div>
 
@@ -217,16 +220,16 @@ body, div {
   background: #2a2a2a;
   z-index: 1;
 }
-.footer .events {
+.footer .evts {
   display: inline-block;
   width: 50%;
   height: 90%;
   overflow: scroll;
 }
-.footer .events .event div {
+.footer .evts .evt div {
   display: inline-block;
 }
-.footer .events .event:hover {
+.footer .evts .evt:hover {
   background: #6a6a6a;
 }
 .splitter {
@@ -235,7 +238,7 @@ body, div {
   border-top: 1px solid #999;
   cursor: ns-resize;
 }
-.toggle {
+.popup {
   font-size: 5px;
 }
 </style>
@@ -330,7 +333,7 @@ function onSplitterStart(el) {
   return false;
 }
 
-function toggle(className) {
+function popup(className) {
   var els = document.getElementsByClassName(className);
   for (var i = 0; i < els.length; i++) {
     els[i].style.display = (els[i].style.display == "none") ? "" : "none";
@@ -340,15 +343,15 @@ function toggle(className) {
 var e0 = [];
 var e1 = [];
 for (var i = 0; i < 2000; i++) {
-  e0.push('<div class="event event-' + i +
+  e0.push('<div class="evt evt-' + i +
     '" onmouseenter="onHover(this);">' + i + '</div>');
   for (var j = 0; j < 10; j++) {
-    e1.push('<div class="event event-' + i +
+    e1.push('<div class="evt evt-' + i +
       '" onmouseenter="onHover(this);">' + i + ':' + j + '</div>');
   }
 }
-document.getElementById("events-0").innerHTML = e0.join('');
-document.getElementById("events-1").innerHTML = e1.join('');
+document.getElementById("evts-0").innerHTML = e0.join('');
+document.getElementById("evts-1").innerHTML = e1.join('');
 
 var onHoverPrev;
 function onHover(el) {
