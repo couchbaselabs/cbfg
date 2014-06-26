@@ -3,6 +3,8 @@
   <link href="vis.css" rel="stylesheet" type="text/css">
 </head>
 <body>
+<div class="top" id="top" style="height: 80%;">
+
 <div class="header">
   <div class="ribbon ribbon-fixed">
     <div class="ribbon-part ribbon-prog">
@@ -100,43 +102,56 @@ kv_client("client-2", "serverA", 8000)
 </div>
 
 <div class="main" id="main">
-  <div class="main-body">
-    <div class="events-container">
-      <div class="pane">
-        <div class="events" id="events"></div>
-      </div>
-    </div>
-    <div class="prog-map-container" id="prog-map-container">
-      <div class="pane">
-        <div class="prog-map" id="prog-map"></div>
-        <div class="prog-map-hover" id="prog-map-hover"></div>
-      </div>
-    </div>
-    <div class="vis-container" id="vis-container">
-      <div class="client-curr" id="client-curr"></div>
-      <div class="vis-event" id="vis-event"></div>
-      <div class="vis" id="vis"
-          style="position:relative; width:100%; height:100%;">
-        <div class="vis-html" id="vis-html"
-            style="position:absolute; top:0; left:0; width:100%;">
+  <div class="sides">
+    <div class="lhs" id="lhs" style="width: 70%;">
+      <div class="main-body">
+        <div class="events-container">
+          <div class="pane">
+            <div class="events" id="events"></div>
+          </div>
         </div>
-        <svg class="vis-svg" id="vis-svg"
-            style="position:absolute; top:0; left:500px; width:120px; height:100%;">
-        </svg>
+        <div class="prog-map-container" id="prog-map-container">
+          <div class="pane">
+            <div class="prog-map" id="prog-map"></div>
+            <div class="prog-map-hover" id="prog-map-hover"></div>
+          </div>
+        </div>
+        <div class="vis-container" id="vis-container">
+          <div class="client-curr" id="client-curr"></div>
+          <div class="vis-event" id="vis-event"></div>
+          <div class="vis" id="vis"
+              style="position:relative; width:100%; height:100%;">
+            <div class="vis-html" id="vis-html"
+                style="position:absolute; top:0; left:0; width:100%;">
+            </div>
+            <svg class="vis-svg" id="vis-svg"
+                style="position:absolute; top:0; left:500px; width:120px; height:100%;">
+            </svg>
+          </div>
+        </div>
+        <div class="prog-container" id="prog-container">
+          <div class="pane">
+            <div class="prog" id="prog"></div>
+            <div class="prog-hover" id="prog-hover"></div>
+          </div>
+        </div>
       </div>
     </div>
-    <div class="prog-container" id="prog-container">
-      <div class="pane">
-        <div class="prog" id="prog"></div>
-        <div class="prog-hover" id="prog-hover"></div>
+    <div class="rhs" id="rhs" style="width: 30%;">
+      <div class="splitter-ew"
+           onmousedown="return startDrag('ew', 'lhs', 'rhs');"></div>
+      <div class="rhs-main">
+        hello
       </div>
     </div>
   </div>
-  <div class="footer-space" id="footer-space" style="height: 20%";></div>
 </div>
 
-<div class="footer" id="footer" style="top: 80%; height: 20%;">
-  <div class="splitter" onmousedown="return onSplitterStart(this);"></div>
+</div>
+
+<div class="footer" id="footer" style="height: 20%;">
+  <div class="splitter-ns"
+       onmousedown="return startDrag('ns', 'top', 'footer');"></div>
   <div class="evts" id="evts-0">
   </div>
   <div class="evts" id="evts-1">
@@ -158,9 +173,10 @@ body, div {
   vertical-align: top;
   white-space: nowrap;
 }
-.header, .main, .footer {
-  margin-left: 20px;
+.top, .footer {
   width: 95%;
+  margin-left: 20px;
+  overflow: hidden;
 }
 .header {
   background: #2a2a2a;
@@ -209,17 +225,6 @@ body, div {
 .field .units {
   font-size: 7pt;
 }
-.main {
-  overflow: scroll;
-}
-.footer-space {
-  visibility: hidden;
-}
-.footer {
-  position: fixed;
-  background: #2a2a2a;
-  z-index: 1;
-}
 .footer .evts {
   display: inline-block;
   width: 50%;
@@ -232,11 +237,17 @@ body, div {
 .footer .evts .evt:hover {
   background: #6a6a6a;
 }
-.splitter {
+.splitter-ns {
   width: 100%;
   height: 3px;
   border-top: 1px solid #999;
   cursor: ns-resize;
+}
+.splitter-ew {
+  width: 3px;
+  height: 100%;
+  border-left: 1px solid #999;
+  cursor: ew-resize;
 }
 .popup {
   font-size: 5px;
@@ -311,20 +322,32 @@ body, div {
 .main .vis-container #vis-event {
     background-color: #2a2a2a;
 }
+.main .sides {
+  width 100%;
+}
+.main .sides > div {
+  display: inline-block;
+  overflow: scroll;
+}
+.main .sides .rhs > div {
+  display: inline-block;
+}
 </style>
 
 <style id="hover-style"></style>
 
 <script>
-function onSplitterStart(el) {
-  var footer = document.getElementById("footer");
-  var footerSpace = document.getElementById("footer-space");
+var dragMeta = {
+  ew: { prop: "width",  clientProp: "clientX", windowProp: "innerWidth" },
+  ns: { prop: "height", clientProp: "clientY", windowProp: "innerHeight"}
+}
+function startDrag(dir, idMain, idRest) {
+  var s = dragMeta[dir];
   window.onmousemove = function(ev) {
-    var pct = Math.max(10, Math.min(95, Math.round(100 * ((1.0 * ev.clientY) /
-                                                          window.innerHeight))));
-    footer.style.top = pct + "%";
-    footer.style.height = (100 - pct) + "%";
-    footerSpace.style.height = (100 - pct) + "%";
+    var pct = Math.max(10, Math.min(95, Math.round(100 * ((1.0 * ev[s.clientProp]) /
+                                                          window[s.windowProp]))));
+    document.getElementById(idMain).style[s.prop] = pct + "%";
+    document.getElementById(idRest).style[s.prop] = (100 - pct) + "%";
     return false;
   }
   window.onmouseup = function(ev) {
