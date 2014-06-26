@@ -3,8 +3,14 @@
   <link href="world.css" rel="stylesheet" type="text/css">
 </head>
 <body>
-<div class="prog">
-  <textarea id="prog-in">
+<div class="header">
+  <div class="ribbon ribbon-fixed">
+    <div class="ribbon-part ribbon-prog">
+      <div class="ribbon-top">
+        <input id="prog-name" type="text" value="simulation-name-here"/>
+      </div>
+      <div class="ribbon-bottom">
+        <textarea id="prog-in">
 kv_server("serverA", 8000, 8100)
 kv_server("serverB", 8000)
 
@@ -12,173 +18,247 @@ kv_client("client-0", "serverA", 8000)
 kv_client("client-1", "serverA", 8000)
 kv_client("client-2", "serverA", 8000)
 </textarea>
-<!--
-kv_client("clientX", "serverA:8000")
-kv_client("clientY", "serverA:8100")
-kv_client("clientZ", "serverB:8000")
-kv_client("clientW", "serverB:8000")
-
-after(1000).
-  kv_workload("clientX")
-
-after(5000).
-  pause("serverA")
-
-after(8000).
-  unpause("serverA")-->
-  <br/>
-  <button id="prog-go">go</button>
-  <div class="filters" id="filters">todo filters</div>
-  <div class="watches" id="watches">todo watches</div>
-</div>
-<div class="run">
-  <div class="header">
-    <div class="controls" id="header-run-controls">controls</div>
-    <div class="controls-input">
-      <label>client:</label>
-        <span id="controls-clients">
-          <select id="client">
-            <option value="client-0" selected>client-0</option>
-            <option value="client-1">client-1</option>
-            <option value="client-2">client-2</option>
-          </select>
-        </span>
-      <br/>
-      <label>fence:</label>
-        <select id="fence">
-          <option value="0" selected>false</option>
-          <option value="1">true</option>
-        </select>
-      <br/>
-      <label>x:</label><input id="x" type="text" value="1"></input>&nbsp;
-             y:        <input id="y" type="text" value="2"></input>&nbsp;
-             delay:    <input id="delay" type="text" value="1000"></input>
-                       <span class="units">(milliseconds)</span>
-      <br/>
-      <label>lane:</label><input id="lane" type="text" value=""></input>
-      <br/>
-      <label>color:</label>
-        <select id="color">
-          <option value="red" selected>red</option>
-          <option value="blue">blue</option>
-          <option value="green">green</option>
-          <option value="orange">orange</option>
-          <option value="purple">purple</option>
-          <option value="black">black</option>
-        </select>
-        &nbsp;
-      server delay:
-        <input id="sleep" type="text" value="5000"></input>
-        <span class="units">(milliseconds)</span>
-      <br/>
-      <button id="add">add</button>
-      <button id="sub">sub</button>
-      <button id="count">count</button>
-      <button id="close-lane">close lane</button>
-      <button id="test">test</button>
+        <button id="prog-go">restart</button>
+      </div>
     </div>
-  </div>
-  <div class="main" id="main">
-    <div class="main-body">
-      <div class="events-container">
-        <div class="pane">
-          <div class="events" id="events"></div>
-        </div>
+    <div class="ribbon-part">
+      <div class="ribbon-top">
+        <div class="controls" id="header-run-controls">run controls</div>
       </div>
-      <div class="prog-map-container" id="prog-map-container">
-        <div class="pane">
-          <div class="prog-map" id="prog-map"></div>
-          <div class="prog-map-hover" id="prog-map-hover"></div>
-        </div>
-      </div>
-      <div class="vis-container" id="vis-container">
-        <div class="client-curr" id="client-curr"></div>
-        <div class="vis-event" id="vis-event"></div>
-        <div class="vis" id="vis"
-            style="position:relative; width:100%; height:100%;">
-          <div class="vis-html" id="vis-html"
-              style="position:absolute; top:0; left:0; width:100%;">
+      <div class="ribbon-bottom ribbon-inputs">
+        input controls
+        <button onclick="toggle('inputs')">&#8597;</button>
+        <div class="ribbon-popup inputs">
+          <div class="field">
+            <label>client:</label>
+            <span id="controls-clients">
+              <select id="client">
+                <option value="client-0" selected>client-0</option>
+                <option value="client-1">client-1</option>
+                <option value="client-2">client-2</option>
+              </select>
+            </span>
           </div>
-          <svg class="vis-svg" id="vis-svg"
-              style="position:absolute; top:0; left:500px; width:120px; height:100%;">
-          </svg>
+          <div class="field">
+            <label>fence:</label>
+            <select id="fence">
+              <option value="0" selected>false</option>
+              <option value="1">true</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>x:</label>
+            <input id="x" type="text" value="1"></input>
+          </div>
+          <div class="field">
+            <label>y:</label>
+            <input id="y" type="text" value="2"></input>
+          </div>
+          <div class="field">
+            <label>delay:</label>
+            <input id="delay" type="text" value="1000"></input>
+            <span class="units">(millisecs)</span>
+          </div>
+          <div class="field">
+            <label>lane:</label>
+            <input id="lane" type="text" value=""></input>
+          </div>
+          <div class="field">
+            <label>color:</label>
+            <select id="color">
+              <option value="red" selected>red</option>
+              <option value="blue">blue</option>
+              <option value="green">green</option>
+              <option value="orange">orange</option>
+              <option value="purple">purple</option>
+              <option value="black">black</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>server delay:</label>
+            <input id="sleep" type="text" value="5000"></input>
+            <span class="units">(millisecs)</span>
+          </div>
+          <button id="add">add</button>
+          <button id="sub">sub</button>
+          <button id="count">count</button>
+          <button id="close-lane">close lane</button>
+          <button id="test">test</button>
         </div>
       </div>
-      <div class="prog-container" id="prog-container">
-        <div class="pane">
-          <div class="prog" id="prog"></div>
-          <div class="prog-hover" id="prog-hover"></div>
+    </div>
+    <div class="ribbon-part ribbon-filters">
+      <div class="ribbon-top">
+        filters / watches
+      </div>
+      <div class="ribbon-bottom">
+        <button onclick="toggle('filters')">&#8597;</button>
+        <div class="ribbon-popup filters">
+          lots<br/>
+          of&nbsp;filters&nbsp;here&nbsp;placeholder&nbsp;<br/>
+          and<br/>
+          more<br/>
+          more<br/>
+          more<br/>
+          more<br/>
+          more<br/>
         </div>
       </div>
     </div>
   </div>
+  <div class="ribbon ribbon-space">
+    <div class="ribbon-part">
+      <div class="ribbon-top">
+      </div>
+      <div class="ribbon-bottom">
+      </div>
+    </div>
+  </div>
 </div>
-<style id="style">
+
+<div class="main" id="main">
+  <div class="main-body">
+    <div class="events-container">
+      <div class="pane">
+        <div class="events" id="events"></div>
+      </div>
+    </div>
+    <div class="prog-map-container" id="prog-map-container">
+      <div class="pane">
+        <div class="prog-map" id="prog-map"></div>
+        <div class="prog-map-hover" id="prog-map-hover"></div>
+      </div>
+    </div>
+    <div class="vis-container" id="vis-container">
+      <div class="client-curr" id="client-curr"></div>
+      <div class="vis-event" id="vis-event"></div>
+      <div class="vis" id="vis"
+          style="position:relative; width:100%; height:100%;">
+        <div class="vis-html" id="vis-html"
+            style="position:absolute; top:0; left:0; width:100%;">
+        </div>
+        <svg class="vis-svg" id="vis-svg"
+            style="position:absolute; top:0; left:500px; width:120px; height:100%;">
+        </svg>
+      </div>
+    </div>
+    <div class="prog-container" id="prog-container">
+      <div class="pane">
+        <div class="prog" id="prog"></div>
+        <div class="prog-hover" id="prog-hover"></div>
+      </div>
+    </div>
+  </div>
+  <div class="footer-space" id="footer-space" style="height: 20%";></div>
+</div>
+
+<div class="footer" id="footer" style="top: 80%; height: 20%;">
+  <div class="splitter" onmousedown="return onSplitterStart(this);"></div>
+  <div class="events" id="events-0">
+  </div>
+  <div class="events" id="events-1">
+  </div>
+</div>
+
+<style>
 body {
-  margin: 0 0 0 0;
   background-color: #2a2a2a;
-  padding: 0 0 0 0;
   font-family: Tahoma, Geneva, sans-serif;
+  font-size: 10pt;
   color: #a2a2a2;
+}
+body, div {
+  margin: 0 0 0 0;
+  padding: 0 0 0 0;
+}
+* {
+  vertical-align: top;
   white-space: nowrap;
 }
-.prog, .run {
-  display: inline-block;
-  vertical-align: top;
+.header, .main, .footer {
+  margin-left: 20px;
+  width: 95%;
 }
-.prog {
-  margin: 0 0 0 0;
-  min-width: 20%;
-  max-width: 40%;
+.header {
+  background: #2a2a2a;
 }
-.prog textarea {
-  width: 100%;
-  height: 80%;
-  background-color: #e2e2e2;
-  padding: 5px 5px 5px 5px;
-  white-space: pre;
-  word-wrap: normal;
-  overflow-x: scroll;
+.header .ribbon {
+  width: 95%;
+  border-bottom: 1px solid #999;
+  padding-top: 10px;
+  padding-bottom: 5px;
 }
-.run {
-  width: 80%;
-  margin: 0 0 0 0;
-  padding: 0 10px 0 15px;
-}
-.run .header > * {
-  display: inline-block;
-  vertical-align: top;
-}
-.run .controls {
-  margin: 0 0 0 0;
-  background-color: #2a2a2a;
-  padding: 0 0 0 0;
+.header .ribbon-fixed {
   position: fixed;
-  z-index: 1;
+  background: #2a2a2a;
+  z-index: 10;
 }
-.run .controls ul {
-  margin: 0 0 0 0;
-  padding: 0 0 0 0;
+.header .ribbon-space {
+  visibility: hidden;
 }
-.run .controls ul li {
-  display: inline;
-  margin-right: 10px;
-}
-.run .controls-input {
-  margin-top: 40px;
-  background-color: #4a4a4a;
-  padding: 20px 15px 20px 15px;
-  font-size: 13px;
-}
-.run .controls-input label {
+.header .ribbon .ribbon-part {
   display: inline-block;
-  min-width: 3.5em;
+  padding-right: 20px;
+}
+.header .ribbon .ribbon-top {
+  min-height: 1.5em;
+}
+.header .ribbon .ribbon-bottom {
+  min-height: 2.5em;
+}
+.header .ribbon .ribbon-popup {
+  position: absolute;
+  border: 1px solid #999;
+  background: #2a2a2a;
+  z-index: 20;
+}
+.header .ribbon .ribbon-prog input,
+.header .ribbon .ribbon-prog textarea{
+  min-width: 300px;
+}
+.header .ribbon .ribbon-inputs {
+  min-width: 300px;
+}
+.field label {
+  display: inline-block;
+  min-width: 120px;
   text-align: right;
 }
-.run .controls-input .units {
-  color: #7a7a7a;
-  font-size: 8px;
+.field .units {
+  font-size: 7pt;
 }
+.main {
+  overflow: scroll;
+}
+.footer-space {
+  visibility: hidden;
+}
+.footer {
+  position: fixed;
+  background: #2a2a2a;
+  z-index: 1;
+}
+.footer .events {
+  display: inline-block;
+  width: 50%;
+  height: 90%;
+  overflow: scroll;
+}
+.footer .events .event div {
+  display: inline-block;
+}
+.footer .events .event:hover {
+  background: #6a6a6a;
+}
+.splitter {
+  width: 100%;
+  height: 3px;
+  border-top: 1px solid #999;
+  cursor: ns-resize;
+}
+</style>
+
+<style>
 .main {
   margin-top: 20px;
 }
@@ -247,6 +327,58 @@ body {
     background-color: #2a2a2a;
 }
 </style>
+
+<style id="hover-style"></style>
+
+<script>
+function onSplitterStart(el) {
+  var footer = document.getElementById("footer");
+  var footerSpace = document.getElementById("footer-space");
+  window.onmousemove = function(ev) {
+    var pct = Math.max(10, Math.min(95, Math.round(100 * ((1.0 * ev.clientY) /
+                                                          window.innerHeight))));
+    footer.style.top = pct + "%";
+    footer.style.height = (100 - pct) + "%";
+    footerSpace.style.height = (100 - pct) + "%";
+    return false;
+  }
+  window.onmouseup = function(ev) {
+    window.onmouseup = window.onmousemove = null;
+  }
+  return false;
+}
+
+function toggle(className) {
+  var els = document.getElementsByClassName(className);
+  for (var i = 0; i < els.length; i++) {
+    els[i].style.display = (els[i].style.display == "none") ? "" : "none";
+  }
+}
+
+var e0 = [];
+var e1 = [];
+for (var i = 0; i < 2000; i++) {
+  e0.push('<div class="event event-' + i +
+    '" onmouseenter="onHover(this);">' + i + '</div>');
+  for (var j = 0; j < 10; j++) {
+    e1.push('<div class="event event-' + i +
+      '" onmouseenter="onHover(this);">' + i + ':' + j + '</div>');
+  }
+}
+document.getElementById("events-0").innerHTML = e0.join('');
+document.getElementById("events-1").innerHTML = e1.join('');
+
+var onHoverPrev;
+function onHover(el) {
+  var c = el.className.split(' ')[1];
+  if (c != onHoverPrev) {
+    document.getElementById("hover-style").innerText =
+      "div." + c + " { background: #4a4a4a; }";
+    onHoverPrev = c;
+  }
+}
+</script>
+
 <script src="out/goog/base.js" type="text/javascript"></script>
 <script src="vendor/fb-react-0.9.0.js" type="text/javascript"></script>
 <script src="cbfg.js" type="text/javascript"></script>
