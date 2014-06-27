@@ -118,20 +118,18 @@ kv_client("client-2", "serverA", 8000)
         </div>
       </div>
     </div>
+    <div class="splitter-ew"
+         onmousedown="return startDrag('ew', 'lhs', 'rhs');"></div>
     <div class="rhs" id="rhs" style="width:80%;">
-      <div class="splitter-ew"
-           onmousedown="return startDrag('ew', 'lhs', 'rhs');"></div>
-      <div class="rhs-main">
-        <div class="vis-event" id="vis-event"></div>
-        <div class="vis" id="vis"
-            style="position:relative; width:100%; height:100%;">
-          <div class="vis-html" id="vis-html"
-              style="position:absolute; top:0; left:0; width:100%;">
-          </div>
-          <svg class="vis-svg" id="vis-svg"
-              style="position:absolute; top:0; left:500px; width:120px; height:100%;">
-          </svg>
+      <div class="vis-event" id="vis-event"></div>
+      <div class="vis" id="vis"
+          style="position:relative; width:100%; height:100%;">
+        <div class="vis-html" id="vis-html"
+            style="position:absolute; top:0; left:0; width:100%;">
         </div>
+        <svg class="vis-svg" id="vis-svg"
+            style="position:absolute; top:0; left:500px; width:120px; height:100%;">
+        </svg>
       </div>
     </div>
   </div>
@@ -168,7 +166,7 @@ body, div {
 }
 .header .ribbon {
   width: 95%;
-  min-height: 4em;
+  min-height: 5em;
   border-bottom: 1px solid #999;
   padding-top: 10px;
   padding-bottom: 5px;
@@ -237,21 +235,17 @@ body, div {
 </style>
 
 <style>
-.main {
-  margin-top: 20px;
-}
 .main .sides {
   width: 100%;
   height: 100%;
 }
 .main .sides > div {
   display: inline-block;
-  width: 100%;
   height: 100%;
-  overflow: scroll;
 }
-.main .sides .rhs > div {
-  display: inline-block;
+.main .lhs,
+.main .rhs {
+  overflow: scroll;
 }
 .main ul {
   margin: 0 0 0 0;
