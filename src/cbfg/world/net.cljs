@@ -200,10 +200,12 @@
              "</div>"]]
       [@addrs h])))
 
+(defn net-actx-info [vis net-actx-id]
+  (first (filter (fn [[actx actx-info]] (= (last actx) net-actx-id))
+                 (:actxs vis))))
+
 (defn render-net [vis net-actx-id output-el-id prev-addrs]
-  (let [net-state (:loop-state (second (first (filter (fn [[actx actx-info]]
-                                                        (= (last actx) net-actx-id))
-                                                      (:actxs vis)))))
+  (let [net-state (:loop-state (second (net-actx-info vis net-actx-id)))
         [addrs h] (render-net-html net-state @prev-addrs)]
     (when (not= @prev-addrs addrs)
       (reset! prev-addrs addrs)
