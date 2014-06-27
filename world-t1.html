@@ -4,137 +4,135 @@
 </head>
 <body>
 <div class="top" id="top" style="height:80%;">
-
-<div class="header">
-  <div class="ribbon ribbon-fixed">
-    <div class="ribbon-part ribbon-prog">
-      <input id="prog-name" type="text" value="simulation-name-here"/><br/>
-      <textarea id="prog-in">
+  <div class="header">
+    <div class="ribbon ribbon-fixed">
+      <div class="ribbon-part ribbon-prog">
+        <input id="prog-name" type="text" value="simulation-name-here"/><br/>
+        <textarea id="prog-in">
 kv_server("serverA", 8000, 8100)
 kv_server("serverB", 8000)
 
 kv_client("client-0", "serverA", 8000)
 kv_client("client-1", "serverA", 8000)
 kv_client("client-2", "serverA", 8000)
-</textarea>
-      <button id="prog-go">restart</button>
-    </div>
-    <div class="ribbon-part">
-      <div id="header-run-controls">run controls</div>
-      <div class="ribbon-inputs">
-        input controls
-        <button class="popup" onclick="popup('inputs')">&#9660;</button>
-        <div class="ribbon-popup inputs" style="display:none;">
-          <div class="field">
-            <label>client:</label>
-            <span id="controls-clients">
-              <select id="client">
-                <option value="client-0" selected>client-0</option>
-                <option value="client-1">client-1</option>
-                <option value="client-2">client-2</option>
+        </textarea>
+        <button id="prog-go">restart</button>
+      </div>
+      <div class="ribbon-part">
+        <div id="header-run-controls">run controls</div>
+        <div class="ribbon-inputs">
+          input controls
+          <button class="popup" onclick="popup('inputs')">&#9660;</button>
+          <div class="ribbon-popup inputs" style="display:none;">
+            <div class="field">
+              <label>client:</label>
+              <span id="controls-clients">
+                <select id="client">
+                  <option value="client-0" selected>client-0</option>
+                  <option value="client-1">client-1</option>
+                  <option value="client-2">client-2</option>
+                </select>
+              </span>
+            </div>
+            <div class="field">
+              <label>fence:</label>
+              <select id="fence">
+                <option value="0" selected>false</option>
+                <option value="1">true</option>
               </select>
-            </span>
-          </div>
+            </div>
+            <div class="field">
+              <label>x:</label>
+              <input id="x" type="text" value="1"></input>
+            </div>
+            <div class="field">
+              <label>y:</label>
+              <input id="y" type="text" value="2"></input>
+            </div>
           <div class="field">
-            <label>fence:</label>
-            <select id="fence">
-              <option value="0" selected>false</option>
-              <option value="1">true</option>
-            </select>
+              <label>delay:</label>
+              <input id="delay" type="text" value="1000"></input>
+              <span class="units">(millisecs)</span>
+            </div>
+            <div class="field">
+              <label>lane:</label>
+              <input id="lane" type="text" value=""></input>
+            </div>
+            <div class="field">
+              <label>color:</label>
+              <select id="color">
+                <option value="red" selected>red</option>
+                <option value="blue">blue</option>
+                <option value="green">green</option>
+                <option value="orange">orange</option>
+                <option value="purple">purple</option>
+                <option value="black">black</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>server delay:</label>
+              <input id="sleep" type="text" value="5000"></input>
+              <span class="units">(millisecs)</span>
+            </div>
+            <button id="add">add</button>
+            <button id="sub">sub</button>
+            <button id="count">count</button>
+            <button id="close-lane">close lane</button>
+            <button id="test">test</button>
           </div>
-          <div class="field">
-            <label>x:</label>
-            <input id="x" type="text" value="1"></input>
+        </div>
+        <div class="ribbon-filters">
+          filters / watches
+          <button class="popup" onclick="popup('filters')">&#9660;</button>
+          <div class="ribbon-popup filters" style="display:none;">
+            lots<br/>
+            of&nbsp;filters&nbsp;here&nbsp;placeholder&nbsp;<br/>
+            and<br/>
+            more<br/>
+            more<br/>
+            more<br/>
+            more<br/>
+            more<br/>
           </div>
-          <div class="field">
-            <label>y:</label>
-            <input id="y" type="text" value="2"></input>
-          </div>
-          <div class="field">
-            <label>delay:</label>
-            <input id="delay" type="text" value="1000"></input>
-            <span class="units">(millisecs)</span>
-          </div>
-          <div class="field">
-            <label>lane:</label>
-            <input id="lane" type="text" value=""></input>
-          </div>
-          <div class="field">
-            <label>color:</label>
-            <select id="color">
-              <option value="red" selected>red</option>
-              <option value="blue">blue</option>
-              <option value="green">green</option>
-              <option value="orange">orange</option>
-              <option value="purple">purple</option>
-              <option value="black">black</option>
-            </select>
-          </div>
-          <div class="field">
-            <label>server delay:</label>
-            <input id="sleep" type="text" value="5000"></input>
-            <span class="units">(millisecs)</span>
-          </div>
-          <button id="add">add</button>
-          <button id="sub">sub</button>
-          <button id="count">count</button>
-          <button id="close-lane">close lane</button>
-          <button id="test">test</button>
         </div>
       </div>
-      <div class="ribbon-filters">
-        filters / watches
-        <button class="popup" onclick="popup('filters')">&#9660;</button>
-        <div class="ribbon-popup filters" style="display:none;">
-          lots<br/>
-          of&nbsp;filters&nbsp;here&nbsp;placeholder&nbsp;<br/>
-          and<br/>
-          more<br/>
-          more<br/>
-          more<br/>
-          more<br/>
-          more<br/>
+    </div>
+    <div class="ribbon ribbon-space"></div>
+  </div>
+
+  <div class="main" id="main">
+    <div class="sides">
+      <div class="lhs" id="lhs" style="width:20%;">
+        <div class="client-curr" id="client-curr"></div>
+        <div class="prog-map-container">
+          <div class="pane">
+            <div class="prog-map" id="prog-map"></div>
+            <div class="prog-map-hover" id="prog-map-hover"></div>
+          </div>
+        </div>
+        <div class="prog-container" id="prog-container">
+          <div class="pane">
+            <div class="prog" id="prog"></div>
+            <div class="prog-hover" id="prog-hover"></div>
+          </div>
+        </div>
+      </div>
+      <div class="splitter-ew"
+           onmousedown="return startDrag('ew', 'lhs', 'rhs');"></div>
+      <div class="rhs" id="rhs" style="width:80%;">
+        <div class="vis-event" id="vis-event"></div>
+        <div class="vis" id="vis"
+            style="position:relative; width:100%; height:100%;">
+          <div class="vis-html" id="vis-html"
+              style="position:absolute; top:0; left:0; width:100%;">
+          </div>
+          <svg class="vis-svg" id="vis-svg"
+              style="position:absolute; top:0; left:500px; width:120px; height:100%;">
+          </svg>
         </div>
       </div>
     </div>
   </div>
-  <div class="ribbon ribbon-space"></div>
-</div>
-
-<div class="main" id="main">
-  <div class="sides">
-    <div class="lhs" id="lhs" style="width:20%;">
-      <div class="client-curr" id="client-curr"></div>
-      <div class="prog-map-container">
-        <div class="pane">
-          <div class="prog-map" id="prog-map"></div>
-          <div class="prog-map-hover" id="prog-map-hover"></div>
-        </div>
-      </div>
-      <div class="prog-container" id="prog-container">
-        <div class="pane">
-          <div class="prog" id="prog"></div>
-          <div class="prog-hover" id="prog-hover"></div>
-        </div>
-      </div>
-    </div>
-    <div class="splitter-ew"
-         onmousedown="return startDrag('ew', 'lhs', 'rhs');"></div>
-    <div class="rhs" id="rhs" style="width:80%;">
-      <div class="vis-event" id="vis-event"></div>
-      <div class="vis" id="vis"
-          style="position:relative; width:100%; height:100%;">
-        <div class="vis-html" id="vis-html"
-            style="position:absolute; top:0; left:0; width:100%;">
-        </div>
-        <svg class="vis-svg" id="vis-svg"
-            style="position:absolute; top:0; left:500px; width:120px; height:100%;">
-        </svg>
-      </div>
-    </div>
-  </div>
-</div>
-
 </div>
 
 <div class="footer" id="footer" style="height:20%;">
