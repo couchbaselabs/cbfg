@@ -143,14 +143,16 @@
                                  }}
                   :chs {} ; {ch -> {:id (gen-id), :msgs {msg -> true},
                           ;         :first-taker-actx actx-or-nil}}.
-                  :gen-id gen-id})]
+                  :gen-id gen-id})
+            render-net-state (atom {})]
         (prog-init world)
         (cbfg.vis/process-events vis event-delay cbfg.vis/vis-event-handlers
                                  event-ch step-ch event-run-ch)
         (cbfg.vis/process-render el-prefix world event-run-ch
                                  (fn [vis-next]
                                    ; (println :on-delayed-event-cb @last-id)
-                                   ))
+                                   (cbfg.world.net/render-net vis-next "net-1" "net"
+                                                              render-net-state)))
         (make-net world
                   (:net-listen-ch @prog-base)
                   (:net-connect-ch @prog-base))
