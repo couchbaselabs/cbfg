@@ -216,8 +216,26 @@ body, div {
   height: 90%;
   overflow: scroll;
 }
+.footer .evts ul {
+  margin: 0 0 0 0;
+  padding: 0 0 0 10px;
+  list-style-type: none;
+}
 .footer .evts .evt:hover {
   background: #6a6a6a;
+}
+.footer .evts .evt:hover button {
+  visibility: visible;
+}
+.footer .evts .evt button {
+  visibility: hidden;
+  float: right;
+  margin-right: 10px;
+  height: 10px;
+  font-size: 7pt;
+}
+.footer .evts .evt {
+  clear: both;
 }
 .splitter-ns {
   width: 100%;
