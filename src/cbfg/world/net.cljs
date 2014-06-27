@@ -92,11 +92,8 @@
               true
               (conj out (render-msg curr-msg "msg-enter" "")))))))
 
-(defn render-net [vis net-actx-id output-el-id prev-addrs]
-  (let [net-state (:loop-state (second (first (filter (fn [[actx actx-info]]
-                                                        (= (last actx) net-actx-id))
-                                                      (:actxs vis)))))
-        addrs (atom {})
+(defn render-net-html [vis net-state prev-addrs]
+  (let [addrs (atom {})
         coords (atom {})] ; Index positions.
     (doseq [[[addr port] accept-chs] (:listens net-state)]
       (swap! addrs #(assoc-in % [addr :listens port] true)))
@@ -172,7 +169,7 @@
                                           dist (Math/abs (Math/sqrt (+ (* dx dx)
                                                                        (* dy dy))))
                                           prev-msgs (get-in
-                                                     @prev-addrs
+                                                     prev-addrs
                                                      [addr :outs
                                                       [accept-addr accept-port]
                                                       [from-port to-addr to-port]])]
@@ -201,10 +198,16 @@
                         "</div>"]))
                   (sort-by first @addrs))
              "</div>"]]
-      (when (not= @prev-addrs @addrs)
-        (reset! prev-addrs @addrs)
-        (set-el-innerHTML output-el-id
-                          (apply str (flatten h)))))))
+      [@addrs h])))
+
+(defn render-net [vis net-actx-id output-el-id prev-addrs]
+  (let [net-state (:loop-state (second (first (filter (fn [[actx actx-info]]
+                                                        (= (last actx) net-actx-id))
+                                                      (:actxs vis)))))
+        [addrs h] (render-net-html vis net-state @prev-addrs)]
+    (when (not= @prev-addrs addrs)
+      (reset! prev-addrs addrs)
+      (set-el-innerHTML output-el-id (apply str (flatten h))))))
 
 (defn world-vis-init [el-prefix init-event-delay]
   (let [cmd-inject-ch (chan)
