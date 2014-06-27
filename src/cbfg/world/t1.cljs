@@ -74,7 +74,8 @@
 (defn render-events [app owner]
   (apply dom/ul nil
          (map (fn [[ts label prog-frame]]
-                (dom/li #js {:onClick #(on-prog-frame-restore ts label prog-frame)
+                (dom/li #js {:className (str "evt evt-" ts)
+                             :onClick #(on-prog-frame-restore ts label prog-frame)
                              :onMouseEnter #(on-prog-frame-focus ts label prog-frame)
                              :onMouseLeave #(on-prog-frame-blur)}
                         (str ts (apply str label) prog-frame)))
