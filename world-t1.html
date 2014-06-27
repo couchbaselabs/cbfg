@@ -3,7 +3,7 @@
   <link href="vis.css" rel="stylesheet" type="text/css">
 </head>
 <body>
-<div class="top" id="top" style="height: 80%;">
+<div class="top" id="top" style="height:80%;">
 
 <div class="header">
   <div class="ribbon ribbon-fixed">
@@ -24,7 +24,7 @@ kv_client("client-2", "serverA", 8000)
       <div class="ribbon-inputs">
         input controls
         <button class="popup" onclick="popup('inputs')">&#9660;</button>
-        <div class="ribbon-popup inputs" style="display: none;">
+        <div class="ribbon-popup inputs" style="display:none;">
           <div class="field">
             <label>client:</label>
             <span id="controls-clients">
@@ -85,7 +85,7 @@ kv_client("client-2", "serverA", 8000)
       <div class="ribbon-filters">
         filters / watches
         <button class="popup" onclick="popup('filters')">&#9660;</button>
-        <div class="ribbon-popup filters" style="display: none;">
+        <div class="ribbon-popup filters" style="display:none;">
           lots<br/>
           of&nbsp;filters&nbsp;here&nbsp;placeholder&nbsp;<br/>
           and<br/>
@@ -103,45 +103,40 @@ kv_client("client-2", "serverA", 8000)
 
 <div class="main" id="main">
   <div class="sides">
-    <div class="lhs" id="lhs" style="width: 70%;">
-      <div class="main-body">
-        <div class="events-container">
-          <div class="pane">
-            <div class="events" id="events"></div>
-          </div>
+    <div class="lhs" id="lhs" style="width:20%;">
+      <div class="events-container">
+        <div class="pane">
+          <div class="events" id="events"></div>
         </div>
-        <div class="prog-map-container" id="prog-map-container">
-          <div class="pane">
-            <div class="prog-map" id="prog-map"></div>
-            <div class="prog-map-hover" id="prog-map-hover"></div>
-          </div>
+      </div>
+      <div class="prog-map-container" id="prog-map-container">
+        <div class="pane">
+          <div class="prog-map" id="prog-map"></div>
+          <div class="prog-map-hover" id="prog-map-hover"></div>
         </div>
-        <div class="vis-container" id="vis-container">
-          <div class="client-curr" id="client-curr"></div>
-          <div class="vis-event" id="vis-event"></div>
-          <div class="vis" id="vis"
-              style="position:relative; width:100%; height:100%;">
-            <div class="vis-html" id="vis-html"
-                style="position:absolute; top:0; left:0; width:100%;">
-            </div>
-            <svg class="vis-svg" id="vis-svg"
-                style="position:absolute; top:0; left:500px; width:120px; height:100%;">
-            </svg>
-          </div>
-        </div>
-        <div class="prog-container" id="prog-container">
-          <div class="pane">
-            <div class="prog" id="prog"></div>
-            <div class="prog-hover" id="prog-hover"></div>
-          </div>
+      </div>
+      <div class="client-curr" id="client-curr"></div>
+      <div class="prog-container" id="prog-container">
+        <div class="pane">
+          <div class="prog" id="prog"></div>
+          <div class="prog-hover" id="prog-hover"></div>
         </div>
       </div>
     </div>
-    <div class="rhs" id="rhs" style="width: 30%;">
+    <div class="rhs" id="rhs" style="width:80%;">
       <div class="splitter-ew"
            onmousedown="return startDrag('ew', 'lhs', 'rhs');"></div>
       <div class="rhs-main">
-        hello
+        <div class="vis-event" id="vis-event"></div>
+        <div class="vis" id="vis"
+            style="position:relative; width:100%; height:100%;">
+          <div class="vis-html" id="vis-html"
+              style="position:absolute; top:0; left:0; width:100%;">
+          </div>
+          <svg class="vis-svg" id="vis-svg"
+              style="position:absolute; top:0; left:500px; width:120px; height:100%;">
+          </svg>
+        </div>
       </div>
     </div>
   </div>
@@ -149,7 +144,7 @@ kv_client("client-2", "serverA", 8000)
 
 </div>
 
-<div class="footer" id="footer" style="height: 20%;">
+<div class="footer" id="footer" style="height:20%;">
   <div class="splitter-ns"
        onmousedown="return startDrag('ns', 'top', 'footer');"></div>
   <div class="evts" id="evts-0">
@@ -159,7 +154,11 @@ kv_client("client-2", "serverA", 8000)
 </div>
 
 <style>
-body {
+* {
+  vertical-align: top;
+  white-space: nowrap;
+}
+ body {
   background-color: #2a2a2a;
   font-family: Tahoma, Geneva, sans-serif;
   font-size: 10pt;
@@ -168,10 +167,6 @@ body {
 body, div {
   margin: 0 0 0 0;
   padding: 0 0 0 0;
-}
-* {
-  vertical-align: top;
-  white-space: nowrap;
 }
 .top, .footer {
   width: 95%;
@@ -273,19 +268,10 @@ body, div {
   padding: 0 0 0 10px;
   list-style-type: none;
 }
-.main-body {
-  white-space: nowrap;
-  vertical-align: top;
-}
-.main-body > div {
-  display: inline-block;
-  height: 100%;
-  overflow: scroll;
-}
-.main-body .pane {
+.main .pane {
   position: relative;
 }
-.main-body .pane > div {
+.main .pane > div {
   position: absolute;
   top: 0;
   left: 0;
