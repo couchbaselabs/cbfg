@@ -92,7 +92,7 @@
               true
               (conj out (render-msg curr-msg "msg-enter" "")))))))
 
-(defn render-net-html [vis net-state prev-addrs]
+(defn render-net-html [net-state prev-addrs]
   (let [addrs (atom {})
         coords (atom {})] ; Index positions.
     (doseq [[[addr port] accept-chs] (:listens net-state)]
@@ -204,7 +204,7 @@
   (let [net-state (:loop-state (second (first (filter (fn [[actx actx-info]]
                                                         (= (last actx) net-actx-id))
                                                       (:actxs vis)))))
-        [addrs h] (render-net-html vis net-state @prev-addrs)]
+        [addrs h] (render-net-html net-state @prev-addrs)]
     (when (not= @prev-addrs addrs)
       (reset! prev-addrs addrs)
       (set-el-innerHTML output-el-id (apply str (flatten h))))))
