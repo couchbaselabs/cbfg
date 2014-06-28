@@ -336,13 +336,15 @@ function popup(className) {
   }
 }
 
-var onHoverPrev;
-function onHover(el) {
-  var c = el.className.split(' ')[1];
-  if (c != onHoverPrev) {
-    document.getElementById("hover-style").innerText =
-      "." + c + " { background: #3a3a3a; }";
-    onHoverPrev = c;
+var onHoverEvtPrev;
+function onHoverEvt(el) {
+  if (el) {
+    var c = el.className.split(' ')[1];
+    if (c != onHoverEvtPrev) {
+      document.getElementById("hover-style").innerText =
+        "." + c + " { background: #3a3a3a; }";
+      onHoverEvtPrev = c;
+    }
   }
 }
 
@@ -350,7 +352,7 @@ var e1 = [];
 for (var i = 0; i < 2000; i++) {
   for (var j = 0; j < 10; j++) {
     e1.push('<div class="evt evt-' + i +
-      '" onmouseenter="onHover(this);">' + i + ':' + j + '</div>');
+      '" onmouseenter="onHoverEvt(this);">' + i + ':' + j + '</div>');
   }
 }
 document.getElementById("evts-1").innerHTML = e1.join('');
