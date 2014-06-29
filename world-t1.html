@@ -46,53 +46,55 @@ kv_client("client-2", "serverA", 8000)
           <button id="prog-go">restart</button>
         </div>
         <div class="inputs">
-          <div class="field">
-            <label>client:</label>
-            <span id="controls-clients">
-              <select id="client">
-                <option value="client-0" selected>client-0</option>
-                <option value="client-1">client-1</option>
-                <option value="client-2">client-2</option>
+          <div class="fields">
+            <div class="field">
+              <label>client:</label>
+              <span id="controls-clients">
+                <select id="client">
+                  <option value="client-0" selected>client-0</option>
+                  <option value="client-1">client-1</option>
+                  <option value="client-2">client-2</option>
+                </select>
+              </span>
+            </div>
+            <div class="field">
+             <label>fence:</label>
+              <select id="fence">
+                <option value="0" selected>false</option>
+                <option value="1">true</option>
               </select>
-            </span>
-          </div>
-          <div class="field">
-            <label>fence:</label>
-            <select id="fence">
-              <option value="0" selected>false</option>
-              <option value="1">true</option>
-            </select>
-          </div>
-          <div class="field">
-            <label>x:</label>
-            <input id="x" type="text" value="1"></input>
-          </div>
-          <div class="field">
-            <label>y:</label>
-            <input id="y" type="text" value="2"></input>
-          </div>
-          <div class="field">
-            <label>delay: <span class="units">(millisecs)</span></label>
-            <input id="delay" type="text" value="1000"></input>
-          </div>
-          <div class="field">
-            <label>lane:</label>
-            <input id="lane" type="text" value=""></input>
-          </div>
-          <div class="field">
-            <label>color:</label>
-            <select id="color">
-              <option value="red" selected>red</option>
-              <option value="blue">blue</option>
-              <option value="green">green</option>
-              <option value="orange">orange</option>
-              <option value="purple">purple</option>
-              <option value="black">black</option>
-            </select>
-          </div>
-          <div class="field">
-            <label>server delay: <span class="units">(millisecs)</span></label>
-            <input id="sleep" type="text" value="5000"></input>
+            </div>
+            <div class="field">
+              <label>x:</label>
+              <input id="x" type="text" value="1"></input>
+            </div>
+            <div class="field">
+              <label>y:</label>
+              <input id="y" type="text" value="2"></input>
+            </div>
+            <div class="field">
+              <label>delay: <span class="units">(millisecs)</span></label>
+              <input id="delay" type="text" value="1000"></input>
+            </div>
+            <div class="field">
+              <label>lane:</label>
+              <input id="lane" type="text" value=""></input>
+            </div>
+            <div class="field">
+              <label>color:</label>
+              <select id="color">
+                <option value="red" selected>red</option>
+                <option value="blue">blue</option>
+                <option value="green">green</option>
+                <option value="orange">orange</option>
+                <option value="purple">purple</option>
+                <option value="black">black</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>server delay: <span class="units">(millisecs)</span></label>
+              <input id="sleep" type="text" value="5000"></input>
+            </div>
           </div>
           <div class="actions">
             <button id="add">add</button>
@@ -203,27 +205,36 @@ body, div {
   display: inline-block;
   margin-left: 30px;
 }
+.prog-in {
+  width: 100%;
+}
 .prog-in textarea {
-  min-width: 230px;
+  min-width: 250px;
   height: 10em;
 }
 .prog-in button {
   display: block;
 }
 .inputs {
+  width: 100%;
   margin-top: 20px;
   border-top: 1px solid #999;
 }
-.inputs .field label {
+.inputs .fields {
+  float: left;
+  padding-right: 40px;
+  padding-bottom: 30px;
+}
+.inputs .fields .field label {
   margin-top: 10px;
   display: block;
 }
-.inputs .field .units {
+.inputs .fields .field .units {
   font-size: 7pt;
   vertical-align: bottom;
 }
 .inputs .actions {
-  margin-top: 20px;
+  padding-top: 40px;
 }
 .inputs .actions button {
   display: block;
