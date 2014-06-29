@@ -103,36 +103,43 @@ kv_client("client-2", "serverA", 8000)
 
   <div class="main" id="main">
     <div class="sides">
-      <div class="lhs" id="lhs" style="width:60%;">
-        <div class="client-curr" id="client-curr"></div>
-        <div class="prog-map-container">
-          <div class="pane">
-            <div class="prog-map" id="prog-map"></div>
-            <div class="prog-map-hover" id="prog-map-hover"></div>
-          </div>
-        </div>
-        <div class="prog-container" id="prog-container">
-          <div class="pane">
-            <div class="prog" id="prog"></div>
-            <div class="prog-hover" id="prog-hover"></div>
-          </div>
-        </div>
-        <div class="pane">
-          <div class="net" id="net"></div>
-        </div>
+      <div class="llhs" id="llhs" style="width:20%;">
+        hello
       </div>
       <div class="splitter-ew"
-           onmousedown="return startDrag('ew', 'lhs', 'rhs');"></div>
-      <div class="rhs" id="rhs" style="width:40%;">
-        <div class="vis-event" id="vis-event"></div>
-        <div class="vis" id="vis"
-            style="position:relative; width:100%; height:100%;">
-          <div class="vis-html" id="vis-html"
-              style="position:absolute; top:0; left:0; width:100%;">
+           onmousedown="return startDrag('ew', 'llhs', 'middle');"></div>
+      <div class="middle" id="middle" style="width:80%;">
+        <div class="lhs" id="lhs" style="width:60%;">
+          <div class="client-curr" id="client-curr"></div>
+          <div class="prog-map-container">
+            <div class="pane">
+              <div class="prog-map" id="prog-map"></div>
+              <div class="prog-map-hover" id="prog-map-hover"></div>
+            </div>
           </div>
-          <svg class="vis-svg" id="vis-svg"
-              style="position:absolute; top:0; left:500px; width:120px; height:100%;">
-          </svg>
+          <div class="prog-container" id="prog-container">
+            <div class="pane">
+              <div class="prog" id="prog"></div>
+              <div class="prog-hover" id="prog-hover"></div>
+            </div>
+          </div>
+          <div class="pane">
+            <div class="net" id="net"></div>
+          </div>
+        </div>
+        <div class="splitter-ew"
+             onmousedown="return startDrag('ew', 'lhs', 'rhs');"></div>
+        <div class="rhs" id="rhs" style="width:40%;">
+          <div class="vis-event" id="vis-event"></div>
+          <div class="vis" id="vis"
+              style="position:relative; width:100%; height:100%;">
+            <div class="vis-html" id="vis-html"
+                style="position:absolute; top:0; left:0; width:100%;">
+            </div>
+            <svg class="vis-svg" id="vis-svg"
+                style="position:absolute; top:0; left:500px; width:120px; height:100%;">
+            </svg>
+          </div>
         </div>
       </div>
     </div>
@@ -258,12 +265,14 @@ body, div {
 .main .sides {
   width: 100%;
 }
-.main .sides > div {
+.main .sides > div,
+.main .sides .middle > div {
   display: inline-block;
   height: 100%;
 }
-.main .lhs,
-.main .rhs {
+.main .sides .llhs,
+.main .sides .middle .lhs,
+.main .sides .middle .rhs {
   padding-top: 10px;
   padding-left: 10px;
   overflow: scroll;
@@ -310,16 +319,27 @@ body, div {
 <style id="hover-style"></style>
 
 <script>
+function getPos(el) {
+  var r = { left: 0, top: 0 };
+  while (el) {
+    r.left += el.offsetLeft;
+    r.top += el.offsetTop;
+    el = el.offsetParent;
+  }
+  return r;
+}
 var dragMeta = {
-  ew: { prop: "width",  clientProp: "clientX", parentProp: "offsetWidth" },
-  ns: { prop: "height", clientProp: "clientY", parentProp: "offsetHeight"}
+  ew: { prop: "width",  clientProp: "clientX",
+        parentProp: "offsetWidth", origin: "left" },
+  ns: { prop: "height", clientProp: "clientY",
+        parentProp: "offsetHeight", origin: "top" }
 }
 function startDrag(dir, idMain, idRest) {
   var s = dragMeta[dir];
   var p = document.getElementById(idMain).parentElement;
   window.onmousemove = function(ev) {
-    var pct = Math.max(10, Math.min(95, Math.round(100 * ((1.0 * ev[s.clientProp]) /
-                                                          p[s.parentProp]))));
+    var v = ev[s.clientProp] - getPos(p)[s.origin];
+    var pct = Math.max(10, Math.min(95, Math.round(100 * ((1.0 * v) / p[s.parentProp]))));
     document.getElementById(idMain).style[s.prop] = pct + "%";
     document.getElementById(idRest).style[s.prop] = (100 - pct) + "%";
     return false;
