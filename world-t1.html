@@ -7,21 +7,13 @@
 <div class="top" id="top" style="height:80%;">
   <div class="header">
     <div class="ribbon ribbon-fixed">
-      <div class="ribbon-part ribbon-prog">
-        <input id="prog-name" type="text" value="simulation-name-here"/><br/>
-        <textarea id="prog-in">
-kv_server("serverA", 8000, 8100)
-kv_server("serverB", 8000)
-
-kv_client("client-0", "serverA", 8000)
-kv_client("client-1", "serverA", 8000)
-kv_client("client-2", "serverA", 8000)
-        </textarea>
-        <button id="prog-go">restart</button>
+      <div class="ribbon-part ribbon-sim">
+        <input id="sim-name" type="text" value="simulation-name-here"/><br/>
       </div>
       <div class="ribbon-part">
         <div id="header-run-controls">run controls</div>
-        <div class="ribbon-filters">
+      </div>
+      <div class="ribbon-part ribbon-filters">
           filters / watches
           <button class="popup" onclick="popup('filters')">&#9660;</button>
           <div class="ribbon-popup filters" style="display:none;">
@@ -34,7 +26,6 @@ kv_client("client-2", "serverA", 8000)
             more<br/>
             more<br/>
           </div>
-        </div>
       </div>
     </div>
     <div class="ribbon ribbon-space"></div>
@@ -43,6 +34,17 @@ kv_client("client-2", "serverA", 8000)
   <div class="main" id="main">
     <div class="sides">
       <div class="llhs" id="llhs" style="width:20%;">
+        <div class="prog-in">
+          <textarea id="prog-in">
+kv_server("serverA", 8000, 8100)
+kv_server("serverB", 8000)
+
+kv_client("client-0", "serverA", 8000)
+kv_client("client-1", "serverA", 8000)
+kv_client("client-2", "serverA", 8000)
+          </textarea>
+          <button id="prog-go">restart</button>
+        </div>
         <div class="inputs">
           <div class="field">
             <label>client:</label>
@@ -170,7 +172,7 @@ body, div {
 }
 .header .ribbon {
   width: 95%;
-  min-height: 5em;
+  min-height: 30px;
   border-bottom: 1px solid #999;
   padding-top: 10px;
   padding-bottom: 5px;
@@ -194,14 +196,23 @@ body, div {
   padding: 10px 10px 10px 10px;
   z-index: 20;
 }
-.header .ribbon .ribbon-prog input,
-.header .ribbon .ribbon-prog textarea{
+.header .ribbon .ribbon-sim input {
   min-width: 300px;
 }
 .header .ribbon .ribbon-filters {
   display: inline-block;
-  margin-top: 10px;
   margin-left: 30px;
+}
+.prog-in textarea {
+  min-width: 230px;
+  height: 10em;
+}
+.prog-in button {
+  display: block;
+}
+.inputs {
+  margin-top: 20px;
+  border-top: 1px solid #999;
 }
 .inputs .field label {
   margin-top: 10px;
