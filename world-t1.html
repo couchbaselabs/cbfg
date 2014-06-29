@@ -21,67 +21,6 @@ kv_client("client-2", "serverA", 8000)
       </div>
       <div class="ribbon-part">
         <div id="header-run-controls">run controls</div>
-        <div class="ribbon-inputs">
-          input controls
-          <button class="popup" onclick="popup('inputs')">&#9660;</button>
-          <div class="ribbon-popup inputs" style="display:none;">
-            <div class="field">
-              <label>client:</label>
-              <span id="controls-clients">
-                <select id="client">
-                  <option value="client-0" selected>client-0</option>
-                  <option value="client-1">client-1</option>
-                  <option value="client-2">client-2</option>
-                </select>
-              </span>
-            </div>
-            <div class="field">
-              <label>fence:</label>
-              <select id="fence">
-                <option value="0" selected>false</option>
-                <option value="1">true</option>
-              </select>
-            </div>
-            <div class="field">
-              <label>x:</label>
-              <input id="x" type="text" value="1"></input>
-            </div>
-            <div class="field">
-              <label>y:</label>
-              <input id="y" type="text" value="2"></input>
-            </div>
-          <div class="field">
-              <label>delay:</label>
-              <input id="delay" type="text" value="1000"></input>
-              <span class="units">(millisecs)</span>
-            </div>
-            <div class="field">
-              <label>lane:</label>
-              <input id="lane" type="text" value=""></input>
-            </div>
-            <div class="field">
-              <label>color:</label>
-              <select id="color">
-                <option value="red" selected>red</option>
-                <option value="blue">blue</option>
-                <option value="green">green</option>
-                <option value="orange">orange</option>
-                <option value="purple">purple</option>
-                <option value="black">black</option>
-              </select>
-            </div>
-            <div class="field">
-              <label>server delay:</label>
-              <input id="sleep" type="text" value="5000"></input>
-              <span class="units">(millisecs)</span>
-            </div>
-            <button id="add">add</button>
-            <button id="sub">sub</button>
-            <button id="count">count</button>
-            <button id="close-lane">close lane</button>
-            <button id="test">test</button>
-          </div>
-        </div>
         <div class="ribbon-filters">
           filters / watches
           <button class="popup" onclick="popup('filters')">&#9660;</button>
@@ -104,7 +43,63 @@ kv_client("client-2", "serverA", 8000)
   <div class="main" id="main">
     <div class="sides">
       <div class="llhs" id="llhs" style="width:20%;">
-        hello
+        <div class="inputs">
+          <div class="field">
+            <label>client:</label>
+            <span id="controls-clients">
+              <select id="client">
+                <option value="client-0" selected>client-0</option>
+                <option value="client-1">client-1</option>
+                <option value="client-2">client-2</option>
+              </select>
+            </span>
+          </div>
+          <div class="field">
+            <label>fence:</label>
+            <select id="fence">
+              <option value="0" selected>false</option>
+              <option value="1">true</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>x:</label>
+            <input id="x" type="text" value="1"></input>
+          </div>
+          <div class="field">
+            <label>y:</label>
+            <input id="y" type="text" value="2"></input>
+          </div>
+          <div class="field">
+            <label>delay: <span class="units">(millisecs)</span></label>
+            <input id="delay" type="text" value="1000"></input>
+          </div>
+          <div class="field">
+            <label>lane:</label>
+            <input id="lane" type="text" value=""></input>
+          </div>
+          <div class="field">
+            <label>color:</label>
+            <select id="color">
+              <option value="red" selected>red</option>
+              <option value="blue">blue</option>
+              <option value="green">green</option>
+              <option value="orange">orange</option>
+              <option value="purple">purple</option>
+              <option value="black">black</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>server delay: <span class="units">(millisecs)</span></label>
+            <input id="sleep" type="text" value="5000"></input>
+          </div>
+          <div class="actions">
+            <button id="add">add</button>
+            <button id="sub">sub</button>
+            <button id="count">count</button>
+            <button id="close-lane">close lane</button>
+            <button id="test">test</button>
+          </div>
+        </div>
       </div>
       <div class="splitter-ew"
            onmousedown="return startDrag('ew', 'llhs', 'middle');"></div>
@@ -203,19 +198,26 @@ body, div {
 .header .ribbon .ribbon-prog textarea{
   min-width: 300px;
 }
-.header .ribbon .ribbon-inputs,
 .header .ribbon .ribbon-filters {
   display: inline-block;
   margin-top: 10px;
   margin-left: 30px;
 }
-.field label {
-  display: inline-block;
-  min-width: 120px;
-  text-align: right;
+.inputs .field label {
+  margin-top: 10px;
+  display: block;
 }
-.field .units {
+.inputs .field .units {
   font-size: 7pt;
+  vertical-align: bottom;
+}
+.inputs .actions {
+  margin-top: 20px;
+}
+.inputs .actions button {
+  display: block;
+  margin-top: 5px;
+  width: 8em;
 }
 .footer .evts {
   display: inline-block;
