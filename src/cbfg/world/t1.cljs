@@ -172,7 +172,8 @@
         (cbfg.net/make-net world
                            (:net-listen-ch @prog-base)
                            (:net-connect-ch @prog-base))
-        (let [net-actx (first (wait-until #(seq (cbfg.world.net/net-actx-info @vis "net-1"))))
+        (let [net-actx (first (wait-until #(seq (cbfg.world.net/net-actx-info @vis
+                                                                              "net-1"))))
               expand-ch (listen-el (gdom/getElement (str el-prefix "-html")) "click")
               prog-in (get-el-value "prog-in")
               prog-js (str "with (cbfg.world.t1) {" prog-in "}")
