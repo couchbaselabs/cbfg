@@ -311,14 +311,15 @@ body, div {
 
 <script>
 var dragMeta = {
-  ew: { prop: "width",  clientProp: "clientX", windowProp: "innerWidth" },
-  ns: { prop: "height", clientProp: "clientY", windowProp: "innerHeight"}
+  ew: { prop: "width",  clientProp: "clientX", parentProp: "offsetWidth" },
+  ns: { prop: "height", clientProp: "clientY", parentProp: "offsetHeight"}
 }
 function startDrag(dir, idMain, idRest) {
   var s = dragMeta[dir];
+  var p = document.getElementById(idMain).parentElement;
   window.onmousemove = function(ev) {
     var pct = Math.max(10, Math.min(95, Math.round(100 * ((1.0 * ev[s.clientProp]) /
-                                                          window[s.windowProp]))));
+                                                          p[s.parentProp]))));
     document.getElementById(idMain).style[s.prop] = pct + "%";
     document.getElementById(idRest).style[s.prop] = (100 - pct) + "%";
     return false;
