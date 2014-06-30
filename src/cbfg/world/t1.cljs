@@ -21,8 +21,8 @@
 (def prog-base    (atom {}))  ; Stable parts of prog, even during time-travel.
 (def prog-curr    (atom {}))  ; The current prog-frame.
 (def prog-hover   (atom nil)) ; A past prog-frame while hovering over prog-history.
-(def prog-history (atom []))  ; Each event is [ts label prog-frame].
-(def prog-ss      (atom {}))  ; ts => agw-snapshot.
+(def prog-history (atom []))  ; Each event is [ss-ts label prog-frame].
+(def prog-ss      (atom {}))  ; ss-ts => agw-snapshot.
 
 (defn prog-init [world]
   (reset! prog-base {:world world
@@ -36,12 +36,12 @@
   (reset! prog-history []))
 
 (defn prog-event [world label prog-frame-fn]
-  (let [prog-next (swap! prog-curr prog-frame-fn)
-        ts (count @prog-history)]
+  (let [prog-next (swap! prog-curr prog-frame-fn)]
     ; Only snapshot when we're quiescent.
     (when (<= (.-length cljs.core.async.impl.dispatch/tasks) 0)
-      (swap! prog-history #(conj % [ts label prog-next]))
-      (swap! prog-ss #(assoc % ts (ago-snapshot (actx-agw world)))))))
+      (let [ss-ts (count @prog-history)]
+        (swap! prog-history #(conj % [ss-ts label prog-next]))
+        (swap! prog-ss #(assoc % ss-ts (ago-snapshot (actx-agw world))))))))
 
 ; -------------------------------------------------------------------
 
