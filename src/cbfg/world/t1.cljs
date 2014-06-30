@@ -21,8 +21,8 @@
 (def prog-base    (atom {}))  ; Stable parts of prog, even during time-travel.
 (def prog-curr    (atom {}))  ; The current prog-frame.
 (def prog-hover   (atom nil)) ; A past prog-frame while hovering over prog-history.
-(def prog-history (atom []))  ; Each event is [ss-ts label prog-frame].
-(def prog-ss      (atom {}))  ; ss-ts => agw-snapshot.
+(def prog-history (atom []))  ; Each event is [ts label prog-frame].
+(def prog-ss      (atom {}))  ; ts => agw-snapshot.
 
 (defn prog-init [world]
   (reset! prog-base {:world world
@@ -53,17 +53,17 @@
   (reset! prog-hover nil)
   (.remove gdom/classes (gdom/getElement "prog-container") "hover"))
 
-(defn on-prog-frame-restore [ss-ts prog-frame]
+(defn on-prog-frame-restore [ts prog-frame]
   ; Time-travel to the past if snapshot is available.
-  (when-let [ago-ss (get @prog-ss ss-ts)]
+  (when-let [ago-ss (get @prog-ss ts)]
     (ago-restore (actx-agw (:world @prog-base)) ago-ss)
     ; TODO: This prog-frame deref is strange, as it turned into a
     ; om.core/MapCursor somehow during the event handler rather than
     ; an expected prog-frame dict.
     (reset! prog-curr @prog-frame)
     (reset! prog-hover nil)
-    (swap! prog-history #(vec (filter (fn [[s & _]] (<= s ss-ts)) %)))
-    (swap! prog-ss #(into {} (filter (fn [[s _]] (<= s ss-ts)) %)))
+    (swap! prog-history #(vec (filter (fn [[s & _]] (<= s ts)) %)))
+    (swap! prog-ss #(into {} (filter (fn [[s _]] (<= s ts)) %)))
     (cbfg.world.base/render-client-hist (:reqs @prog-curr))))
 
 ; -------------------------------------------------------------------
@@ -75,14 +75,14 @@
 
 (defn render-events [app owner]
   (apply dom/ul nil
-         (map (fn [[ss-ts label prog-frame]]
-                (dom/li #js {:className (str "evt evt-" ss-ts)
+         (map (fn [[ts label prog-frame]]
+                (dom/li #js {:className (str "evt evt-" ts)
                              :onMouseEnter #(on-prog-frame-focus prog-frame)
                              :onMouseLeave #(on-prog-frame-blur)}
                         (dom/button
-                         #js {:onClick #(on-prog-frame-restore ss-ts prog-frame)}
+                         #js {:onClick #(on-prog-frame-restore ts prog-frame)}
                          "rollback")
-                        (str ss-ts (apply str label))))
+                        (str ts (apply str label))))
               app)))
 
 (defn render-clients [app owner]
@@ -182,15 +182,14 @@
               prog-res (try (js/eval prog-js) (catch js/Object ex ex))]
           (go-loop [num-requests 0 num-responses 0]
             (let [[v ch] (alts! [req-ch (:res-ch @prog-base)])
-                  ts (+ num-requests num-responses)]
+                  ts (:ts @prog-curr)]
               (when v
                 (if (= ch req-ch)
                   (if (= (:op v) "replay")
                     (println "TODO-REPLAY-IMPL")
                     (let [req ((get req-handlers (:op v)) (assoc v :opaque ts))]
                       (when-let [client-req-ch
-                                 (get-in @prog-curr
-                                         [:clients (:client req) :req-ch])]
+                                 (get-in @prog-curr [:clients (:client req) :req-ch])]
                         (prog-event world [:req] #(assoc-in % [:reqs ts] [req nil]))
                         (cbfg.world.base/render-client-hist (:reqs @prog-curr))
                         (>! client-req-ch req)
