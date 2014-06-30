@@ -57,12 +57,13 @@
   ; Time-travel to the past if snapshot is available.
   (when-let [ago-ss (get @prog-ss ss-ts)]
     (ago-restore (actx-agw (:world @prog-base)) ago-ss)
-    (swap! prog-history #(vec (filter (fn [[s & _]] (<= s ss-ts)) %)))
-    (swap! prog-ss #(into {} (filter (fn [[s _]] (<= s ss-ts)) %)))
     ; TODO: This prog-frame deref is strange, as it turned into a
     ; om.core/MapCursor somehow during the event handler rather than
     ; an expected prog-frame dict.
     (reset! prog-curr @prog-frame)
+    (reset! prog-hover nil)
+    (swap! prog-history #(vec (filter (fn [[s & _]] (<= s ss-ts)) %)))
+    (swap! prog-ss #(into {} (filter (fn [[s _]] (<= s ss-ts)) %)))
     (cbfg.world.base/render-client-hist (:reqs @prog-curr))))
 
 ; -------------------------------------------------------------------
