@@ -38,9 +38,9 @@
 
 (defn prog-event [world label prog-frame-fn]
   (let [prog-next (swap! prog-curr #(prog-frame-fn (update-in % [:ts] inc)))]
-    ; Only snapshot when we're quiescent.
+    (swap! prog-history #(conj % [(:ts prog-next) label prog-next]))
+    ; Only snapshot when quiescent.
     (when (<= (.-length cljs.core.async.impl.dispatch/tasks) 0)
-      (swap! prog-history #(conj % [(:ts prog-next) label prog-next]))
       (swap! prog-ss #(assoc % (:ts prog-next) (ago-snapshot (actx-agw world)))))))
 
 ; -------------------------------------------------------------------
