@@ -29,19 +29,19 @@
                      :net-listen-ch (achan-buf world 10)
                      :net-connect-ch (achan-buf world 10)
                      :res-ch (achan-buf world 10)})
-  (reset! prog-curr {:servers {}   ; { server-addr => ports }.
+  (reset! prog-curr {:ts 0
+                     :servers {}   ; { server-addr => ports }.
                      :clients {}   ; { client-addr => client-info }.
                      :reqs    {}}) ; { opaque-ts => [req, [[reply-ts reply] ...] }.
   (reset! prog-hover nil)
   (reset! prog-history []))
 
 (defn prog-event [world label prog-frame-fn]
-  (let [prog-next (swap! prog-curr prog-frame-fn)]
+  (let [prog-next (swap! prog-curr #(prog-frame-fn (update-in % [:ts] inc)))]
     ; Only snapshot when we're quiescent.
     (when (<= (.-length cljs.core.async.impl.dispatch/tasks) 0)
-      (let [ss-ts (count @prog-history)]
-        (swap! prog-history #(conj % [ss-ts label prog-next]))
-        (swap! prog-ss #(assoc % ss-ts (ago-snapshot (actx-agw world))))))))
+      (swap! prog-history #(conj % [(:ts prog-next) label prog-next]))
+      (swap! prog-ss #(assoc % (:ts prog-next) (ago-snapshot (actx-agw world)))))))
 
 ; -------------------------------------------------------------------
 
@@ -70,7 +70,7 @@
 
 (defn render-prog-frame [prog-frame owner]
   (apply dom/ul nil
-         (map (fn [[k v]] (dom/li nil (str k ":" (count v))))
+         (map (fn [[k v]] (dom/li nil (str k ":" (if (number? v) v (count v)))))
               prog-frame)))
 
 (defn render-events [app owner]
