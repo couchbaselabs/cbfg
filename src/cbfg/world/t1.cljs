@@ -45,7 +45,7 @@
 
 ; -------------------------------------------------------------------
 
-(defn on-prog-frame-focus [ts label prog-frame]
+(defn on-prog-frame-focus [prog-frame]
   (reset! prog-hover prog-frame)
   (.add gdom/classes (gdom/getElement "prog-container") "hover"))
 
@@ -53,11 +53,11 @@
   (reset! prog-hover nil)
   (.remove gdom/classes (gdom/getElement "prog-container") "hover"))
 
-(defn on-prog-frame-restore [ts label prog-frame]
+(defn on-prog-frame-restore [ss-ts prog-frame]
   ; Time-travel to the past if snapshot is available.
-  (when-let [ago-ss (get @prog-ss ts)]
+  (when-let [ago-ss (get @prog-ss ss-ts)]
     (ago-restore (actx-agw (:world @prog-base)) ago-ss)
-    (swap! prog-history #(vec (take (+ ts 1) %)))
+    (swap! prog-history #(vec (take (+ ss-ts 1) %)))
     ; TODO: This prog-frame deref is strange, as it turned into a
     ; om.core/MapCursor somehow during the event handler rather than
     ; an expected prog-frame dict.
@@ -73,14 +73,14 @@
 
 (defn render-events [app owner]
   (apply dom/ul nil
-         (map (fn [[ts label prog-frame]]
-                (dom/li #js {:className (str "evt evt-" ts)
-                             :onMouseEnter #(on-prog-frame-focus ts label prog-frame)
+         (map (fn [[ss-ts label prog-frame]]
+                (dom/li #js {:className (str "evt evt-" ss-ts)
+                             :onMouseEnter #(on-prog-frame-focus prog-frame)
                              :onMouseLeave #(on-prog-frame-blur)}
                         (dom/button
-                         #js {:onClick #(on-prog-frame-restore ts label prog-frame)}
+                         #js {:onClick #(on-prog-frame-restore ss-ts prog-frame)}
                          "rollback")
-                        (str ts (apply str label))))
+                        (str ss-ts (apply str label))))
               app)))
 
 (defn render-clients [app owner]
