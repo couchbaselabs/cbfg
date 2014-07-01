@@ -316,6 +316,67 @@ body, div, button {
 .footer .evts .evt {
   clear: both;
 }
+.footer .reqs { margin-left: 4em; }
+.footer .reqs table.hist tr { border: 1px solid #999; }
+.footer .reqs table.hist tr th {
+  border-top: 1px solid #FFFCF1;
+  text-align: left;
+}
+.footer .reqs table.hist tr td {
+  padding-right: 10px;
+  color: green;
+  vertical-align: top;
+  white-space: nowrap;
+}
+.footer .reqs table.hist tr.complete td {
+  color: #a2a2a2;
+}
+.footer .reqs table.hist tr.hist-event td {
+  border-top: 1px solid #FFFCF1;
+}
+.footer .reqs table.hist tr.hist-event:hover td {
+  border-top: 1px solid #dde;
+}
+.footer .reqs table.hist li {
+  position: relative;
+}
+.footer .reqs table.hist li .timeline-focus {
+  position: absolute;
+  display: none;
+}
+.footer .reqs table.hist li:hover .timeline-focus {
+  position: absolute;
+  display: block;
+  top: -1000px;
+  left: -18px;
+  width: 6px;
+  height: 6000px;
+  z-index: -1;
+  background-color: #dde;
+}
+.footer .reqs table.hist li button {
+  display: none;
+}
+.footer .reqs table.hist li:hover button {
+  position: absolute;
+  display: block;
+  top: 0px;
+  left: -10px;
+  z-index: 1;
+
+  -webkit-animation: timeline-focus 1s; /* Chrome, Safari, Opera */
+  animation: timeline-focus 1s;
+}
+@-webkit-keyframes timeline-focus {
+  0% { opacity: 0; top: -20px; left: 10px; }
+  50% { opacity: 0.1; top: -20px; left: 10px; }
+  100% { opacity: 1.0; top: 0px; left: -10px; }
+}
+@keyframes timeline-focus {
+  0% { opacity: 0; top: -20px; left: 10px; }
+  50% { opacity: 0.1; top: -20px; left: 10px; }
+  100% { opacity: 1.0; top: 0px; left: -10px; }
+}
 </style>
 
 <style id="hover-style"></style>
