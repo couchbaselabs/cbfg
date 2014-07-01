@@ -44,37 +44,38 @@
                          (dissoc :fence))
                      r))
 
-(defn render-client-hist-html [client-hist]
+(defn render-reqs-html [reqs]
    (apply str
           (flatten ["<table class='hist'>"
                     (map (fn [[ts [request responses]]]
-                           ["<tr class='hist-event"
+                           ["<tr class='evt evt-" ts " "
                             (when (some #(or (:result (second %))
                                              (:status (second %)))
                                         responses)
-                              " complete") "'>"
-                              " <td class='responses'><ul>"
-                              "  <li style='list-type: none; margin-left: "
-                              ts "em;'>" ts " " request
-                              "   <div class='timeline-focus'></div>"
-                              "   <button id='replay-" ts "'>"
-                              "    &lt; replay requests to here</button>"
-                              "  </li>"
-                              (map (fn [[response-ts response]]
-                                     ["<li style='margin-left: "
-                                      response-ts "em;'>"
-                                      (-> (filter-r response)
-                                          (dissoc :lane)
-                                          (dissoc :delay)
-                                          (dissoc :sleep))
-                                      "</li>"])
-                                   (reverse responses))
-                              " </ul></td>"
-                              "</tr>"])
+                              " complete")
+                            "' onmouseenter='return onHoverEvt(this);'>"
+                            " <td class='responses'><ul>"
+                            "  <li style='margin-left: "
+                            ts "em;'>" ts " " request
+                            "   <div class='timeline-focus'></div>"
+                            "   <button id='replay-" ts "'>"
+                            "    &lt; replay requests to here</button>"
+                            "  </li>"
+                            (map (fn [[response-ts response]]
+                                   ["<li style='margin-left: "
+                                    response-ts "em;'>"
+                                    (-> (filter-r response)
+                                        (dissoc :lane)
+                                        (dissoc :delay)
+                                        (dissoc :sleep))
+                                    "</li>"])
+                                 (reverse responses))
+                            " </ul></td>"
+                            "</tr>"])
                          (sort (fn [[ts0 r0] [ts1 r1]]
                                  (compare [(:lane (first r0)) ts0]
                                           [(:lane (first r1)) ts1]))
-                               client-hist))
+                               reqs))
                     "</table>"])))
 
 ; -------------------------------------------------------------------
@@ -87,13 +88,13 @@
     (when need-snapshot ; Only snapshot when quiescent.
       (swap! prog-ss #(assoc % (:ts prog-next) (ago-snapshot (actx-agw world)))))
     (when (not= (:reqs prog-prev) (:reqs prog-next))
-      (set-el-innerHTML "reqs" (render-client-hist-html (:reqs prog-next))))))
+      (set-el-innerHTML "reqs" (render-reqs-html (:reqs prog-next))))))
 
 ; -------------------------------------------------------------------
 
 (defn on-prog-frame-focus [prog-frame]
   (set-el-innerHTML "net-hover"
-                    (render-client-hist-html (:reqs prog-frame)))
+                    (render-reqs-html (:reqs prog-frame)))
   (.add gdom/classes (gdom/getElement "net-container") "hover"))
 
 (defn on-prog-frame-blur []
