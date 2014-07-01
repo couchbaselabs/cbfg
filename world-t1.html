@@ -109,7 +109,6 @@ kv_client("client-2", "serverA", 8000)
            onmousedown="return startDrag('ew', 'llhs', 'middle');"></div>
       <div class="middle" id="middle" style="width:80%;">
         <div class="lhs" id="lhs" style="width:60%;">
-          <div class="client-curr" id="client-curr"></div>
           <div class="prog-map-container">
             <div class="pane">
               <div class="prog-map" id="prog-map"></div>
@@ -149,7 +148,9 @@ kv_client("client-2", "serverA", 8000)
   <div class="splitter-ns"
        onmousedown="return startDrag('ns', 'top', 'footer');"></div>
   <div class="evts" id="evts"></div>
-  <div class="reqs" id="reqs"></div>
+  <div class="reqs" id="reqs">
+    <div class="client-curr" id="client-curr"></div>
+  </div>
 </div>
 
 <style>
@@ -241,7 +242,8 @@ body, div {
   margin-top: 5px;
   width: 8em;
 }
-.footer .evts {
+.footer .evts,
+.footer .reqs {
   display: inline-block;
   width: 50%;
   height: 90%;

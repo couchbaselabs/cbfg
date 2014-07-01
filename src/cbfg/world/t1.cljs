@@ -104,8 +104,6 @@
            {:target (. js/document (getElementById "prog-map-hover"))})
   (om/root render-evts prog-evts
            {:target (. js/document (getElementById "evts"))})
-  (om/root render-prog-frame prog-curr
-           {:target (. js/document (getElementById "reqs"))})
   (om/root render-clients prog-curr
            {:target (. js/document (getElementById "controls-clients"))}))
 
