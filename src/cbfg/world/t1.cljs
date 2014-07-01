@@ -9,7 +9,8 @@
             [om.dom :as dom :include-macros true]
             [ago.core :refer [make-ago-world ago-chan ago-timeout
                               ago-snapshot ago-restore]]
-            [cbfg.vis :refer [listen-el get-el-value get-el-innerHTML]]
+            [cbfg.vis :refer [listen-el get-el-value
+                              get-el-innerHTML set-el-innerHTML]]
             [cbfg.net]
             [cbfg.lane]
             [cbfg.world.net]
@@ -18,11 +19,10 @@
 
 (defn actx-agw [actx] ((:get-agw (first actx))))
 
-(def prog-base  (atom {}))  ; Stable parts of prog, even during time-travel.
-(def prog-curr  (atom {}))  ; The current prog-frame.
-(def prog-hover (atom nil)) ; A past prog-frame while hovering over prog-evts.
-(def prog-evts  (atom []))  ; Each evt is [ts label prog-frame has-snapshot].
-(def prog-ss    (atom {}))  ; ts => agw-snapshot.
+(def prog-base (atom {}))  ; Stable parts of prog, even during time-travel.
+(def prog-curr (atom {}))  ; The current prog-frame.
+(def prog-evts (atom []))  ; Each evt is [ts label prog-frame has-snapshot].
+(def prog-ss   (atom {}))  ; ts => agw-snapshot.
 
 (defn prog-init [world]
   (reset! prog-base {:world world
@@ -33,39 +33,33 @@
                      :servers {}   ; { server-addr => ports }.
                      :clients {}   ; { client-addr => client-info }.
                      :reqs    {}}) ; { opaque-ts => [req, [[reply-ts reply] ...] }.
-  (reset! prog-hover nil)
   (reset! prog-evts []))
 
 (defn prog-evt [world label prog-frame-fn]
   (let [prog-next (swap! prog-curr #(prog-frame-fn (update-in % [:ts] inc)))
         need-snapshot (<= (.-length cljs.core.async.impl.dispatch/tasks) 0)]
     (swap! prog-evts #(conj % [(:ts prog-next) label prog-next need-snapshot]))
-    (cbfg.world.base/render-client-hist (:reqs prog-next))
     (when need-snapshot ; Only snapshot when quiescent.
       (swap! prog-ss #(assoc % (:ts prog-next) (ago-snapshot (actx-agw world)))))))
 
 ; -------------------------------------------------------------------
 
 (defn on-prog-frame-focus [prog-frame]
-  (reset! prog-hover prog-frame)
+  (set-el-innerHTML "prog-hover"
+                    (cbfg.world.base/render-client-hist-html (:reqs prog-frame)))
   (.add gdom/classes (gdom/getElement "prog-container") "hover"))
 
 (defn on-prog-frame-blur []
-  (reset! prog-hover nil)
+  (set-el-innerHTML "prog-hover" "")
   (.remove gdom/classes (gdom/getElement "prog-container") "hover"))
 
 (defn on-prog-frame-restore [ts prog-frame]
   ; Time-travel to the past if snapshot is available.
   (when-let [ago-ss (get @prog-ss ts)]
     (ago-restore (actx-agw (:world @prog-base)) ago-ss)
-    ; TODO: This prog-frame deref is strange, as it turned into a
-    ; om.core/MapCursor somehow during the event handler rather than
-    ; an expected prog-frame dict.
-    (reset! prog-curr @prog-frame)
-    (reset! prog-hover nil)
+    (reset! prog-curr prog-frame)
     (swap! prog-evts #(vec (filter (fn [[s & _]] (<= s ts)) %)))
-    (swap! prog-ss #(into {} (filter (fn [[s _]] (<= s ts)) %)))
-    (cbfg.world.base/render-client-hist (:reqs @prog-curr))))
+    (swap! prog-ss #(into {} (filter (fn [[s _]] (<= s ts)) %)))))
 
 ; -------------------------------------------------------------------
 
@@ -78,11 +72,11 @@
   (apply dom/ul nil
          (map (fn [[ts label prog-frame has-snapshot]]
                 (dom/li #js {:className (str "evt evt-" ts)
-                             :onMouseEnter #(on-prog-frame-focus prog-frame)
+                             :onMouseEnter #(on-prog-frame-focus @prog-frame)
                              :onMouseLeave #(on-prog-frame-blur)}
                         (if has-snapshot
                           (dom/button
-                           #js {:onClick #(on-prog-frame-restore ts prog-frame)}
+                           #js {:onClick #(on-prog-frame-restore ts @prog-frame)}
                            "rollback")
                           "")
                         (str ts (apply str label))))
@@ -97,8 +91,6 @@
 (defn init-roots []
   (om/root render-prog-frame prog-curr
            {:target (. js/document (getElementById "prog"))})
-  (om/root render-prog-frame prog-hover
-           {:target (. js/document (getElementById "prog-hover"))})
   (om/root render-evts prog-evts
            {:target (. js/document (getElementById "evts"))})
   (om/root render-clients prog-curr
