@@ -55,7 +55,7 @@
                               " complete") "'>"
                               " <td class='responses'><ul>"
                               "  <li style='list-type: none; margin-left: "
-                              ts "em;'>" request
+                              ts "em;'>" ts " " request
                               "   <div class='timeline-focus'></div>"
                               "   <button id='replay-" ts "'>"
                               "    &lt; replay requests to here</button>"
@@ -71,8 +71,9 @@
                                    (reverse responses))
                               " </ul></td>"
                               "</tr>"])
-                         (sort #(compare [(:lane (first (second %1))) (first %1)]
-                                         [(:lane (first (second %2))) (first %2)])
+                         (sort (fn [[ts0 r0] [ts1 r1]]
+                                 (compare [(:lane (first r0)) ts0]
+                                          [(:lane (first r1)) ts1]))
                                client-hist))
                     "</table>"])))
 
