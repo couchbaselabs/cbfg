@@ -36,22 +36,26 @@
   (reset! prog-evts []))
 
 (defn prog-evt [world label prog-frame-fn]
-  (let [prog-next (swap! prog-curr #(prog-frame-fn (update-in % [:ts] inc)))
+  (let [prog-prev @prog-curr
+        prog-next (swap! prog-curr #(prog-frame-fn (update-in % [:ts] inc)))
         need-snapshot (<= (.-length cljs.core.async.impl.dispatch/tasks) 0)]
     (swap! prog-evts #(conj % [(:ts prog-next) label prog-next need-snapshot]))
     (when need-snapshot ; Only snapshot when quiescent.
-      (swap! prog-ss #(assoc % (:ts prog-next) (ago-snapshot (actx-agw world)))))))
+      (swap! prog-ss #(assoc % (:ts prog-next) (ago-snapshot (actx-agw world)))))
+    (when (not= (:reqs prog-prev) (:reqs prog-next))
+      (set-el-innerHTML "reqs"
+                        (cbfg.world.base/render-client-hist-html (:reqs prog-next))))))
 
 ; -------------------------------------------------------------------
 
 (defn on-prog-frame-focus [prog-frame]
-  (set-el-innerHTML "prog-hover"
+  (set-el-innerHTML "net-hover"
                     (cbfg.world.base/render-client-hist-html (:reqs prog-frame)))
-  (.add gdom/classes (gdom/getElement "prog-container") "hover"))
+  (.add gdom/classes (gdom/getElement "net-container") "hover"))
 
 (defn on-prog-frame-blur []
-  (set-el-innerHTML "prog-hover" "")
-  (.remove gdom/classes (gdom/getElement "prog-container") "hover"))
+  (set-el-innerHTML "net-hover" "")
+  (.remove gdom/classes (gdom/getElement "net-container") "hover"))
 
 (defn on-prog-frame-restore [ts prog-frame]
   ; Time-travel to the past if snapshot is available.
@@ -89,8 +93,6 @@
               (keys (:clients app)))))
 
 (defn init-roots []
-  (om/root render-prog-frame prog-curr
-           {:target (. js/document (getElementById "prog"))})
   (om/root render-evts prog-evts
            {:target (. js/document (getElementById "evts"))})
   (om/root render-clients prog-curr
