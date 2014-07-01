@@ -147,8 +147,10 @@ kv_client("client-2", "serverA", 8000)
 <div class="footer" id="footer" style="height:20%;">
   <div class="splitter-ns"
        onmousedown="return startDrag('ns', 'top', 'footer');"></div>
-  <div class="evts" id="evts"></div>
-  <div class="reqs" id="reqs">
+  <div class="evts" id="evts" style="width:30%;"></div>
+  <div class="splitter-ew"
+       onmousedown="return startDrag('ew', 'evts', 'reqs');"></div>
+  <div class="reqs" id="reqs" style="width:70%;">
     <div class="client-curr" id="client-curr"></div>
   </div>
 </div>
@@ -245,7 +247,6 @@ body, div {
 .footer .evts,
 .footer .reqs {
   display: inline-block;
-  width: 50%;
   height: 90%;
   overflow: scroll;
 }
@@ -271,12 +272,14 @@ body, div {
   clear: both;
 }
 .splitter-ns {
+  display: block;
   width: 100%;
   height: 3px;
   border-top: 1px solid #999;
   cursor: ns-resize;
 }
 .splitter-ew {
+  display: inline-block;
   width: 3px;
   height: 100%;
   border-left: 1px solid #999;
