@@ -35,6 +35,49 @@
                      :reqs    {}}) ; { opaque-ts => [req, [[reply-ts reply] ...] }.
   (reset! prog-evts []))
 
+; -------------------------------------------------------------------
+
+(defn filter-r [r] (if (map? r)
+                     (-> r
+                         (dissoc :opaque)
+                         (dissoc :op)
+                         (dissoc :fence))
+                     r))
+
+(defn render-client-hist-html [client-hist]
+   (apply str
+          (flatten ["<table class='hist'>"
+                    (map (fn [[ts [request responses]]]
+                           ["<tr class='hist-event"
+                            (when (some #(or (:result (second %))
+                                             (:status (second %)))
+                                        responses)
+                              " complete") "'>"
+                              " <td class='responses'><ul>"
+                              "  <li style='list-type: none; margin-left: "
+                              ts "em;'>" request
+                              "   <div class='timeline-focus'></div>"
+                              "   <button id='replay-" ts "'>"
+                              "    &lt; replay requests to here</button>"
+                              "  </li>"
+                              (map (fn [[response-ts response]]
+                                     ["<li style='margin-left: "
+                                      response-ts "em;'>"
+                                      (-> (filter-r response)
+                                          (dissoc :lane)
+                                          (dissoc :delay)
+                                          (dissoc :sleep))
+                                      "</li>"])
+                                   (reverse responses))
+                              " </ul></td>"
+                              "</tr>"])
+                         (sort #(compare [(:lane (first (second %1))) (first %1)]
+                                         [(:lane (first (second %2))) (first %2)])
+                               client-hist))
+                    "</table>"])))
+
+; -------------------------------------------------------------------
+
 (defn prog-evt [world label prog-frame-fn]
   (let [prog-prev @prog-curr
         prog-next (swap! prog-curr #(prog-frame-fn (update-in % [:ts] inc)))
@@ -43,14 +86,13 @@
     (when need-snapshot ; Only snapshot when quiescent.
       (swap! prog-ss #(assoc % (:ts prog-next) (ago-snapshot (actx-agw world)))))
     (when (not= (:reqs prog-prev) (:reqs prog-next))
-      (set-el-innerHTML "reqs"
-                        (cbfg.world.base/render-client-hist-html (:reqs prog-next))))))
+      (set-el-innerHTML "reqs" (render-client-hist-html (:reqs prog-next))))))
 
 ; -------------------------------------------------------------------
 
 (defn on-prog-frame-focus [prog-frame]
   (set-el-innerHTML "net-hover"
-                    (cbfg.world.base/render-client-hist-html (:reqs prog-frame)))
+                    (render-client-hist-html (:reqs prog-frame)))
   (.add gdom/classes (gdom/getElement "net-container") "hover"))
 
 (defn on-prog-frame-blur []
