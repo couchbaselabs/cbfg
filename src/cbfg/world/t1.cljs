@@ -18,11 +18,11 @@
 
 (defn actx-agw [actx] ((:get-agw (first actx))))
 
-(def prog-base    (atom {}))  ; Stable parts of prog, even during time-travel.
-(def prog-curr    (atom {}))  ; The current prog-frame.
-(def prog-hover   (atom nil)) ; A past prog-frame while hovering over prog-history.
-(def prog-history (atom []))  ; Each event is [ts label prog-frame has-snapshot].
-(def prog-ss      (atom {}))  ; ts => agw-snapshot.
+(def prog-base  (atom {}))  ; Stable parts of prog, even during time-travel.
+(def prog-curr  (atom {}))  ; The current prog-frame.
+(def prog-hover (atom nil)) ; A past prog-frame while hovering over prog-evts.
+(def prog-evts  (atom []))  ; Each evt is [ts label prog-frame has-snapshot].
+(def prog-ss    (atom {}))  ; ts => agw-snapshot.
 
 (defn prog-init [world]
   (reset! prog-base {:world world
@@ -34,12 +34,12 @@
                      :clients {}   ; { client-addr => client-info }.
                      :reqs    {}}) ; { opaque-ts => [req, [[reply-ts reply] ...] }.
   (reset! prog-hover nil)
-  (reset! prog-history []))
+  (reset! prog-evts []))
 
-(defn prog-event [world label prog-frame-fn]
+(defn prog-evt [world label prog-frame-fn]
   (let [prog-next (swap! prog-curr #(prog-frame-fn (update-in % [:ts] inc)))
         need-snapshot (<= (.-length cljs.core.async.impl.dispatch/tasks) 0)]
-    (swap! prog-history #(conj % [(:ts prog-next) label prog-next need-snapshot]))
+    (swap! prog-evts #(conj % [(:ts prog-next) label prog-next need-snapshot]))
     (when need-snapshot ; Only snapshot when quiescent.
       (swap! prog-ss #(assoc % (:ts prog-next) (ago-snapshot (actx-agw world)))))))
 
@@ -62,7 +62,7 @@
     ; an expected prog-frame dict.
     (reset! prog-curr @prog-frame)
     (reset! prog-hover nil)
-    (swap! prog-history #(vec (filter (fn [[s & _]] (<= s ts)) %)))
+    (swap! prog-evts #(vec (filter (fn [[s & _]] (<= s ts)) %)))
     (swap! prog-ss #(into {} (filter (fn [[s _]] (<= s ts)) %)))
     (cbfg.world.base/render-client-hist (:reqs @prog-curr))))
 
@@ -73,7 +73,7 @@
          (map (fn [[k v]] (dom/li nil (str k ":" (if (number? v) v (count v)))))
               prog-frame)))
 
-(defn render-events [app owner]
+(defn render-evts [app owner]
   (apply dom/ul nil
          (map (fn [[ts label prog-frame has-snapshot]]
                 (dom/li #js {:className (str "evt evt-" ts)
@@ -102,8 +102,10 @@
            {:target (. js/document (getElementById "prog-hover"))})
   (om/root render-prog-frame prog-hover
            {:target (. js/document (getElementById "prog-map-hover"))})
-  (om/root render-events prog-history
-           {:target (. js/document (getElementById "events"))})
+  (om/root render-evts prog-evts
+           {:target (. js/document (getElementById "evts"))})
+  (om/root render-prog-frame prog-curr
+           {:target (. js/document (getElementById "reqs"))})
   (om/root render-clients prog-curr
            {:target (. js/document (getElementById "controls-clients"))}))
 
@@ -192,11 +194,11 @@
                     (let [req ((get req-handlers (:op v)) (assoc v :opaque ts))]
                       (when-let [client-req-ch
                                  (get-in @prog-curr [:clients (:client req) :req-ch])]
-                        (prog-event world [:req] #(assoc-in % [:reqs ts] [req nil]))
+                        (prog-evt world [:req] #(assoc-in % [:reqs ts] [req nil]))
                         (cbfg.world.base/render-client-hist (:reqs @prog-curr))
                         (>! client-req-ch req)
                         (recur (inc num-requests) num-responses))))
-                  (do (prog-event world [:res] #(update-in % [:reqs (:opaque v) 1]
+                  (do (prog-evt world [:res] #(update-in % [:reqs (:opaque v) 1]
                                                            conj [ts v]))
                       (cbfg.world.base/render-client-hist (:reqs @prog-curr))
                       (recur num-requests (inc num-responses)))))))
@@ -231,9 +233,8 @@
                (cbfg.world.net/server-accept-loop world accept-ch close-accept-ch)))
            (reset! done true))
       (wait-done done)
-      (prog-event world [:kv-server server-addr port]
-                  #(update-in % [:servers server-addr]
-                              conj port)))))
+      (prog-evt world [:kv-server server-addr port]
+                #(update-in % [:servers server-addr] conj port)))))
 
 (defn kv-client [client-addr server-addr server-port]
   (let [world (:world @prog-base)
@@ -243,9 +244,9 @@
                                            client-addr (:res-ch @prog-base)
                                            :start-cb #(reset! ready true))]
     (wait-done ready)
-    (prog-event world [:kv-client client-addr server-addr server-port]
-                #(assoc-in % [:clients client-addr]
-                           {:client-addr client-addr
-                            :server-addr server-addr
-                            :server-port server-port
-                            :req-ch req-ch}))))
+    (prog-evt world [:kv-client client-addr server-addr server-port]
+              #(assoc-in % [:clients client-addr]
+                         {:client-addr client-addr
+                          :server-addr server-addr
+                          :server-port server-port
+                          :req-ch req-ch}))))

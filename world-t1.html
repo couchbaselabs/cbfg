@@ -148,8 +148,8 @@ kv_client("client-2", "serverA", 8000)
 <div class="footer" id="footer" style="height:20%;">
   <div class="splitter-ns"
        onmousedown="return startDrag('ns', 'top', 'footer');"></div>
-  <div class="evts" id="events"></div>
-  <div class="evts" id="evts-1"></div>
+  <div class="evts" id="evts"></div>
+  <div class="reqs" id="reqs"></div>
 </div>
 
 <style>
@@ -352,12 +352,14 @@ function getPos(el) {
   }
   return r;
 }
+
 var dragMeta = {
   ew: { prop: "width",  clientProp: "clientX",
         parentProp: "offsetWidth", origin: "left" },
   ns: { prop: "height", clientProp: "clientY",
         parentProp: "offsetHeight", origin: "top" }
 }
+
 function startDrag(dir, idMain, idRest) {
   var s = dragMeta[dir];
   var p = document.getElementById(idMain).parentElement;
@@ -392,15 +394,6 @@ function onHoverEvt(el) {
     }
   }
 }
-
-var e1 = [];
-for (var i = 0; i < 2000; i++) {
-  for (var j = 0; j < 10; j++) {
-    e1.push('<div class="evt evt-' + i +
-      '" onmouseenter="onHoverEvt(this);">' + i + ':' + j + '</div>');
-  }
-}
-document.getElementById("evts-1").innerHTML = e1.join('');
 </script>
 
 <script src="out/goog/base.js" type="text/javascript"></script>
