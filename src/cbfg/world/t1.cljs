@@ -96,12 +96,8 @@
 (defn init-roots []
   (om/root render-prog-frame prog-curr
            {:target (. js/document (getElementById "prog"))})
-  (om/root render-prog-frame prog-curr
-           {:target (. js/document (getElementById "prog-map"))})
   (om/root render-prog-frame prog-hover
            {:target (. js/document (getElementById "prog-hover"))})
-  (om/root render-prog-frame prog-hover
-           {:target (. js/document (getElementById "prog-map-hover"))})
   (om/root render-evts prog-evts
            {:target (. js/document (getElementById "evts"))})
   (om/root render-clients prog-curr

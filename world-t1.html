@@ -109,18 +109,6 @@ kv_client("client-2", "serverA", 8000)
            onmousedown="return startDrag('ew', 'llhs', 'middle');"></div>
       <div class="middle" id="middle" style="width:80%;">
         <div class="lhs" id="lhs" style="width:60%;">
-          <div class="prog-map-container">
-            <div class="pane">
-              <div class="prog-map" id="prog-map"></div>
-              <div class="prog-map-hover" id="prog-map-hover"></div>
-            </div>
-          </div>
-          <div class="prog-container" id="prog-container">
-            <div class="pane">
-              <div class="prog" id="prog"></div>
-              <div class="prog-hover" id="prog-hover"></div>
-            </div>
-          </div>
           <div class="pane">
             <div class="net" id="net"></div>
           </div>
@@ -151,6 +139,12 @@ kv_client("client-2", "serverA", 8000)
   <div class="splitter-ew"
        onmousedown="return startDrag('ew', 'evts', 'reqs');"></div>
   <div class="reqs" id="reqs" style="width:70%;">
+    <div class="prog-container" id="prog-container">
+      <div class="pane">
+        <div class="prog" id="prog"></div>
+        <div class="prog-hover" id="prog-hover"></div>
+      </div>
+    </div>
     <div class="client-curr" id="client-curr"></div>
   </div>
 </div>
@@ -310,38 +304,26 @@ body, div, button {
   margin: 0 0 0 0;
   padding: 0 0 0 10px;
   list-style-type: none;
-}
-.main .pane {
-  position: relative;
-}
-.main .pane > div {
-  position: absolute;
-  top: 0;
-  left: 0;
-}
-.main .prog-map-container {
-  float: right;
-  width: 200px;
-  z-index: 1;
-}
-.main .prog-map-container .pane {
-  -webkit-transform: scale(0.2,0.2);
-  transform: scale(0.2,0.2);
-}
-.main .prog-container {
-  width: 80%;
-}
-.main .hover .prog, .main .hover .prog-map {
-  opacity: 0.5;
-}
-.main .prog-hover {
-  color: #8282a2;
-}
-.main .vis {
+}.main .vis {
     background-color: #2a2a2a;
 }
 .main .vis-event {
     background-color: #2a2a2a;
+}
+.pane {
+  position: relative;
+}
+.pane > div {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+.prog-hover {
+  color: #8282a2;
+}
+.hover .prog,
+.hover .prog-map {
+  opacity: 0.5;
 }
 </style>
 
