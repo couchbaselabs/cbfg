@@ -21,7 +21,7 @@
 (def prog-base    (atom {}))  ; Stable parts of prog, even during time-travel.
 (def prog-curr    (atom {}))  ; The current prog-frame.
 (def prog-hover   (atom nil)) ; A past prog-frame while hovering over prog-history.
-(def prog-history (atom []))  ; Each event is [ts label prog-frame].
+(def prog-history (atom []))  ; Each event is [ts label prog-frame has-snapshot].
 (def prog-ss      (atom {}))  ; ts => agw-snapshot.
 
 (defn prog-init [world]
@@ -37,10 +37,10 @@
   (reset! prog-history []))
 
 (defn prog-event [world label prog-frame-fn]
-  (let [prog-next (swap! prog-curr #(prog-frame-fn (update-in % [:ts] inc)))]
-    (swap! prog-history #(conj % [(:ts prog-next) label prog-next]))
-    ; Only snapshot when quiescent.
-    (when (<= (.-length cljs.core.async.impl.dispatch/tasks) 0)
+  (let [prog-next (swap! prog-curr #(prog-frame-fn (update-in % [:ts] inc)))
+        need-snapshot (<= (.-length cljs.core.async.impl.dispatch/tasks) 0)]
+    (swap! prog-history #(conj % [(:ts prog-next) label prog-next need-snapshot]))
+    (when need-snapshot ; Only snapshot when quiescent.
       (swap! prog-ss #(assoc % (:ts prog-next) (ago-snapshot (actx-agw world)))))))
 
 ; -------------------------------------------------------------------
@@ -75,13 +75,15 @@
 
 (defn render-events [app owner]
   (apply dom/ul nil
-         (map (fn [[ts label prog-frame]]
+         (map (fn [[ts label prog-frame has-snapshot]]
                 (dom/li #js {:className (str "evt evt-" ts)
                              :onMouseEnter #(on-prog-frame-focus prog-frame)
                              :onMouseLeave #(on-prog-frame-blur)}
-                        (dom/button
-                         #js {:onClick #(on-prog-frame-restore ts prog-frame)}
-                         "rollback")
+                        (if has-snapshot
+                          (dom/button
+                           #js {:onClick #(on-prog-frame-restore ts prog-frame)}
+                           "rollback")
+                          "")
                         (str ts (apply str label))))
               app)))
 
