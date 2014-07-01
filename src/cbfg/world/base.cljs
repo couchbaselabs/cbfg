@@ -42,9 +42,7 @@
                          (dissoc :fence))
                      r))
 
-(defn render-client-hist [client-hist]
-  (set-el-innerHTML
-   "client-curr"
+(defn render-client-hist-html [client-hist]
    (apply str
           (flatten ["<table class='hist'>"
                     "<tr><th>op</th><th>fence</th>"
@@ -79,7 +77,10 @@
                          (sort #(compare [(:lane (first (second %1))) (first %1)]
                                          [(:lane (first (second %2))) (first %2)])
                                client-hist))
-                    "</table>"]))))
+                    "</table>"])))
+
+(defn render-client-hist [client-hist]
+  (set-el-innerHTML "client-curr" (render-client-hist-html client-hist)))
 
 (defn world-cmd-loop [actx cmd-handlers cmd-ch req-ch res-ch
                       vis-chs world-vis-init el-prefix]

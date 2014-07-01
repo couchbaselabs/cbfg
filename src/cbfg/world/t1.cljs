@@ -40,6 +40,7 @@
   (let [prog-next (swap! prog-curr #(prog-frame-fn (update-in % [:ts] inc)))
         need-snapshot (<= (.-length cljs.core.async.impl.dispatch/tasks) 0)]
     (swap! prog-evts #(conj % [(:ts prog-next) label prog-next need-snapshot]))
+    (cbfg.world.base/render-client-hist (:reqs prog-next))
     (when need-snapshot ; Only snapshot when quiescent.
       (swap! prog-ss #(assoc % (:ts prog-next) (ago-snapshot (actx-agw world)))))))
 
@@ -189,12 +190,10 @@
                       (when-let [client-req-ch
                                  (get-in @prog-curr [:clients (:client req) :req-ch])]
                         (prog-evt world [:req] #(assoc-in % [:reqs ts] [req nil]))
-                        (cbfg.world.base/render-client-hist (:reqs @prog-curr))
                         (>! client-req-ch req)
                         (recur (inc num-requests) num-responses))))
                   (do (prog-evt world [:res] #(update-in % [:reqs (:opaque v) 1]
                                                            conj [ts v]))
-                      (cbfg.world.base/render-client-hist (:reqs @prog-curr))
                       (recur num-requests (inc num-responses)))))))
           (go-loop [] ; Process expand/collapse UI events.
             (when-let [ev (<! expand-ch)]
