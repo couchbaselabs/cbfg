@@ -55,15 +55,15 @@
                               " complete")
                             "' onmouseenter='return onHoverEvt(this);'>"
                             " <td class='responses'><ul>"
-                            "  <li style='margin-left: "
-                            ts "em;'>" ts " " request
+                            "  <li style='margin-left:" ts "em;'>" request
                             "   <div class='timeline-focus'></div>"
                             "   <button id='replay-" ts "'>"
                             "    &lt; replay requests to here</button>"
                             "  </li>"
                             (map (fn [[response-ts response]]
-                                   ["<li style='margin-left: "
-                                    response-ts "em;'>"
+                                   ["<li class='evt evt-" response-ts
+                                    "' onmouseenter='return onHoverEvt(this);"
+                                    "' style='margin-left:" response-ts "em;'>"
                                     (-> (filter-r response)
                                         (dissoc :lane)
                                         (dissoc :delay)
