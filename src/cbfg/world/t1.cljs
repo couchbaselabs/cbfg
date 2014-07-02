@@ -219,7 +219,7 @@
               prog-res (try (js/eval prog-js) (catch js/Object ex ex))]
           (go-loop [num-requests 0 num-responses 0]
             (let [[v ch] (alts! [req-ch (:res-ch @prog-base)])
-                  ts (:ts @prog-curr)]
+                  ts (inc (:ts @prog-curr))]
               (when v
                 (if (= ch req-ch)
                   (if (= (:op v) "replay")
