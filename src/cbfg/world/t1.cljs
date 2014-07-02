@@ -48,6 +48,7 @@
 (defn render-reqs-html [reqs]
    (apply str
           (flatten ["<table class='hist'>"
+                    "<tr><th>lane</th><th>requests and responses</th></tr>"
                     (map (fn [[ts [request responses]]]
                            ["<tr class='evt evt-" ts " "
                             (when (some #(or (:result (second %))
@@ -55,6 +56,7 @@
                                         responses)
                               " complete")
                             "' onmouseenter='return onHoverEvt(this);'>"
+                            " <td>" (:lane request) "</td>"
                             " <td class='responses'><ul>"
                             "  <li style='margin-left:" ts "em;'>" request
                             "   <div class='timeline-focus'></div>"
