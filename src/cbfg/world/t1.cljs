@@ -32,7 +32,8 @@
   (reset! prog-curr {:ts 0
                      :servers {}   ; { server-addr => ports }.
                      :clients {}   ; { client-addr => client-info }.
-                     :reqs    {}}) ; { opaque-ts => [req, [[reply-ts reply] ...] }.
+                     :reqs    {}   ; { opaque-ts => [req, [[reply-ts reply] ...] }.
+                     :net     {}}) ; The :loop-state of the net-actx.
   (reset! prog-evts []))
 
 ; -------------------------------------------------------------------
@@ -199,21 +200,25 @@
                   :chs {} ; {ch -> {:id (gen-id), :msgs {msg -> true},
                           ;         :first-taker-actx actx-or-nil}}.
                   :gen-id gen-id})
-            render-net-state (atom {})]
+            net-actx (atom nil)
+            net-addrs (atom {})
+            net-cb (fn [vis]
+                     (when-let [net (get-in vis [:actxs @net-actx :loop-state])]
+                       (when (not= net (:net @prog-curr))
+                         (swap! prog-curr #(assoc % :net net))
+                         (let [[addrs h] (cbfg.world.net/render-net-html net @net-addrs)]
+                           (reset! net-addrs addrs)
+                           (set-el-innerHTML "net" (apply str (flatten h)))))))]
         (prog-init world)
         (cbfg.vis/process-events vis event-delay cbfg.vis/vis-event-handlers
                                  event-ch step-ch event-run-ch)
-        (cbfg.vis/process-render el-prefix world event-run-ch
-                                 (fn [vis-next]
-                                   ; (println :on-delayed-event-cb @last-id)
-                                   (cbfg.world.net/render-net vis-next "net-1" "net"
-                                                              render-net-state)))
+        (cbfg.vis/process-render el-prefix world event-run-ch net-cb)
         (cbfg.net/make-net world
                            (:net-listen-ch @prog-base)
                            (:net-connect-ch @prog-base))
-        (let [net-actx (first (wait-until #(seq (cbfg.world.net/net-actx-info @vis
-                                                                              "net-1"))))
-              expand-ch (listen-el (gdom/getElement (str el-prefix "-html")) "click")
+        (reset! net-actx
+                (first (wait-until #(seq (cbfg.world.net/net-actx-info @vis "net-1")))))
+        (let [expand-ch (listen-el (gdom/getElement (str el-prefix "-html")) "click")
               prog-in (get-el-value "prog-in")
               prog-js (str "with (cbfg.world.t1) {" prog-in "}")
               prog-res (try (js/eval prog-js) (catch js/Object ex ex))]

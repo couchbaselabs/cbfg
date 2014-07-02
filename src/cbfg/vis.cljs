@@ -326,7 +326,7 @@
   (let [el-event (str el-prefix "-event")
         el-html (str el-prefix "-html")
         el-svg (str el-prefix "-svg")]
-    (go-loop [vis-last nil       ; Process render-ch, updating U/I.
+    (go-loop [vis-last nil ; Process render-ch, updating U/I.
               vis-last-positions nil
               vis-last-html nil
               vis-last-svg nil
