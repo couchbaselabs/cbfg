@@ -36,6 +36,13 @@
                      :net     {}}) ; The :loop-state of the net-actx.
   (reset! prog-evts []))
 
+; ------------------------------------------------
+
+(defn render-net [target-el-id net prev-addrs]
+  (let [[addrs h] (cbfg.world.net/render-net-html net prev-addrs)]
+    (set-el-innerHTML target-el-id (apply str (flatten h)))
+    addrs))
+
 ; -------------------------------------------------------------------
 
 (defn filter-r [r] (if (map? r)
@@ -99,9 +106,8 @@
 ; -------------------------------------------------------------------
 
 (defn on-prog-frame-focus [prog-frame]
-  (let [[addrs h] (cbfg.world.net/render-net-html (:net prog-frame) {})]
-    (set-el-innerHTML "net-hover" (apply str (flatten h)))
-    (.add gdom/classes (gdom/getElement "net-container") "hover")))
+  (render-net "net-hover" (:net prog-frame) {})
+  (.add gdom/classes (gdom/getElement "net-container") "hover"))
 
 (defn on-prog-frame-blur []
   (set-el-innerHTML "net-hover" "")
@@ -113,7 +119,10 @@
     (ago-restore (actx-agw (:world @prog-base)) ago-ss)
     (reset! prog-curr prog-frame)
     (swap! prog-evts #(vec (filter (fn [[s & _]] (<= s ts)) %)))
-    (swap! prog-ss #(into {} (filter (fn [[s _]] (<= s ts)) %)))))
+    (swap! prog-ss #(into {} (filter (fn [[s _]] (<= s ts)) %)))
+    (set-el-innerHTML "reqs" (render-reqs-html (:reqs prog-frame)))
+    (render-net "net-main" (:net prog-frame) {})
+    (on-prog-frame-blur)))
 
 ; -------------------------------------------------------------------
 
@@ -211,9 +220,7 @@
                      (when-let [net (get-in vis [:actxs @net-actx :loop-state])]
                        (when (not= net (:net @prog-curr))
                          (swap! prog-curr #(assoc % :net net))
-                         (let [[addrs h] (cbfg.world.net/render-net-html net @net-addrs)]
-                           (reset! net-addrs addrs)
-                           (set-el-innerHTML "net-main" (apply str (flatten h)))))))]
+                         (swap! net-addrs #(render-net "net-main" net %)))))]
         (prog-init world)
         (cbfg.vis/process-events vis event-delay cbfg.vis/vis-event-handlers
                                  event-ch step-ch event-run-ch)
