@@ -110,7 +110,7 @@ kv_client("client-2", "serverA", 8000)
       <div class="middle" id="middle" style="width:80%;">
         <div class="lhs" id="lhs" style="width:60%;">
           <div class="net-container pane" id="net-container">
-            <div class="net" id="net"></div>
+            <div class="net net-main" id="net-main"></div>
             <div class="net net-hover" id="net-hover"></div>
           </div>
         </div>
@@ -276,11 +276,8 @@ body, div, button {
   top: 0;
   left: 0;
 }
-.main .hover .net {
+.main .hover .net-main {
   opacity: 0.3;
-}
-.main .hover .net-hover {
-  opacity: 1.0;
 }
 .main .vis,
 .main .vis-event {
@@ -350,7 +347,7 @@ body, div, button {
   width: 6px;
   height: 6000px;
   z-index: -1;
-  background-color: #dde;
+  background-color: #3a3a3a;
 }
 .footer .reqs table.hist li button {
   display: none;

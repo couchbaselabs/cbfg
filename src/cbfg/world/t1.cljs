@@ -50,23 +50,26 @@
           (flatten ["<table class='hist'>"
                     "<tr><th>lane</th><th>request and responses</th></tr>"
                     (map (fn [[ts [request responses]]]
-                           ["<tr class='evt evt-" ts " "
+                           ["<tr class='evt evt-" ts
                             (when (some #(or (:result (second %))
                                              (:status (second %)))
                                         responses)
                               " complete")
-                            "' onmouseenter='return onHoverEvt(this);'>"
+                            "'>"
                             " <td>" (:lane request) "</td>"
                             " <td class='responses'><ul>"
-                            "  <li style='margin-left:" ts "em;'>" request
+                            "  <li class='evt evt-" ts
+                            "'     onmouseenter='return onHoverEvt(this);"
+                            "'     style='margin-left:" ts "em;'>" request
                             "   <div class='timeline-focus'></div>"
                             "   <button id='replay-" ts "'>"
                             "    &lt; replay requests to here</button>"
                             "  </li>"
                             (map (fn [[response-ts response]]
                                    ["<li class='evt evt-" response-ts
-                                    "' onmouseenter='return onHoverEvt(this);"
-                                    "' style='margin-left:" response-ts "em;'>"
+                                    "'   onmouseenter='return onHoverEvt(this);"
+                                    "'   style='margin-left:" response-ts "em;'>"
+                                    " <div class='timeline-focus'></div>"
                                     (-> (filter-r response)
                                         (dissoc :lane)
                                         (dissoc :delay)
@@ -210,7 +213,7 @@
                          (swap! prog-curr #(assoc % :net net))
                          (let [[addrs h] (cbfg.world.net/render-net-html net @net-addrs)]
                            (reset! net-addrs addrs)
-                           (set-el-innerHTML "net" (apply str (flatten h)))))))]
+                           (set-el-innerHTML "net-main" (apply str (flatten h)))))))]
         (prog-init world)
         (cbfg.vis/process-events vis event-delay cbfg.vis/vis-event-handlers
                                  event-ch step-ch event-run-ch)
