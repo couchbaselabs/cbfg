@@ -111,7 +111,7 @@ kv_client("client-2", "serverA", 8000)
         <div class="lhs" id="lhs" style="width:60%;">
           <div class="net-container pane" id="net-container">
             <div class="net" id="net"></div>
-            <div class="net-hover" id="net-hover"></div>
+            <div class="net net-hover" id="net-hover"></div>
           </div>
         </div>
         <div class="splitter-ew"
@@ -268,12 +268,6 @@ body, div, button {
   margin-top: 5px;
   width: 8em;
 }
-.main .vis {
-  background-color: #2a2a2a;
-}
-.main .vis-event {
-  background-color: #2a2a2a;
-}
 .main .pane {
   position: relative;
 }
@@ -282,12 +276,15 @@ body, div, button {
   top: 0;
   left: 0;
 }
-.main .prog-hover {
-  color: #8282a2;
+.main .hover .net {
+  opacity: 0.3;
 }
-.hover .prog,
-.hover .prog-map {
-  opacity: 0.5;
+.main .hover .net-hover {
+  opacity: 1.0;
+}
+.main .vis,
+.main .vis-event {
+  background-color: #2a2a2a;
 }
 .footer .evts,
 .footer .reqs {

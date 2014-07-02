@@ -94,9 +94,9 @@
 ; -------------------------------------------------------------------
 
 (defn on-prog-frame-focus [prog-frame]
-  (set-el-innerHTML "net-hover"
-                    (render-reqs-html (:reqs prog-frame)))
-  (.add gdom/classes (gdom/getElement "net-container") "hover"))
+  (let [[addrs h] (cbfg.world.net/render-net-html (:net prog-frame) {})]
+    (set-el-innerHTML "net-hover" (apply str (flatten h)))
+    (.add gdom/classes (gdom/getElement "net-container") "hover")))
 
 (defn on-prog-frame-blur []
   (set-el-innerHTML "net-hover" "")
