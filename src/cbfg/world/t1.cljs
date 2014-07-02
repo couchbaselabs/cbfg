@@ -48,7 +48,7 @@
 (defn render-reqs-html [reqs]
    (apply str
           (flatten ["<table class='hist'>"
-                    "<tr><th>lane</th><th>requests and responses</th></tr>"
+                    "<tr><th>lane</th><th>request and responses</th></tr>"
                     (map (fn [[ts [request responses]]]
                            ["<tr class='evt evt-" ts " "
                             (when (some #(or (:result (second %))
