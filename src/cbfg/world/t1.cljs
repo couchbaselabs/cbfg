@@ -56,31 +56,32 @@
    (apply str
           (flatten ["<table class='hist'>"
                     "<tr><th>lane</th><th>request and responses</th></tr>"
-                    (map (fn [[ts [request responses]]]
-                           ["<tr class='evt evt-" ts
-                            (when (some #(or (:result (second %))
-                                             (:status (second %)))
-                                        responses)
-                              " complete")
-                            "'>"
-                            " <td>" (:lane request) "</td>"
-                            " <td class='responses'><ul>"
+                    (map (fn [[ts [req resps]]]
+                           ["<tr class='" (when (some #(or (:result (second %))
+                                                           (:status (second %)))
+                                                      resps)
+                                            "complete") "'>"
+                            " <td>" (:lane req) "</td>"
+                            " <td><ul>"
                             "  <li class='evt evt-" ts
                             "'     onmouseenter='return onHoverEvt(this);"
-                            "'     style='margin-left:" ts "em;'>" request
+                            "'     style='padding-left:" ts "em;'>"
+                            "   <span style='color:" (:color req) ";'>&#9679;</span>"
+                            req
                             "   <button id='replay-" ts "'>"
                             "    &lt; replay requests to here</button>"
                             "  </li>"
-                            (map (fn [[response-ts response]]
-                                   ["<li class='evt evt-" response-ts
+                            (map (fn [[resp-ts resp]]
+                                   ["<li class='evt evt-" resp-ts
                                     "'   onmouseenter='return onHoverEvt(this);"
-                                    "'   style='margin-left:" response-ts "em;'>"
-                                    (-> (filter-r response)
+                                    "'   style='padding-left:" resp-ts "em;'>"
+                                    " <span style='color:" (:color resp) ";'>&#9679;</span>"
+                                    (-> (filter-r resp)
                                         (dissoc :lane)
                                         (dissoc :delay)
                                         (dissoc :sleep))
                                     "</li>"])
-                                 (reverse responses))
+                                 (reverse resps))
                             " </ul></td>"
                             "</tr>"])
                          (sort (fn [[ts0 r0] [ts1 r1]]
