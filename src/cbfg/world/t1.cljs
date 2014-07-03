@@ -21,7 +21,7 @@
 
 (def prog-base (atom {}))  ; Stable parts of prog, even during time-travel.
 (def prog-curr (atom {}))  ; The current prog-frame.
-(def prog-evts (atom []))  ; Each evt is [ts label prog-frame has-snapshot].
+(def prog-evts (atom []))  ; Each evt is [ts kind data prog-frame has-snapshot].
 (def prog-ss   (atom {}))  ; ts => agw-snapshot.
 
 (defn prog-init [world]
@@ -92,11 +92,11 @@
 
 ; -------------------------------------------------------------------
 
-(defn prog-evt [world label prog-frame-fn]
+(defn prog-evt [world kind data prog-frame-fn]
   (let [prog-prev @prog-curr
         prog-next (swap! prog-curr #(prog-frame-fn (update-in % [:ts] inc)))
         need-snapshot (<= (.-length cljs.core.async.impl.dispatch/tasks) 0)]
-    (swap! prog-evts #(conj % [(:ts prog-next) label prog-next need-snapshot]))
+    (swap! prog-evts #(conj % [(:ts prog-next) kind data prog-next need-snapshot]))
     (when need-snapshot ; Only snapshot when quiescent.
       (swap! prog-ss #(assoc % (:ts prog-next) (ago-snapshot (actx-agw world)))))
     (when (not= (:reqs prog-prev) (:reqs prog-next))
@@ -127,7 +127,7 @@
 
 (defn render-evts [app owner]
   (apply dom/ul nil
-         (map (fn [[ts label prog-frame has-snapshot]]
+         (map (fn [[ts kind data prog-frame has-snapshot]]
                 (dom/li #js {:className (str "evt evt-" ts)
                              :onMouseEnter #(on-prog-frame-focus @prog-frame)
                              :onMouseLeave #(on-prog-frame-blur)}
@@ -136,7 +136,8 @@
                            #js {:onClick #(on-prog-frame-restore ts @prog-frame)}
                            "rollback")
                           "")
-                        (str ts (apply str label))))
+                        (str ts ": " kind ":")
+                        (apply str (map (fn [[k v]] (str " " k ":" v)) data))))
               app)))
 
 (defn render-clients [app owner]
@@ -235,14 +236,14 @@
                 (if (= ch req-ch)
                   (if (= (:op v) "replay")
                     (println "TODO-REPLAY-IMPL")
-                    (let [req ((get req-handlers (:op v)) (assoc v :opaque ts))]
+                    (let [req (assoc v :opaque ts)]
                       (when-let [client-req-ch
                                  (get-in @prog-curr [:clients (:client req) :req-ch])]
-                        (prog-evt world [:req] #(assoc-in % [:reqs ts] [req nil]))
-                        (>! client-req-ch req)
+                        (prog-evt world :req req #(assoc-in % [:reqs ts] [req nil]))
+                        (>! client-req-ch ((get req-handlers (:op v)) req))
                         (recur (inc num-requests) num-responses))))
-                  (do (prog-evt world [:res] #(update-in % [:reqs (:opaque v) 1]
-                                                           conj [ts v]))
+                  (do (prog-evt world :res v #(update-in % [:reqs (:opaque v) 1]
+                                                         conj [ts v]))
                       (recur num-requests (inc num-responses)))))))
           (go-loop [] ; Process expand/collapse UI events.
             (when-let [ev (<! expand-ch)]
@@ -275,7 +276,7 @@
                (cbfg.world.net/server-accept-loop world accept-ch close-accept-ch)))
            (reset! done true))
       (wait-done done)
-      (prog-evt world [:kv-server server-addr port]
+      (prog-evt world :kv-server {:server-addr server-addr :server-port port}
                 #(update-in % [:servers server-addr] conj port)))))
 
 (defn kv-client [client-addr server-addr server-port]
@@ -286,7 +287,9 @@
                                            client-addr (:res-ch @prog-base)
                                            :start-cb #(reset! ready true))]
     (wait-done ready)
-    (prog-evt world [:kv-client client-addr server-addr server-port]
+    (prog-evt world :kv-client {:client-addr client-addr
+                                :server-addr server-addr
+                                :server-port server-port}
               #(assoc-in % [:clients client-addr]
                          {:client-addr client-addr
                           :server-addr server-addr
