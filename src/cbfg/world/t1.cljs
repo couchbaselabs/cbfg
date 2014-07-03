@@ -68,7 +68,6 @@
                             "  <li class='evt evt-" ts
                             "'     onmouseenter='return onHoverEvt(this);"
                             "'     style='margin-left:" ts "em;'>" request
-                            "   <div class='timeline-focus'></div>"
                             "   <button id='replay-" ts "'>"
                             "    &lt; replay requests to here</button>"
                             "  </li>"
@@ -76,7 +75,6 @@
                                    ["<li class='evt evt-" response-ts
                                     "'   onmouseenter='return onHoverEvt(this);"
                                     "'   style='margin-left:" response-ts "em;'>"
-                                    " <div class='timeline-focus'></div>"
                                     (-> (filter-r response)
                                         (dissoc :lane)
                                         (dissoc :delay)
