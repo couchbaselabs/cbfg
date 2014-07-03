@@ -125,11 +125,6 @@
 
 ; -------------------------------------------------------------------
 
-(defn render-prog-frame [prog-frame owner]
-  (apply dom/ul nil
-         (map (fn [[k v]] (dom/li nil (str k ":" (if (number? v) v (count v)))))
-              prog-frame)))
-
 (defn render-evts [app owner]
   (apply dom/ul nil
          (map (fn [[ts label prog-frame has-snapshot]]
