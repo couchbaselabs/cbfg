@@ -69,7 +69,7 @@
                             "   <span style='color:" (:color req) ";'>&#9679;</span>"
                             req
                             "   <button id='replay-" ts "'>"
-                            "    &lt; replay requests to here</button>"
+                            "    replay requests to here &gt;</button>"
                             "  </li>"
                             (map (fn [[resp-ts resp]]
                                    ["<li class='evt evt-" resp-ts
