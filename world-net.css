@@ -13,6 +13,9 @@
   border: 1px solid #888;
   padding: 0 5px 0 5px;
 }
+.net .addr label {
+  z-index: 10;
+}
 .net .accept-addr-port {
   position: relative;
 }
