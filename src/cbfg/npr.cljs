@@ -2,6 +2,8 @@
   (:require-macros [cbfg.act :refer [achan-buf act act-loop
                                      aput aput-close atake]]))
 
+; TODO: What if the underlying bucket / collection is deleted, flushed or DDL modified?
+
 (defprotocol NPRSnapshot
   (snapshot-rollback? [this])
   (snapshot-items [this])
