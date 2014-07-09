@@ -92,7 +92,7 @@
               true
               (conj out (render-msg curr-msg "msg-enter" "")))))))
 
-(defn render-net-html [net-state prev-addrs]
+(defn render-net-html [net-state prev-addrs & {:keys [addr-attrs-fn]}]
   (let [addrs (atom {})
         coords (atom {})] ; Index positions.
     (doseq [[[addr port] accept-chs] (:listens net-state)]
@@ -142,8 +142,10 @@
           h ["<div style='height:" (apply max (map #(count (:outs %))
                                                    (vals @addrs))) "em;'>"
              (mapv (fn [[addr addr-v]]
-                     (let [[addr-x addr-y] (calc-xy addr)]
-                       ["<div class='addr' style='top:" addr-y "px; left:" addr-x "px;'>"
+                     (let [[addr-x addr-y] (calc-xy addr)
+                           addr-attrs (or (and addr-attrs-fn (addr-attrs-fn addr)) "")]
+                       ["<div class='addr' id='addr-" addr "'"
+                        " style='top:" addr-y "px; left:" addr-x "px;' " addr-attrs ">"
                         "<label>" addr "</label>"
                         (mapv (fn [[[accept-addr accept-port] accept-addr-port-v]]
                                 ["<div class='accept-addr-port'>"
