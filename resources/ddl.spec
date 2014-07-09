@@ -6,9 +6,12 @@ This ddl.spec file covers logical cluster configuration concepts.
 The main "containment" hierarchy is...
 
   hierarchy:
-    - cluster
+    - cluster or site
+      - nodes (or should this be in cdl? in site?)
+              (need separation of logical vs physical)
       - pool
         - bucket
+          - kvCfg
           - indexCfg
           - designDoc
             - view
