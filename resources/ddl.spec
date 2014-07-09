@@ -7,8 +7,10 @@ The main "containment" hierarchy is...
 
   hierarchy:
     - cluster or site
-      - nodes (or should this be in cdl? in site?)
-              (need separation of logical vs physical)
+      (no nodes listed here as that is in cdl.spec)
+      (need a separate container for physical vs logical and both?
+       cluster and site sound kind of physical.
+       how about database?)
       - pool
         - bucket
           - kvCfg
