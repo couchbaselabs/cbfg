@@ -38,8 +38,12 @@
 
 ; ------------------------------------------------
 
+(defn addr-attrs-fn [addr]
+  (str "onmousedown=\"return startDrag('loc', 'addr-" addr "');\""))
+
 (defn render-net [target-el-id net prev-addrs]
-  (let [[addrs h] (cbfg.world.net/render-net-html net prev-addrs)]
+  (let [[addrs h] (cbfg.world.net/render-net-html net prev-addrs
+                                                  :addr-attrs-fn addr-attrs-fn)]
     (set-el-innerHTML target-el-id (apply str (flatten h)))
     addrs))
 

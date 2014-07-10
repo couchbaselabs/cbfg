@@ -372,26 +372,50 @@ function getPos(el) {
 }
 
 var dragMeta = {
-  ew: { prop: "width",  clientProp: "clientX",
-        parentProp: "offsetWidth", origin: "left" },
-  ns: { prop: "height", clientProp: "clientY",
-        parentProp: "offsetHeight", origin: "top" }
+  ew: [{ prop: "width",  clientProp: "clientX", fn: dragByPct,
+         parentProp: "offsetWidth", origin: "left" }],
+  ns: [{ prop: "height", clientProp: "clientY", fn: dragByPct,
+         parentProp: "offsetHeight", origin: "top" }],
+  loc: [{ prop: "left", clientProp: "clientX", fn: dragByPx,
+         parentProp: "offsetWidth", origin: "left" },
+        { prop: "top", clientProp: "clientY", fn: dragByPx,
+         parentProp: "offsetHeight", origin: "top" }]
 }
 
 function startDrag(dir, idMain, idRest) {
-  var s = dragMeta[dir];
   var p = document.getElementById(idMain).parentElement;
   window.onmousemove = function(ev) {
-    var v = ev[s.clientProp] - getPos(p)[s.origin];
-    var pct = Math.max(10, Math.min(95, Math.round(100 * ((1.0 * v) / p[s.parentProp]))));
-    document.getElementById(idMain).style[s.prop] = pct + "%";
-    document.getElementById(idRest).style[s.prop] = (100 - pct) + "%";
+    for (var i = 0; i < dragMeta[dir].length; i++) {
+      var s = dragMeta[dir][i];
+      var v = ev[s.clientProp] - getPos(p)[s.origin];
+      s.fn(p, s, v, idMain, idRest);
+    }
     return false;
   }
   window.onmouseup = function(ev) {
     window.onmouseup = window.onmousemove = null;
   }
   return false;
+}
+
+function dragByPx(p, s, v, idMain, idRest) {
+  var m = document.getElementById(idMain);
+  if (m) {
+    console.log(v);
+    m.style[s.prop] = v + "px";
+  }
+}
+
+function dragByPct(p, s, v, idMain, idRest) {
+  var pct = Math.max(10, Math.min(95, Math.round(100 * ((1.0 * v) / p[s.parentProp]))));
+  var m = document.getElementById(idMain);
+  if (m) {
+    m.style[s.prop] = pct + "%";
+  }
+  var r = document.getElementById(idRest);
+  if (r) {
+    r.style[s.prop] = (100 - pct) + "%";
+  }
 }
 
 function popup(className) {
