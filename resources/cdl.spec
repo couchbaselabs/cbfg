@@ -23,7 +23,7 @@ Definitions...
     - container  // Path for shelf/rack/row/zone awareness.
     - nodeState
       * known
-      * wanted   // Should have active partitions and/or resources assigned.
+      * wanted   // Should have active partitions and/or resources assign-able.
       * unwanted
     - usage      // e.g., kv only, index only, stats ony?
     - weight

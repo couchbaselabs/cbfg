@@ -73,14 +73,14 @@ proposed leveldb layout...
   cust-0001:m            (metaData: revId, cas, flags, expiration,
                           dataType, compression)
   cust-0001:v            (value)
-  cust-0001/_at/01:m     (attachment metaData)
-  cust-0001/_at/01:v     (attachment value)
-  cust-0001/_fm:m        (flexMetaData metaData)
-  cust-0001/_fm:v        (flexMetaData value)
-  cust-0001/_rt:m        (revTree metaData)
-  cust-0001/_rt:v        (revTree value)
-  cust-0001/_tx:m        (transaction metaData)
-  cust-0001/_tx:v        (transaction metaData)
+  cust-0001:_at/01:m     (attachment metaData)
+  cust-0001:_at/01:v     (attachment value)
+  cust-0001:_fm:m        (flexMetaData metaData)
+  cust-0001:_fm:v        (flexMetaData value)
+  cust-0001:_rt:m        (revTree metaData)
+  cust-0001:_rt:v        (revTree value)
+  cust-0001:_tx:m        (transaction metaData)
+  cust-0001:_tx:v        (transaction metaData)
   cust-0001/<subKey>:m
   cust-0001/<subKey>:v
   cust-0001/campaign-001:m
@@ -89,6 +89,10 @@ proposed leveldb layout...
   cust-0001/campaign-002:v
   cust-0001/campaign-002/response-000001:m
   cust-0001/campaign-002/response-000001:v
+
+some subkeys are atomic with item (":"), transactional,
+  and replicated atomically
+other subkeys are independent items ("/"), but are stored "close by"
 
 storage / dir (perhaps this goes into cdl.spec?)
 - quota
