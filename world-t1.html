@@ -372,14 +372,14 @@ function getPos(el) {
 }
 
 var dragMeta = {
-  ew: [{ prop: "width",  clientProp: "clientX", fn: dragByPct,
-         parentProp: "offsetWidth", origin: "left" }],
-  ns: [{ prop: "height", clientProp: "clientY", fn: dragByPct,
-         parentProp: "offsetHeight", origin: "top" }],
-  loc: [{ prop: "left", clientProp: "clientX", fn: dragByPx,
-         parentProp: "offsetWidth", origin: "left" },
-        { prop: "top", clientProp: "clientY", fn: dragByPx,
-         parentProp: "offsetHeight", origin: "top" }]
+  ew: [{ prop: "width",  eventProp: "clientX", fn: dragByPct,
+         parentProp: "offsetWidth", posProp: "left" }],
+  ns: [{ prop: "height", eventProp: "clientY", fn: dragByPct,
+         parentProp: "offsetHeight", posProp: "top" }],
+  loc: [{ prop: "left", eventProp: "clientX", fn: dragByPx,
+         parentProp: "offsetWidth", posProp: "left" },
+        { prop: "top", eventProp: "clientY", fn: dragByPx,
+         parentProp: "offsetHeight", posProp: "top" }]
 }
 
 function startDrag(dir, idMain, idRest) {
@@ -387,7 +387,7 @@ function startDrag(dir, idMain, idRest) {
   window.onmousemove = function(ev) {
     for (var i = 0; i < dragMeta[dir].length; i++) {
       var s = dragMeta[dir][i];
-      var v = ev[s.clientProp] - getPos(p)[s.origin];
+      var v = ev[s.eventProp] - getPos(p)[s.posProp];
       s.fn(p, s, v, idMain, idRest);
     }
     return false;
