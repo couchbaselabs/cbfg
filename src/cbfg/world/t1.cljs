@@ -41,9 +41,16 @@
 (defn addr-attrs-fn [addr]
   (str "onmousedown=\"return startDrag('loc', 'addr-" addr "', null, onDragNetAddrDone);\""))
 
+(def addr-override-xy-g (atom {}))
+
+(defn addr-override-xy [addr x y]
+  (reset! addr-override-xy-g #(assoc % addr [x y])))
+
 (defn render-net [target-el-id net prev-addrs]
-  (let [[addrs h] (cbfg.world.net/render-net-html net prev-addrs
-                                                  :addr-attrs-fn addr-attrs-fn)]
+  (let [[addrs h]
+        (cbfg.world.net/render-net-html net prev-addrs
+                                        :addr-attrs-fn addr-attrs-fn
+                                        :addr-override-xy #(get @addr-override-xy-g %))]
     (set-el-innerHTML target-el-id (apply str (flatten h)))
     addrs))
 
