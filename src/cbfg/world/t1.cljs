@@ -38,15 +38,14 @@
 
 ; ------------------------------------------------
 
+(def net-addrs-g (atom {})) ; Last output of net-main render-net-addrs-to-el.
+
+(def addr-override-xy-g (atom {})) ; Explicit xy's (ex: drag/drop) of addr positions.
+
 (defn addr-attrs-fn [addr]
   (str "onmousedown=\"return startDrag('loc', 'addr-" addr "', null, onDragNetAddrDone);\""))
 
-(def addr-override-xy-g (atom {}))
-
-(defn addr-override-xy [addr x y]
-  (swap! addr-override-xy-g #(assoc % addr [x y])))
-
-(defn render-net [target-el-id net prev-addrs]
+(defn render-net-addrs-to-el [target-el-id net prev-addrs]
   (let [[addrs h]
         (cbfg.world.net/render-net-html net prev-addrs
                                         :addr-attrs-fn addr-attrs-fn
@@ -54,7 +53,12 @@
     (set-el-innerHTML target-el-id (apply str (flatten h)))
     addrs))
 
-(def net-addrs (atom {}))
+(defn render-net-addrs [net]
+  (swap! net-addrs-g #(render-net-addrs-to-el "net-main" net %)))
+
+(defn addr-override-xy [addr x y]
+  (swap! addr-override-xy-g #(assoc % addr [x y]))
+  (render-net-addrs (:net @prog-curr)))
 
 ; -------------------------------------------------------------------
 
@@ -118,7 +122,7 @@
 ; -------------------------------------------------------------------
 
 (defn on-prog-frame-focus [prog-frame]
-  (render-net "net-hover" (:net prog-frame) {})
+  (render-net-addrs-to-el "net-hover" (:net prog-frame) {})
   (.add gdom/classes (gdom/getElement "net-container") "hover"))
 
 (defn on-prog-frame-blur []
@@ -133,7 +137,7 @@
     (swap! prog-evts #(vec (filter (fn [[s & _]] (<= s ts)) %)))
     (swap! prog-ss #(into {} (filter (fn [[s _]] (<= s ts)) %)))
     (set-el-innerHTML "reqs" (render-reqs-html (:reqs prog-frame)))
-    (render-net "net-main" (:net prog-frame) @net-addrs)
+    (render-net-addrs-to-el "net-main" (:net prog-frame) {})
     (on-prog-frame-blur)))
 
 ; -------------------------------------------------------------------
@@ -227,7 +231,7 @@
                      (when-let [net (get-in vis [:actxs @net-actx :loop-state])]
                        (when (not= net (:net @prog-curr))
                          (swap! prog-curr #(assoc % :net net))
-                         (swap! net-addrs #(render-net "net-main" net %)))))]
+                         (render-net-addrs net))))]
         (prog-init world)
         (cbfg.vis/process-events vis event-delay cbfg.vis/vis-event-handlers
                                  event-ch step-ch event-run-ch)
