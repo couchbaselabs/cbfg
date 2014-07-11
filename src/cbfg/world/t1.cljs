@@ -44,7 +44,7 @@
 (def addr-override-xy-g (atom {}))
 
 (defn addr-override-xy [addr x y]
-  (reset! addr-override-xy-g #(assoc % addr [x y])))
+  (swap! addr-override-xy-g #(assoc % addr [x y])))
 
 (defn render-net [target-el-id net prev-addrs]
   (let [[addrs h]

@@ -439,7 +439,9 @@ function onHoverEvt(el) {
 }
 
 function onDragNetAddrDone(dir, idMain, idRest) {
-  console.log("done-" + idMain);
+  var addr = idMain.split("-").splice(1).join("-"); // Convert "addr-foo" to "foo".
+  var m = document.getElementById(idMain);
+  cbfg.world.t1.addr_override_xy(addr, parseInt(m.style.left), parseInt(m.style.top));
 }
 </script>
 
