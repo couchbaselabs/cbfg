@@ -92,7 +92,9 @@
               true
               (conj out (render-msg curr-msg "msg-enter" "")))))))
 
-(defn render-net-html [net-state prev-addrs & {:keys [addr-attrs-fn]}]
+(defn render-net-html [net-state prev-addrs &
+                       {:keys [addr-attrs-fn force-coords]
+                        :or {addr-attrs-fn nil force-coords {}}}]
   (let [addrs (atom {})
         coords (atom {})] ; Index positions.
     (doseq [[[addr port] accept-chs] (:listens net-state)]
@@ -136,7 +138,7 @@
           line-height 20
           addr-width 50
           addr-gap 80
-          calc-xy (fn [addr] (let [[c0 c1] (get coords addr)]
+          calc-xy (fn [addr] (let [[c0 c1] (get force-coords addr (get coords addr))]
                                [(* addr-width c0 (/ (+ addr-width addr-gap) addr-width))
                                 (* top-height c1)]))
           h ["<div style='height:" (apply max (map #(count (:outs %))
