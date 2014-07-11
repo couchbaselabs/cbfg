@@ -54,6 +54,8 @@
     (set-el-innerHTML target-el-id (apply str (flatten h)))
     addrs))
 
+(def net-addrs (atom {}))
+
 ; -------------------------------------------------------------------
 
 (defn filter-r [r] (if (map? r)
@@ -131,7 +133,7 @@
     (swap! prog-evts #(vec (filter (fn [[s & _]] (<= s ts)) %)))
     (swap! prog-ss #(into {} (filter (fn [[s _]] (<= s ts)) %)))
     (set-el-innerHTML "reqs" (render-reqs-html (:reqs prog-frame)))
-    (render-net "net-main" (:net prog-frame) {})
+    (render-net "net-main" (:net prog-frame) @net-addrs)
     (on-prog-frame-blur)))
 
 ; -------------------------------------------------------------------
@@ -221,7 +223,6 @@
                           ;         :first-taker-actx actx-or-nil}}.
                   :gen-id gen-id})
             net-actx (atom nil)
-            net-addrs (atom {})
             net-cb (fn [vis]
                      (when-let [net (get-in vis [:actxs @net-actx :loop-state])]
                        (when (not= net (:net @prog-curr))
