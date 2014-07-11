@@ -372,41 +372,42 @@ function getPos(el) {
 }
 
 var dragMeta = {
-  ew: [{ prop: "width",  eventProp: "clientX", fn: dragByPct,
+  ew: [{ prop: "width",  eventProp: "X", fn: dragByPct,
          parentProp: "offsetWidth", posProp: "left" }],
-  ns: [{ prop: "height", eventProp: "clientY", fn: dragByPct,
+  ns: [{ prop: "height", eventProp: "Y", fn: dragByPct,
          parentProp: "offsetHeight", posProp: "top" }],
-  loc: [{ prop: "left", eventProp: "clientX", fn: dragByPx,
+  loc: [{ prop: "left", eventProp: "X", fn: dragByPx,
          parentProp: "offsetWidth", posProp: "left" },
-        { prop: "top", eventProp: "clientY", fn: dragByPx,
+        { prop: "top", eventProp: "Y", fn: dragByPx,
          parentProp: "offsetHeight", posProp: "top" }]
 }
 
-function startDrag(dir, idMain, idRest) {
+function startDrag(dir, idMain, idRest, onDone) {
   var p = document.getElementById(idMain).parentElement;
   window.onmousemove = function(ev) {
     for (var i = 0; i < dragMeta[dir].length; i++) {
       var s = dragMeta[dir][i];
-      var v = ev[s.eventProp] - getPos(p)[s.posProp];
-      s.fn(p, s, v, idMain, idRest);
+      s.fn(ev, p, s, ev["client" + s.eventProp] - getPos(p)[s.posProp], idMain, idRest);
     }
     return false;
   }
   window.onmouseup = function(ev) {
     window.onmouseup = window.onmousemove = null;
+    if (onDone) {
+      onDone(dir, idMain, idRest);
+    }
   }
   return false;
 }
 
-function dragByPx(p, s, v, idMain, idRest) {
+function dragByPx(ev, p, s, v, idMain, idRest) {
   var m = document.getElementById(idMain);
   if (m) {
-    console.log(v);
     m.style[s.prop] = v + "px";
   }
 }
 
-function dragByPct(p, s, v, idMain, idRest) {
+function dragByPct(ev, p, s, v, idMain, idRest) {
   var pct = Math.max(10, Math.min(95, Math.round(100 * ((1.0 * v) / p[s.parentProp]))));
   var m = document.getElementById(idMain);
   if (m) {
@@ -435,6 +436,10 @@ function onHoverEvt(el) {
       onHoverEvtPrev = c;
     }
   }
+}
+
+function onDragNetAddrDone(dir, idMain, idRest) {
+  console.log("done-" + idMain);
 }
 </script>
 

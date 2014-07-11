@@ -39,7 +39,7 @@
 ; ------------------------------------------------
 
 (defn addr-attrs-fn [addr]
-  (str "onmousedown=\"return startDrag('loc', 'addr-" addr "');\""))
+  (str "onmousedown=\"return startDrag('loc', 'addr-" addr "', null, onDragNetAddrDone);\""))
 
 (defn render-net [target-el-id net prev-addrs]
   (let [[addrs h] (cbfg.world.net/render-net-html net prev-addrs
