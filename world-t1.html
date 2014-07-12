@@ -400,6 +400,7 @@ var dragMeta = {
 }
 
 function startDrag(dir, idMain, idRest, onDone) {
+  var startXY = [window.event.clientX, window.event.clientY];
   window.onmousemove = function(ev) {
     for (var i = 0; i < dragMeta[dir].length; i++) {
       var p = document.getElementById(idMain).parentElement;
@@ -411,7 +412,7 @@ function startDrag(dir, idMain, idRest, onDone) {
   }
   window.onmouseup = function(ev) {
     window.onmouseup = window.onmousemove = null;
-    if (onDone) {
+    if (onDone && startXY[0] != ev.clientX && startXY[1] != ev.clientY) {
       onDone(dir, idMain, idRest);
     }
   }
