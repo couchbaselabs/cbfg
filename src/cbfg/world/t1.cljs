@@ -43,7 +43,7 @@
 (def addr-override-xy-g (atom {})) ; Explicit xy's (ex: drag/drop) of addr positions.
 
 (defn addr-attrs-fn [addr]
-  (str "onmousedown=\"return startDrag('loc', 'addr-" addr "', null, onDragNetAddrDone);\""))
+  (str "onmousedown=\"return startDrag('addr', 'addr-" addr "', null, onDragNetAddr);\""))
 
 (defn render-net-addrs-to-el [target-el-id net prev-addrs]
   (let [[addrs h]
