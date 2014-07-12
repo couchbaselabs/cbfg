@@ -404,11 +404,12 @@ var dragMeta = {
 
 function startDrag(dir, idMain, idRest, onDone) {
   var startXY = [window.event.clientX, window.event.clientY];
+  var offsetXY = [window.event.offsetX, window.event.offsetY];
   window.onmousemove = function(ev) {
     for (var i = 0; i < dragMeta[dir].length; i++) {
       var p = document.getElementById(idMain).parentElement;
       var s = dragMeta[dir][i];
-      s.fn(ev, p, s,
+      s.fn(ev, p, s, offsetXY,
            ev["client" + s.eventProp] - getPos(p)[s.posProp || s.prop], idMain, idRest);
     }
     return false;
@@ -422,7 +423,7 @@ function startDrag(dir, idMain, idRest, onDone) {
   return false;
 }
 
-function dragByPct(ev, p, s, v, idMain, idRest) {
+function dragByPct(ev, p, s, offsetXY, v, idMain, idRest) {
   var pct = Math.max(10, Math.min(95, Math.round(100 * ((1.0 * v) / p[s.parentProp]))));
   var m = document.getElementById(idMain);
   if (m) {
@@ -434,11 +435,11 @@ function dragByPct(ev, p, s, v, idMain, idRest) {
   }
 }
 
-function onDragNetAddrPx(ev, p, s, v, idMain) {
+function onDragNetAddrPx(ev, p, s, offsetXY, v, idMain) {
   if (s.prop == "left") {
-    onDragNetAddr(null, idMain, null, v, null);
+    onDragNetAddr(null, idMain, null, v - offsetXY[0], null);
   } else {
-    onDragNetAddr(null, idMain, null, null, v);
+    onDragNetAddr(null, idMain, null, null, v - offsetXY[1]);
   }
 }
 
