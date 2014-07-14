@@ -92,7 +92,8 @@
               true
               (conj out (render-msg curr-msg "msg-enter" "")))))))
 
-(defn render-net-html [net-state prev-addrs & {:keys [addr-attrs-fn addr-override-xy]}]
+(defn render-net-html [net-state prev-addrs & {:keys [addr-attrs-fn addr-override-xy geom]
+                                               :or {geom {}}}]
   (let [addrs (atom {})
         coords (atom {})] ; Index positions.
     (doseq [[[addr port] accept-chs] (:listens net-state)]
@@ -132,10 +133,10 @@
                   [addr (inc idx)]))
               nil conns))
     (let [coords @coords
-          top-height 60
-          line-height 20
-          addr-width 50
-          addr-gap 80
+          top-height (get geom :top-height 60)
+          line-height (get geom :line-height 20)
+          addr-width (get geom :addr-width 50)
+          addr-gap (get geom :addr-gap 80)
           calc-xy (fn [addr] (or (and addr-override-xy (addr-override-xy addr))
                                  (let [[c0 c1] (get coords addr)]
                                    [(* addr-width c0 (/ (+ addr-width addr-gap) addr-width))
