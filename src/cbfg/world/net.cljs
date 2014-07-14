@@ -59,6 +59,50 @@
                          (recur (inc num-outs)))))))
     cmd-ch))
 
+(defn calc-addrs [net-state]
+  (let [addrs (atom {})]
+    (doseq [[[addr port] accept-chs] (:listens net-state)]
+      (swap! addrs #(assoc-in % [addr :listens port] true)))
+    (doseq [[send-ch stream] (:streams net-state)]
+      (if (= (:side stream) :client)
+        (swap! addrs #(assoc-in % [(:client-addr stream) :outs
+                                   [(:accept-addr stream) (:accept-port stream)]
+                                   [(:client-port stream)
+                                    (:server-addr stream) (:server-port stream)]]
+                                (:msgs stream)))
+        (swap! addrs #(assoc-in % [(:server-addr stream) :outs
+                                   [(:accept-addr stream) (:accept-port stream)]
+                                   [(:server-port stream)
+                                    (:client-addr stream) (:client-port stream)]]
+                                (:msgs stream)))))
+    @addrs))
+
+(defn calc-coords [addrs]
+  (let [coords (atom {}) ; Index positions.
+        naddrs (count addrs) ; Assign coords.
+        conns (sort (mapcat (fn [[addr addr-v]]
+                              (mapcat (fn [[[accept-addr accept-port]
+                                            accept-addr-port-v]]
+                                        (map (fn [[[from-port to-addr to-port] msgs]]
+                                               [(not= addr accept-addr)
+                                                addr accept-addr accept-port
+                                                from-port])
+                                             accept-addr-port-v))
+                                      (:outs addr-v)))
+                            addrs))]
+    (doall (map-indexed (fn [addr-idx [addr addr-v]]
+                          (swap! coords
+                                 #(assoc % addr
+                                         [addr-idx (rem (* (dec naddrs) addr-idx)
+                                                        naddrs)])))
+                        (sort-by first addrs)))
+    (reduce (fn [prev [is-client addr accept-addr accept-port port]]
+              (let [idx (if (= (first prev) addr) (second prev) 0)]
+                (swap! coords #(assoc % [addr port] idx))
+                [addr (inc idx)]))
+            nil conns)
+    @coords))
+
 (defn render-msg [msg class-extra style-extra]
   ["<div class='msg " class-extra
    "' style='color:" (:color msg) "; " style-extra "'>&#9679;"
@@ -172,49 +216,11 @@
     [addrs h]))
 
 (defn render-net-html [net-state prev-addrs &
-                       {:keys [addr-override-xy addr-attrs-fn geom]
-                        :or {geom {}}}]
-  (let [addrs (atom {})
-        coords (atom {})] ; Index positions.
-    (doseq [[[addr port] accept-chs] (:listens net-state)]
-      (swap! addrs #(assoc-in % [addr :listens port] true)))
-    (doseq [[send-ch stream] (:streams net-state)]
-      (if (= (:side stream) :client)
-        (swap! addrs #(assoc-in % [(:client-addr stream) :outs
-                                   [(:accept-addr stream) (:accept-port stream)]
-                                   [(:client-port stream)
-                                    (:server-addr stream) (:server-port stream)]]
-                                (:msgs stream)))
-        (swap! addrs #(assoc-in % [(:server-addr stream) :outs
-                                   [(:accept-addr stream) (:accept-port stream)]
-                                   [(:server-port stream)
-                                    (:client-addr stream) (:client-port stream)]]
-                                (:msgs stream)))))
-    (let [naddrs (count @addrs) ; Assign coords.
-          conns (sort (mapcat
-                       (fn [[addr addr-v]]
-                         (mapcat (fn [[[accept-addr accept-port]
-                                       accept-addr-port-v]]
-                                   (map (fn [[[from-port to-addr to-port] msgs]]
-                                          [(not= addr accept-addr)
-                                           addr accept-addr accept-port
-                                           from-port])
-                                        accept-addr-port-v))
-                                 (:outs addr-v)))
-                       @addrs))]
-      (doall (map-indexed
-              (fn [addr-idx [addr addr-v]]
-                (swap! coords
-                       #(assoc % addr
-                               [addr-idx (rem (* (dec naddrs) addr-idx)
-                                              naddrs)])))
-              (sort-by first @addrs)))
-      (reduce (fn [prev [is-client addr accept-addr accept-port port]]
-                (let [idx (if (= (first prev) addr) (second prev) 0)]
-                  (swap! coords #(assoc % [addr port] idx))
-                  [addr (inc idx)]))
-              nil conns))
-    (render-net-addrs-html @addrs prev-addrs @coords addr-override-xy addr-attrs-fn geom)))
+                       {:keys [addr-override-xy addr-attrs-fn geom]}]
+  (let [addrs (calc-addrs net-state)
+        coords (calc-coords addrs)]
+    (render-net-addrs-html addrs prev-addrs coords
+                           addr-override-xy addr-attrs-fn (or geom {}))))
 
 (defn net-actx-info [vis net-actx-id]
   (first (filter (fn [[actx actx-info]] (= (last actx) net-actx-id))
