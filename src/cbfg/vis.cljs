@@ -157,14 +157,17 @@
   ([vis loop-state]
      (interpose ", " (map (fn [x] [(vis-html-loop-state vis (first x) (second x))])
                           loop-state)))
-  ([vis name val]
-     (let [name-parts (string/split (str name) #"-")]
-       (cond (= "ch" (last name-parts)) [name " " (vis-html-ch vis val)]
-             (= "chs" (last name-parts)) [name " ["
+  ([vis key val]
+     (let [key-parts (string/split (str key) #"-")]
+       (cond (= "ch" (last key-parts)) [key " " (vis-html-ch vis val)]
+             (= "chs" (last key-parts)) [key " ["
                                           (interpose ", "
                                                      (map #(vis-html-ch vis %) val))
                                           "]"]
-             :default [name " " (if val val "nil")]))))
+             :default ["<span class='" (name key) "'>"
+                       " <span class='key'>" key "</span>"
+                       " <span class='val'>" (if val val "nil") "</span>"
+                       "</span>"]))))
 
 (defn vis-html-actx [vis actx actx-ch-ch-infos]
   (let [actx-id (last actx)

@@ -26,14 +26,17 @@
     border-radius: 6px;
     background-color: rgba(0,100,0,0.1);
 }
-.vis .actx div.loop-state {
-    display: inline-block;
-    margin-left: 10px;
-    padding-top: 3px;
+.vis .actx div.loop-state,
+.vis .actx div.loop-state span {
     white-space: nowrap;
     vertical-align: top;
     font-size: 10px;
     color: #bbb;
+    padding-top: 3px;
+}
+.vis .actx div.loop-state {
+    display: inline-block;
+    margin-left: 10px;
 }
 .vis span.actx-id,
 .vis span.actx-id-suffix {
