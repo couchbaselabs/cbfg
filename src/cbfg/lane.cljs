@@ -27,9 +27,11 @@
                 (if-let [lane-ch (get lane-chs (:lane m))]
                   (do (aput lane-pump lane-ch m)
                       (recur lane-chs tot-lane-chs))
-                  (let [lane-ch (make-lane-fn lane-pump (:lane m) out-ch)]
-                    (aput lane-pump lane-ch m)
-                    (recur (assoc lane-chs (:lane m) lane-ch)
-                           (inc tot-lane-chs)))))
+                  (if-let [lane-ch (make-lane-fn lane-pump (:lane m) out-ch)]
+                    (do (aput lane-pump lane-ch m)
+                        (recur (assoc lane-chs (:lane m) lane-ch)
+                               (inc tot-lane-chs)))
+                    (do (aput lane-pump out-ch (assoc m :status :error))
+                        (recur lane-chs tot-lane-chs))))) ; TODO: error code.
               (doseq [[lane-name lane-ch] lane-chs] ; Close lane-chs & exit.
                 (aclose lane-pump lane-ch)))))
