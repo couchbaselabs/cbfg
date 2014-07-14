@@ -10,21 +10,20 @@
             [cbfg.world.base :refer [replay-cmd-ch world-cmd-loop start-test]]))
 
 (defn server-conn-loop [actx server-send-ch server-recv-ch close-server-recv-ch]
-  (let [fenced-pump-lane-in-ch (achan actx)
-        fenced-pump-lane-out-ch (achan actx)]
+  (let [lanes-in-ch (achan actx)
+        lanes-out-ch (achan actx)]
     (cbfg.lane/make-lane-pump actx
-                              fenced-pump-lane-in-ch fenced-pump-lane-out-ch
+                              lanes-in-ch lanes-out-ch
                               cbfg.world.lane/make-fenced-pump-lane)
-    (act-loop fenced-pump-lane-in actx [num-ins 0]
-              (let [msg (atake fenced-pump-lane-in server-recv-ch)]
-                (aput fenced-pump-lane-in fenced-pump-lane-in-ch msg)
+    (act-loop lanes-in actx [num-ins 0]
+              (let [msg (atake lanes-in server-recv-ch)]
+                (aput lanes-in lanes-in-ch msg)
                 (when (> (:sleep msg) 0)
-                  (let [sleep-ch (atimeout fenced-pump-lane-in (:sleep msg))]
-                    (atake fenced-pump-lane-in sleep-ch)))
+                  (let [sleep-ch (atimeout lanes-in (:sleep msg))]
+                    (atake lanes-in sleep-ch)))
                 (recur (inc num-ins))))
-    (act-loop fenced-pump-lane-out actx [num-outs 0]
-              (aput fenced-pump-lane-out server-send-ch
-                    [(atake fenced-pump-lane-out fenced-pump-lane-out-ch)])
+    (act-loop lanes-out actx [num-outs 0]
+              (aput lanes-out server-send-ch [(atake lanes-out lanes-out-ch)])
               (recur (inc num-outs)))))
 
 (defn server-accept-loop [actx accept-ch close-accept-ch]
