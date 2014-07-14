@@ -17,7 +17,6 @@
                               cbfg.world.lane/make-fenced-pump-lane)
     (act-loop fenced-pump-lane-in actx [num-ins 0]
               (let [msg (atake fenced-pump-lane-in server-recv-ch)]
-                (println :fenced-pump-lane-in msg)
                 (aput fenced-pump-lane-in fenced-pump-lane-in-ch msg)
                 (when (> (:sleep msg) 0)
                   (let [sleep-ch (atimeout fenced-pump-lane-in (:sleep msg))]

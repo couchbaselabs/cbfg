@@ -15,23 +15,23 @@
    'after' the lane closing, so an out-ch consumer should be prepared
    to handle and/or drop those late messages.  To avoid confusion due
    to this, a client should also avoid reusing lane names."
-  (act-loop lane-pump actx [lane-chs {} tot-lane-chs 0]
+  (act-loop lane-pump actx [lane-chs {} lane-chs-tot 0]
             (if-let [m (atake lane-pump in-ch)]
               (if (= (:op m) :close-lane)
                 (if-let [lane-ch (get lane-chs (:lane m))]
                   (do (aclose lane-pump lane-ch)
                       (aput lane-pump out-ch (assoc m :status :ok))
-                      (recur (dissoc lane-chs (:lane m)) tot-lane-chs))
+                      (recur (dissoc lane-chs (:lane m)) lane-chs-tot))
                   (do (aput lane-pump out-ch (assoc m :status :not-found))
-                      (recur lane-chs tot-lane-chs)))
+                      (recur lane-chs lane-chs-tot)))
                 (if-let [lane-ch (get lane-chs (:lane m))]
                   (do (aput lane-pump lane-ch m)
-                      (recur lane-chs tot-lane-chs))
+                      (recur lane-chs lane-chs-tot))
                   (if-let [lane-ch (make-lane-fn lane-pump (:lane m) out-ch)]
                     (do (aput lane-pump lane-ch m)
                         (recur (assoc lane-chs (:lane m) lane-ch)
-                               (inc tot-lane-chs)))
+                               (inc lane-chs-tot)))
                     (do (aput lane-pump out-ch (assoc m :status :error))
-                        (recur lane-chs tot-lane-chs))))) ; TODO: error code.
+                        (recur lane-chs lane-chs-tot))))) ; TODO: error code.
               (doseq [[lane-name lane-ch] lane-chs] ; Close lane-chs & exit.
                 (aclose lane-pump lane-ch)))))
