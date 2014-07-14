@@ -12,8 +12,7 @@
 (defn server-conn-loop [actx server-send-ch server-recv-ch close-server-recv-ch]
   (let [lanes-in-ch (achan actx)
         lanes-out-ch (achan actx)]
-    (cbfg.lane/make-lane-pump actx
-                              lanes-in-ch lanes-out-ch
+    (cbfg.lane/make-lane-pump actx lanes-in-ch lanes-out-ch
                               cbfg.world.lane/make-fenced-pump-lane)
     (act-loop lanes-in actx [num-ins 0]
               (let [msg (atake lanes-in server-recv-ch)]
@@ -48,7 +47,6 @@
                       (atake client-loop connect-result-ch)]
              (act-loop client-loop-in actx [num-ins 0]
                        (when-let [msg (atake client-loop-in cmd-ch)]
-                         (println :client-loop-in-msg msg)
                          (aput client-loop-in client-send-ch [msg])
                          (recur (inc num-ins))))
              (act-loop client-loop-out actx [num-outs 0]
