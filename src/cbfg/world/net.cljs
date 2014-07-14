@@ -141,6 +141,14 @@
                 true
                 (conj out (render-msg curr-msg "msg-enter" ""))))))))
 
+(defn rad-style-transforms [rad]
+  ["transform-origin:top left;"
+   "-ms-transform-origin:top left;"
+   "-webkit-transform-origin:top left;"
+   "transform:rotate(" rad "rad);"
+   "-ms-transform:rotate(" rad "rad);"
+   "-webkit-transform:rotate(" rad "rad);"])
+
 (defn render-net-addrs-html [addrs prev-addrs coords addr-override-xy addr-attrs-fn geom]
   (let [top-height (get geom :top-height 60)
         line-height (get geom :line-height 20)
@@ -150,76 +158,70 @@
         calc-xy (fn [addr] (or (and addr-override-xy (addr-override-xy addr))
                                (let [[c0 c1] (get coords addr)]
                                  [(* addr-width c0 (/ (+ addr-width addr-gap) addr-width))
-                                  (* top-height c1)])))
-        h ["<div style='height:" (apply max (map #(count (:outs %))
-                                                 (vals addrs))) "em;'>"
+                                  (* top-height c1)])))]
+    ["<div style='height:" (apply max (map #(count (:outs %)) (vals addrs))) "em;'>"
+     (mapv
+      (fn [[addr addr-v]]
+        (let [[addr-x addr-y] (calc-xy addr)
+              addr-attrs (or (and addr-attrs-fn (addr-attrs-fn addr)) "")]
+          ["<div class='addr' id='addr-" addr "'"
+           " style='top:" addr-y "px; left:" addr-x "px;' " addr-attrs ">"
+           " <label>" addr "</label>"
            (mapv
-            (fn [[addr addr-v]]
-              (let [[addr-x addr-y] (calc-xy addr)
-                    addr-attrs (or (and addr-attrs-fn (addr-attrs-fn addr)) "")]
-                ["<div class='addr' id='addr-" addr "'"
-                 " style='top:" addr-y "px; left:" addr-x "px;' " addr-attrs ">"
-                 "<label>" addr "</label>"
-                 (mapv (fn [[[accept-addr accept-port] accept-addr-port-v]]
-                         ["<div class='accept-addr-port'>"
-                          " <span class='accept-addr'>" accept-addr "</span>"
-                          " <span class='accept-port'>" accept-port "</span>"
-                          (when (and (= accept-addr addr)
-                                     (get (:listens addr-v) accept-port))
-                            ["<div class='listen'>" accept-port "</div>"])
-                          (mapv
-                           (fn [[[from-port to-addr to-port] msgs]]
-                             (let [from-x addr-x
-                                   from-y (+ addr-y
-                                             (* line-height
-                                                (get coords [addr from-port])))
-                                   [to-addr-x to-addr-y] (calc-xy to-addr)
-                                   to-x to-addr-x
-                                   to-y (+ to-addr-y
-                                           (* line-height
-                                              (get coords [to-addr to-port])))
-                                   dx (- from-x to-x)
-                                   dy (- to-y from-y)
-                                   rad (Math/atan2 dx dy)
-                                   dist (Math/abs (Math/sqrt (+ (* dx dx)
-                                                                (* dy dy))))
-                                   prev-msgs (get-in prev-addrs
-                                                     [addr :outs
-                                                      [accept-addr accept-port]
-                                                      [from-port to-addr to-port]])]
-                               ["<div class='port'>"
-                                " <div class='port-info'>"
-                                from-port " --&gt; "
-                                to-addr ":" to-port "</div>"
-                                " <div class='msgs-container'>"
-                                "  <div class='msgs"
-                                (when (= accept-addr addr)
-                                  " to-client")
-                                "' style='min-height:" (- dist msgs-height-sub) "px;"
-                                "transform-origin:top left;"
-                                "-ms-transform-origin:top left;"
-                                "-webkit-transform-origin:top left;"
-                                "transform:rotate(" rad "rad);"
-                                "-ms-transform:rotate(" rad "rad);"
-                                "-webkit-transform:rotate(" rad "rad);'>"
-                                (render-msgs msgs prev-msgs dist line-height geom)
-                                "  </div>"
-                                " </div>"
-                                "</div>"]))
-                           (sort-by first accept-addr-port-v))
-                          "</div>"])
-                       (sort-by first (:outs addr-v)))
-                 "</div>"]))
-            (sort-by first addrs))
-           "</div>"]]
-    [addrs h]))
+            (fn [[[accept-addr accept-port] accept-addr-port-v]]
+              ["<div class='accept-addr-port'>"
+               " <span class='accept-addr'>" accept-addr "</span>"
+               " <span class='accept-port'>" accept-port "</span>"
+               (when (and (= accept-addr addr)
+                          (get (:listens addr-v) accept-port))
+                 ["<div class='listen'>" accept-port "</div>"])
+               (mapv
+                (fn [[[from-port to-addr to-port] msgs]]
+                  (let [from-x addr-x
+                        from-y (+ addr-y
+                                  (* line-height
+                                     (get coords [addr from-port])))
+                        [to-addr-x to-addr-y] (calc-xy to-addr)
+                        to-x to-addr-x
+                        to-y (+ to-addr-y
+                                (* line-height
+                                   (get coords [to-addr to-port])))
+                        dx (- from-x to-x)
+                        dy (- to-y from-y)
+                        rad (Math/atan2 dx dy)
+                        dist (Math/abs (Math/sqrt (+ (* dx dx)
+                                                     (* dy dy))))
+                        prev-msgs (get-in prev-addrs
+                                          [addr :outs
+                                           [accept-addr accept-port]
+                                           [from-port to-addr to-port]])]
+                    ["<div class='port'>"
+                     " <div class='port-info'>"
+                     from-port " --&gt; "
+                     to-addr ":" to-port "</div>"
+                     " <div class='msgs-container'>"
+                     "  <div class='msgs"
+                     (when (= accept-addr addr) " to-client")
+                     "' style='min-height:" (- dist msgs-height-sub) "px;"
+                     (rad-style-transforms rad) "'>"
+                     (render-msgs msgs prev-msgs dist line-height geom)
+                     "  </div>"
+                     " </div>"
+                     "</div>"]))
+                (sort-by first accept-addr-port-v))
+               "</div>"])
+            (sort-by first (:outs addr-v)))
+           "</div>"]))
+      (sort-by first addrs))
+     "</div>"]))
 
 (defn render-net-html [net-state prev-addrs &
                        {:keys [addr-override-xy addr-attrs-fn geom]}]
   (let [addrs (calc-addrs net-state)
         coords (calc-coords addrs)]
-    (render-net-addrs-html addrs prev-addrs coords
-                           addr-override-xy addr-attrs-fn (or geom {}))))
+    [addrs
+     (render-net-addrs-html addrs prev-addrs coords
+                            addr-override-xy addr-attrs-fn (or geom {}))]))
 
 (defn net-actx-info [vis net-actx-id]
   (first (filter (fn [[actx actx-info]] (= (last actx) net-actx-id))
