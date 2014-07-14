@@ -183,11 +183,10 @@
                                    rad (Math/atan2 dx dy)
                                    dist (Math/abs (Math/sqrt (+ (* dx dx)
                                                                 (* dy dy))))
-                                   prev-msgs (get-in
-                                              prev-addrs
-                                              [addr :outs
-                                               [accept-addr accept-port]
-                                               [from-port to-addr to-port]])]
+                                   prev-msgs (get-in prev-addrs
+                                                     [addr :outs
+                                                      [accept-addr accept-port]
+                                                      [from-port to-addr to-port]])]
                                ["<div class='port'>"
                                 " <div class='port-info'>"
                                 from-port " --&gt; "
