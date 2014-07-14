@@ -15,20 +15,21 @@
    'after' the lane closing, so an out-ch consumer should be prepared
    to handle and/or drop those late messages.  To avoid confusion due
    to this, a client should also avoid reusing lane names."
-  (act-loop lane-pump actx [lane-chs {}]
+  (act-loop lane-pump actx [lane-chs {} tot-lane-chs 0]
             (if-let [m (atake lane-pump in-ch)]
               (if (= (:op m) :close-lane)
                 (if-let [lane-ch (get lane-chs (:lane m))]
                   (do (aclose lane-pump lane-ch)
                       (aput lane-pump out-ch (assoc m :status :ok))
-                      (recur (dissoc lane-chs (:lane m))))
+                      (recur (dissoc lane-chs (:lane m)) tot-lane-chs))
                   (do (aput lane-pump out-ch (assoc m :status :not-found))
-                      (recur lane-chs)))
+                      (recur lane-chs tot-lane-chs)))
                 (if-let [lane-ch (get lane-chs (:lane m))]
                   (do (aput lane-pump lane-ch m)
-                      (recur lane-chs))
+                      (recur lane-chs tot-lane-chs))
                   (let [lane-ch (make-lane-fn lane-pump (:lane m) out-ch)]
                     (aput lane-pump lane-ch m)
-                    (recur (assoc lane-chs (:lane m) lane-ch)))))
+                    (recur (assoc lane-chs (:lane m) lane-ch)
+                           (inc tot-lane-chs)))))
               (doseq [[lane-name lane-ch] lane-chs] ; Close lane-chs & exit.
                 (aclose lane-pump lane-ch)))))
