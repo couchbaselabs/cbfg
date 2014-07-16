@@ -16,7 +16,7 @@
              max-entries-per-take max-entries-per-take
              tot-puts 0
              tot-takes 0
-             tot-entries 0] ; Can be < tot-puts if there's de-deupe.
+             tot-entries 0] ; Can be < tot-puts if there's de-dupe.
             (let [n (count entries)
                   chs0 (if (>= n max-entries-per-take)
                          []        ; We're full, so ignore put'ers.
