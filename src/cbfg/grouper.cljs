@@ -13,7 +13,7 @@
    The grouper closes the take-all-ch after put-ch is closed
    and all the entries are taken."
   (act-loop grouper actx
-            [entries {} max-entries max-entries]
+            [entries {} max-entries max-entries tot-puts 0 tot-takes 0]
             (let [n (count entries)
                   chs0 (if (>= n max-entries)
                          []        ; We're full, so ignore put'ers.
@@ -23,10 +23,11 @@
                          chs0)]    ; We're empty, so ignore takers.
               (if (seq chs1)
                 (let [[m ch] (aalts grouper chs1)]
-                  (cond
-                   (= ch put-ch) (if-let [[k f] m]
-                                   (recur (update-in entries [k] f) max-entries)
-                                   (recur entries -1))
-                   (= ch take-all-ch) (recur {} max-entries)))
+                  (if (= ch put-ch)
+                    (if-let [[k f] m]
+                      (recur (update-in entries [k] f) max-entries
+                             (inc tot-puts) tot-takes)
+                      (recur entries -1 tot-puts tot-takes))
+                    (recur {} max-entries tot-puts (inc tot-takes))))
                 (aclose grouper take-all-ch)))))
 
