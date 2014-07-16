@@ -2,16 +2,15 @@
   (:require-macros [cbfg.act :refer [act-loop achan aclose aalts]]))
 
 (defn make-grouper [actx put-ch take-all-ch max-entries-per-take]
-  "A grouper manages a put-ch, a take-all-ch, and a set of entries.
-   Multiple producers can put entries to the put-ch, and a consumer
-   can grab all the collected entries in one shot by a take on the
-   take-all-ch.  During a put, an entry is a [key update-fn], so
-   producers can merge or group entries, such as for de-dupe or
-   piggy-backing requests.  Puts will block if there are more than
-   max-entries-per-take number of entries.  During a take-all, the received
-   entries is an associative map of key to update-fn-result.
-   The grouper closes the take-all-ch after put-ch is closed
-   and all the entries are taken."
+  "A grouper manages a put-ch, take-all-ch, and a set of entries.
+   Multiple producers can put to the put-ch, and a consumer can grab
+   all the collected entries in one shot by a take on the take-all-ch.
+   During a put, an entry is a [key update-fn], so producers can merge
+   or group entries, to de-dupe or piggy-backing requests.  Puts will
+   block when there are more than max-entries-per-take number of
+   entries already.  A take on take-all-ch will receive a map of
+   key to update-fn-result.  grouper closes take-all-ch after put-ch
+   is closed and all entries are taken."
   (act-loop grouper actx
             [entries {}
              max-entries-per-take max-entries-per-take
