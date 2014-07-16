@@ -132,7 +132,8 @@
                      (recur (inc ts) listens
                             (assoc streams (:send-ch stream2) stream2)
                             results)))
-                 (if-let [stream (first (filter #(= (:close-recv-ch %) ch) (vals streams)))]
+                 (if-let [stream (first (filter #(= (:close-recv-ch %) ch)
+                                                (vals streams)))]
                    (if v ; Or, test if it's a closed close-recv-ch.
                      (recur (inc ts) listens streams results)
                      (do (aclose net (:recv-ch stream))
@@ -153,7 +154,8 @@
                                   (dissoc listens addr-port)
                                   streams
                                   results)))
-                     (if-let [[keep-open-bool result-ch result-msg] ; Or, was result-ch aput.
+                     ; Else, was succesful result-ch aput (delivery of result-msg).
+                     (if-let [[keep-open-bool result-ch result-msg]
                               (first (filter #(= (second %) ch) results))]
                        (do (when (not keep-open-bool)
                              (aclose net ch))
