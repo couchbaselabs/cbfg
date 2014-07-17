@@ -452,8 +452,10 @@ function onDragNetAddr(dir, idMain, idRest, x, y) {
 
 document.getElementById("prog-eval-selection").onclick = function() {
   var t = document.getElementById("prog-in");
-  console.log(eval("with (cbfg.world.t1) {" +
-                    t.value.slice(t.selectionStart, t.selectionEnd) + "}"));
+  var s = [t.selectionStart, t.selectionEnd];
+  console.log(eval("with (cbfg.world.t1) {" + t.value.slice(s[0], s[1]) + "}"));
+  t.selectionStart = s[0];
+  t.selectionEnd = s[1];
 }
 </script>
 
