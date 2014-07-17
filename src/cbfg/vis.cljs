@@ -313,9 +313,9 @@
 
 (defn process-events [vis event-delay event-handlers event-ch step-ch render-ch]
   (go-loop [num-events 0]
-    (when-let [[actx [verb step & args]] (<! event-ch)]
+    (when-let [[actx loc [verb step & args]] (<! event-ch)]
       (let [deltas ((get (get event-handlers verb) step) vis actx args)
-            event-str (str num-events ": " (last actx) " " verb " " step " " args)]
+            event-str (str num-events ": " (last actx) " " verb " " step " " args " " loc)]
         (when (and (not (zero? @event-delay)) (some #(not (:after %)) deltas))
           (>! render-ch [@vis deltas false event-str])
           (when (> @event-delay 0) (<! (timeout @event-delay)))
