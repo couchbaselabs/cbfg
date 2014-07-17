@@ -44,6 +44,7 @@ kv_client("client-1", "serverA", 8000)
 kv_client("client-2", "serverA", 8000)
           </textarea>
           <button id="prog-go">restart</button>
+          <button id="prog-eval-selection">eval selection</button>
         </div>
         <div class="inputs">
           <div class="fields">
@@ -236,11 +237,9 @@ body, div, button {
   width: 100%;
 }
 .main .prog-in textarea {
+  display: block;
   min-width: 250px;
   height: 10em;
-}
-.main .prog-in button {
-  display: block;
 }
 .main .inputs {
   width: 100%;
@@ -449,6 +448,12 @@ function onDragNetAddr(dir, idMain, idRest, x, y) {
   cbfg.world.t1.addr_override_xy(addr,
                                  x || parseInt(m.style.left),
                                  y || parseInt(m.style.top));
+}
+
+document.getElementById("prog-eval-selection").onclick = function() {
+  var t = document.getElementById("prog-in");
+  console.log(eval("with (cbfg.world.t1) {" +
+                    t.value.slice(t.selectionStart, t.selectionEnd) + "}"));
 }
 </script>
 
