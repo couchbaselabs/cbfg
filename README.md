@@ -6,16 +6,34 @@ simulation and (perhaps one day) code-gen.
 
 Also, it was initially discussed over lunch at (f)ive (g)uys,
 so "c.b.f.g." (couchbase five guys).  Clearly, this is a
-future backronym waiting to be reassigned.
+backronym waiting for future reassignment.
 
-# build
+# grab the code...
 
-get [lein](http://github.com/technomancy/leiningen)
+    git clone git@github.com:couchbaselabs/cbfg.git
+
+# build...
+
+You'll need the [lein](http://github.com/technomancy/leiningen)
+toolchain, so that you can run...
 
     lein cljsbuild once cbfg
 
-open index.html
+Or, during development cycle, instead run...
 
-# convert
+    lein cljsbuild auto cbfg
+
+# run a local webserver...
+
+    $ python -m SimpleHTTPServer
+    Serving HTTP on 0.0.0.0 port 8000 ...
+
+# browse...
+
+    http://localhost:8000/
+    http://localhost:8000/world-t1.html
+
+# for some codegen...
 
     lein run src/cbfg/fence.cljs
+
