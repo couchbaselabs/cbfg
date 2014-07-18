@@ -242,6 +242,9 @@ body, div, button {
   margin: 0 0 0 0;
   padding: 0 0 0 10px;
 }
+.main .sides .middle .rhs .source pre.current-line {
+  background-color: #339;
+}
 .main .sides .middle .rhs .event-loc {
   display: block;
 }
@@ -479,14 +482,20 @@ var showSourceMap = {};
 var showSourceCurr = null;
 
 function showSource(name, line) {
+  if (name == null) {
+    return;
+  }
   if (showSourceMap[name] == null) {
     showSourceMap[name] = "...loading...";
     var xhr = new XMLHttpRequest();
     xhr.onload = function() {
       console.log(xhr);
       if (xhr.status == 200) {
-        showSourceMap[name] =
-          "<pre>" + xhr.responseText.replace(/\n/g, "</pre><pre>") + "</pre>";
+        var t = xhr.responseText.
+                    replace(/&/g, "&amp;").
+                    replace(/</g, "&lt;").
+                    replace(/>/g, "&gt;");
+        showSourceMap[name] = "<pre>" + t.replace(/\n/g, " </pre><pre>") + " </pre>";
         showSource(name, line);
       }
     }
@@ -501,9 +510,14 @@ function showSource(name, line) {
     }
     showSourceCurr = name;
     requestAnimationFrame(function() {
-      var c = s.childNodes[line];
+      var els = document.getElementsByClassName("current-line");
+      for (var i = 0; i < els.length; i++) {
+        els[i].className = "";
+      }
+      var c = s.childNodes[line - 1];
       if (c) {
         c.scrollIntoViewIfNeeded();
+        c.className = "current-line";
       }
     });
   }
