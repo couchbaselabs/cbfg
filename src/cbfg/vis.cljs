@@ -315,7 +315,9 @@
                                                  (:verb event-info) " "
                                                  (:step event-info) " "
                                                  (:args event-info) " "
-                                                 (:loc event-info)))
+                                                 "<span class='event-loc'>"
+                                                 (:loc event-info)
+                                                 "</span>"))
 
 ;; ------------------------------------------------
 

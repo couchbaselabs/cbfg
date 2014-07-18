@@ -185,6 +185,11 @@
 
 ; ------------------------------------------------
 
+(defn event-to-html [vis event-info]
+  (cbfg.vis/event-to-html-helper vis event-info))
+
+; ------------------------------------------------
+
 (defn world-vis-init [el-prefix init-event-delay]
   (init-roots)
   (let [req-handlers cbfg.world.lane/cmd-handlers
@@ -235,7 +240,8 @@
         (prog-init world)
         (cbfg.vis/process-events vis event-delay cbfg.vis/vis-event-handlers
                                  event-ch step-ch event-run-ch)
-        (cbfg.vis/process-render el-prefix world event-run-ch net-cb)
+        (cbfg.vis/process-render el-prefix world event-run-ch net-cb
+                                 :event-to-html event-to-html)
         (cbfg.net/make-net world
                            (:net-listen-ch @prog-base)
                            (:net-connect-ch @prog-base))
