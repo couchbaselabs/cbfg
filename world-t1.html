@@ -120,9 +120,7 @@ kv_client("client-2", "serverA", 8000)
         <div class="rhs" id="rhs" style="width:40%;">
           <div class="source-container" id="source-container" style="height:20%;">
             <div class="vis-event" id="vis-event"></div>
-            <div class="source" id="source">
-              source code appears here
-            </div>
+            <pre class="source" id="source">source code appears here</pre>
           </div>
           <div class="splitter-ns"
              onmousedown="return startDrag('ns', 'source-container', 'vis-container');"></div>
@@ -473,6 +471,32 @@ document.getElementById("prog-eval-selection").onclick = function() {
   console.log(eval("with (cbfg.world.t1) {" + t.value.slice(s[0], s[1]) + "}"));
   t.selectionStart = s[0];
   t.selectionEnd = s[1];
+}
+
+var showSourceMap = {};
+var showSourceCurr = null;
+
+function showSource(name, line) {
+  if (showSourceMap[name] == null) {
+    showSourceMap[name] = "...loading...";
+    var xhr = new XMLHttpRequest();
+    xhr.onload = function() {
+      console.log(xhr);
+      if (xhr.status == 200) {
+        showSourceMap[name] = xhr.responseText;
+        showSource(name, line);
+      }
+    }
+    var parts = name.split(".");
+    var dir = parts.slice(0, parts.length - 1).join("/");
+    xhr.open("get", "src/" + dir + "/" + parts[parts.length - 1] + ".cljs");
+    xhr.send();
+  } else {
+    if (showSourceCurr != name) {
+      document.getElementById("source").innerText = showSourceMap[name];
+    }
+    showSourceCurr = name;
+  }
 }
 </script>
 
