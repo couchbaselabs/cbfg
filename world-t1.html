@@ -482,7 +482,7 @@ var showSourceMap = {};
 var showSourceCurr = null;
 
 function showSource(name, line) {
-  if (name == null) {
+  if (name == null || line == null) {
     return;
   }
   if (showSourceMap[name] == null) {

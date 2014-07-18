@@ -310,14 +310,14 @@
 
 ;; ------------------------------------------------
 
-(defn event-to-html-helper [vis event-info] (str (:num-events event-info) ": "
-                                                 (last (:actx event-info)) " "
-                                                 (:verb event-info) " "
-                                                 (:step event-info) " "
-                                                 (:args event-info) " "
-                                                 "<span class='event-loc'>"
-                                                 (:loc event-info)
-                                                 "</span>"))
+(defn render-event-to-html [el-prefix vis deltas after event-info]
+  (set-el-innerHTML (str el-prefix "-event")
+                    (str (:num-events event-info) ": "
+                         (last (:actx event-info)) " "
+                         (:verb event-info) " "
+                         (:step event-info) " "
+                         (:args event-info) " "
+                         "<span class='event-loc'>" (:loc event-info) "</span>")))
 
 ;; ------------------------------------------------
 
@@ -336,19 +336,18 @@
         (when (< @event-delay 0) (<! step-ch)))
       (recur (inc num-events)))))
 
-(defn process-render [el-prefix world render-ch on-render-cb & {:keys [event-to-html]}]
-  (let [el-event (str el-prefix "-event")
-        el-html (str el-prefix "-html")
+(defn process-render [el-prefix world render-ch on-render-cb & {:keys [render-event]}]
+  (let [el-html (str el-prefix "-html")
         el-svg (str el-prefix "-svg")
-        event-to-html-fn (or event-to-html event-to-html-helper)]
+        render-event-fn (or render-event render-event-to-html)]
     (go-loop [vis-last nil ; Process render-ch, updating U/I.
               vis-last-positions nil
               vis-last-html nil
               vis-last-svg nil
               prev-deltas nil]
       (when-let [[vis-next deltas after event-info] (<! render-ch)]
+        (render-event-fn el-prefix vis-next deltas after event-info)
         (let [next-deltas (take 20 (conj prev-deltas [after deltas]))]
-          (set-el-innerHTML el-event (event-to-html-fn vis-next event-info))
           (if after
             (let [vis-next-positions (atom {})
                   actx-ch-ch-infos (group-by #(:first-taker-actx (second %))

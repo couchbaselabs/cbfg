@@ -185,10 +185,10 @@
 
 ; ------------------------------------------------
 
-(defn event-to-html [vis event-info]
+(defn render-event-to-html [el-prefix vis deltas after event-info]
   (let [[source-name source-pos] (:loc event-info)]
-    (js/showSource source-name (:line source-pos)))
-  (cbfg.vis/event-to-html-helper vis event-info))
+    (js/showSource source-name (:line source-pos) after))
+  (cbfg.vis/render-event-to-html el-prefix vis deltas after event-info))
 
 ; ------------------------------------------------
 
@@ -243,7 +243,7 @@
         (cbfg.vis/process-events vis event-delay cbfg.vis/vis-event-handlers
                                  event-ch step-ch event-run-ch)
         (cbfg.vis/process-render el-prefix world event-run-ch net-cb
-                                 :event-to-html event-to-html)
+                                 :render-event render-event-to-html)
         (cbfg.net/make-net world
                            (:net-listen-ch @prog-base)
                            (:net-connect-ch @prog-base))
