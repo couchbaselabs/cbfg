@@ -120,7 +120,9 @@ kv_client("client-2", "serverA", 8000)
         <div class="rhs" id="rhs" style="width:40%;">
           <div class="source-container" id="source-container" style="height:20%;">
             <div class="vis-event" id="vis-event"></div>
-            <div class="source" id="source">source code appears here</div>
+            <div class="source" id="source">
+              source code appears here
+            </div>
           </div>
           <div class="splitter-ns"
              onmousedown="return startDrag('ns', 'source-container', 'vis-container');"></div>
@@ -232,6 +234,11 @@ body, div, button {
 .main .sides .middle .lhs,
 .main .sides .middle .rhs {
   padding-top: 10px;
+}
+.main .sides .llhs,
+.main .sides .middle .lhs,
+.main .sides .middle .rhs .source-container,
+.main .sides .middle .rhs .vis-container {
   padding-left: 10px;
   overflow: scroll;
 }
