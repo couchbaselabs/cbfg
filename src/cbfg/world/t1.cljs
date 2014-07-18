@@ -1,7 +1,6 @@
 (ns cbfg.world.t1
   (:require-macros [cljs.core.async.macros :refer [go-loop]]
-                   [cbfg.act :refer [act act-loop actx-top achan achan-buf
-                                     aalts aput atake]])
+                   [cbfg.act :refer [act achan achan-buf aput atake]])
   (:require [cljs.core.async :refer [<! >! close! chan map< merge timeout
                                      dropping-buffer]]
             [goog.dom :as gdom]
