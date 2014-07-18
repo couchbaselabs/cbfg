@@ -186,6 +186,8 @@
 ; ------------------------------------------------
 
 (defn event-to-html [vis event-info]
+  (let [[source-name source-pos] (:loc event-info)]
+    (js/showSource source-name (:line source-pos)))
   (cbfg.vis/event-to-html-helper vis event-info))
 
 ; ------------------------------------------------
