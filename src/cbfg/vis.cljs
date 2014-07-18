@@ -37,31 +37,31 @@
 
 (def vis-event-handlers
   {:act
-   {:start (fn [vis actx [child-actx]]
+   {:start (fn [vis actx loc [child-actx]]
              (swap! vis #(-> %
                              (assoc-in [:actxs child-actx]
                                        {:children {} :wait-chs {} :collapsed false})
                              (assoc-in [:actxs actx :children child-actx] true)))
              [{:delta :actx-start :actx actx :child-actx child-actx :after true}])
-    :end (fn [vis actx [child-actx result]]
+    :end (fn [vis actx loc [child-actx result]]
            (swap! vis #(-> %
                            (dissoc-in [:actxs child-actx])
                            (dissoc-in [:actxs actx :children child-actx])))
            [{:delta :actx-end :actx actx :child-actx child-actx}])}
    :act-loop
-   {:loop-state (fn [vis actx [loop-state]]
+   {:loop-state (fn [vis actx loc [loop-state]]
                   (swap! vis #(assoc-in % [:actxs actx :loop-state] loop-state))
                   nil)}
    :aclose
-   {:before (fn [vis actx [ch]] nil)
-    :after (fn [vis actx [ch result]] nil)}
+   {:before (fn [vis actx loc [ch]] nil)
+    :after (fn [vis actx loc [ch result]] nil)}
    :atake
-   {:before (fn [vis actx [ch-name ch]]
+   {:before (fn [vis actx loc [ch-name ch]]
               (swap! vis #(-> %
                               (assoc-in [:actxs actx :wait-chs ch] [:take ch-name])
                               (vis-add-ch ch actx)))
               nil)
-    :after (fn [vis actx [ch-name ch msg]]
+    :after (fn [vis actx loc [ch-name ch msg]]
              (swap! vis #(-> %
                              (dissoc-in [:actxs actx :wait-chs ch])
                              (dissoc-in [:chs ch :msgs msg])))
@@ -69,20 +69,20 @@
                (swap! vis #(dissoc-in % [:chs ch])))
              [{:delta :take :msg msg :ch ch :actx actx :ch-name ch-name}])}
    :aput
-   {:before (fn [vis actx [ch-name ch msg]]
+   {:before (fn [vis actx loc [ch-name ch msg]]
               (swap! vis #(-> %
                               (assoc-in [:actxs actx :wait-chs ch] [:put ch-name])
                               (vis-add-ch ch nil)
                               (assoc-in [:chs ch :msgs msg] true)))
               [{:delta :put :msg msg :actx actx :ch ch :ch-name ch-name}])
-    :after (fn [vis actx [ch-name ch msg result]]
+    :after (fn [vis actx loc [ch-name ch msg result]]
              (swap! vis #(-> %
                              (dissoc-in [:actxs actx :wait-chs ch])))
                ; NOTE: Normally we should cleanup ch when nil result but
                ; looks like CLJS async always incorrectly returns nil from >!.
                nil)}
    :aalts
-   {:before (fn [vis actx [ch-names ch-bindings]]
+   {:before (fn [vis actx loc [ch-names ch-bindings]]
               (let [; The ch-actions will be [[ch :take] [ch :put msg] ...].
                     ch-actions (map #(if (coll? %) [(first %) :put (second %)] [% :take])
                                     ch-bindings)
@@ -103,10 +103,9 @@
                                    [{:delta :put :msg (first msgv) :actx actx :ch ch
                                      :ch-name (when use-names (nth ch-names idx))}]))
                                ch-actions)))))
-    :after (fn [vis actx [ch-names ch-bindings [result-msg result-ch]]]
-             (let [; The ch-actions will be [[ch :take] [ch :put] ...].
-                   ch-actions (map #(if (coll? %) [(first %) :put (second %)] [% :take])
-                                   ch-bindings)
+    :after (fn [vis actx loc [ch-names ch-bindings [result-msg result-ch]]]
+             (let [ch-actions (map #(if (coll? %) [(first %) :put (second %)] [% :take])
+                                   ch-bindings) ; ch-actions = [[ch :take] [ch :put] ...].
                    use-names (and (coll? ch-names)
                                   (= (count ch-names)
                                      (count ch-bindings)))]
@@ -314,7 +313,7 @@
 (defn process-events [vis event-delay event-handlers event-ch step-ch render-ch]
   (go-loop [num-events 0]
     (when-let [[actx loc [verb step & args]] (<! event-ch)]
-      (let [deltas ((get (get event-handlers verb) step) vis actx args)
+      (let [deltas ((get (get event-handlers verb) step) vis actx loc args)
             event-str (str num-events ": " (last actx) " " verb " " step " " args " " loc)]
         (when (and (not (zero? @event-delay)) (some #(not (:after %)) deltas))
           (>! render-ch [@vis deltas false event-str])
