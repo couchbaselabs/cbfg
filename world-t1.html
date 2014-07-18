@@ -243,10 +243,10 @@ body, div, button {
   padding: 0 0 0 10px;
 }
 .main .sides .middle .rhs .source pre.current-line {
-  background-color: #226;
+  background-color: #262;
 }
 .main .sides .middle .rhs .source pre.event-after {
-  background-color: #339;
+  background-color: #282;
 }
 .main .sides .middle .rhs .event-loc {
   display: block;
@@ -498,7 +498,8 @@ function showSource(name, line, after) {
                     replace(/&/g, "&amp;").
                     replace(/</g, "&lt;").
                     replace(/>/g, "&gt;");
-        showSourceMap[name] = "<pre>" + t.replace(/\n/g, " </pre><pre>") + " </pre>";
+        t = "<pre>" + t.replace(/\n/g, " </pre><pre>") + " </pre>";
+        showSourceMap[name] = t
         showSource(name, line);
       }
     }
