@@ -54,43 +54,45 @@
 
 (defn world-vis-init [el-prefix init-event-delay]
   (let [cmd-inject-ch (chan)]
-    (vis-init (fn [world vis-chs]
-                (let [store (store/make-store world)
-                      store-cmd-handlers (make-store-cmd-handlers store)
-                      cmd-ch (replay-cmd-ch cmd-inject-ch (keys store-cmd-handlers)
-                                            (fn [ev] {:op (.-id (.-target ev))}))
-                      client-hist (atom {}) ; Keyed by opaque -> [request, replies]
-                      in-ch (achan-buf world 100)
-                      out-ch (achan-buf world 0)]
-                  (act-loop client world [num-ins 0 num-outs 0]
-                            (let [[v ch] (aalts client [cmd-ch out-ch])
-                                  ts (+ num-ins num-outs)]
-                              (cond
-                               (= ch cmd-ch) (if (= (:op v) "replay")
-                                               (world-replay in-ch vis-chs world-vis-init el-prefix
-                                                             @client-hist (:replay-to v))
-                                               (let [op (:op v)
-                                                     op-fence (= (get-el-value (str op "-fence")) "1")
-                                                     [params handler] (get store-cmd-handlers op)
-                                                     cmd2 (-> v
-                                                              (assoc :opaque ts)
-                                                              (assoc :fence op-fence))
-                                                     cmd3 (reduce #(if (get %1 (keyword %2))
-                                                                     %1 ; Allows cmd2 to have precedence.
-                                                                     (assoc %1 (keyword %2)
-                                                                            (get-el-value (str op "-" %2))))
-                                                                  cmd2 params)]
-                                                 (render-client-hist (swap! client-hist
-                                                                            #(assoc % ts [cmd3 nil])))
-                                                 (aput client in-ch (assoc cmd3 :rq (handler cmd3)))
-                                                 (recur (inc num-ins) num-outs)))
-                               (= ch out-ch) (when v
-                                               (do (render-client-hist (swap! client-hist
-                                                                              #(update-in % [(:opaque v) 1]
-                                                                                          conj [ts v])))
-                                                   (recur num-ins (inc num-outs)))))))
-                  (make-fenced-pump world "main" in-ch out-ch @store-max-inflight true)))
-              el-prefix nil init-event-delay)
+    (vis-init
+     (fn [world vis-chs]
+       (let [store (store/make-store world)
+             store-cmd-handlers (make-store-cmd-handlers store)
+             cmd-ch (replay-cmd-ch cmd-inject-ch (keys store-cmd-handlers)
+                                   (fn [ev] {:op (.-id (.-target ev))}))
+             client-hist (atom {}) ; Keyed by opaque -> [request, replies]
+             in-ch (achan-buf world 100)
+             out-ch (achan-buf world 0)]
+         (act-loop
+          client world [num-ins 0 num-outs 0]
+          (let [[v ch] (aalts client [cmd-ch out-ch])
+                ts (+ num-ins num-outs)]
+            (cond
+             (= ch cmd-ch) (if (= (:op v) "replay")
+                             (world-replay in-ch vis-chs world-vis-init el-prefix
+                                           @client-hist (:replay-to v))
+                             (let [op (:op v)
+                                   op-fence (= (get-el-value (str op "-fence")) "1")
+                                   [params handler] (get store-cmd-handlers op)
+                                   cmd2 (-> v
+                                            (assoc :opaque ts)
+                                            (assoc :fence op-fence))
+                                   cmd3 (reduce #(if (get %1 (keyword %2))
+                                                   %1 ; Allows cmd2 to have precedence.
+                                                   (assoc %1 (keyword %2)
+                                                          (get-el-value (str op "-" %2))))
+                                                cmd2 params)]
+                               (render-client-hist (swap! client-hist
+                                                          #(assoc % ts [cmd3 nil])))
+                               (aput client in-ch (assoc cmd3 :rq (handler cmd3)))
+                               (recur (inc num-ins) num-outs)))
+             (= ch out-ch) (when v
+                             (do (render-client-hist (swap! client-hist
+                                                            #(update-in % [(:opaque v) 1]
+                                                                        conj [ts v])))
+                                 (recur num-ins (inc num-outs)))))))
+         (make-fenced-pump world "main" in-ch out-ch @store-max-inflight true)))
+     el-prefix nil init-event-delay)
     cmd-inject-ch))
 
 (start-test "store" cbfg.test.store/test)
