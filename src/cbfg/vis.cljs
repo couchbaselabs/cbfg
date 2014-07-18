@@ -310,32 +310,43 @@
 
 ;; ------------------------------------------------
 
+(defn event-to-html-helper [vis event-info] (str (:num-events event-info) ": "
+                                                 (last (:actx event-info)) " "
+                                                 (:verb event-info) " "
+                                                 (:step event-info) " "
+                                                 (:args event-info) " "
+                                                 (:loc event-info)))
+
+;; ------------------------------------------------
+
 (defn process-events [vis event-delay event-handlers event-ch step-ch render-ch]
   (go-loop [num-events 0]
     (when-let [[actx loc [verb step & args]] (<! event-ch)]
       (let [deltas ((get (get event-handlers verb) step) vis actx loc args)
-            event-str (str num-events ": " (last actx) " " verb " " step " " args " " loc)]
+            event-info {:num-events num-events :actx actx :deltas deltas
+                        :verb verb :step step :args args :loc loc}]
         (when (and (not (zero? @event-delay)) (some #(not (:after %)) deltas))
-          (>! render-ch [@vis deltas false event-str])
+          (>! render-ch [@vis deltas false event-info])
           (when (> @event-delay 0) (<! (timeout @event-delay)))
           (when (< @event-delay 0) (<! step-ch)))
-        (>! render-ch [@vis deltas true event-str])
+        (>! render-ch [@vis deltas true event-info])
         (when (> @event-delay 0) (<! (timeout @event-delay)))
         (when (< @event-delay 0) (<! step-ch)))
       (recur (inc num-events)))))
 
-(defn process-render [el-prefix world render-ch on-render-cb]
+(defn process-render [el-prefix world render-ch on-render-cb & {:keys [event-to-html]}]
   (let [el-event (str el-prefix "-event")
         el-html (str el-prefix "-html")
-        el-svg (str el-prefix "-svg")]
+        el-svg (str el-prefix "-svg")
+        event-to-html-fn (or event-to-html event-to-html-helper)]
     (go-loop [vis-last nil ; Process render-ch, updating U/I.
               vis-last-positions nil
               vis-last-html nil
               vis-last-svg nil
               prev-deltas nil]
-      (when-let [[vis-next deltas after event-str] (<! render-ch)]
+      (when-let [[vis-next deltas after event-info] (<! render-ch)]
         (let [next-deltas (take 20 (conj prev-deltas [after deltas]))]
-          (set-el-innerHTML el-event event-str)
+          (set-el-innerHTML el-event (event-to-html-fn vis-next event-info))
           (if after
             (let [vis-next-positions (atom {})
                   actx-ch-ch-infos (group-by #(:first-taker-actx (second %))
