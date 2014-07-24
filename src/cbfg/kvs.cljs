@@ -37,6 +37,16 @@
 
 ; TODO: Add snapshot ability.
 
+(defn kvs-check [m work-fn]
+  (fn [state] ; Meant to be used as work-fn for state-work function.
+    (if-let [[name uuid] (:kvs-ident m)]
+      (if-let [kvs (get-in state [:kvss name])]
+        (if (= uuid (:uuid kvs))
+          (work-fn state kvs)
+          [state {:status :mismatch :sub-status :wrong-uuid}])
+        [state {:status :not-found :sub-status :no-kvs}])
+      [state {:status :invalid :sub-status :no-kvs-ident}])))
+
 (defn state-work [actx state-ch m work-fn]
   (act state-work actx
        (let [res-ch (:res-ch m)
@@ -45,41 +55,36 @@
          (aput state-work res-ch
                (merge m (or (atake state-work help-ch) {:status :error}))))))
 
-(defn kvs-work [actx state-ch m work-fn]
-  (state-work actx state-ch m
-              #(if-let [[name uuid] (:kvs-ident m)]
-                 (if-let [kvs (get-in % [:kvss name])]
-                   (if (= uuid (:uuid kvs))
-                     (work-fn % kvs)
-                     [% {:status :mismatch :sub-status :wrong-uuid}])
-                   [% {:status :not-found :sub-status :no-kvs}])
-                 [% {:status :invalid :sub-status :no-kvs-ident}])))
-
 (def op-handlers
   {:kvs-open
    (fn [actx state-ch m]
      (state-work actx state-ch m
-                 #(if-let [name (:name m)]
-                    (if-let [kvs (get-in % [:kvss name])]
-                      [% {:status :ok :kvs-ident [name (:uuid kvs)]}]
-                      [(-> %
-                           (update-in [:kvss name] (make-kvs name (:next-uuid %)))
-                           (assoc :next-uuid (inc (:next-uuid %))))
-                       {:status :ok :kvs-ident [name (:next-uuid %)]}])
-                    [% {:status :invalid :sub-status :no-name}])))
+                 (kvs-check m #(if-let [name (:name m)]
+                                 (if-let [kvs (get-in % [:kvss name])]
+                                   [% {:status :ok :kvs-ident [name (:uuid kvs)]}]
+                                   [(-> %
+                                        (update-in [:kvss name]
+                                                   (make-kvs name (:next-uuid %)))
+                                        (assoc :next-uuid (inc (:next-uuid %))))
+                                    {:status :ok :kvs-ident [name (:next-uuid %)]}])
+                                 [% {:status :invalid :sub-status :no-name}]))))
 
    :kvs-remove
    (fn [actx state-ch m]
-     (kvs-work actx state-ch m
-               (fn [state kvs]
-                 [(dissoc-in state [:kvss (:name kvs)]) {:status :ok}])))
+     (state-work actx state-ch m
+                 (kvs-check m
+                            (fn [state kvs]
+                              [(dissoc-in state [:kvss (:name kvs)])
+                               {:status :ok}]))))
 
    :multi-get
    (fn [actx state-ch m]
-     (kvs-work actx state-ch m
-               (fn [state kvs]
-                 [state {:status :ok
-                         :results (map #(kvs-entry-by-key kvs %) (:keys m))}])))
+     (state-work actx state-ch m
+                 (kvs-check m
+                            (fn [state kvs]
+                              [state
+                               {:status :ok
+                                :results (map #(kvs-entry-by-key kvs %) (:keys m))}]))))
 
    :multi-change
    (fn [actx state-ch [res-ch name changes]])
