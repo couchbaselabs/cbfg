@@ -129,7 +129,15 @@
    (fn [actx state-ch [res-ch name from-sq to-sq]])
 
    :sync
-   (fn [actx state-ch [res-ch name]])})
+   (fn [actx state-ch m]
+     (state-work actx state-ch m
+                 (kvs-ident-check (:kvs-ident m)
+                                  (fn [state kvs]
+                                    [(assoc-in state [:kvss (:name kvs)]
+                                               (-> kvs
+                                                   (assoc :clean (:dirty kvs))
+                                                   (assoc :dirty (make-kc))))
+                                     {:status :ok :status-info :synced}]))))})
 
 (defn make-kvs-mgr [actx]
   (let [cmd-ch (achan actx)
