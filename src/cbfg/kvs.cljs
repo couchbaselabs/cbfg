@@ -89,21 +89,38 @@
            work-fn (fn [state kvs]
                      (act multi-get actx
                           (let [kc-clean (:clean kvs)]
-                            (doseq [key (:keys m)]
+                            (doseq [key keys]
                               (if-let [entry (kc-entry-by-key kc-clean key)]
                                 (aput multi-get res-ch
-                                      (merge res-m
-                                             {:partial :ok :key key :entry entry}))
+                                      (merge res-m {:partial :ok :key key :entry entry}))
                                 (aput multi-get res-ch
-                                      (merge res-m
-                                             {:partial :not-found :key key}))))
-                            (aput multi-get res-ch {:status :ok})))
+                                      (merge res-m {:partial :not-found :key key}))))
+                            (aput multi-get res-ch
+                                  (merge res-m {:status :ok}))))
                      [state nil])]
        (act multi-get-start actx
-         (aput multi-get-start state-ch [work-fn nil]))))
+         (aput multi-get-start state-ch
+               [(kvs-ident-check (:kvs-ident m) work-fn) nil]))))
 
    :multi-change
-   (fn [actx state-ch [res-ch name changes]])
+   (fn [actx state-ch m]
+     (let [res-m (dissoc m :status :status-info :partial :changes)
+           res-ch (:res-ch m)
+           work-fn (fn [state kvs]
+                     (let [next-sq (:next-sq kvs)
+                           [next-kvs ress] (reduce (fn [[kvs ress] change]
+                                                     (let [[kvs res] (change kvs next-sq)]
+                                                       [kvs (conj ress res)]))
+                                                   [(assoc kvs :next-sq (inc next-sq)) []]
+                                                   (:changes m))]
+                       (act multi-change actx
+                            (doseq [res ress]
+                              (aput multi-change res-ch (merge res-m res)))
+                            (aput multi-change res-ch (merge res-m {:status :ok})))
+                       [(assoc-in state [:kvss (:name kvs)] next-kvs) nil]))]
+       (act multi-change-start actx
+         (aput multi-change-start state-ch
+               [(kvs-ident-check (:kvs-ident m) work-fn) nil]))))
 
    :scan-keys
    (fn [actx state-ch [res-ch name from-key to-key]])
