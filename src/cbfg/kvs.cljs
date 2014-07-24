@@ -50,8 +50,8 @@
         [state {:status :not-found :status-info :no-kvs}])
       [state {:status :invalid :status-info :no-kvs-ident}])))
 
-(defn state-work [actx state-ch m work-fn & opt-done-ch]
-  (let [done-ch (or opt-done-ch (achan actx))]
+(defn state-work [actx state-ch m work-fn]
+  (let [done-ch (achan actx)]
     (act state-work actx
          (aput state-work state-ch [work-fn done-ch]))
          (aput state-work (:res-ch m)
@@ -84,7 +84,7 @@
    :multi-get
    (fn [actx state-ch m]
      (let [keys (:keys m)
-           res-m (dissoc m :keys)
+           res-m (dissoc m :status :status-info :partial :keys)
            res-ch (:res-ch m)
            work-fn (fn [state kvs]
                      (act multi-get actx
