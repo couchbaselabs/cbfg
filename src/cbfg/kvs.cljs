@@ -17,6 +17,7 @@
 ; TODO: Track age, utilization, compaction for simulated performance.
 ; TODO: Cannot use atoms because they prevent time travel.
 ; TODO: Add snapshot ability.
+; TODO: Readers not blocked by writers.
 
 (defn make-kvs [name uuid]
   {:name name
