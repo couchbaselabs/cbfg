@@ -18,6 +18,7 @@
 ; TODO: Cannot use atoms because they prevent time travel.
 ; TODO: Add snapshot ability.
 ; TODO: Readers not blocked by writers.
+; TODO: Mutations shadow old values.
 
 (defn make-kc [] ; A kc is a keys / changes map.
   {:keys (sorted-map)      ; key -> sq
@@ -60,10 +61,8 @@
 
 (defn make-scan-fn [scan-kind result-key get-entry]
   (fn [actx state-ch m]
-     (let [from (:from m)
-           to (:to m)
+     (let [{:keys [from to res-ch]} m
            res-m (dissoc m :status :status-info :partial)
-           res-ch (:res-ch m)
            work-fn (fn [state kvs]
                      (act scan-work actx
                           (let [kc-clean (:clean kvs)]
@@ -164,9 +163,9 @@
                                                    (assoc :dirty (make-kc))))
                                      {:status :ok :status-info :synced}]))))})
 
-(defn make-kvs-mgr [actx & op-handlers-in]
-  (let [cmd-ch (achan actx)
-        state-ch (achan actx)]
+(defn make-kvs-mgr [actx & op-handlers-in & {:keys [cmd-ch state-ch]}]
+  (let [cmd-ch (or cmd-ch (achan actx))
+        state-ch (or state-ch (achan actx))]
     (act-loop kvs-mgr-in actx [tot-ops 0]
               (if-let [m (atake kvs-mgr-in cmd-ch)]
                 (if-let [op-handler (get (or op-handlers-in op-handlers) (:op m))]
