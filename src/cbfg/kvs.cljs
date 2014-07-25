@@ -58,6 +58,31 @@
                (merge m (or (atake state-work done-ch)
                             {:status :error :status-info :closed-ch})))))
 
+(defn make-scan-fn [scan-kind result-key get-entry]
+  (fn [actx state-ch m]
+     (let [from (:from m)
+           to (:to m)
+           res-m (dissoc m :status :status-info :partial)
+           res-ch (:res-ch m)
+           work-fn (fn [state kvs]
+                     (act scan-work actx
+                          (let [kc-clean (:clean kvs)]
+                            (doseq [[k v]
+                                    (subseq (into (sorted-map) (scan-kind kc-clean))
+                                            >= from < to)]
+                              (when-let [entry (get-entry kc-clean k v)]
+                                (when (not (:deleted entry))
+                                  (aput scan-work res-ch
+                                        (merge res-m {:partial :ok
+                                                      result-key key
+                                                      :entry entry})))))
+                            (aput scan-work res-ch
+                                  (merge res-m {:status :ok}))))
+                     nil)]
+       (act scan-start actx
+         (aput scan-start state-ch
+               [(kvs-ident-check (:kvs-ident m) work-fn) nil])))))
+
 (def op-handlers
   {:kvs-open
    (fn [actx state-ch m]
@@ -97,7 +122,7 @@
                                       (merge res-m {:partial :not-found :key key}))))
                             (aput multi-get res-ch
                                   (merge res-m {:status :ok}))))
-                     [state nil])]
+                     nil)]
        (act multi-get-start actx
          (aput multi-get-start state-ch
                [(kvs-ident-check (:kvs-ident m) work-fn) nil]))))
@@ -123,10 +148,10 @@
                [(kvs-ident-check (:kvs-ident m) work-fn) nil]))))
 
    :scan-keys
-   (fn [actx state-ch [res-ch name from-key to-key]])
+   (make-scan-fn :keys :key kc-entry-by-key-sq)
 
    :scan-changes
-   (fn [actx state-ch [res-ch name from-sq to-sq]])
+   (make-scan-fn :changes :sq (fn [kc sq-key entry] entry))
 
    :sync
    (fn [actx state-ch m]
@@ -139,12 +164,12 @@
                                                    (assoc :dirty (make-kc))))
                                      {:status :ok :status-info :synced}]))))})
 
-(defn make-kvs-mgr [actx]
+(defn make-kvs-mgr [actx & op-handlers-in]
   (let [cmd-ch (achan actx)
         state-ch (achan actx)]
     (act-loop kvs-mgr-in actx [tot-ops 0]
               (if-let [m (atake kvs-mgr-in cmd-ch)]
-                (if-let [op-handler (get op-handlers (:op m))]
+                (if-let [op-handler (get (or op-handlers-in op-handlers) (:op m))]
                   (do (op-handler kvs-mgr-in state-ch m)
                       (recur (inc tot-ops)))
                   (println :kvs-mgr-in-unknown-op-exit m))
@@ -153,10 +178,9 @@
     ; Using kvs-mgr-state to avoid atoms, which prevent time-travel.
     (act-loop kvs-mgr-state actx [state { :next-uuid 0 :kvss {} }]
               (if-let [[state-fn done-ch] (atake kvs-mgr-state state-ch)]
-                (if-let [[next-state done-res] (state-fn state)]
-                  (do (when (and done-ch done-res)
-                        (aput-close kvs-mgr-state done-ch done-res))
-                      (recur next-state))
-                  (println :kvs-mgr-state-fn-exit))
+                (let [[next-state done-res] (state-fn state)]
+                  (when (and done-ch done-res)
+                    (aput-close kvs-mgr-state done-ch done-res))
+                  (recur (or next-state state)))
                 (println :kvs-mgr-state-ch-exit)))
     cmd-ch))
