@@ -20,6 +20,7 @@
 ; TODO: Readers not blocked by writers.
 ; TODO: Mutations shadow old values.
 ; TODO: Conventions on :status, :status-info, :partial, :result responses.
+; TODO: Conventions on closing res-ch.
 
 (defn make-kc [] ; A kc is a keys / changes map.
   {:keys (sorted-map)      ; key -> sq
