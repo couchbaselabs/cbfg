@@ -42,36 +42,36 @@
    :dirty (make-kc) ; Mutations go here, until "persisted / made durable".
    :next-sq 1})
 
-(defn kvs-checker [kvs-ident work-fn]
+(defn kvs-checker [kvs-ident cb]
   (fn [state] ; Returns wrapper fn to check if kvs-ident is current.
     (if-let [[name uuid] kvs-ident]
       (if-let [kvs (get-in state [:kvss name])]
         (if (= uuid (:uuid kvs))
-          (work-fn state kvs)
+          (cb state kvs)
           [state {:status :mismatch :status-info :wrong-uuid}])
         [state {:status :not-found :status-info :no-kvs}])
       [state {:status :invalid :status-info :no-kvs-ident}])))
 
-(defn kvs-do [actx state-ch res-ch work-fn]
+(defn kvs-do [actx state-ch res-ch cb]
   (act kvs-do actx
-       (aput kvs-do state-ch [work-fn res-ch])))
+       (aput kvs-do state-ch [cb res-ch])))
 
 (defn make-scan-fn [kc-kind scan-kind result-key get-entry]
   (fn [actx state-ch m]
      (let [{:keys [from to res-ch]} m
-           work-fn (fn [state kvs]
-                     (act scan-work actx
-                          (let [kc (kc-kind kvs)]
-                            (doseq [[k v] (subseq (into (sorted-map) (scan-kind kc))
-                                                  >= from < to)]
-                              (when-let [entry (get-entry kc k v)]
-                                (when (not (:deleted entry))
-                                  (aput scan-work res-ch (merge m {:partial :ok
-                                                                   result-key key
-                                                                   :entry entry})))))
-                            (aput-close scan-work res-ch (merge m {:status :ok}))))
-                     nil)]
-       (kvs-do actx state-ch nil (kvs-checker (:kvs-ident m) work-fn)))))
+           cb (fn [state kvs]
+                (act scan-work actx
+                     (let [kc (kc-kind kvs)]
+                       (doseq [[k v] (subseq (into (sorted-map) (scan-kind kc))
+                                             >= from < to)]
+                         (when-let [entry (get-entry kc k v)]
+                           (when (not (:deleted entry))
+                             (aput scan-work res-ch (merge m {:partial :ok
+                                                              result-key key
+                                                              :entry entry})))))
+                       (aput-close scan-work res-ch (merge m {:status :ok}))))
+                nil)]
+       (kvs-do actx state-ch nil (kvs-checker (:kvs-ident m) cb)))))
 
 (def op-handlers
   {:kvs-open
@@ -98,39 +98,38 @@
 
    :multi-get
    (fn [actx state-ch m]
-     (let [keys (:keys m)
-           res-m (dissoc m :keys)
+     (let [res-m (dissoc m :keys)
            res-ch (:res-ch m)
-           work-fn (fn [state kvs]
-                     (act multi-get actx
-                          (let [kc (:clean kvs)]
-                            (doseq [key keys]
-                              (if-let [entry (kc-entry-by-key kc key)]
-                                (aput multi-get res-ch
-                                      (merge res-m {:partial :ok :key key :entry entry}))
-                                (aput multi-get res-ch
-                                      (merge res-m {:partial :not-found :key key}))))
-                            (aput-close multi-get res-ch (merge res-m {:status :ok}))))
-                     nil)]
-       (kvs-do actx state-ch nil (kvs-checker (:kvs-ident m) work-fn))))
+           cb (fn [state kvs]
+                (act multi-get actx
+                     (let [kc (:clean kvs)]
+                       (doseq [key (:keys m)]
+                         (if-let [entry (kc-entry-by-key kc key)]
+                           (aput multi-get res-ch
+                                 (merge res-m {:partial :ok :key key :entry entry}))
+                           (aput multi-get res-ch
+                                 (merge res-m {:partial :not-found :key key}))))
+                       (aput-close multi-get res-ch (merge res-m {:status :ok}))))
+                nil)]
+       (kvs-do actx state-ch nil (kvs-checker (:kvs-ident m) cb))))
 
    :multi-change
    (fn [actx state-ch m]
-     (let [res-m (dissoc m :status :status-info :partial :changes)
+     (let [res-m (dissoc m :changes)
            res-ch (:res-ch m)
-           work-fn (fn [state kvs]
-                     (let [next-sq (:next-sq kvs)
-                           [next-kvs ress] (reduce (fn [[kvs ress] change]
-                                                     (let [[kvs res] (change kvs next-sq)]
-                                                       [kvs (conj ress res)]))
-                                                   [(assoc kvs :next-sq (inc next-sq)) []]
-                                                   (:changes m))]
-                       (act multi-change actx
-                            (doseq [res ress]
-                              (aput multi-change res-ch (merge res-m res)))
-                            (aput-close multi-change res-ch (merge res-m {:status :ok})))
-                       [(assoc-in state [:kvss (:name kvs)] next-kvs) nil]))]
-       (kvs-do actx state-ch nil (kvs-checker (:kvs-ident m) work-fn))))
+           cb (fn [state kvs]
+                (let [next-sq (:next-sq kvs)
+                      [next-kvs ress] (reduce (fn [[kvs ress] change]
+                                                (let [[kvs res] (change kvs next-sq)]
+                                                  [kvs (conj ress res)]))
+                                              [(assoc kvs :next-sq (inc next-sq)) []]
+                                              (:changes m))]
+                  (act multi-change actx
+                       (doseq [res ress]
+                         (aput multi-change res-ch (merge res-m res)))
+                       (aput-close multi-change res-ch (merge res-m {:status :ok})))
+                  [(assoc-in state [:kvss (:name kvs)] next-kvs) nil]))]
+       (kvs-do actx state-ch nil (kvs-checker (:kvs-ident m) cb))))
 
    :scan-keys
    (make-scan-fn :clean :keys :key kc-entry-by-key-sq)
