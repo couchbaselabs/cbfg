@@ -19,7 +19,7 @@
 ; TODO: Add snapshot ability.
 ; TODO: Readers not blocked by writers.
 ; TODO: Mutations shadow old values.
-; TODO: Conventions on :status, :status-info, :partial, :result responses.
+
 ; TODO: Conventions on closing res-ch.
 
 (defn make-kc [] ; A kc is a keys & changes map.
@@ -48,9 +48,9 @@
       (if-let [kvs (get-in state [:kvss name])]
         (if (= uuid (:uuid kvs))
           (cb state kvs)
-          [state {:status :mismatch :status-info :wrong-uuid}])
-        [state {:status :not-found :status-info :no-kvs}])
-      [state {:status :invalid :status-info :no-kvs-ident}])))
+          [state {:status :mismatch :status-info [:wrong-uuid kvs-ident]}])
+        [state {:status :not-found :status-info [:no-kvs kvs-ident]}])
+      [state {:status :invalid :status-info :missing-kvs-ident-arg}])))
 
 (defn kvs-do [actx state-ch res-ch cb]
   (act kvs-do actx
@@ -86,7 +86,7 @@
                        (assoc :next-uuid (inc (:next-uuid %))))
                    (merge m {:status :ok :status-info :created
                              :kvs-ident [name (:next-uuid %)]})])
-                [% (merge m {:status :invalid :status-info :no-name})])))
+                [% (merge m {:status :invalid :status-info :missing-name-arg})])))
 
    :kvs-remove
    (fn [actx state-ch m]
@@ -94,7 +94,7 @@
              (kvs-checker (:kvs-ident m)
                           (fn [state kvs]
                             [(dissoc-in state [:kvss (:name kvs)])
-                             {:status :ok :status-info :removed}]))))
+                             {:status :ok :status-info [:removed (:kvs-ident m)]}]))))
 
    :multi-get
    (fn [actx state-ch m]
@@ -146,7 +146,7 @@
                                        (-> kvs
                                            (assoc :clean (:dirty kvs))
                                            (assoc :dirty (make-kc))))
-                             {:status :ok :status-info :synced}]))))})
+                             {:status :ok :status-info [:synced (:kv-ident m)]}]))))})
 
 (defn make-kvs-mgr [actx & op-handlers-in & {:keys [cmd-ch state-ch]}]
   (let [cmd-ch (or cmd-ch (achan actx))
