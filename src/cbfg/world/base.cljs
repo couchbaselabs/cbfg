@@ -10,6 +10,8 @@
             [cbfg.vis :refer [listen-el get-el-value
                               get-el-innerHTML set-el-innerHTML]]))
 
+(enable-console-print!)
+
 (defn replay-cmd-ch [cmd-inject-ch el-ids ev-to-cmd-fn]
   (merge [cmd-inject-ch
           (map< #(let [[op x] (string/split (.-id (.-target %)) #"-")]
