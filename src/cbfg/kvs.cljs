@@ -60,17 +60,17 @@
 
 (defn make-scan-fn [kc-kind scan-kind result-key get-entry]
   (fn [actx state-ch m]
-     (let [{:keys [kvs-ident kvs-snapshot from to res-ch]} m
+     (let [{:keys [kvs-ident kvs-snapshot from to include-deleted res-ch]} m
            cb (fn [state kvs]
                 (act scan-work actx
-                     (let [kc (kc-kind kvs)]
-                       (doseq [[k v] (subseq (into (sorted-map) (scan-kind kc))
-                                             >= from < to)]
+                     (let [kc (kc-kind kvs)] ; Either :clean or :dirty.
+                       (doseq [[k v](subseq (into (sorted-map)
+                                                  (scan-kind kc)) ; :keys or :changes.
+                                            >= from < to)]
                          (when-let [entry (get-entry kc k v)]
-                           (when (not (:deleted entry))
-                             (aput scan-work res-ch (merge m {:partial :ok
-                                                              result-key key
-                                                              :entry entry})))))
+                           (when (or include-deleted (not (:deleted entry)))
+                             (aput scan-work res-ch
+                                   (merge m {:partial :ok result-key key :entry entry})))))
                        (aput-close scan-work res-ch (merge m {:status :ok}))))
                 nil)]
        (if kvs-snapshot
