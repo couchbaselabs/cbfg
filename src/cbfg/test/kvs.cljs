@@ -18,7 +18,20 @@
                     (aput tkvs cmd-ch m)
                     (e n
                        (atake tkvs res-ch)
-                       (merge m {:status :invalid, :status-info :missing-kvs-ident-arg})
+                       (merge m {:status :invalid
+                                 :status-info :missing-kvs-ident-arg})
+                       nil)
+                    (e n
+                       (atake tkvs res-ch)
+                       nil
+                       nil))
+                  (let [res-ch (achan tkvs)
+                        m {:res-ch res-ch :op :kvs-remove :kvs-ident [:bogus :ident]}]
+                    (aput tkvs cmd-ch m)
+                    (e n
+                       (atake tkvs res-ch)
+                       (merge m {:status :not-found
+                                 :status-info [:no-kvs (:kvs-ident m)]})
                        nil)))
            "pass"
            (str "FAIL: on test-lane #" @n)))))
