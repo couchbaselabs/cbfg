@@ -4,7 +4,7 @@
 
 ; A kvs is an abstraction of ordered-KV store.  Concrete examples
 ; would include couchkvs, forestDB, rocksDB, sqlite, bdb, gklite.
-; The mapping is ordered-key => sq => item, and ordered-sq => item.
+; The mapping is ordered-key => sq => entry, and ordered-sq => entry.
 ;
 ; Abstract operations include...
 ; - multi-get
