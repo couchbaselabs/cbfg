@@ -18,8 +18,6 @@
 
 ; TODO: Track age, utilization, compaction for simulated performance.
 ; TODO: Compaction/maintenance/re-org/vaccuum abstraction.
-; TODO: Readers not blocked by writers.
-; TODO: Mutations shadow old values.
 ; TODO: Simulated slow-disks, full-disks, half-written mutation, rollback, etc.
 
 (defn make-kc [] ; A kc is a keys & changes map.
