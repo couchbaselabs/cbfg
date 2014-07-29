@@ -58,7 +58,7 @@
   (act kvs-snapshot-do actx
        (aput kvs-snapshot-do res-ch (cb kvs-snapshot))))
 
-(defn make-scan-fn [kc-kind scan-kind result-key get-entry]
+(defn make-scan-fn [kc-kind scan-kind res-key get-entry]
   (fn [actx state-ch m]
      (let [{:keys [kvs-ident kvs-snapshot from to include-deleted res-ch]} m
            cb (fn [state kvs]
@@ -70,7 +70,7 @@
                          (when-let [entry (get-entry kc k v)]
                            (when (or include-deleted (not (:deleted entry)))
                              (aput scan-work res-ch
-                                   (merge m {:partial :ok result-key key :entry entry})))))
+                                   (merge m {:partial :ok res-key key :entry entry})))))
                        (aput-close scan-work res-ch (merge m {:status :ok}))))
                 nil)]
        (if kvs-snapshot
