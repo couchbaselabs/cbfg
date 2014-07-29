@@ -5,6 +5,7 @@
             [cbfg.world.fence]
             [cbfg.world.lane]
             [cbfg.world.grouper]
+            [cbfg.world.kvs]
             [cbfg.world.net]
             [cbfg.world.npr]
             [cbfg.world.store]
