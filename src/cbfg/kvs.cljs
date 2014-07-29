@@ -20,7 +20,7 @@
 ; TODO: Compaction/maintenance/re-org/vaccuum abstraction.
 ; TODO: Readers not blocked by writers.
 ; TODO: Mutations shadow old values.
-; TODO: Simulated slow-disks, full-disks, etc.
+; TODO: Simulated slow-disks, full-disks, half-written mutation, rollback, etc.
 
 (defn make-kc [] ; A kc is a keys & changes map.
   {:keys (sorted-map)      ; key -> sq
