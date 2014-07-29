@@ -64,9 +64,9 @@
            cb (fn [state kvs]
                 (act scan-work actx
                      (let [kc ((or kind :dirty) kvs)] ; Either :clean or :dirty.
-                       (doseq [[k v](subseq (into (sorted-map)
-                                                  (scan-kind kc)) ; :keys or :changes.
-                                            >= from < to)]
+                       (doseq [[k v] (subseq (into (sorted-map)
+                                                   (scan-kind kc)) ; :keys or :changes.
+                                             >= from < to)]
                          (when-let [entry (get-entry kc k v)]
                            (when (or include-deleted (not (:deleted entry)))
                              (aput scan-work res-ch
