@@ -97,7 +97,8 @@
      (kvs-do actx state-ch (:res-ch m)
              (kvs-checker m (fn [state kvs]
                               [(dissoc-in state [:kvss (:name kvs)])
-                               {:status :ok :status-info [:removed (:kvs-ident m)]}]))))
+                               (merge m {:status :ok
+                                         :status-info [:removed (:kvs-ident m)]})]))))
 
    :multi-get
    (fn [actx state-ch m]
@@ -146,7 +147,7 @@
    :snapshot
    (fn [actx state-ch m]
      (kvs-do actx state-ch (:res-ch m)
-             (fn [state] [state {:status :ok :kvs-snapshot state}])))
+             (fn [state] [state (merge m {:status :ok :kvs-snapshot state})])))
 
    :sync
    (fn [actx state-ch m]
@@ -156,7 +157,8 @@
                                          (-> kvs
                                              (assoc :clean (:dirty kvs))
                                              (assoc :dirty (make-kc))))
-                               {:status :ok :status-info [:synced (:kv-ident m)]}]))))})
+                               (merge m {:status :ok
+                                         :status-info [:synced (:kv-ident m)]})]))))})
 
 (defn make-kvs-mgr [actx & {:keys [cmd-ch state-ch op-handlers]}]
   (let [cmd-ch (or cmd-ch (achan actx))
