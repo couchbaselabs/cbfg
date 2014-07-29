@@ -60,12 +60,12 @@
   (act kvs-snapshot-do actx
        (aput kvs-snapshot-do res-ch (cb kvs-snapshot))))
 
-(defn make-scan-fn [kc-kind scan-kind res-key get-entry]
+(defn make-scan-fn [scan-kind res-key get-entry]
   (fn [actx state-ch m]
-     (let [{:keys [kvs-ident kvs-snapshot from to include-deleted res-ch]} m
+     (let [{:keys [kvs-ident kvs-snapshot kind from to include-deleted res-ch]} m
            cb (fn [state kvs]
                 (act scan-work actx
-                     (let [kc (kc-kind kvs)] ; Either :clean or :dirty.
+                     (let [kc ((or kind :dirty) kvs)] ; Either :clean or :dirty.
                        (doseq [[k v](subseq (into (sorted-map)
                                                   (scan-kind kc)) ; :keys or :changes.
                                             >= from < to)]
@@ -104,17 +104,18 @@
 
    :multi-get
    (fn [actx state-ch m]
-     (let [{:keys [kvs-ident kvs-snapshot res-ch]} m
+     (let [{:keys [kvs-ident kvs-snapshot kind include-deleted res-ch]} m
            res-m (dissoc m :keys)
            cb (fn [state kvs]
                 (act multi-get actx
-                     (let [kc (:clean kvs)]
+                     (let [kc ((or kind :dirty) kvs)] ; Either :clean or :dirty.
                        (doseq [key (:keys m)]
-                         (if-let [entry (kc-entry-by-key kc key)]
-                           (aput multi-get res-ch
-                                 (merge res-m {:partial :ok :key key :entry entry}))
-                           (aput multi-get res-ch
-                                 (merge res-m {:partial :not-found :key key}))))
+                         (let [entry (kc-entry-by-key kc key)]
+                           (if (and entry (or include-deleted (not (:deleted entry))))
+                             (aput multi-get res-ch
+                                   (merge res-m {:partial :ok :key key :entry entry}))
+                             (aput multi-get res-ch
+                                   (merge res-m {:partial :not-found :key key})))))
                        (aput-close multi-get res-ch (merge res-m {:status :ok}))))
                 nil)]
        (if kvs-snapshot
@@ -140,10 +141,10 @@
        (kvs-do actx state-ch nil (kvs-checker (:kvs-ident m) cb))))
 
    :scan-keys
-   (make-scan-fn :clean :keys :key kc-entry-by-key-sq)
+   (make-scan-fn :keys :key kc-entry-by-key-sq)
 
    :scan-changes
-   (make-scan-fn :clean :changes :sq (fn [kc sq-key entry] entry))
+   (make-scan-fn :changes :sq (fn [kc sq-key entry] entry))
 
    :snapshot
    (fn [actx state-ch m]
