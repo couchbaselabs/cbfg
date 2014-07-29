@@ -4,21 +4,23 @@
 
 ; A kvs is an abstraction of ordered-KV store.  Concrete examples
 ; would include couchkvs, forestDB, rocksDB, sqlite, bdb, gklite.
-; The mapping is ordered key => sq => item, and ordered sq => item.
+; The mapping is ordered-key => sq => item, and ordered-sq => item.
+;
 ; Abstract operations include...
 ; - multi-get
-; - multi-change (a change is an upsert or delete).
+; - multi-change (a change is an upsert or delete)
 ; - scan-keys
 ; - scan-changes
-; - fsync
-; - stats
-; - has compaction/maintenance abstraction
+; - snapshot
+; - sync (like fsync)
 ;
-; Note that we always close the res-ch.
+; Note on res-ch: the kvs always closes the res-ch on request completion.
 
 ; TODO: Track age, utilization, compaction for simulated performance.
+; TODO: Compaction/maintenance/re-org/vaccuum abstraction.
 ; TODO: Readers not blocked by writers.
 ; TODO: Mutations shadow old values.
+; TODO: Simulated slow-disks, full-disks, etc.
 
 (defn make-kc [] ; A kc is a keys & changes map.
   {:keys (sorted-map)      ; key -> sq
