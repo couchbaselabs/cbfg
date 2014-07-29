@@ -13,14 +13,12 @@
 ; - fsync
 ; - stats
 ; - has compaction/maintenance abstraction
+;
+; Note that we always close the res-ch.
 
 ; TODO: Track age, utilization, compaction for simulated performance.
-; TODO: Cannot use atoms because they prevent time travel.
-; TODO: Add snapshot ability.
 ; TODO: Readers not blocked by writers.
 ; TODO: Mutations shadow old values.
-
-; TODO: Conventions on closing res-ch.
 
 (defn make-kc [] ; A kc is a keys & changes map.
   {:keys (sorted-map)      ; key -> sq
@@ -56,9 +54,13 @@
   (act kvs-do actx
        (aput kvs-do state-ch [cb res-ch])))
 
+(defn kvs-snapshot-do [actx res-ch kvs-snapshot cb]
+  (act kvs-snapshot-do actx
+       (aput kvs-snapshot-do res-ch (cb kvs-snapshot))))
+
 (defn make-scan-fn [kc-kind scan-kind result-key get-entry]
   (fn [actx state-ch m]
-     (let [{:keys [from to res-ch]} m
+     (let [{:keys [kvs-ident kvs-snapshot from to res-ch]} m
            cb (fn [state kvs]
                 (act scan-work actx
                      (let [kc (kc-kind kvs)]
@@ -71,7 +73,9 @@
                                                               :entry entry})))))
                        (aput-close scan-work res-ch (merge m {:status :ok}))))
                 nil)]
-       (kvs-do actx state-ch nil (kvs-checker (:kvs-ident m) cb)))))
+       (if kvs-snapshot
+         (kvs-snapshot-do actx res-ch kvs-snapshot (kvs-checker kvs-ident cb))
+         (kvs-do actx state-ch nil (kvs-checker kvs-ident cb))))))
 
 (def op-handlers
   {:kvs-open
@@ -98,8 +102,8 @@
 
    :multi-get
    (fn [actx state-ch m]
-     (let [res-m (dissoc m :keys)
-           res-ch (:res-ch m)
+     (let [{:keys [kvs-ident kvs-snapshot res-ch]} m
+           res-m (dissoc m :keys)
            cb (fn [state kvs]
                 (act multi-get actx
                      (let [kc (:clean kvs)]
@@ -111,7 +115,9 @@
                                  (merge res-m {:partial :not-found :key key}))))
                        (aput-close multi-get res-ch (merge res-m {:status :ok}))))
                 nil)]
-       (kvs-do actx state-ch nil (kvs-checker (:kvs-ident m) cb))))
+       (if kvs-snapshot
+         (kvs-snapshot-do actx res-ch kvs-snapshot (kvs-checker kvs-ident cb))
+         (kvs-do actx state-ch nil (kvs-checker kvs-ident cb)))))
 
    :multi-change
    (fn [actx state-ch m]
@@ -136,6 +142,11 @@
 
    :scan-changes
    (make-scan-fn :clean :changes :sq (fn [kc sq-key entry] entry))
+
+   :snapshot
+   (fn [actx state-ch m]
+     (kvs-do actx state-ch (:res-ch m)
+             (fn [state] [state {:status :ok :kvs-snapshot state}])))
 
    :sync
    (fn [actx state-ch m]
