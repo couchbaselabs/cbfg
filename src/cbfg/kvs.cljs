@@ -169,8 +169,8 @@
                 (if-let [op-handler (get (or op-handlers-in op-handlers) (:op m))]
                   (do (op-handler kvs-mgr-in state-ch m)
                       (recur (inc tot-ops)))
-                  (println :kvs-mgr-in-unknown-op-exit m))
-                (println :kvs-mgr-in-ch-exit)))
+                  (println :kvs-mgr-in-exit-unknown-op m))
+                (println :kvs-mgr-in-exit-ch)))
 
     ; Using kvs-mgr-state to avoid atoms, which prevent time-travel.
     (act-loop kvs-mgr-state actx [state { :next-uuid 0 :kvss {} }]
@@ -179,5 +179,5 @@
                   (when (and done-ch done-res)
                     (aput-close kvs-mgr-state done-ch done-res))
                   (recur (or next-state state)))
-                (println :kvs-mgr-state-ch-exit)))
+                (println :kvs-mgr-state-exit-ch)))
     cmd-ch))
