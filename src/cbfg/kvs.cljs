@@ -77,7 +77,7 @@
          (kvs-snapshot-do actx res-ch kvs-snapshot (kvs-checker kvs-ident cb))
          (kvs-do actx state-ch nil (kvs-checker kvs-ident cb))))))
 
-(def op-handlers
+(def default-op-handlers
   {:kvs-open
    (fn [actx state-ch m]
      (kvs-do actx state-ch (:res-ch m)
@@ -160,12 +160,12 @@
                                            (assoc :dirty (make-kc))))
                              {:status :ok :status-info [:synced (:kv-ident m)]}]))))})
 
-(defn make-kvs-mgr [actx & op-handlers-in & {:keys [cmd-ch state-ch]}]
+(defn make-kvs-mgr [actx & {:keys [cmd-ch state-ch op-handlers]}]
   (let [cmd-ch (or cmd-ch (achan actx))
         state-ch (or state-ch (achan actx))]
     (act-loop kvs-mgr-in actx [tot-ops 0]
               (if-let [m (atake kvs-mgr-in cmd-ch)]
-                (if-let [op-handler (get (or op-handlers-in op-handlers) (:op m))]
+                (if-let [op-handler (get (or op-handlers default-op-handlers) (:op m))]
                   (do (op-handler kvs-mgr-in state-ch m)
                       (recur (inc tot-ops)))
                   (println :kvs-mgr-in-exit-unknown-op m))
