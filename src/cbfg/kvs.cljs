@@ -98,7 +98,7 @@
              (kvs-checker m (fn [state kvs]
                               [(dissoc-in state [:kvss (:name kvs)])
                                (merge m {:status :ok
-                                         :status-info [:removed (:kvs-ident m)]})]))))
+                                         :status-info :removed})]))))
 
    :multi-get
    (fn [actx state-ch m]

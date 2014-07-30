@@ -57,7 +57,29 @@
                                   (merge m2 {:status :ok
                                              :status-info :reopened
                                              :kvs-ident (:kvs-ident res)})
-                                  (atake tkvs res-ch2))))))))
+                                  (atake tkvs res-ch2))))
+                           (let [res-ch3 (achan tkvs)
+                                 m3 {:opaque @n
+                                     :res-ch res-ch3
+                                     :op :kvs-remove
+                                     :kvs-ident (:kvs-ident res)}]
+                             (aput tkvs cmd-ch m3)
+                             (let [res3 (atake tkvs res-ch3)]
+                               (e n res3
+                                  (merge m3 {:status :ok
+                                             :status-info :removed})
+                                  (atake tkvs res-ch3))))
+                           (let [res-ch4 (achan tkvs)
+                                 m4 {:opaque @n
+                                     :res-ch res-ch4
+                                     :op :kvs-remove
+                                     :kvs-ident (:kvs-ident res)}]
+                             (aput tkvs cmd-ch m4)
+                             (let [res4 (atake tkvs res-ch4)]
+                               (e n res4
+                                  (merge m4 {:status :not-found
+                                             :status-info [:no-kvs (:kvs-ident res)]})
+                                  (atake tkvs res-ch4))))))))
            "pass"
            (str "FAIL: on test-lane #" @n)))))
 
