@@ -14,7 +14,9 @@
        (let [n (atom 0)
              cmd-ch (make-kvs-mgr tkvs)]
          (if (and (let [res-ch (achan tkvs)
-                        m {:res-ch res-ch :op :kvs-remove}]
+                        m {:opaque @n
+                           :res-ch res-ch
+                           :op :kvs-remove}]
                     (aput tkvs cmd-ch m)
                     (e n
                        (atake tkvs res-ch)
@@ -22,13 +24,40 @@
                                  :status-info :missing-kvs-ident-arg})
                        (atake tkvs res-ch)))
                   (let [res-ch (achan tkvs)
-                        m {:res-ch res-ch :op :kvs-remove :kvs-ident [:bogus :ident]}]
+                        m {:opaque @n
+                           :res-ch res-ch
+                           :op :kvs-remove
+                           :kvs-ident [:bogus :ident]}]
                     (aput tkvs cmd-ch m)
                     (e n
                        (atake tkvs res-ch)
                        (merge m {:status :not-found
                                  :status-info [:no-kvs (:kvs-ident m)]})
-                       (atake tkvs res-ch))))
+                       (atake tkvs res-ch)))
+                  (let [res-ch (achan tkvs)
+                        m {:opaque @n
+                           :res-ch res-ch
+                           :op :kvs-open
+                           :name :foo}]
+                    (aput tkvs cmd-ch m)
+                    (let [res (atake tkvs res-ch)]
+                      (and (e n res
+                              (merge m {:status :ok
+                                        :status-info :created
+                                        :kvs-ident (:kvs-ident res)})
+                              (atake tkvs res-ch))
+                           (let [res-ch2 (achan tkvs)
+                                 m2 {:opaque @n
+                                     :res-ch res-ch2
+                                     :op :kvs-open
+                                     :name :foo}]
+                             (aput tkvs cmd-ch m2)
+                             (let [res2 (atake tkvs res-ch2)]
+                               (e n res2
+                                  (merge m2 {:status :ok
+                                             :status-info :reopened
+                                             :kvs-ident (:kvs-ident res)})
+                                  (atake tkvs res-ch2))))))))
            "pass"
            (str "FAIL: on test-lane #" @n)))))
 

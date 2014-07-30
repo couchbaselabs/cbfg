@@ -86,7 +86,7 @@
                   [% (merge m {:status :ok :status-info :reopened
                                :kvs-ident [name (:uuid kvs)]})]
                   [(-> %
-                       (update-in [:kvss name] (make-kvs name (:next-uuid %)))
+                       (assoc-in [:kvss name] (make-kvs name (:next-uuid %)))
                        (assoc :next-uuid (inc (:next-uuid %))))
                    (merge m {:status :ok :status-info :created
                              :kvs-ident [name (:next-uuid %)]})])
@@ -172,7 +172,7 @@
                 (println :kvs-mgr-in-exit-ch)))
 
     ; Using kvs-mgr-state to avoid atoms, which prevent time-travel.
-    (act-loop kvs-mgr-state actx [state { :next-uuid 0 :kvss {} }]
+    (act-loop kvs-mgr-state actx [state {:next-uuid 0 :kvss {}}]
               (if-let [[state-fn done-ch] (atake kvs-mgr-state state-ch)]
                 (let [[next-state done-res] (state-fn state)]
                   (when (and done-ch done-res)
