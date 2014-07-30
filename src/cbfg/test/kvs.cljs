@@ -79,7 +79,18 @@
                                (e n res4
                                   (merge m4 {:status :not-found
                                              :status-info [:no-kvs (:kvs-ident res)]})
-                                  (atake tkvs res-ch4))))))))
+                                  (atake tkvs res-ch4))))
+                           (let [res-ch5 (achan tkvs)
+                                 m5 {:opaque @n
+                                     :res-ch res-ch5
+                                     :op :multi-get
+                                     :kvs-ident (:kvs-ident res)}]
+                             (aput tkvs cmd-ch m5)
+                             (let [res5 (atake tkvs res-ch5)]
+                               (e n res5
+                                  (merge m5 {:status :not-found
+                                             :status-info [:no-kvs (:kvs-ident res)]})
+                                  (atake tkvs res-ch5))))))))
            "pass"
            (str "FAIL: on test-lane #" @n)))))
 

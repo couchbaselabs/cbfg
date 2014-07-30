@@ -54,10 +54,6 @@
   (act kvs-do actx
        (aput kvs-do state-ch [cb res-ch])))
 
-(defn kvs-snapshot-do [actx res-ch kvs-snapshot cb]
-  (act kvs-snapshot-do actx
-       (aput kvs-snapshot-do res-ch (cb kvs-snapshot))))
-
 (defn make-scan-fn [scan-kind res-key get-entry]
   (fn [actx state-ch m]
      (let [{:keys [kvs-ident kvs-snapshot kind from to include-deleted res-ch]} m
@@ -73,9 +69,8 @@
                                    (merge m {:partial :ok res-key key :entry entry})))))
                        (aput-close scan-work res-ch (merge m {:status :ok}))))
                 nil)]
-       (if kvs-snapshot
-         (kvs-snapshot-do actx res-ch kvs-snapshot (kvs-checker m cb))
-         (kvs-do actx state-ch nil (kvs-checker m cb))))))
+       (kvs-do actx state-ch res-ch
+               (fn [state] ((kvs-checker m cb) (or kvs-snapshot state)))))))
 
 (def default-op-handlers
   {:kvs-open
@@ -116,9 +111,8 @@
                                    (merge res-m {:partial :not-found :key key})))))
                        (aput-close multi-get res-ch (merge res-m {:status :ok}))))
                 nil)]
-       (if kvs-snapshot
-         (kvs-snapshot-do actx res-ch kvs-snapshot (kvs-checker m cb))
-         (kvs-do actx state-ch nil (kvs-checker m cb)))))
+       (kvs-do actx state-ch res-ch
+               (fn [state] ((kvs-checker m cb) (or kvs-snapshot state))))))
 
    :multi-change
    (fn [actx state-ch m]
