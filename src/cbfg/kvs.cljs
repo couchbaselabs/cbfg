@@ -36,8 +36,8 @@
 (defn make-kvs [name uuid]
   {:name name
    :uuid uuid
-   :clean (make-kc) ; Read-only.
-   :dirty (make-kc) ; Mutations go here, until "persisted / made durable".
+   :clean (make-kc) ; "Persisted", committed kc data after successful :sync op.
+   :dirty (make-kc) ; Uncommitted, unsync'ed kc mutations, waiting for :sync op.
    :next-sq 1})
 
 (defn kvs-checker [m cb]
