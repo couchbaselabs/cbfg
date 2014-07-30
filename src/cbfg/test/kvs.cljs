@@ -114,8 +114,19 @@
                                (e n res2
                                   (dissoc (merge m2 {:status :ok})
                                           :keys)
-                                  (atake tkvs res-ch2)))))))
-
+                                  (atake tkvs res-ch2))))
+                           (let [res-ch3 (achan tkvs)
+                                 m3 {:opaque @n
+                                     :res-ch res-ch3
+                                     :op :multi-change
+                                     :kvs-ident (:kvs-ident open)
+                                     :changes []}]
+                             (aput tkvs cmd-ch m3)
+                             (let [res3 (atake tkvs res-ch3)]
+                               (e n res3
+                                  (dissoc (merge m3 {:status :ok})
+                                          :changes)
+                                  (atake tkvs res-ch3)))))))
                     )
            "pass"
            (str "FAIL: on test-lane #" @n)))))

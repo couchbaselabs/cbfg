@@ -130,7 +130,7 @@
                          (aput multi-change res-ch (merge res-m res)))
                        (aput-close multi-change res-ch (merge res-m {:status :ok})))
                   [(assoc-in state [:kvss (:name kvs)] next-kvs) nil]))]
-       (kvs-do actx state-ch nil (kvs-checker m cb))))
+       (kvs-do actx state-ch res-ch (kvs-checker m cb))))
 
    :scan-keys
    (make-scan-fn :keys :key kc-entry-by-key-sq)
