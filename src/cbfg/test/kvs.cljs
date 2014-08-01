@@ -207,7 +207,37 @@
                                           (e n (atake tkvs res-ch7)
                                              (dissoc (merge m7 {:status :ok})
                                                      :keys)
-                                             (atake tkvs res-ch7)))))))))
+                                             (atake tkvs res-ch7)))))
+                                     (let [res-ch7 (achan tkvs)
+                                           m7 {:opaque @n
+                                               :res-ch res-ch7
+                                               :op :multi-get
+                                               :kvs-ident (:kvs-ident open)
+                                               :keys [:a :a :a]}]
+                                       (aput tkvs cmd-ch m7)
+                                       (and
+                                        (e n (atake tkvs res-ch7)
+                                           (dissoc (merge m7 {:partial :ok
+                                                              :key :a
+                                                              :entry {:key :a :val :A :sq (:sq res6)}})
+                                                   :keys)
+                                           nil)
+                                        (e n (atake tkvs res-ch7)
+                                           (dissoc (merge m7 {:partial :ok
+                                                              :key :a
+                                                              :entry {:key :a :val :A :sq (:sq res6)}})
+                                                   :keys)
+                                           nil)
+                                        (e n (atake tkvs res-ch7)
+                                           (dissoc (merge m7 {:partial :ok
+                                                              :key :a
+                                                              :entry {:key :a :val :A :sq (:sq res6)}})
+                                                   :keys)
+                                           nil)
+                                        (e n (atake tkvs res-ch7)
+                                           (dissoc (merge m7 {:status :ok})
+                                                   :keys)
+                                           (atake tkvs res-ch7))))))))
                            (let [res-ch8 (achan tkvs)
                                  m8 {:opaque @n
                                      :res-ch res-ch8
