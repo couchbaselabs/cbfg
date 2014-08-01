@@ -1,6 +1,7 @@
 (ns cbfg.test.kvs
   (:require-macros [cbfg.act :refer [achan aclose act act-loop aput atake]])
-  (:require [cbfg.kvs :refer [make-kvs-mgr]]))
+  (:require [cbfg.kvs :refer [make-kvs-mgr]]
+            [cbfg.misc :refer [dissoc-in]]))
 
 (defn e [n result expect result-nil]
   (let [pass (= result expect)
@@ -9,7 +10,7 @@
       (println (str my-n ":") "FAIL:" result expect))
     (and pass (nil? result-nil))))
 
-(defn noop-change [kvs change-sq]
+(defn noop-change [kvs new-sq]
   [kvs {:status :ok}])
 
 (defn test-kvs [actx]
@@ -170,6 +171,43 @@
                                  (dissoc (merge m5 {:status :ok})
                                          :changes)
                                  (atake tkvs res-ch5))))
+                           (let [res-ch6 (achan tkvs)
+                                 m6 {:opaque @n
+                                     :res-ch res-ch6
+                                     :op :multi-change
+                                     :kvs-ident (:kvs-ident open)
+                                     :changes [(cbfg.kvs/mutate-entry {:key :a :val :A})]}]
+                             (aput tkvs cmd-ch m6)
+                             (and
+                              (let [res6 (atake tkvs res-ch6)]
+                                (and (:sq res6)
+                                     (e n res6
+                                        (dissoc (merge m6 {:status :ok :key :a :sq (:sq res6)})
+                                                :changes)
+                                        nil)
+                                     (e n (atake tkvs res-ch6)
+                                        (dissoc (merge m6 {:status :ok})
+                                                :changes)
+                                        (atake tkvs res-ch6))
+                                     (let [res-ch7 (achan tkvs)
+                                           m7 {:opaque @n
+                                               :res-ch res-ch7
+                                               :op :multi-get
+                                               :kvs-ident (:kvs-ident open)
+                                               :keys [:a]}]
+                                       (aput tkvs cmd-ch m7)
+                                       (and
+                                        (let [res7 (atake tkvs res-ch7)]
+                                          (e n res7
+                                             (dissoc (merge m7 {:partial :ok
+                                                                :key :a
+                                                                :entry {:key :a :val :A :sq (:sq res6)}})
+                                                     :keys)
+                                             nil)
+                                          (e n (atake tkvs res-ch7)
+                                             (dissoc (merge m7 {:status :ok})
+                                                     :keys)
+                                             (atake tkvs res-ch7)))))))))
                            ))))
            "pass"
            (str "FAIL: on test-lane #" @n)))))

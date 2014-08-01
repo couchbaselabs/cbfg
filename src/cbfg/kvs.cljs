@@ -120,9 +120,9 @@
            res-ch (:res-ch m)
            cb (fn [state kvs]
                 (let [next-sq (:next-sq kvs)
-                      [next-kvs ress] (reduce (fn [[kvs ress] change]
-                                                (let [[kvs res] (change kvs next-sq)]
-                                                  [kvs (conj ress res)]))
+                      [next-kvs ress] (reduce (fn [[kvs1 ress] change]
+                                                (let [[kvs2 res] (change kvs1 next-sq)]
+                                                  [kvs2 (conj ress res)]))
                                               [(assoc kvs :next-sq (inc next-sq)) []]
                                               (:changes m))]
                   (act multi-change actx
@@ -174,3 +174,17 @@
                   (recur (or next-state state)))
                 (println :kvs-mgr-state-exit-ch)))
     cmd-ch))
+
+(defn mutate-entry [entry] ; Used for :multi-change.
+  (fn [kvs new-sq]
+    (let [key (:key entry)
+          old-sq (get-in kvs [:dirty key])]
+      (if (or (nil? (:sq entry)) (= (:sq entry) old-sq))
+        [(-> (if (:deleted entry)
+               (dissoc-in kvs [:dirty :keys key])
+               (assoc-in kvs [:dirty :keys key] new-sq))
+             (dissoc-in [:dirty :changes [old-sq key]])
+             (assoc-in [:dirty :changes [new-sq key]] (assoc entry :sq new-sq)))
+         {:status :ok :key key :sq new-sq}]
+        [kvs {:status :mismatch :key key
+              :status-info [:wrong-sq (:sq entry)]}]))))
