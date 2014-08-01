@@ -208,6 +208,28 @@
                                              (dissoc (merge m7 {:status :ok})
                                                      :keys)
                                              (atake tkvs res-ch7)))))))))
+                           (let [res-ch8 (achan tkvs)
+                                 m8 {:opaque @n
+                                     :res-ch res-ch8
+                                     :op :multi-get
+                                     :kvs-ident (:kvs-ident open)
+                                     :keys [:does-not-exist :not-there]}]
+                             (aput tkvs cmd-ch m8)
+                             (and
+                              (e n (atake tkvs res-ch8)
+                                 (dissoc (merge m8 {:partial :not-found
+                                                    :key :does-not-exist})
+                                         :keys)
+                                 nil)
+                              (e n (atake tkvs res-ch8)
+                                 (dissoc (merge m8 {:partial :not-found
+                                                    :key :not-there})
+                                         :keys)
+                                 nil)
+                              (e n (atake tkvs res-ch8)
+                                 (dissoc (merge m8 {:status :ok})
+                                         :keys)
+                                 (atake tkvs res-ch8))))
                            ))))
            "pass"
            (str "FAIL: on test-lane #" @n)))))
