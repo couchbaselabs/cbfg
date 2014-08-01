@@ -9,6 +9,9 @@
       (println (str my-n ":") "FAIL:" result expect))
     (and pass (nil? result-nil))))
 
+(defn noop-change [kvs change-sq]
+  [kvs {:status :ok}])
+
 (defn test-kvs [actx]
   (act tkvs actx
        (let [n (atom 0)
@@ -127,9 +130,7 @@
                                   (dissoc (merge m3 {:status :ok})
                                           :changes)
                                   (atake tkvs res-ch3))))
-                           (let [noop-change (fn [kvs change-sq]
-                                               [kvs {:status :ok :foo :bar}])
-                                 res-ch4 (achan tkvs)
+                           (let [res-ch4 (achan tkvs)
                                  m4 {:opaque @n
                                      :res-ch res-ch4
                                      :op :multi-change
@@ -138,13 +139,38 @@
                              (aput tkvs cmd-ch m4)
                              (and
                               (e n (atake tkvs res-ch4)
-                                 (dissoc (merge m4 {:status :ok :foo :bar})
+                                 (dissoc (merge m4 {:status :ok})
                                          :changes)
                                  nil)
                               (e n (atake tkvs res-ch4)
                                  (dissoc (merge m4 {:status :ok})
                                          :changes)
-                                 (atake tkvs res-ch4))))))))
+                                 (atake tkvs res-ch4))))
+                           (let [res-ch5 (achan tkvs)
+                                 m5 {:opaque @n
+                                     :res-ch res-ch5
+                                     :op :multi-change
+                                     :kvs-ident (:kvs-ident open)
+                                     :changes [noop-change noop-change noop-change]}]
+                             (aput tkvs cmd-ch m5)
+                             (and
+                              (e n (atake tkvs res-ch5)
+                                 (dissoc (merge m5 {:status :ok})
+                                         :changes)
+                                 nil)
+                              (e n (atake tkvs res-ch5)
+                                 (dissoc (merge m5 {:status :ok})
+                                         :changes)
+                                 nil)
+                              (e n (atake tkvs res-ch5)
+                                 (dissoc (merge m5 {:status :ok})
+                                         :changes)
+                                 nil)
+                              (e n (atake tkvs res-ch5)
+                                 (dissoc (merge m5 {:status :ok})
+                                         :changes)
+                                 (atake tkvs res-ch5))))
+                           ))))
            "pass"
            (str "FAIL: on test-lane #" @n)))))
 
