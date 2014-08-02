@@ -260,6 +260,42 @@
                                  (dissoc (merge m8 {:status :ok})
                                          :keys)
                                  (atake tkvs res-ch8))))
+                           (let [res-ch9 (achan tkvs)
+                                 m9 {:opaque @n
+                                     :res-ch res-ch9
+                                     :op :multi-change
+                                     :kvs-ident (:kvs-ident open)
+                                     :changes [(cbfg.kvs/mutate-entry {:key :a :deleted true})]}]
+                             (aput tkvs cmd-ch m9)
+                             (and
+                              (let [res9 (atake tkvs res-ch9)]
+                                (and (:sq res9)
+                                     (e n res9
+                                        (dissoc (merge m9 {:status :ok :key :a :sq (:sq res9)})
+                                                :changes)
+                                        nil)
+                                     (e n (atake tkvs res-ch9)
+                                        (dissoc (merge m9 {:status :ok})
+                                                :changes)
+                                        (atake tkvs res-ch9))
+                                     (let [res-ch9a (achan tkvs)
+                                           m9a {:opaque @n
+                                                :res-ch res-ch9a
+                                                :op :multi-get
+                                                :kvs-ident (:kvs-ident open)
+                                                :keys [:a]}]
+                                       (aput tkvs cmd-ch m9a)
+                                       (and
+                                        (let [res9a (atake tkvs res-ch9a)]
+                                          (e n res9a
+                                             (dissoc (merge m9a {:partial :not-found
+                                                                 :key :a})
+                                                     :keys)
+                                             nil)
+                                          (e n (atake tkvs res-ch9a)
+                                             (dissoc (merge m9a {:status :ok})
+                                                     :keys)
+                                             (atake tkvs res-ch9a)))))))))
                            ))))
            "pass"
            (str "FAIL: on test-lane #" @n)))))
