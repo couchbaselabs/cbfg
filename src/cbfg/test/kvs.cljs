@@ -182,7 +182,8 @@
                               (let [res6 (atake tkvs res-ch6)]
                                 (and (:sq res6)
                                      (e n res6
-                                        (dissoc (merge m6 {:status :ok :key :a :sq (:sq res6)})
+                                        (dissoc (merge m6 {:status :ok :key :a
+                                                           :sq (:sq res6)})
                                                 :changes)
                                         nil)
                                      (e n (atake tkvs res-ch6)
@@ -201,7 +202,8 @@
                                           (e n res7
                                              (dissoc (merge m7 {:partial :ok
                                                                 :key :a
-                                                                :entry {:key :a :val :A :sq (:sq res6)}})
+                                                                :entry {:key :a :val :A
+                                                                        :sq (:sq res6)}})
                                                      :keys)
                                              nil)
                                           (e n (atake tkvs res-ch7)
@@ -219,19 +221,22 @@
                                         (e n (atake tkvs res-ch7)
                                            (dissoc (merge m7 {:partial :ok
                                                               :key :a
-                                                              :entry {:key :a :val :A :sq (:sq res6)}})
+                                                              :entry {:key :a :val :A
+                                                                      :sq (:sq res6)}})
                                                    :keys)
                                            nil)
                                         (e n (atake tkvs res-ch7)
                                            (dissoc (merge m7 {:partial :ok
                                                               :key :a
-                                                              :entry {:key :a :val :A :sq (:sq res6)}})
+                                                              :entry {:key :a :val :A
+                                                                      :sq (:sq res6)}})
                                                    :keys)
                                            nil)
                                         (e n (atake tkvs res-ch7)
                                            (dissoc (merge m7 {:partial :ok
                                                               :key :a
-                                                              :entry {:key :a :val :A :sq (:sq res6)}})
+                                                              :entry {:key :a :val :A
+                                                                      :sq (:sq res6)}})
                                                    :keys)
                                            nil)
                                         (e n (atake tkvs res-ch7)
@@ -285,13 +290,15 @@
                                      :res-ch res-ch9
                                      :op :multi-change
                                      :kvs-ident (:kvs-ident open)
-                                     :changes [(cbfg.kvs/mutate-entry {:key :a :deleted true})]}]
+                                     :changes [(cbfg.kvs/mutate-entry {:key :a
+                                                                       :deleted true})]}]
                              (aput tkvs cmd-ch m9)
                              (and
                               (let [res9 (atake tkvs res-ch9)]
                                 (and (:sq res9)
                                      (e n res9
-                                        (dissoc (merge m9 {:status :ok :key :a :sq (:sq res9)})
+                                        (dissoc (merge m9 {:status :ok :key :a
+                                                           :sq (:sq res9)})
                                                 :changes)
                                         nil)
                                      (e n (atake tkvs res-ch9)
