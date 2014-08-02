@@ -265,6 +265,26 @@
                                      :res-ch res-ch9
                                      :op :multi-change
                                      :kvs-ident (:kvs-ident open)
+                                     :changes [(cbfg.kvs/mutate-entry {:key :a :deleted true
+                                                                       :sq :not-a-sq-match})]}]
+                             (aput tkvs cmd-ch m9)
+                             (and
+                              (let [res9 (atake tkvs res-ch9)]
+                                (and (e n res9
+                                        (dissoc (merge m9 {:status :mismatch
+                                                           :status-info [:wrong-sq :not-a-sq-match]
+                                                           :key :a})
+                                                :changes)
+                                        nil)
+                                     (e n (atake tkvs res-ch9)
+                                        (dissoc (merge m9 {:status :ok})
+                                                :changes)
+                                        (atake tkvs res-ch9))))))
+                           (let [res-ch9 (achan tkvs)
+                                 m9 {:opaque @n
+                                     :res-ch res-ch9
+                                     :op :multi-change
+                                     :kvs-ident (:kvs-ident open)
                                      :changes [(cbfg.kvs/mutate-entry {:key :a :deleted true})]}]
                              (aput tkvs cmd-ch m9)
                              (and
