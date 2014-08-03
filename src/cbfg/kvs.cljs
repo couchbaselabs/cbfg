@@ -185,6 +185,6 @@
                (assoc-in kvs [:dirty :keys key] new-sq))
              (dissoc-in [:dirty :changes [old-sq key]])
              (assoc-in [:dirty :changes [new-sq key]] (assoc entry :sq new-sq)))
-         {:status :ok :key key :sq new-sq}]
-        [kvs {:status :mismatch :key key
-              :status-info [:wrong-sq (:sq entry)]}]))))
+         {:partial :ok :key key :sq new-sq}]
+        [kvs {:partial :mismatch :key key
+              :partial-info [:wrong-sq (:sq entry)]}]))))

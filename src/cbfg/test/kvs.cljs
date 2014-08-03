@@ -11,7 +11,7 @@
     (and pass (nil? result-nil))))
 
 (defn noop-change [kvs new-sq]
-  [kvs {:status :ok}])
+  [kvs {:partial :ok}])
 
 (defn test-kvs [actx]
   (act tkvs actx
@@ -140,7 +140,7 @@
                              (aput tkvs cmd-ch m4)
                              (and
                               (e n (atake tkvs res-ch4)
-                                 (dissoc (merge m4 {:status :ok})
+                                 (dissoc (merge m4 {:partial :ok})
                                          :changes)
                                  nil)
                               (e n (atake tkvs res-ch4)
@@ -156,15 +156,15 @@
                              (aput tkvs cmd-ch m5)
                              (and
                               (e n (atake tkvs res-ch5)
-                                 (dissoc (merge m5 {:status :ok})
+                                 (dissoc (merge m5 {:partial :ok})
                                          :changes)
                                  nil)
                               (e n (atake tkvs res-ch5)
-                                 (dissoc (merge m5 {:status :ok})
+                                 (dissoc (merge m5 {:partial :ok})
                                          :changes)
                                  nil)
                               (e n (atake tkvs res-ch5)
-                                 (dissoc (merge m5 {:status :ok})
+                                 (dissoc (merge m5 {:partial :ok})
                                          :changes)
                                  nil)
                               (e n (atake tkvs res-ch5)
@@ -182,7 +182,7 @@
                               (let [res6 (atake tkvs res-ch6)]
                                 (and (:sq res6)
                                      (e n res6
-                                        (dissoc (merge m6 {:status :ok :key :a
+                                        (dissoc (merge m6 {:partial :ok :key :a
                                                            :sq (:sq res6)})
                                                 :changes)
                                         nil)
@@ -242,7 +242,32 @@
                                         (e n (atake tkvs res-ch7)
                                            (dissoc (merge m7 {:status :ok})
                                                    :keys)
-                                           (atake tkvs res-ch7))))))))
+                                           (atake tkvs res-ch7))))
+                                     (let [res-ch7bs (achan tkvs)
+                                           m7bs {:opaque @n
+                                                 :res-ch res-ch7bs
+                                                 :op :multi-change
+                                                 :kvs-ident (:kvs-ident open)
+                                                 :changes [(cbfg.kvs/mutate-entry
+                                                            {:key :a
+                                                             :val :will-be-rejected
+                                                             :sq :some-wrong-sq})]}]
+                                       (aput tkvs cmd-ch m7bs)
+                                       (and
+                                        (let [res7bs (atake tkvs res-ch7bs)]
+                                          (e n res7bs
+                                             (dissoc (merge m7bs
+                                                            {:partial :mismatch
+                                                             :partial-info [:wrong-sq
+                                                                            :some-wrong-sq]
+                                                             :key :a})
+                                                     :changes)
+                                             nil)
+                                          (e n (atake tkvs res-ch7bs)
+                                             (dissoc (merge m7bs {:status :ok})
+                                                     :changes)
+                                             (atake tkvs res-ch7bs)))))
+                                     ))))
                            (let [res-ch8 (achan tkvs)
                                  m8 {:opaque @n
                                      :res-ch res-ch8
@@ -276,8 +301,9 @@
                              (and
                               (let [res9 (atake tkvs res-ch9)]
                                 (and (e n res9
-                                        (dissoc (merge m9 {:status :mismatch
-                                                           :status-info [:wrong-sq :not-a-sq-match]
+                                        (dissoc (merge m9 {:partial :mismatch
+                                                           :partial-info [:wrong-sq
+                                                                          :not-a-sq-match]
                                                            :key :a})
                                                 :changes)
                                         nil)
@@ -297,7 +323,7 @@
                               (let [res9 (atake tkvs res-ch9)]
                                 (and (:sq res9)
                                      (e n res9
-                                        (dissoc (merge m9 {:status :ok :key :a
+                                        (dissoc (merge m9 {:partial :ok :key :a
                                                            :sq (:sq res9)})
                                                 :changes)
                                         nil)
