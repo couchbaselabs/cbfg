@@ -179,202 +179,222 @@
                                      :changes [(cbfg.kvs/mutate-entry
                                                 {:key :a :val :A})]}]
                              (aput tkvs cmd-ch m6)
-                             (and
-                              (let [res6 (atake tkvs res-ch6)]
-                                (and (:sq res6)
-                                     (e n res6
-                                        (dissoc (merge m6 {:partial :ok :key :a
-                                                           :sq (:sq res6)})
-                                                :changes)
-                                        nil)
-                                     (e n (atake tkvs res-ch6)
-                                        (dissoc (merge m6 {:status :ok})
-                                                :changes)
-                                        (atake tkvs res-ch6))
-                                     (let [res-ch7 (achan tkvs)
-                                           m7 {:opaque @n
-                                               :res-ch res-ch7
-                                               :op :multi-get
-                                               :kvs-ident (:kvs-ident open)
-                                               :keys [:a]}]
-                                       (aput tkvs cmd-ch m7)
-                                       (and
-                                        (let [res7 (atake tkvs res-ch7)]
-                                          (e n res7
-                                             (dissoc (merge m7 {:partial :ok
-                                                                :key :a
-                                                                :entry {:key :a :val :A
-                                                                        :sq (:sq res6)}})
-                                                     :keys)
-                                             nil)
-                                          (e n (atake tkvs res-ch7)
-                                             (dissoc (merge m7 {:status :ok})
-                                                     :keys)
-                                             (atake tkvs res-ch7)))))
-                                     (let [res-ch7 (achan tkvs)
-                                           m7 {:opaque @n
-                                               :res-ch res-ch7
-                                               :op :multi-get
-                                               :kvs-ident (:kvs-ident open)
-                                               :keys [:a :a :a]}]
-                                       (aput tkvs cmd-ch m7)
-                                       (and
-                                        (e n (atake tkvs res-ch7)
-                                           (dissoc (merge m7 {:partial :ok
-                                                              :key :a
-                                                              :entry {:key :a :val :A
-                                                                      :sq (:sq res6)}})
-                                                   :keys)
-                                           nil)
-                                        (e n (atake tkvs res-ch7)
-                                           (dissoc (merge m7 {:partial :ok
-                                                              :key :a
-                                                              :entry {:key :a :val :A
-                                                                      :sq (:sq res6)}})
-                                                   :keys)
-                                           nil)
-                                        (e n (atake tkvs res-ch7)
-                                           (dissoc (merge m7 {:partial :ok
-                                                              :key :a
-                                                              :entry {:key :a :val :A
-                                                                      :sq (:sq res6)}})
-                                                   :keys)
-                                           nil)
-                                        (e n (atake tkvs res-ch7)
-                                           (dissoc (merge m7 {:status :ok})
-                                                   :keys)
-                                           (atake tkvs res-ch7))))
-                                     (let [res-ch7bs (achan tkvs)
-                                           m7bs {:opaque @n
-                                                 :res-ch res-ch7bs
-                                                 :op :multi-change
-                                                 :kvs-ident (:kvs-ident open)
-                                                 :changes [(cbfg.kvs/mutate-entry
-                                                            {:key :a
-                                                             :val :will-be-rejected
-                                                             :sq :some-wrong-sq})]}]
-                                       (aput tkvs cmd-ch m7bs)
-                                       (let [res7bs (atake tkvs res-ch7bs)]
-                                         (and
-                                          (e n res7bs
-                                             (dissoc (merge m7bs
-                                                            {:partial :mismatch
-                                                             :partial-info [:wrong-sq
-                                                                            :some-wrong-sq]
-                                                             :key :a})
-                                                     :changes)
-                                             nil)
-                                          (e n (atake tkvs res-ch7bs)
-                                             (dissoc (merge m7bs {:status :ok})
-                                                     :changes)
-                                             (atake tkvs res-ch7bs)))))
-                                     (let [res-ch7c (achan tkvs)
-                                           m7c {:opaque @n
-                                                :res-ch res-ch7c
+                             (let [res6 (atake tkvs res-ch6)]
+                               (and (:sq res6)
+                                    (e n res6
+                                       (dissoc (merge m6 {:partial :ok :key :a
+                                                          :sq (:sq res6)})
+                                               :changes)
+                                       nil)
+                                    (e n (atake tkvs res-ch6)
+                                       (dissoc (merge m6 {:status :ok})
+                                               :changes)
+                                       (atake tkvs res-ch6))
+                                    (let [res-ch7 (achan tkvs)
+                                          m7 {:opaque @n
+                                              :res-ch res-ch7
+                                              :op :multi-get
+                                              :kvs-ident (:kvs-ident open)
+                                              :keys [:a]}]
+                                      (aput tkvs cmd-ch m7)
+                                      (let [res7 (atake tkvs res-ch7)]
+                                        (and
+                                         (e n res7
+                                            (dissoc (merge m7 {:partial :ok
+                                                               :key :a
+                                                               :entry {:key :a :val :A
+                                                                       :sq (:sq res6)}})
+                                                    :keys)
+                                            nil)
+                                         (e n (atake tkvs res-ch7)
+                                            (dissoc (merge m7 {:status :ok})
+                                                    :keys)
+                                            (atake tkvs res-ch7)))))
+                                    (let [res-ch7 (achan tkvs)
+                                          m7 {:opaque @n
+                                              :res-ch res-ch7
+                                              :op :multi-get
+                                              :kvs-ident (:kvs-ident open)
+                                              :keys [:a :a :a]}]
+                                      (aput tkvs cmd-ch m7)
+                                      (and
+                                       (e n (atake tkvs res-ch7)
+                                          (dissoc (merge m7 {:partial :ok
+                                                             :key :a
+                                                             :entry {:key :a :val :A
+                                                                     :sq (:sq res6)}})
+                                                  :keys)
+                                          nil)
+                                       (e n (atake tkvs res-ch7)
+                                          (dissoc (merge m7 {:partial :ok
+                                                             :key :a
+                                                             :entry {:key :a :val :A
+                                                                     :sq (:sq res6)}})
+                                                  :keys)
+                                          nil)
+                                       (e n (atake tkvs res-ch7)
+                                          (dissoc (merge m7 {:partial :ok
+                                                             :key :a
+                                                             :entry {:key :a :val :A
+                                                                     :sq (:sq res6)}})
+                                                  :keys)
+                                          nil)
+                                       (e n (atake tkvs res-ch7)
+                                          (dissoc (merge m7 {:status :ok})
+                                                  :keys)
+                                          (atake tkvs res-ch7))))
+                                    (let [res-ch7bs (achan tkvs)
+                                          m7bs {:opaque @n
+                                                :res-ch res-ch7bs
                                                 :op :multi-change
                                                 :kvs-ident (:kvs-ident open)
                                                 :changes [(cbfg.kvs/mutate-entry
                                                            {:key :a
-                                                            :val :AA
-                                                            :sq (:sq res6)})]}]
-                                       (aput tkvs cmd-ch m7c)
-                                       (let [res7c (atake tkvs res-ch7c)]
-                                         (and
-                                          (:sq res7c)
-                                          (e n res7c
-                                             (dissoc (merge m7c
-                                                            {:partial :ok
-                                                             :key :a
-                                                             :sq (:sq res7c)})
-                                                     :changes)
-                                             nil)
-                                          (e n (atake tkvs res-ch7c)
-                                             (dissoc (merge m7c {:status :ok})
-                                                     :changes)
-                                             (atake tkvs res-ch7c)))))
-                                     ))))
-                           (let [res-ch8 (achan tkvs)
-                                 m8 {:opaque @n
-                                     :res-ch res-ch8
-                                     :op :multi-get
-                                     :kvs-ident (:kvs-ident open)
-                                     :keys [:does-not-exist :not-there]}]
-                             (aput tkvs cmd-ch m8)
-                             (and
-                              (e n (atake tkvs res-ch8)
-                                 (dissoc (merge m8 {:partial :not-found
-                                                    :key :does-not-exist})
-                                         :keys)
-                                 nil)
-                              (e n (atake tkvs res-ch8)
-                                 (dissoc (merge m8 {:partial :not-found
-                                                    :key :not-there})
-                                         :keys)
-                                 nil)
-                              (e n (atake tkvs res-ch8)
-                                 (dissoc (merge m8 {:status :ok})
-                                         :keys)
-                                 (atake tkvs res-ch8))))
-                           (let [res-ch9 (achan tkvs)
-                                 m9 {:opaque @n
-                                     :res-ch res-ch9
-                                     :op :multi-change
-                                     :kvs-ident (:kvs-ident open)
-                                     :changes [(cbfg.kvs/mutate-entry {:key :a :deleted true
-                                                                       :sq :not-a-sq-match})]}]
-                             (aput tkvs cmd-ch m9)
-                             (let [res9 (atake tkvs res-ch9)]
-                               (and (e n res9
-                                       (dissoc (merge m9 {:partial :mismatch
-                                                          :partial-info [:wrong-sq
-                                                                         :not-a-sq-match]
-                                                          :key :a})
-                                               :changes)
-                                       nil)
-                                    (e n (atake tkvs res-ch9)
-                                       (dissoc (merge m9 {:status :ok})
-                                               :changes)
-                                       (atake tkvs res-ch9)))))
-                           (let [res-ch9 (achan tkvs)
-                                 m9 {:opaque @n
-                                     :res-ch res-ch9
-                                     :op :multi-change
-                                     :kvs-ident (:kvs-ident open)
-                                     :changes [(cbfg.kvs/mutate-entry {:key :a
-                                                                       :deleted true})]}]
-                             (aput tkvs cmd-ch m9)
-                             (let [res9 (atake tkvs res-ch9)]
-                               (and (:sq res9)
-                                    (e n res9
-                                       (dissoc (merge m9 {:partial :ok :key :a
-                                                          :sq (:sq res9)})
-                                               :changes)
-                                       nil)
-                                    (e n (atake tkvs res-ch9)
-                                       (dissoc (merge m9 {:status :ok})
-                                               :changes)
-                                       (atake tkvs res-ch9))
-                                    (let [res-ch9a (achan tkvs)
-                                          m9a {:opaque @n
-                                               :res-ch res-ch9a
-                                               :op :multi-get
-                                               :kvs-ident (:kvs-ident open)
-                                               :keys [:a]}]
-                                      (aput tkvs cmd-ch m9a)
-                                      (let [res9a (atake tkvs res-ch9a)]
+                                                            :val :will-be-rejected
+                                                            :sq :some-wrong-sq})]}]
+                                      (aput tkvs cmd-ch m7bs)
+                                      (let [res7bs (atake tkvs res-ch7bs)]
                                         (and
-                                         (e n res9a
-                                            (dissoc (merge m9a {:partial :not-found
-                                                                :key :a})
-                                                    :keys)
+                                         (e n res7bs
+                                            (dissoc (merge m7bs
+                                                           {:partial :mismatch
+                                                            :partial-info [:wrong-sq
+                                                                           :some-wrong-sq]
+                                                            :key :a})
+                                                    :changes)
                                             nil)
-                                         (e n (atake tkvs res-ch9a)
-                                            (dissoc (merge m9a {:status :ok})
-                                                    :keys)
-                                            (atake tkvs res-ch9a))))))))
-                           ))))
-           "pass"
-           (str "FAIL: on test-lane #" @n)))))
+                                         (e n (atake tkvs res-ch7bs)
+                                            (dissoc (merge m7bs {:status :ok})
+                                                    :changes)
+                                            (atake tkvs res-ch7bs)))))
+                                    (let [res-ch7c (achan tkvs)
+                                          m7c {:opaque @n
+                                               :res-ch res-ch7c
+                                               :op :multi-change
+                                               :kvs-ident (:kvs-ident open)
+                                               :changes [(cbfg.kvs/mutate-entry
+                                                          {:key :a
+                                                           :val :AA
+                                                           :sq (:sq res6)})]}]
+                                      (aput tkvs cmd-ch m7c)
+                                      (let [res7c (atake tkvs res-ch7c)]
+                                        (and
+                                         (:sq res7c)
+                                         (e n res7c
+                                            (dissoc (merge m7c
+                                                           {:partial :ok
+                                                            :key :a
+                                                            :sq (:sq res7c)})
+                                                    :changes)
+                                            nil)
+                                         (e n (atake tkvs res-ch7c)
+                                            (dissoc (merge m7c {:status :ok})
+                                                    :changes)
+                                            (atake tkvs res-ch7c))
+                                         (let [res-ch7g (achan tkvs)
+                                               m7g {:opaque @n
+                                                    :res-ch res-ch7g
+                                                    :op :multi-get
+                                                    :kvs-ident (:kvs-ident open)
+                                                    :keys [:a]}]
+                                           (aput tkvs cmd-ch m7g)
+                                           (let [res7g (atake tkvs res-ch7g)]
+                                             (and
+                                              (e n res7g
+                                                 (dissoc (merge m7g {:partial :ok
+                                                                     :key :a
+                                                                     :entry {:key :a :val :AA
+                                                                             :sq (:sq res7c)}})
+                                                         :keys)
+                                                 nil)
+                                              (e n (atake tkvs res-ch7g)
+                                                 (dissoc (merge m7g {:status :ok})
+                                                         :keys)
+                                                 (atake tkvs res-ch7g)))))
+                                         )))
+                                    )))
+                      (let [res-ch8 (achan tkvs)
+                            m8 {:opaque @n
+                                :res-ch res-ch8
+                                :op :multi-get
+                                :kvs-ident (:kvs-ident open)
+                                :keys [:does-not-exist :not-there]}]
+                        (aput tkvs cmd-ch m8)
+                        (and
+                         (e n (atake tkvs res-ch8)
+                            (dissoc (merge m8 {:partial :not-found
+                                               :key :does-not-exist})
+                                    :keys)
+                            nil)
+                         (e n (atake tkvs res-ch8)
+                            (dissoc (merge m8 {:partial :not-found
+                                               :key :not-there})
+                                    :keys)
+                            nil)
+                         (e n (atake tkvs res-ch8)
+                            (dissoc (merge m8 {:status :ok})
+                                    :keys)
+                            (atake tkvs res-ch8))))
+                      (let [res-ch9 (achan tkvs)
+                            m9 {:opaque @n
+                                :res-ch res-ch9
+                                :op :multi-change
+                                :kvs-ident (:kvs-ident open)
+                                :changes [(cbfg.kvs/mutate-entry {:key :a :deleted true
+                                                                  :sq :not-a-sq-match})]}]
+                        (aput tkvs cmd-ch m9)
+                        (let [res9 (atake tkvs res-ch9)]
+                          (and (e n res9
+                                  (dissoc (merge m9 {:partial :mismatch
+                                                     :partial-info [:wrong-sq
+                                                                    :not-a-sq-match]
+                                                     :key :a})
+                                          :changes)
+                                  nil)
+                               (e n (atake tkvs res-ch9)
+                                  (dissoc (merge m9 {:status :ok})
+                                          :changes)
+                                  (atake tkvs res-ch9)))))
+                      (let [res-ch9 (achan tkvs)
+                            m9 {:opaque @n
+                                :res-ch res-ch9
+                                :op :multi-change
+                                :kvs-ident (:kvs-ident open)
+                                :changes [(cbfg.kvs/mutate-entry {:key :a
+                                                                  :deleted true})]}]
+                        (aput tkvs cmd-ch m9)
+                        (let [res9 (atake tkvs res-ch9)]
+                          (and (:sq res9)
+                               (e n res9
+                                  (dissoc (merge m9 {:partial :ok :key :a
+                                                     :sq (:sq res9)})
+                                          :changes)
+                                  nil)
+                               (e n (atake tkvs res-ch9)
+                                  (dissoc (merge m9 {:status :ok})
+                                          :changes)
+                                  (atake tkvs res-ch9))
+                               (let [res-ch9a (achan tkvs)
+                                     m9a {:opaque @n
+                                          :res-ch res-ch9a
+                                          :op :multi-get
+                                          :kvs-ident (:kvs-ident open)
+                                          :keys [:a]}]
+                                 (aput tkvs cmd-ch m9a)
+                                 (let [res9a (atake tkvs res-ch9a)]
+                                   (and
+                                    (e n res9a
+                                       (dissoc (merge m9a {:partial :not-found
+                                                           :key :a})
+                                               :keys)
+                                       nil)
+                                    (e n (atake tkvs res-ch9a)
+                                       (dissoc (merge m9a {:status :ok})
+                                               :keys)
+                                       (atake tkvs res-ch9a))))))))
+                      ))))
+         "pass"
+         (str "FAIL: on test-lane #" @n)))))
 
 (defn test [actx opaque]
   (act test actx
