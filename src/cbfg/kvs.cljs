@@ -178,7 +178,7 @@
 (defn mutate-entry [entry] ; Used for :multi-change.
   (fn [kvs new-sq]
     (let [key (:key entry)
-          old-sq (get-in kvs [:dirty key])]
+          old-sq (get-in kvs [:dirty :keys key])]
       (if (or (nil? (:sq entry)) (= (:sq entry) old-sq))
         [(-> (if (:deleted entry)
                (dissoc-in kvs [:dirty :keys key])
