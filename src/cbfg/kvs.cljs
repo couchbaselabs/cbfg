@@ -12,7 +12,7 @@
 ; - scan-keys
 ; - scan-changes
 ; - snapshot
-; - sync (like fsync)
+; - sync (commits any unpersisted, dirty changes)
 ;
 ; Note on res-ch: the kvs always closes the res-ch on request completion.
 
