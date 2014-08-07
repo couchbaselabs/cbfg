@@ -80,9 +80,8 @@
      (kvs-do actx state-ch (:res-ch m)
              (fn [state]
                (act list-names actx
-                    (doseq [[name kvs] (keys (:kvss state))]
-                      (aput list-names (:res-ch m)
-                            (merge m {:partial :ok :name name})))
+                    (doseq [name (keys (:kvss state))]
+                      (aput list-names (:res-ch m) (merge m {:partial :ok :name name})))
                     (aput-close list-names (:res-ch m) (merge m {:status :ok})))
                nil)))
 

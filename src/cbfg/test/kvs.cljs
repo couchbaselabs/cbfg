@@ -59,6 +59,19 @@
                                         :status-info :created
                                         :kvs-ident (:kvs-ident res)})
                               (atake tkvs res-ch))
+                           (let [res-ch (achan tkvs)
+                                 m {:opaque @n
+                                    :res-ch res-ch
+                                    :op :kvs-list}]
+                             (aput tkvs cmd-ch m)
+                             (and (e n
+                                     (atake tkvs res-ch)
+                                     (merge m {:partial :ok :name :foo})
+                                     nil)
+                                  (e n
+                                     (atake tkvs res-ch)
+                                     (merge m {:status :ok})
+                                     (atake tkvs res-ch))))
                            (let [res-ch2 (achan tkvs)
                                  m2 {:opaque @n
                                      :res-ch res-ch2
@@ -103,7 +116,17 @@
                                (e n res5
                                   (merge m5 {:status :not-found
                                              :status-info [:no-kvs (:kvs-ident res)]})
-                                  (atake tkvs res-ch5)))))))
+                                  (atake tkvs res-ch5))))
+                           (let [res-ch (achan tkvs)
+                                 m {:opaque @n
+                                    :res-ch res-ch
+                                    :op :kvs-list}]
+                             (aput tkvs cmd-ch m)
+                             (e n
+                                (atake tkvs res-ch)
+                                (merge m {:status :ok})
+                                (atake tkvs res-ch)))
+                           )))
                   (let [open-ch (achan tkvs)
                         m {:opaque @n
                            :res-ch open-ch
