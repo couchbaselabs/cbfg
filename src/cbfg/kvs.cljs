@@ -18,6 +18,8 @@
 
 ; TODO: Track age, utilization, compaction for simulated performance.
 ; TODO: Compaction/maintenance/re-org/vaccuum abstraction.
+; TODO: Expiration and expiry races or is that a higher level concern?
+; TODO: ABA races.
 ; TODO: Simulated slow-disks, full-disks, half-written mutation, rollback, etc.
 
 (defn make-kc [] ; A kc is a keys & changes map.
@@ -73,7 +75,18 @@
                (fn [state] ((kvs-checker m cb) (or kvs-snapshot state)))))))
 
 (def default-op-handlers
-  {:kvs-open
+  {:kvs-list
+   (fn [actx state-ch m]
+     (kvs-do actx state-ch (:res-ch m)
+             (fn [state]
+               (act list-names actx
+                    (doseq [[name kvs] (keys (:kvss state))]
+                      (aput list-names (:res-ch m)
+                            (merge m {:partial :ok :name name})))
+                    (aput-close list-names (:res-ch m) (merge m {:status :ok})))
+               nil)))
+
+   :kvs-open
    (fn [actx state-ch m]
      (kvs-do actx state-ch (:res-ch m)
              #(if-let [name (:name m)]

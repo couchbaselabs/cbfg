@@ -30,6 +30,15 @@
                   (let [res-ch (achan tkvs)
                         m {:opaque @n
                            :res-ch res-ch
+                           :op :kvs-list}]
+                    (aput tkvs cmd-ch m)
+                    (e n
+                       (atake tkvs res-ch)
+                       (merge m {:status :ok})
+                       (atake tkvs res-ch)))
+                  (let [res-ch (achan tkvs)
+                        m {:opaque @n
+                           :res-ch res-ch
                            :op :kvs-remove
                            :kvs-ident [:bogus :ident]}]
                     (aput tkvs cmd-ch m)
