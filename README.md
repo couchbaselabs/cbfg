@@ -12,6 +12,18 @@ a backronym waiting for future reassignment.
 
     git clone git@github.com:couchbaselabs/cbfg.git
 
+# grab the dependencies...
+
+    git clone git@github.com:couchbaselabs/ago.git
+
+# setup the dependencies...
+
+    cd cbfg
+    mkdir checkouts
+    cd checkouts
+    ln -s ../../ago .
+    cd ..
+
 # build...
 
 You'll need the [lein](http://github.com/technomancy/leiningen)
