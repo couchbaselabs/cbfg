@@ -4,9 +4,9 @@ cbfg
 An experiment / prototype in distributed systems modeling,
 simulation and (perhaps one day) code-gen.
 
-Also, it was initially discussed over lunch at (f)ive (g)uys,
-so "c.b.f.g." (couchbase five guys).  Clearly, this is a
-backronym waiting for future reassignment.
+This was initially discussed over lunch at a Five Guys burger
+restaurant, so "c.b.f.g." means couchbase five guys.  Clearly, this is
+a backronym waiting for future reassignment.
 
 # grab the code...
 
