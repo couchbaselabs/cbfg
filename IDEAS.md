@@ -138,3 +138,5 @@ stuff to look at / learn
 -- http://www.lighttable.com/2014/05/16/pain-we-forgot/
 - TLA+
 -- http://research.microsoft.com/en-us/um/people/lamport/tla/amazon.html
+- ocaml combinators to declare distributed systems
+
