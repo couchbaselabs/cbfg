@@ -1,28 +1,54 @@
-Some notes on the generic :status/:status-info and other response
-codes, keys and values.
+Map collection objects are commonly passed around to hold request and
+response data, and this page has some notes on request and response
+standard codes, keys and values.
 
-Responses should include a :status code.  And, if appropriate, an
-optional :status-info value which holds more detailed information
-for the client / developer.
+Request maps should include an :op code and a :res-ch (response
+channel).
 
-The :status-info value, however, is just meant for logging and human
-debugging and not really meant to be parsable by computers.  It might
-be perhaps an opaque string or JSON or EDN.
+The "server" or request processing entity is expected to close the
+res-ch when all responses (there might be multiple responses) for the
+request have been put onto the res-ch.  The requestor can rely on the
+closed res-ch to determine that the entire request has been handled.
 
-Other standardized response keys/values should be used, instead, to
-convey program-readable information (like :result, :value, :partial,
-etc).
+Response maps often have these key/value entries...
 
-The :status codes...
+  :status      - <common status code like :ok, :invalid, :mismatch ...>
+  :status-info - <optional, extra human readable message or information
+                  meant to aid with debugging>
+  :more        - <boolean, defaults to false.
+                  true means more responses for the request will follow;
+                  and false means this is the last response for the request>
+
+Response maps must include a :status key/value entry.
+
+If appropriate, an optional :status-info key/value entry can hold more
+detailed information for the client / requestor / developer.  That is,
+the :status-info value is often meant for logging and human debugging
+as opposed to programmatic processing (think HTTP human-readable
+status message strings instead of HTTP status codes).  A :status-info
+value might also be perhaps an opaque string or JSON or EDN.
+
+Other standardized response keys/values should be used to convey
+program-readable data (like :result, :value, etc).
+
+The :more boolean response key/value entry signifies a non-terminating
+response, when a stream of multiple responses is expected.  Some
+examples might be streaming the next entry during a directory listing,
+range scan, or multi-get / multi-change request.  For example, there
+should be a sequence of zero or more responses with :more of true,
+terminated by a single, final response with :more of false.
+
+The standard, common :status codes...
 
 :ok
 
-More response information may be available in other response
-keys/values like :result or :value.
+This means a successful request.  Additional response data may be
+available in other response keys/values like :result or :value.
 
 :invalid
 
-Caller made an ill-formed request (such as missing a param).
+Caller made an ill-formed request (such as missing a parameter).
+More information may be available in the :status-info key/value.
 
 :mismatch
 
@@ -38,18 +64,8 @@ no longer exists, perhaps due to a previous deletion.  In contrast to
 a :not-found status code, a :mismatch informs the caller that a
 resource is still there, but has a version or CAS mismatch.
 
-:partial
-
-This :status code signifies a partial response, when multiple
-responses are expected.  Some examples might be streaming the next
-entry in a directory listing, or a range scan, or a changes-stream
-request, or a multi-get / multi-change request.  For example, there
-might be a sequence of many :partial responses, terminated by a final
-non-partial :status response code (like ok or some error code).  In a
-partial response, there might be an additional :partial code with more
-program-readable data.
+----------------------------------
 
 :redirect or :moved ? (covers not-my-vbucket / not-my-partition?)
 
-:not-enough-resources ? (covers temp-OOM?)
-
+:not-enough-resources ? (covers temp-OOM?) or :busy
