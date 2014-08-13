@@ -68,7 +68,8 @@
                          (when-let [entry (get-entry kc k v)]
                            (when (or include-deleted (not (:deleted entry)))
                              (aput scan-work res-ch
-                                   (merge m {:partial :ok res-key key :entry entry})))))
+                                   (merge m {:more true :status :ok
+                                             res-key key :entry entry})))))
                        (aput-close scan-work res-ch (merge m {:status :ok}))))
                 nil)]
        (kvs-do actx state-ch res-ch
@@ -81,7 +82,8 @@
              (fn [state]
                (act list-names actx
                     (doseq [name (keys (:kvss state))]
-                      (aput list-names (:res-ch m) (merge m {:partial :ok :name name})))
+                      (aput list-names (:res-ch m) (merge m {:more true :status :ok
+                                                             :name name})))
                     (aput-close list-names (:res-ch m) (merge m {:status :ok})))
                nil)))
 
@@ -118,9 +120,11 @@
                          (let [entry (kc-entry-by-key kc key)]
                            (if (and entry (or include-deleted (not (:deleted entry))))
                              (aput multi-get res-ch
-                                   (merge res-m {:partial :ok :key key :entry entry}))
+                                   (merge res-m {:more true :status :ok
+                                                 :key key :entry entry}))
                              (aput multi-get res-ch
-                                   (merge res-m {:partial :not-found :key key})))))
+                                   (merge res-m {:more true :status :not-found
+                                                 :key key})))))
                        (aput-close multi-get res-ch (merge res-m {:status :ok}))))
                 nil)]
        (kvs-do actx state-ch res-ch
@@ -197,6 +201,6 @@
                (assoc-in kvs [:dirty :keys key] new-sq))
              (dissoc-in [:dirty :changes [old-sq key]])
              (assoc-in [:dirty :changes [new-sq key]] (assoc entry :sq new-sq)))
-         {:partial :ok :key key :sq new-sq}]
-        [kvs {:partial :mismatch :key key
-              :partial-info [:wrong-sq (:sq entry)]}]))))
+         {:more true :status :ok :key key :sq new-sq}]
+        [kvs {:more true :status :mismatch :key key
+              :status-info [:wrong-sq (:sq entry)]}]))))
