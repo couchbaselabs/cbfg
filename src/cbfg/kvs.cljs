@@ -82,8 +82,8 @@
              (fn [state]
                (act list-names actx
                     (doseq [name (keys (:kvss state))]
-                      (aput list-names (:res-ch m) (merge m {:more true :status :ok
-                                                             :name name})))
+                      (aput list-names (:res-ch m)
+                            (merge m {:more true :status :ok :name name})))
                     (aput-close list-names (:res-ch m) (merge m {:status :ok})))
                nil)))
 
@@ -92,14 +92,17 @@
      (kvs-do actx state-ch (:res-ch m)
              #(if-let [name (:name m)]
                 (if-let [kvs (get-in % [:kvss name])]
-                  [% (merge m {:status :ok :status-info :reopened
+                  [% (merge m {:status :ok
+                               :status-info :reopened
                                :kvs-ident [name (:uuid kvs)]})]
                   [(-> %
                        (assoc-in [:kvss name] (make-kvs name (:next-uuid %)))
                        (assoc :next-uuid (inc (:next-uuid %))))
-                   (merge m {:status :ok :status-info :created
+                   (merge m {:status :ok
+                             :status-info :created
                              :kvs-ident [name (:next-uuid %)]})])
-                [% (merge m {:status :invalid :status-info :missing-name-arg})])))
+                [% (merge m {:status :invalid
+                             :status-info :missing-name-arg})])))
 
    :kvs-remove
    (fn [actx state-ch m]
@@ -120,10 +123,12 @@
                          (let [entry (kc-entry-by-key kc key)]
                            (if (and entry (or include-deleted (not (:deleted entry))))
                              (aput multi-get res-ch
-                                   (merge res-m {:more true :status :ok
+                                   (merge res-m {:more true
+                                                 :status :ok
                                                  :key key :entry entry}))
                              (aput multi-get res-ch
-                                   (merge res-m {:more true :status :not-found
+                                   (merge res-m {:more true
+                                                 :status :not-found
                                                  :key key})))))
                        (aput-close multi-get res-ch (merge res-m {:status :ok}))))
                 nil)]
@@ -202,5 +207,6 @@
              (dissoc-in [:dirty :changes [old-sq key]])
              (assoc-in [:dirty :changes [new-sq key]] (assoc entry :sq new-sq)))
          {:more true :status :ok :key key :sq new-sq}]
-        [kvs {:more true :status :mismatch :key key
+        [kvs {:more true
+              :status :mismatch :key key
               :status-info [:wrong-sq (:sq entry)]}]))))
