@@ -184,7 +184,7 @@
 
 ; ------------------------------------------------
 
-(defn world-vis-init [el-prefix init-event-delay]
+(defn world-vis-init-t [js-ns el-prefix init-event-delay]
   (init-roots)
   (let [req-handlers cbfg.world.lane/cmd-handlers
         req-ch (map< (fn [ev] {:op (.-id (.-target ev))
@@ -243,7 +243,7 @@
                 (first (wait-until #(seq (cbfg.world.net/net-actx-info @vis "net-1")))))
         (let [expand-ch (listen-el (gdom/getElement (str el-prefix "-html")) "click")
               prog-in (get-el-value "prog-in")
-              prog-js (str "with (cbfg.world.t1) {" prog-in "}")
+              prog-js (str "with (" js-ns ") {" prog-in "}")
               prog-res (try (js/eval prog-js) (catch js/Object ex ex))]
           (go-loop [num-requests 0 num-responses 0]
             (let [[v ch] (alts! [req-ch (:res-ch @prog-base)])
@@ -276,6 +276,9 @@
           (close! event-ch)
           (close! (:res-ch @prog-base))
           (recur (inc num-worlds)))))))
+
+(defn world-vis-init [el-prefix init-event-delay]
+  (world-vis-init-t "cbfg.world.t1" el-prefix init-event-delay))
 
 ; --------------------------------------------
 
