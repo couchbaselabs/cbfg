@@ -14,7 +14,7 @@
             [cbfg.lane]
             [cbfg.world.net]
             [cbfg.world.lane]
-            [cbfg.world.base :refer [world-cmd-loop]]))
+            [cbfg.world.base :refer [world-cmd-loop filter-r]]))
 
 (defn actx-agw [actx] ((:get-agw (first actx))))
 
@@ -60,13 +60,6 @@
   (render-net-addrs (:net @prog-curr)))
 
 ; -------------------------------------------------------------------
-
-(defn filter-r [r] (if (map? r)
-                     (-> r
-                         (dissoc :opaque)
-                         (dissoc :op)
-                         (dissoc :fence))
-                     r))
 
 (defn render-reqs-html [reqs]
    (apply str
