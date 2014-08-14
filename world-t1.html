@@ -492,7 +492,6 @@ function showSource(name, line, after) {
     showSourceMap[name] = "...loading...";
     var xhr = new XMLHttpRequest();
     xhr.onload = function() {
-      console.log(xhr);
       if (xhr.status == 200) {
         var t = xhr.responseText.
                     replace(/&/g, "&amp;").
