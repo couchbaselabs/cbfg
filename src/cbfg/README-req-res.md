@@ -10,14 +10,18 @@ res-ch when all responses (there might be multiple responses) for the
 request have been put onto the res-ch.  The requestor can rely on the
 closed res-ch to determine that the entire request has been handled.
 
-Response maps often have these key/value entries...
+The requestor can use an :opaque key/value in the request map to
+tie multiple responses together, and the server must mirror back the
+:opaque key/value in all its response maps.
 
-  :status      - <common status code like :ok, :invalid, :mismatch ...>
-  :status-info - <optional, extra human readable message or information
-                  meant to aid with debugging>
-  :more        - <boolean, defaults to false.
-                  true means more responses for the request will follow;
-                  and false means this is the last response for the request>
+Response maps have these key/value entries...
+
+ :status      - <common status code like :ok, :invalid, :mismatch ...>
+ :status-info - <optional, extra human readable message or information
+                 meant to aid with debugging>
+ :more        - <optional, boolean, defaults to false.
+                 true means more responses for the request will follow;
+                 and false means this is the last response for the request>
 
 Response maps must include a :status key/value entry.
 
