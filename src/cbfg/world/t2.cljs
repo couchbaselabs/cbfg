@@ -1,10 +1,29 @@
 (ns cbfg.world.t2
-  (:require-macros [cbfg.act :refer [act achan aput atake]])
+  (:require-macros [cbfg.act :refer [act act-loop achan aput atake atimeout]])
   (:require [cbfg.world.t1 :refer [prog-base-now prog-curr-now prog-evt
-                                   wait-done addr-override-xy]]))
+                                   wait-done addr-override-xy]]
+            [cbfg.lane]))
 
 (defn world-vis-init [el-prefix init-event-delay]
   (cbfg.world.t1/world-vis-init-t "cbfg.world.t2" el-prefix init-event-delay))
+
+; --------------------------------------------
+
+(defn server-conn-loop [actx server-send-ch server-recv-ch close-server-recv-ch]
+  (let [lanes-in-ch (achan actx)
+        lanes-out-ch (achan actx)]
+    (cbfg.lane/make-lane-pump actx lanes-in-ch lanes-out-ch
+                              cbfg.world.lane/make-fenced-pump-lane)
+    (act-loop lanes-in actx [num-ins 0]
+              (let [msg (atake lanes-in server-recv-ch)]
+                (aput lanes-in lanes-in-ch msg)
+                (when (> (:sleep msg) 0)
+                  (let [sleep-ch (atimeout lanes-in (:sleep msg))]
+                    (atake lanes-in sleep-ch)))
+                (recur (inc num-ins))))
+    (act-loop lanes-out actx [num-outs 0]
+              (aput lanes-out server-send-ch [(atake lanes-out lanes-out-ch)])
+              (recur (inc num-outs)))))
 
 ; --------------------------------------------
 
@@ -18,7 +37,8 @@
                    [server-addr port listen-result-ch])
              (when-let [[accept-ch close-accept-ch]
                         (atake server-init listen-result-ch)]
-               (cbfg.world.net/server-accept-loop world accept-ch close-accept-ch)))
+               (cbfg.world.net/server-accept-loop world accept-ch close-accept-ch
+                                                  :server-conn-loop server-conn-loop)))
            (reset! done true))
       (wait-done done)
       (prog-evt world :kv-server {:server-addr server-addr :server-port port}
