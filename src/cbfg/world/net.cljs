@@ -25,7 +25,8 @@
               (aput lanes-out server-send-ch [(atake lanes-out lanes-out-ch)])
               (recur (inc num-outs)))))
 
-(defn server-accept-loop [actx accept-ch close-accept-ch]
+(defn server-accept-loop [actx accept-ch close-accept-ch &
+                          {:keys [server-conn-loop] :or {server-conn-loop server-conn-loop}}]
   (act-loop server-accept-loop actx [num-accepts 0]
             (if-let [[server-send-ch server-recv-ch close-server-recv-ch]
                      (atake server-accept-loop accept-ch)]
