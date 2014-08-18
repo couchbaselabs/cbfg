@@ -9,7 +9,8 @@
             [cbfg.world.net]
             [cbfg.world.npr]
             [cbfg.world.store]
-            [cbfg.world.t1]))
+            [cbfg.world.t1]
+            [cbfg.world.t2]))
 
 (enable-console-print!)
 
@@ -17,7 +18,8 @@
              "world-lane.html"  cbfg.world.lane/world-vis-init
              "world-net.html"   cbfg.world.net/world-vis-init
              "world-store.html" cbfg.world.store/world-vis-init
-             "world-t1.html"    cbfg.world.t1/world-vis-init})
+             "world-t1.html"    cbfg.world.t1/world-vis-init
+             "world-t2.html"    cbfg.world.t2/world-vis-init})
 
 (let [world (last (string/split (.-href (.-location js/window)) #"/"))
       maker (makers world 0)]

@@ -35,6 +35,9 @@
                      :net     {}}) ; The :loop-state of the net-actx.
   (reset! prog-evts []))
 
+(defn prog-base-now [] @prog-base)
+(defn prog-curr-now [] @prog-curr)
+
 ; ------------------------------------------------
 
 (def net-addrs-g (atom {})) ; Last output of net-main render-net-addrs-to-el.
@@ -57,7 +60,7 @@
 
 (defn addr-override-xy [addr x y]
   (swap! addr-override-xy-g #(assoc % addr [x y]))
-  (render-net-addrs (:net @prog-curr)))
+  (render-net-addrs (:net (prog-curr-now))))
 
 ; -------------------------------------------------------------------
 
@@ -102,7 +105,7 @@
 ; -------------------------------------------------------------------
 
 (defn prog-evt [world kind data prog-frame-fn]
-  (let [prog-prev @prog-curr
+  (let [prog-prev (prog-curr-now)
         prog-next (swap! prog-curr #(prog-frame-fn (update-in % [:ts] inc)))
         need-snapshot (<= (.-length cljs.core.async.impl.dispatch/tasks) 0)]
     (swap! prog-evts #(conj % [(:ts prog-next) kind data prog-next need-snapshot]))
@@ -124,7 +127,7 @@
 (defn on-prog-frame-restore [ts prog-frame]
   ; Time-travel to the past if snapshot is available.
   (when-let [ago-ss (get @prog-ss ts)]
-    (ago-restore (actx-agw (:world @prog-base)) ago-ss)
+    (ago-restore (actx-agw (:world (prog-base-now))) ago-ss)
     (reset! prog-curr prog-frame)
     (swap! prog-evts #(vec (filter (fn [[s & _]] (<= s ts)) %)))
     (swap! prog-ss #(into {} (filter (fn [[s _]] (<= s ts)) %)))
@@ -228,7 +231,7 @@
             net-actx (atom nil)
             net-cb (fn [vis]
                      (when-let [net (get-in vis [:actxs @net-actx :loop-state])]
-                       (when (not= net (:net @prog-curr))
+                       (when (not= net (:net (prog-curr-now)))
                          (swap! prog-curr #(assoc % :net net))
                          (render-net-addrs net))))]
         (prog-init world)
@@ -237,8 +240,8 @@
         (cbfg.vis/process-render el-prefix world event-run-ch net-cb
                                  :render-event render-event-to-html)
         (cbfg.net/make-net world
-                           (:net-listen-ch @prog-base)
-                           (:net-connect-ch @prog-base))
+                           (:net-listen-ch (prog-base-now))
+                           (:net-connect-ch (prog-base-now)))
         (reset! net-actx
                 (first (wait-until #(seq (cbfg.world.net/net-actx-info @vis "net-1")))))
         (let [expand-ch (listen-el (gdom/getElement (str el-prefix "-html")) "click")
@@ -246,15 +249,15 @@
               prog-js (str "with (" js-ns ") {" prog-in "}")
               prog-res (try (js/eval prog-js) (catch js/Object ex ex))]
           (go-loop [num-requests 0 num-responses 0]
-            (let [[v ch] (alts! [req-ch (:res-ch @prog-base)])
-                  ts (inc (:ts @prog-curr))]
+            (let [[v ch] (alts! [req-ch (:res-ch (prog-base-now))])
+                  ts (inc (:ts (prog-curr-now)))]
               (when v
                 (if (= ch req-ch)
                   (if (= (:op v) "replay")
                     (println "TODO-REPLAY-IMPL")
                     (let [req (assoc v :opaque ts)]
                       (when-let [client-req-ch
-                                 (get-in @prog-curr [:clients (:client req) :req-ch])]
+                                 (get-in (prog-curr-now) [:clients (:client req) :req-ch])]
                         (prog-evt world :req req #(assoc-in % [:reqs ts] [req nil]))
                         (>! client-req-ch ((get req-handlers (:op v)) req))
                         (recur (inc num-requests) num-responses))))
@@ -274,7 +277,7 @@
           (close! expand-ch)
           (close! event-run-ch)
           (close! event-ch)
-          (close! (:res-ch @prog-base))
+          (close! (:res-ch (prog-base-now)))
           (recur (inc num-worlds)))))))
 
 (defn world-vis-init [el-prefix init-event-delay]
@@ -284,11 +287,11 @@
 
 (defn kv-server [server-addr & ports]
   (doseq [port ports]
-    (let [world (:world @prog-base)
+    (let [world (:world (prog-base-now))
           done (atom false)]
       (act server-init world
            (when-let [listen-result-ch (achan server-init)]
-             (aput server-init (:net-listen-ch @prog-base)
+             (aput server-init (:net-listen-ch (prog-base-now))
                    [server-addr port listen-result-ch])
              (when-let [[accept-ch close-accept-ch]
                         (atake server-init listen-result-ch)]
@@ -298,14 +301,14 @@
       (prog-evt world :kv-server {:server-addr server-addr :server-port port}
                 #(update-in % [:servers server-addr] conj port))))
   (addr-override-xy server-addr
-                    300 (+ 20 (* 120 (dec (count (:servers @prog-curr)))))))
+                    300 (+ 20 (* 120 (dec (count (:servers (prog-curr-now))))))))
 
 (defn kv-client [client-addr server-addr server-port]
-  (let [world (:world @prog-base)
+  (let [world (:world (prog-base-now))
         ready (atom false)
-        req-ch (cbfg.world.net/client-loop world (:net-connect-ch @prog-base)
+        req-ch (cbfg.world.net/client-loop world (:net-connect-ch (prog-base-now))
                                            server-addr server-port
-                                           client-addr (:res-ch @prog-base)
+                                           client-addr (:res-ch (prog-base-now))
                                            :start-cb #(reset! ready true))]
     (wait-done ready)
     (prog-evt world :kv-client {:client-addr client-addr
@@ -317,4 +320,4 @@
                           :server-port server-port
                           :req-ch req-ch})))
   (addr-override-xy client-addr
-                    20 (+ 20 (* 120 (dec (count (:clients @prog-curr)))))))
+                    20 (+ 20 (* 120 (dec (count (:clients (prog-curr-now))))))))
