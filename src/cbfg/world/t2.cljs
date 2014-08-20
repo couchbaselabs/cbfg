@@ -3,10 +3,12 @@
   (:require [cbfg.world.t1 :refer [prog-base-now prog-curr-now prog-evt
                                    wait-done addr-override-xy]]
             [cbfg.fence]
-            [cbfg.lane]))
+            [cbfg.lane]
+            [cbfg.world.lane]))
 
 (defn world-vis-init [el-prefix init-event-delay]
-  (cbfg.world.t1/world-vis-init-t "cbfg.world.t2" el-prefix
+  (cbfg.world.t1/world-vis-init-t "cbfg.world.t2"
+                                  cbfg.world.lane/cmd-handlers el-prefix
                                   cbfg.world.t1/ev-msg init-event-delay))
 
 ; --------------------------------------------

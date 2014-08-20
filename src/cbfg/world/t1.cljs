@@ -202,10 +202,9 @@
 
 ; ------------------------------------------------
 
-(defn world-vis-init-t [js-ns el-prefix ev-msg init-event-delay]
+(defn world-vis-init-t [js-ns req-handlers el-prefix ev-msg init-event-delay]
   (init-roots)
-  (let [req-handlers cbfg.world.lane/cmd-handlers
-        req-ch (map< ev-msg (merge (map #(listen-el (gdom/getElement %) "click")
+  (let [req-ch (map< ev-msg (merge (map #(listen-el (gdom/getElement %) "click")
                                         (keys req-handlers))))
         event-delay (atom init-event-delay)
         step-ch (chan (dropping-buffer 1))
@@ -287,7 +286,8 @@
           (recur (inc num-worlds)))))))
 
 (defn world-vis-init [el-prefix init-event-delay]
-  (world-vis-init-t "cbfg.world.t1" el-prefix ev-msg-t1 init-event-delay))
+  (world-vis-init-t "cbfg.world.t1" cbfg.world.lane/cmd-handlers
+                    el-prefix ev-msg-t1 init-event-delay))
 
 ; --------------------------------------------
 
