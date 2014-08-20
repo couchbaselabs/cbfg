@@ -187,20 +187,26 @@
 
 ; ------------------------------------------------
 
-(defn world-vis-init-t [js-ns el-prefix init-event-delay]
+(defn ev-msg [ev]
+  {:op (.-id (.-target ev))
+   :x (js/parseInt (get-el-value "x"))
+   :y (js/parseInt (get-el-value "y"))
+   :delay (js/parseInt (get-el-value "delay"))
+   :fence (= (get-el-value "fence") "1")
+   :lane (get-el-value "lane")
+   :client (get-el-value "client")
+   :color (get-el-value "color")})
+
+(defn ev-msg-t1 [ev]
+  (assoc (ev-msg ev) :sleep (js/parseInt (get-el-value "sleep"))))
+
+; ------------------------------------------------
+
+(defn world-vis-init-t [js-ns el-prefix ev-msg init-event-delay]
   (init-roots)
   (let [req-handlers cbfg.world.lane/cmd-handlers
-        req-ch (map< (fn [ev] {:op (.-id (.-target ev))
-                               :x (js/parseInt (get-el-value "x"))
-                               :y (js/parseInt (get-el-value "y"))
-                               :delay (js/parseInt (get-el-value "delay"))
-                               :fence (= (get-el-value "fence") "1")
-                               :lane (get-el-value "lane")
-                               :client (get-el-value "client")
-                               :color (get-el-value "color")
-                               :sleep (js/parseInt (get-el-value "sleep"))})
-                     (merge (map #(listen-el (gdom/getElement %) "click")
-                                 (keys req-handlers))))
+        req-ch (map< ev-msg (merge (map #(listen-el (gdom/getElement %) "click")
+                                        (keys req-handlers))))
         event-delay (atom init-event-delay)
         step-ch (chan (dropping-buffer 1))
         prog-ch (listen-el (gdom/getElement "prog-go") "click")
@@ -281,7 +287,7 @@
           (recur (inc num-worlds)))))))
 
 (defn world-vis-init [el-prefix init-event-delay]
-  (world-vis-init-t "cbfg.world.t1" el-prefix init-event-delay))
+  (world-vis-init-t "cbfg.world.t1" el-prefix ev-msg-t1 init-event-delay))
 
 ; --------------------------------------------
 

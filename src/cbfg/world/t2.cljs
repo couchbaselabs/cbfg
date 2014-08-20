@@ -1,18 +1,28 @@
 (ns cbfg.world.t2
-  (:require-macros [cbfg.act :refer [act act-loop achan aput atake atimeout]])
+  (:require-macros [cbfg.act :refer [act act-loop achan achan-buf aput atake atimeout]])
   (:require [cbfg.world.t1 :refer [prog-base-now prog-curr-now prog-evt
                                    wait-done addr-override-xy]]
+            [cbfg.fence]
             [cbfg.lane]))
 
 (defn world-vis-init [el-prefix init-event-delay]
-  (cbfg.world.t1/world-vis-init-t "cbfg.world.t2" el-prefix init-event-delay))
+  (cbfg.world.t1/world-vis-init-t "cbfg.world.t2" el-prefix
+                                  cbfg.world.t1/ev-msg init-event-delay))
 
 ; --------------------------------------------
+
+(defn make-fenced-pump-lane [actx lane-name lane-out-ch]
+  (let [max-inflight 10
+        lane-buf-size 20
+        lane-in-ch (achan-buf actx lane-buf-size)]
+    (cbfg.fence/make-fenced-pump actx lane-name lane-in-ch lane-out-ch
+                                 max-inflight false)
+    lane-in-ch))
 
 (defn server-conn-loop [actx server-send-ch server-recv-ch close-server-recv-ch]
   (let [lanes-out-ch (achan actx)]
     (cbfg.lane/make-lane-pump actx server-recv-ch lanes-out-ch
-                              cbfg.world.lane/make-fenced-pump-lane)
+                              make-fenced-pump-lane)
     (act-loop lanes-out actx [num-outs 0]
               (aput lanes-out server-send-ch [(atake lanes-out lanes-out-ch)])
               (recur (inc num-outs)))))
