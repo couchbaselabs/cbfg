@@ -17,7 +17,7 @@
     (act-loop lanes-in actx [num-ins 0]
               (let [msg (atake lanes-in server-recv-ch)]
                 (aput lanes-in lanes-in-ch msg)
-                (when (> (:sleep msg) 0)
+                (when (> (get msg :sleep 0) 0)
                   (let [sleep-ch (atimeout lanes-in (:sleep msg))]
                     (atake lanes-in sleep-ch)))
                 (recur (inc num-ins))))

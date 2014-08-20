@@ -13,24 +13,6 @@
 
 ; --------------------------------------------
 
-(defn make-fenced-pump-lane [actx lane-name lane-out-ch]
-  (let [max-inflight 10
-        lane-buf-size 20
-        lane-in-ch (achan-buf actx lane-buf-size)]
-    (cbfg.fence/make-fenced-pump actx lane-name lane-in-ch lane-out-ch
-                                 max-inflight false)
-    lane-in-ch))
-
-(defn server-conn-loop [actx server-send-ch server-recv-ch close-server-recv-ch]
-  (let [lanes-out-ch (achan actx)]
-    (cbfg.lane/make-lane-pump actx server-recv-ch lanes-out-ch
-                              make-fenced-pump-lane)
-    (act-loop lanes-out actx [num-outs 0]
-              (aput lanes-out server-send-ch [(atake lanes-out lanes-out-ch)])
-              (recur (inc num-outs)))))
-
-; --------------------------------------------
-
 (defn kv-server [server-addr & ports]
   (doseq [port ports]
     (let [world (:world (prog-base-now))
@@ -41,8 +23,7 @@
                    [server-addr port listen-result-ch])
              (when-let [[accept-ch close-accept-ch]
                         (atake server-init listen-result-ch)]
-               (cbfg.world.net/server-accept-loop world accept-ch close-accept-ch
-                                                  :server-conn-loop server-conn-loop)))
+               (cbfg.world.net/server-accept-loop world accept-ch close-accept-ch)))
            (reset! done true))
       (wait-done done)
       (prog-evt world :kv-server {:server-addr server-addr :server-port port}
