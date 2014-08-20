@@ -2,13 +2,16 @@
   (:require-macros [cbfg.act :refer [act act-loop achan achan-buf aput atake atimeout]])
   (:require [cbfg.world.t1 :refer [prog-base-now prog-curr-now prog-evt
                                    wait-done addr-override-xy]]
-            [cbfg.fence]
-            [cbfg.lane]
-            [cbfg.world.lane]))
+            [cbfg.world.base]))
+
+(def cmd-handlers
+  {"add"   (fn [c] (assoc c :rq #(cbfg.world.base/example-add % c)))
+   "sub"   (fn [c] (assoc c :rq #(cbfg.world.base/example-sub % c)))
+   "count" (fn [c] (assoc c :rq #(cbfg.world.base/example-count % c)))
+   "close-lane" (fn [c] (assoc c :op :close-lane))})
 
 (defn world-vis-init [el-prefix init-event-delay]
-  (cbfg.world.t1/world-vis-init-t "cbfg.world.t2"
-                                  cbfg.world.lane/cmd-handlers el-prefix
+  (cbfg.world.t1/world-vis-init-t "cbfg.world.t2" cmd-handlers el-prefix
                                   cbfg.world.t1/ev-msg init-event-delay))
 
 ; --------------------------------------------
