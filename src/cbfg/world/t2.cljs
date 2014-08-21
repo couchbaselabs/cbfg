@@ -1,6 +1,7 @@
 (ns cbfg.world.t2
-  (:require-macros [cbfg.act :refer [act act-loop achan achan-buf aput atake atimeout]])
-  (:require [cbfg.world.t1 :refer [prog-base-now prog-curr-now prog-evt
+  (:require-macros [cbfg.act :refer [act achan achan-buf aput atake]])
+  (:require [cbfg.fence]
+            [cbfg.world.t1 :refer [prog-base-now prog-curr-now prog-evt
                                    wait-done addr-override-xy]]
             [cbfg.world.base]
             [cbfg.world.net]))
@@ -16,9 +17,16 @@
                                   (make-t2-cmd-handlers nil) el-prefix
                                   cbfg.world.t1/ev-msg init-event-delay))
 
+(defn make-fenced-pump-lane [actx lane-name lane-out-ch]
+  (let [max-inflight 10
+        lane-buf-size 20
+        lane-in-ch (achan-buf actx lane-buf-size)]
+    (cbfg.fence/make-fenced-pump actx lane-name lane-in-ch lane-out-ch max-inflight false)
+    lane-in-ch))
+
 (defn server-conn-loop [actx server-send-ch server-recv-ch close-server-recv-ch]
   (cbfg.world.net/server-conn-loop actx server-send-ch server-recv-ch close-server-recv-ch
-                                   :make-lane-fn cbfg.world.lane/make-fenced-pump-lane))
+                                   :make-lane-fn make-fenced-pump-lane))
 
 ; --------------------------------------------
 
