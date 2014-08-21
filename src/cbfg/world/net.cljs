@@ -9,11 +9,12 @@
             [cbfg.world.lane]
             [cbfg.world.base :refer [replay-cmd-ch world-cmd-loop start-test]]))
 
-(defn server-conn-loop [actx server-send-ch server-recv-ch close-server-recv-ch]
+(defn server-conn-loop [actx server-send-ch server-recv-ch close-server-recv-ch &
+                        {:keys [make-lane-fn]
+                         :or {make-lane-fn cbfg.world.lane/make-fenced-pump-lane}}]
   (let [lanes-in-ch (achan actx)
         lanes-out-ch (achan actx)]
-    (cbfg.lane/make-lane-pump actx lanes-in-ch lanes-out-ch
-                              cbfg.world.lane/make-fenced-pump-lane)
+    (cbfg.lane/make-lane-pump actx lanes-in-ch lanes-out-ch make-lane-fn)
     (act-loop lanes-in actx [num-ins 0]
               (let [msg (atake lanes-in server-recv-ch)]
                 (aput lanes-in lanes-in-ch msg)
