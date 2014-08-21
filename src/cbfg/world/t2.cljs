@@ -17,15 +17,19 @@
                                   (make-t2-cmd-handlers nil) el-prefix
                                   cbfg.world.t1/ev-msg init-event-delay))
 
+; --------------------------------------------
+
 (defn make-fenced-pump-lane [actx lane-name lane-out-ch]
   (let [max-inflight 10
         lane-buf-size 20
         lane-in-ch (achan-buf actx lane-buf-size)]
-    (cbfg.fence/make-fenced-pump actx lane-name lane-in-ch lane-out-ch max-inflight false)
+    (cbfg.fence/make-fenced-pump actx lane-name lane-in-ch lane-out-ch
+                                 max-inflight false)
     lane-in-ch))
 
 (defn server-conn-loop [actx server-send-ch server-recv-ch close-server-recv-ch]
-  (cbfg.world.net/server-conn-loop actx server-send-ch server-recv-ch close-server-recv-ch
+  (cbfg.world.net/server-conn-loop actx server-send-ch server-recv-ch
+                                   close-server-recv-ch
                                    :make-lane-fn make-fenced-pump-lane))
 
 ; --------------------------------------------

@@ -1,5 +1,8 @@
 (ns cbfg.misc)
 
+(defn identity2 [x y]
+  [x y])
+
 (defn dissoc-in [m [k & ks :as keys]]
   (if ks
     (if-let [next-map (get m k)]
