@@ -2,7 +2,8 @@
   (:require-macros [cbfg.act :refer [act act-loop achan achan-buf aput atake atimeout]])
   (:require [cbfg.world.t1 :refer [prog-base-now prog-curr-now prog-evt
                                    wait-done addr-override-xy]]
-            [cbfg.world.base]))
+            [cbfg.world.base]
+            [cbfg.world.net]))
 
 (defn make-t2-cmd-handlers [st]
   {"add"   (fn [c] (assoc c :rq #(cbfg.world.base/example-add % c)))
@@ -14,6 +15,10 @@
   (cbfg.world.t1/world-vis-init-t "cbfg.world.t2"
                                   (make-t2-cmd-handlers nil) el-prefix
                                   cbfg.world.t1/ev-msg init-event-delay))
+
+(defn server-conn-loop [actx server-send-ch server-recv-ch close-server-recv-ch]
+  (cbfg.world.net/server-conn-loop actx server-send-ch server-recv-ch close-server-recv-ch
+                                   :make-lane-fn cbfg.world.lane/make-fenced-pump-lane))
 
 ; --------------------------------------------
 
@@ -27,7 +32,8 @@
                    [server-addr port listen-result-ch])
              (when-let [[accept-ch close-accept-ch]
                         (atake server-init listen-result-ch)]
-               (cbfg.world.net/server-accept-loop world accept-ch close-accept-ch)))
+               (cbfg.world.net/server-accept-loop world accept-ch close-accept-ch
+                                                  :server-conn-loop server-conn-loop)))
            (reset! done true))
       (wait-done done)
       (prog-evt world :kv-server {:server-addr server-addr :server-port port}
