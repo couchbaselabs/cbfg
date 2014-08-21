@@ -37,7 +37,7 @@
 ;; {:rq function-to-call :fence true-or-false}
 
 (defn make-fenced-pump [actx name in-ch out-ch max-inflight close? &
-                        {:keys [ext-cb] :or {ext-cb cbfg.misc/identity2}}]
+                        {:keys [ext-cb]}]
   (act-loop fenced-pump actx
    [name name
     inflight-chs #{}                ; chans of requests currently being processed.
@@ -50,7 +50,9 @@
                     (conj inflight-chs in-ch)))]
      (if (seq chs)                  ; empty when in-ch is closed and no inflight-chs.
        (let [[v ch] (aalts fenced-pump chs)
-             [v ext-state] (ext-cb v ext-state)]
+             [v ext-state] (if ext-cb
+                             (ext-cb (= ch in-ch) v ext-state)
+                             [v ext-state])]
          (cond
           (= ch in-ch) (if (nil? v)
                          (recur name inflight-chs out-ch ; using out-ch as sentinel.

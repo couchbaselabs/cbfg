@@ -19,12 +19,17 @@
 
 ; --------------------------------------------
 
+(defn ext-cb [is-request msg ext-state]
+  (if msg
+    [msg ext-state]
+    [msg ext-state]))
+
 (defn make-fenced-pump-lane [actx lane-name lane-out-ch]
   (let [max-inflight 10
         lane-buf-size 20
         lane-in-ch (achan-buf actx lane-buf-size)]
     (cbfg.fence/make-fenced-pump actx lane-name lane-in-ch lane-out-ch
-                                 max-inflight false)
+                                 max-inflight false :ext-cb ext-cb)
     lane-in-ch))
 
 (defn server-conn-loop [actx server-send-ch server-recv-ch close-server-recv-ch]
