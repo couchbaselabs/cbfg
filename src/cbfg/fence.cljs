@@ -1,6 +1,5 @@
 (ns cbfg.fence
-  (:require-macros [cbfg.act :refer [aclose aalts act-loop aput]])
-  (:require [cbfg.misc]))
+  (:require-macros [cbfg.act :refer [aclose aalts act-loop aput]]))
 
 ;; Explaining out-of-order replies and fencing with a diagram.  Client
 ;; sends a bunch of requests (r0...r4), where r2 is fenced (F).  "pX"
@@ -36,40 +35,34 @@
 ;; request format
 ;; {:rq function-to-call :fence true-or-false}
 
-(defn make-fenced-pump [actx name in-ch out-ch max-inflight close? &
-                        {:keys [ext-cb]}]
+(defn make-fenced-pump [actx name in-ch out-ch max-inflight close?]
   (act-loop fenced-pump actx
    [name name
     inflight-chs #{}                ; chans of requests currently being processed.
     fenced-ch nil                   ; chan of last, inflight "fenced" request.
-    fenced-ch-res nil               ; last received result from last fenced request.
-    ext-state nil]
+    fenced-ch-res nil]              ; last received result from last fenced request.
    (let [chs (vec (if (or fenced-ch ; if we're fenced or too many inflight requests,
                           (>= (count inflight-chs) max-inflight))
                     inflight-chs    ; then ignore in-ch & finish any inflight requests.
                     (conj inflight-chs in-ch)))]
      (if (seq chs)                  ; empty when in-ch is closed and no inflight-chs.
-       (let [[v ch] (aalts fenced-pump chs)
-             [v ext-state] (if ext-cb
-                             (ext-cb (= ch in-ch) v ext-state)
-                             [v ext-state])]
+       (let [[v ch] (aalts fenced-pump chs)]
          (cond
           (= ch in-ch) (if (nil? v)
-                         (recur name inflight-chs out-ch ; using out-ch as sentinel.
-                                 nil ext-state)
+                         (recur name inflight-chs out-ch nil) ; using out-ch as sentinel.
                          (let [new-inflight ((:rq v) fenced-pump)]
                            (recur name (conj inflight-chs new-inflight)
                                   (when (:fence v) new-inflight)
-                                  nil ext-state)))
+                                  nil)))
           (= v nil) (let [new-inflight-chs (disj inflight-chs ch)] ; inflight request done.
                       (if (empty? new-inflight-chs)           ; all inflight requests done,
                         (do (when fenced-ch-res               ; so send held fenced-ch-res.
                               (aput fenced-pump out-ch fenced-ch-res))
-                            (recur name new-inflight-chs nil nil ext-state))
-                        (recur name new-inflight-chs fenced-ch fenced-ch-res ext-state)))
+                            (recur name new-inflight-chs nil nil))
+                        (recur name new-inflight-chs fenced-ch fenced-ch-res)))
           (= ch fenced-ch) (do (when fenced-ch-res ; send held fenced-res to hold onto v.
                                  (aput fenced-pump out-ch fenced-ch-res))
-                               (recur name inflight-chs fenced-ch v ext-state))
+                               (recur name inflight-chs fenced-ch v))
           :else (do (aput fenced-pump out-ch v)
-                    (recur name inflight-chs fenced-ch fenced-ch-res ext-state))))
+                    (recur name inflight-chs fenced-ch fenced-ch-res))))
        (when close? (aclose fenced-pump out-ch))))))

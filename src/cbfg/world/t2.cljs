@@ -6,6 +6,18 @@
             [cbfg.world.base]
             [cbfg.world.net]))
 
+(def req-handlers
+  {"add" cbfg.world.base/example-add
+   "sub" cbfg.world.base/example-add
+   "count" cbfg.world.base/example-add
+   "close-lane" cbfg.world.base/close-lane})
+
+(defn req-handler [actx c]
+  (let [rh (get req-handlers (:op c))]
+    (rh actx c)))
+
+(defn cmd-handler [c] (assoc c :rq #(req-handler % c)))
+
 (defn make-t2-cmd-handlers [st]
   {"add"   (fn [c] (assoc c :rq #(cbfg.world.base/example-add % c)))
    "sub"   (fn [c] (assoc c :rq #(cbfg.world.base/example-sub % c)))
@@ -19,17 +31,12 @@
 
 ; --------------------------------------------
 
-(defn ext-cb [is-request msg ext-state]
-  (if msg
-    [msg ext-state]
-    [msg ext-state]))
-
 (defn make-fenced-pump-lane [actx lane-name lane-out-ch]
   (let [max-inflight 10
         lane-buf-size 20
         lane-in-ch (achan-buf actx lane-buf-size)]
     (cbfg.fence/make-fenced-pump actx lane-name lane-in-ch lane-out-ch
-                                 max-inflight false :ext-cb ext-cb)
+                                 max-inflight false)
     lane-in-ch))
 
 (defn server-conn-loop [actx server-send-ch server-recv-ch close-server-recv-ch]
