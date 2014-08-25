@@ -12,15 +12,12 @@
    "count" cbfg.world.base/example-count
    "close-lane" cbfg.world.base/close-lane})
 
-(defn cmd-handler [c] (assoc c :rq #((get req-handlers (:op c)) % c)))
-
-(defn make-t2-cmd-handlers []
-  (into {} (map (fn [k] [k cmd-handler]) (keys req-handlers))))
-
 (defn world-vis-init [el-prefix init-event-delay]
-  (cbfg.world.t1/world-vis-init-t "cbfg.world.t2"
-                                  (make-t2-cmd-handlers) el-prefix
-                                  cbfg.world.t1/ev-msg init-event-delay))
+  (let [cmd-handler (fn [c] (assoc c :rq #((get req-handlers (:op c)) % c)))
+        cmd-handlers (into {} (map (fn [k] [k cmd-handler]) (keys req-handlers)))]
+    (cbfg.world.t1/world-vis-init-t "cbfg.world.t2"
+                                    cmd-handlers el-prefix
+                                    cbfg.world.t1/ev-msg init-event-delay)))
 
 ; --------------------------------------------
 
