@@ -21,39 +21,37 @@
 
 ; --------------------------------------------
 
-(defn make-fenced-pump-lane [actx lane-name lane-out-ch]
-  (let [max-inflight 10
-        lane-buf-size 20
-        lane-in-ch (achan-buf actx lane-buf-size)]
-    (cbfg.fence/make-fenced-pump actx lane-name lane-in-ch lane-out-ch
-                                 max-inflight false)
-    lane-in-ch))
-
-(defn server-conn-loop [actx server-send-ch server-recv-ch close-server-recv-ch]
-  (cbfg.world.net/server-conn-loop actx server-send-ch server-recv-ch
-                                   close-server-recv-ch
-                                   :make-lane-fn make-fenced-pump-lane))
-
 ; --------------------------------------------
 
 (defn kv-server [server-addr & ports]
-  (doseq [port ports]
-    (let [world (:world (prog-base-now))
-          done (atom false)]
-      (act server-init world
-           (when-let [listen-result-ch (achan server-init)]
-             (aput server-init (:net-listen-ch (prog-base-now))
-                   [server-addr port listen-result-ch])
-             (when-let [[accept-ch close-accept-ch]
-                        (atake server-init listen-result-ch)]
-               (cbfg.world.net/server-accept-loop world accept-ch close-accept-ch
-                                                  :server-conn-loop server-conn-loop)))
-           (reset! done true))
-      (wait-done done)
-      (prog-evt world :kv-server {:server-addr server-addr :server-port port}
-                #(update-in % [:servers server-addr] conj port))))
-  (addr-override-xy server-addr
-                    300 (+ 20 (* 120 (dec (count (:servers (prog-curr-now))))))))
+  (let [lane-max-inflight 10
+        lane-buf-size 20
+        make-lane (fn [actx lane-name lane-out-ch]
+                    (let [lane-in-ch (achan-buf actx lane-buf-size)]
+                      (cbfg.fence/make-fenced-pump actx lane-name lane-in-ch lane-out-ch
+                                                   lane-max-inflight false)
+                      lane-in-ch))
+        conn-loop (fn [actx server-send-ch server-recv-ch close-server-recv-ch]
+                    (cbfg.world.net/server-conn-loop actx server-send-ch server-recv-ch
+                                                     close-server-recv-ch
+                                                     :make-lane-fn make-lane))]
+    (doseq [port ports]
+      (let [world (:world (prog-base-now))
+            done (atom false)]
+        (act server-init world
+             (when-let [listen-result-ch (achan server-init)]
+               (aput server-init (:net-listen-ch (prog-base-now))
+                     [server-addr port listen-result-ch])
+               (when-let [[accept-ch close-accept-ch]
+                          (atake server-init listen-result-ch)]
+                 (cbfg.world.net/server-accept-loop world accept-ch close-accept-ch
+                                                    :server-conn-loop conn-loop)))
+             (reset! done true))
+        (wait-done done)
+        (prog-evt world :kv-server {:server-addr server-addr :server-port port}
+                  #(update-in % [:servers server-addr] conj port))))
+    (addr-override-xy server-addr
+                      300 (+ 20 (* 120 (dec (count (:servers (prog-curr-now)))))))))
 
 (defn kv-client [client-addr server-addr server-port]
   (let [world (:world (prog-base-now))
