@@ -18,15 +18,12 @@
 
 (defn cmd-handler [c] (assoc c :rq #(req-handler % c)))
 
-(defn make-t2-cmd-handlers [st]
-  {"add"   (fn [c] (assoc c :rq #(cbfg.world.base/example-add % c)))
-   "sub"   (fn [c] (assoc c :rq #(cbfg.world.base/example-sub % c)))
-   "count" (fn [c] (assoc c :rq #(cbfg.world.base/example-count % c)))
-   "close-lane" (fn [c] (assoc c :op :close-lane))})
+(defn make-t2-cmd-handlers []
+  (into {} (map (fn [k] [k cmd-handler]) (keys req-handlers))))
 
 (defn world-vis-init [el-prefix init-event-delay]
   (cbfg.world.t1/world-vis-init-t "cbfg.world.t2"
-                                  (make-t2-cmd-handlers nil) el-prefix
+                                  (make-t2-cmd-handlers) el-prefix
                                   cbfg.world.t1/ev-msg init-event-delay))
 
 ; --------------------------------------------
