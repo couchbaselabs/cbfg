@@ -60,10 +60,10 @@
 
 ; --------------------------------------------
 
-(defn state-loop [actx name initial-state]
+(defn state-loop [actx name initial-state & {:keys [unknown-fn]}]
   (let [req-ch (achan actx)]
     (act-loop state-loop actx [name name state initial-state]
-              (let [m (atake state-loop req-ch)]
+              (when-let [m (atake state-loop req-ch)]
                 (case (:op m)
                   :get (do (aput state-loop (:res-ch m)
                                  (assoc m :status :ok :value state))
@@ -72,7 +72,11 @@
                                 (aput state-loop (:res-ch m)
                                       (assoc m :status :ok)))
                               (recur name ((:update-fn m) state)))
-                  :unknown-op)))
+                  (when unknown-fn
+                    (when-let [[state2 res] (unknown-fn state m)]
+                      (when res
+                        (aput state-loop (:res-ch m) res))
+                      (recur name state2))))))
     req-ch))
 
 ; --------------------------------------------
