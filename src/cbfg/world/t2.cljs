@@ -55,7 +55,9 @@
                                                    :ext-cb lane-state-cb)
                       lane-in-ch))
         conn-loop (fn [actx server-send-ch server-recv-ch close-server-recv-ch]
-                    (cbfg.world.net/server-conn-loop actx server-send-ch server-recv-ch
+                    (cbfg.world.net/server-conn-loop actx
+                                                     server-send-ch
+                                                     server-recv-ch
                                                      close-server-recv-ch
                                                      :make-lane-fn make-lane))]
     (doseq [port ports]
