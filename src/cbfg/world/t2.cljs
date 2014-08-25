@@ -7,18 +7,44 @@
             [cbfg.world.base]
             [cbfg.world.net]))
 
+(defn rq-authenticate [actx m]
+  (act rq-authenticate actx
+       (let [{:keys [server-state-ch lane-state-ch realm user pswd]} m
+             r (dissoc m :pswd)]
+         (if (and realm user pswd)
+           (let [res-ch (achan rq-authenticate)]
+             (if (aput rq-authenticate server-state-ch {:op :get :res-ch res-ch})
+               (let [server-state (atake rq-authenticate res-ch)]
+                 (if (= pswd (get-in server-state
+                                     [:realms realm :users user :pswd]))
+                   (do (aput rq-authenticate lane-state-ch
+                             {:op :update
+                              :update-fn #(assoc % :cred {:realm realm
+                                                          :user :user})})
+                       (assoc r :status :ok))
+                   (assoc r :status :failed
+                          :status-info [:authenticate-failed :mismatch])))
+               (assoc r :status :failed
+                      :status-info [:authenticate-failed :closed])))
+           (assoc r :status :invalid
+                  :status-info [:missing-args :authenticate])))))
+
+; --------------------------------------------
+
 (def rq-handlers
-  {"add" cbfg.world.base/example-add
+  {"authenticate" rq-authenticate
+   "add" cbfg.world.base/example-add
    "sub" cbfg.world.base/example-add
    "count" cbfg.world.base/example-count
    "close-lane" cbfg.world.base/close-lane})
 
-(defn rq-dispatch [actx c] ((get rq-handlers (:op c)) actx c))
+(defn rq-dispatch [actx m] ((get rq-handlers (:op m)) actx m))
+
+; --------------------------------------------
 
 (defn cmd-handler [c] (assoc c :rq #(rq-dispatch % c)))
 
-(def cmd-handlers (into {} (map (fn [k] [k cmd-handler])
-                                (keys rq-handlers))))
+(def cmd-handlers (into {} (map (fn [k] [k cmd-handler]) (keys rq-handlers))))
 
 (defn world-vis-init [el-prefix init-event-delay]
     (cbfg.world.t1/world-vis-init-t "cbfg.world.t2"
@@ -35,8 +61,9 @@
                   :get (do (aput state-loop (:res-ch m)
                                  (assoc m :status :ok :value state))
                            (recur name state))
-                  :update (do (aput state-loop (:res-ch m)
-                                    (assoc m :status :ok))
+                  :update (do (when (:res-ch m)
+                                (aput state-loop (:res-ch m)
+                                      (assoc m :status :ok)))
                               (recur name ((:update-fn m) state)))
                   :unknown-op)))
     req-ch))
