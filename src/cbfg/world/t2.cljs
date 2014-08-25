@@ -1,5 +1,6 @@
 (ns cbfg.world.t2
-  (:require-macros [cbfg.act :refer [act achan achan-buf aput atake]])
+  (:require-macros [cbfg.act :refer [act act-loop achan achan-buf
+                                     aclose aput atake]])
   (:require [cbfg.fence]
             [cbfg.world.t1 :refer [prog-base-now prog-curr-now prog-evt
                                    wait-done addr-override-xy]]
@@ -25,10 +26,30 @@
   (let [lane-max-inflight 10
         lane-buf-size 20
         make-lane (fn [actx lane-name lane-out-ch]
-                    (let [lane-in-ch (achan-buf actx lane-buf-size)]
+                    (let [lane-in-ch (achan-buf actx lane-buf-size)
+                          cred-ch (achan actx)
+                          cred-cb (fn [is-req msg lane-state]
+                                    (if is-req
+                                      (if msg
+                                        [(assoc msg :cred-ch cred-ch) lane-state]
+                                        (do (act close-cred actx
+                                                 (aclose close-cred cred-ch))
+                                            [msg lane-state]))
+                                      [msg lane-state]))]
                       (cbfg.fence/make-fenced-pump actx lane-name
                                                    lane-in-ch lane-out-ch
-                                                   lane-max-inflight false)
+                                                   lane-max-inflight false
+                                                   :ext-cb cred-cb)
+                      (act-loop lane-cred actx [cred nil]
+                                (let [m (atake lane-cred cred-ch)]
+                                  (case (:op m)
+                                    :get-cred (do (aput lane-cred (:res-ch m)
+                                                        (assoc m :status :ok :result cred))
+                                                  (recur cred))
+                                    :set-cred (do (aput lane-cred (:res-ch m)
+                                                        (assoc m :status :ok))
+                                                  (recur (:cred m)))
+                                    :mismatch)))
                       lane-in-ch))
         conn-loop (fn [actx server-send-ch server-recv-ch close-server-recv-ch]
                     (cbfg.world.net/server-conn-loop actx server-send-ch server-recv-ch
