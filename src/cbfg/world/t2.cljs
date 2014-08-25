@@ -14,6 +14,11 @@
             "_lobby" {:default-user "_anon"
                       :users {"_anon" {:pswd ""}}}}})
 
+(def initial-lane-state
+  (let [realm (:default-realm initial-server-state)]
+    {:realm realm
+     :user (get-in initial-server-state [:realms realm :default-user])}))
+
 (defn rq-authenticate [actx m]
   (act rq-authenticate actx
        (let [{:keys [server-state-ch lane-state-ch realm user pswd]} m
@@ -60,7 +65,7 @@
 
 ; --------------------------------------------
 
-(defn start-state-loop [actx name initial-state]
+(defn state-loop [actx name initial-state]
   (let [req-ch (achan actx)]
     (act-loop state-loop actx [name name state initial-state]
               (let [m (atake state-loop req-ch)]
@@ -79,14 +84,12 @@
 
 (defn kv-server [server-addr & ports]
   (let [world (:world (prog-base-now))
-        server-state-ch (start-state-loop world :server-state initial-server-state)
+        server-state-ch (state-loop world :server-state initial-server-state)
         lane-max-inflight 10
         lane-buf-size 20
         make-lane (fn [actx lane-name lane-out-ch]
                     (let [lane-in-ch (achan-buf actx lane-buf-size)
-                          lane-state-ch (start-state-loop actx
-                                                          :lane-state {:realm "_lobby"
-                                                                       :user "_anon"})
+                          lane-state-ch (state-loop actx :lane-state initial-lane-state)
                           lane-state-cb (fn [is-req m lane-ext-state]
                                           (if is-req
                                             (if m
