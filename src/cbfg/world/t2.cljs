@@ -53,9 +53,9 @@
 
 ; --------------------------------------------
 
-(defn start-state-loop [actx name]
+(defn start-state-loop [actx name initial-state]
   (let [req-ch (achan actx)]
-    (act-loop state-loop actx [name name state {}]
+    (act-loop state-loop actx [name name state initial-state]
               (let [m (atake state-loop req-ch)]
                 (case (:op m)
                   :get (do (aput state-loop (:res-ch m)
@@ -70,14 +70,22 @@
 
 ; --------------------------------------------
 
+(def initial-server-state
+  {:default-realm "default"
+   :realms {"_system" {:users {"admin" {:pswd "password"}}}
+            "_foyer" {:users {"_anon" {:pswd ""}}}
+            "default" {:default-user "_anon"
+                       :users {"admin" {:pswd "password"}
+                               "_anon" {:pswd ""}}}}})
+
 (defn kv-server [server-addr & ports]
   (let [world (:world (prog-base-now))
-        server-state-ch (start-state-loop world :server-state)
+        server-state-ch (start-state-loop world :server-state initial-server-state)
         lane-max-inflight 10
         lane-buf-size 20
         make-lane (fn [actx lane-name lane-out-ch]
                     (let [lane-in-ch (achan-buf actx lane-buf-size)
-                          lane-state-ch (start-state-loop actx :lane-state)
+                          lane-state-ch (start-state-loop actx :lane-state {})
                           lane-state-cb (fn [is-req m lane-ext-state]
                                           (if is-req
                                             (if m
