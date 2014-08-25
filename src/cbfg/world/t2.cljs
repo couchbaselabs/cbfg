@@ -7,18 +7,25 @@
             [cbfg.world.base]
             [cbfg.world.net]))
 
-(def req-handlers
+(def rq-handlers
   {"add" cbfg.world.base/example-add
    "sub" cbfg.world.base/example-add
    "count" cbfg.world.base/example-count
    "close-lane" cbfg.world.base/close-lane})
 
+(defn rq-dispatch [actx c] ((get rq-handlers (:op c)) actx c))
+
+(defn cmd-handler [c] (assoc c :rq #(rq-dispatch % c)))
+
+(def cmd-handlers (into {} (map (fn [k] [k cmd-handler])
+                                (keys rq-handlers))))
+
 (defn world-vis-init [el-prefix init-event-delay]
-  (let [cmd-handler (fn [c] (assoc c :rq #((get req-handlers (:op c)) % c)))
-        cmd-handlers (into {} (map (fn [k] [k cmd-handler]) (keys req-handlers)))]
     (cbfg.world.t1/world-vis-init-t "cbfg.world.t2"
                                     cmd-handlers el-prefix
-                                    cbfg.world.t1/ev-msg init-event-delay)))
+                                    cbfg.world.t1/ev-msg init-event-delay))
+
+; --------------------------------------------
 
 (defn start-state-loop [actx name]
   (let [req-ch (achan actx)]
