@@ -7,6 +7,13 @@
             [cbfg.world.base]
             [cbfg.world.net]))
 
+(def initial-server-state
+  {:default-realm "_lobby"
+   :realms {"_system" {:default-user nil
+                       :users {"admin" {:pswd "password"}}}
+            "_lobby" {:default-user "_anon"
+                      :users {"_anon" {:pswd ""}}}}})
+
 (defn rq-authenticate [actx m]
   (act rq-authenticate actx
        (let [{:keys [server-state-ch lane-state-ch realm user pswd]} m
@@ -20,7 +27,7 @@
                    (do (aput rq-authenticate lane-state-ch
                              {:op :update
                               :update-fn #(assoc % :cred {:realm realm
-                                                          :user :user})})
+                                                          :user user})})
                        (assoc r :status :ok))
                    (assoc r :status :failed
                           :status-info [:authenticate-failed :mismatch])))
@@ -70,14 +77,6 @@
 
 ; --------------------------------------------
 
-(def initial-server-state
-  {:default-realm "default"
-   :realms {"_system" {:users {"admin" {:pswd "password"}}}
-            "_foyer" {:users {"_anon" {:pswd ""}}}
-            "default" {:default-user "_anon"
-                       :users {"admin" {:pswd "password"}
-                               "_anon" {:pswd ""}}}}})
-
 (defn kv-server [server-addr & ports]
   (let [world (:world (prog-base-now))
         server-state-ch (start-state-loop world :server-state initial-server-state)
@@ -85,7 +84,9 @@
         lane-buf-size 20
         make-lane (fn [actx lane-name lane-out-ch]
                     (let [lane-in-ch (achan-buf actx lane-buf-size)
-                          lane-state-ch (start-state-loop actx :lane-state {})
+                          lane-state-ch (start-state-loop actx
+                                                          :lane-state {:realm "_lobby"
+                                                                       :user "_anon"})
                           lane-state-cb (fn [is-req m lane-ext-state]
                                           (if is-req
                                             (if m
