@@ -21,14 +21,13 @@
 
 ; --------------------------------------------
 
-; --------------------------------------------
-
 (defn kv-server [server-addr & ports]
   (let [lane-max-inflight 10
         lane-buf-size 20
         make-lane (fn [actx lane-name lane-out-ch]
                     (let [lane-in-ch (achan-buf actx lane-buf-size)]
-                      (cbfg.fence/make-fenced-pump actx lane-name lane-in-ch lane-out-ch
+                      (cbfg.fence/make-fenced-pump actx lane-name
+                                                   lane-in-ch lane-out-ch
                                                    lane-max-inflight false)
                       lane-in-ch))
         conn-loop (fn [actx server-send-ch server-recv-ch close-server-recv-ch]
