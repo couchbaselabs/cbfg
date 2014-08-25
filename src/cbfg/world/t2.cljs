@@ -27,29 +27,32 @@
         lane-buf-size 20
         make-lane (fn [actx lane-name lane-out-ch]
                     (let [lane-in-ch (achan-buf actx lane-buf-size)
-                          cred-ch (achan actx)
-                          cred-cb (fn [is-req msg lane-state]
-                                    (if is-req
-                                      (if msg
-                                        [(assoc msg :cred-ch cred-ch) lane-state]
-                                        (do (act close-cred actx
-                                                 (aclose close-cred cred-ch))
-                                            [msg lane-state]))
-                                      [msg lane-state]))]
+                          lane-state-ch (achan actx)
+                          lane-state-cb (fn [is-req m lane-ext-state]
+                                          (if is-req
+                                            (if m
+                                              [(assoc m :lane-state-ch lane-state-ch)
+                                               lane-ext-state]
+                                              (do (act closer actx
+                                                       (aclose closer lane-state-ch))
+                                                  [m lane-ext-state]))
+                                            [m lane-ext-state]))]
+                      (act-loop lane-state-loop actx [lane-state nil]
+                                (let [m (atake lane-state-loop lane-state-ch)]
+                                  (case (:op m)
+                                    :get-lane-state
+                                    (do (aput lane-state-loop (:res-ch m)
+                                              (assoc m :status :ok :value lane-state))
+                                        (recur lane-state))
+                                    :update-lane-state
+                                    (do (aput lane-state-loop (:res-ch m)
+                                              (assoc m :status :ok))
+                                        (recur ((:update-fn m) lane-state)))
+                                    :unknown-op)))
                       (cbfg.fence/make-fenced-pump actx lane-name
                                                    lane-in-ch lane-out-ch
                                                    lane-max-inflight false
-                                                   :ext-cb cred-cb)
-                      (act-loop lane-cred actx [cred nil]
-                                (let [m (atake lane-cred cred-ch)]
-                                  (case (:op m)
-                                    :get-cred (do (aput lane-cred (:res-ch m)
-                                                        (assoc m :status :ok :result cred))
-                                                  (recur cred))
-                                    :set-cred (do (aput lane-cred (:res-ch m)
-                                                        (assoc m :status :ok))
-                                                  (recur (:cred m)))
-                                    :mismatch)))
+                                                   :ext-cb lane-state-cb)
                       lane-in-ch))
         conn-loop (fn [actx server-send-ch server-recv-ch close-server-recv-ch]
                     (cbfg.world.net/server-conn-loop actx server-send-ch server-recv-ch
