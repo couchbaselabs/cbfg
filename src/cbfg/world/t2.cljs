@@ -8,16 +8,11 @@
             [cbfg.world.net]))
 
 (def initial-server-state
-  {:default-realm "_lobby"
-   :realms {"_system" {:default-user nil
-                       :users {"admin" {:pswd "password"}}}
-            "_lobby" {:default-user "_anon"
-                      :users {"_anon" {:pswd ""}}}}})
+  {:realms {"_system" {:users {"admin" {:pswd "password"}}}
+            "_lobby" {:users {"_anon" {:pswd ""}}}}})
 
 (def initial-lane-state
-  (let [realm (:default-realm initial-server-state)]
-    {:realm realm
-     :user (get-in initial-server-state [:realms realm :default-user])}))
+  {:realm "_lobby" :user "_anon"})
 
 (defn rq-authenticate [actx m]
   (act rq-authenticate actx
