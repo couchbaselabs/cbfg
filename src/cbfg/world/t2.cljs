@@ -9,14 +9,10 @@
 (def req-handlers
   {"add" cbfg.world.base/example-add
    "sub" cbfg.world.base/example-add
-   "count" cbfg.world.base/example-add
+   "count" cbfg.world.base/example-count
    "close-lane" cbfg.world.base/close-lane})
 
-(defn req-handler [actx c]
-  (let [rh (get req-handlers (:op c))]
-    (rh actx c)))
-
-(defn cmd-handler [c] (assoc c :rq #(req-handler % c)))
+(defn cmd-handler [c] (assoc c :rq #((get req-handlers (:op c)) % c)))
 
 (defn make-t2-cmd-handlers []
   (into {} (map (fn [k] [k cmd-handler]) (keys req-handlers))))
