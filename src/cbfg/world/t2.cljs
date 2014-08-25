@@ -20,35 +20,40 @@
                                     cmd-handlers el-prefix
                                     cbfg.world.t1/ev-msg init-event-delay)))
 
+(defn start-state-loop [actx name]
+  (let [req-ch (achan actx)]
+    (act-loop state-loop actx [name name state {}]
+              (let [m (atake state-loop req-ch)]
+                (case (:op m)
+                  :get (do (aput state-loop (:res-ch m)
+                                 (assoc m :status :ok :value state))
+                           (recur name state))
+                  :update (do (aput state-loop (:res-ch m)
+                                    (assoc m :status :ok))
+                              (recur name ((:update-fn m) state)))
+                  :unknown-op)))
+    req-ch))
+
 ; --------------------------------------------
 
 (defn kv-server [server-addr & ports]
-  (let [lane-max-inflight 10
+  (let [world (:world (prog-base-now))
+        server-state-ch (start-state-loop world :server-state)
+        lane-max-inflight 10
         lane-buf-size 20
         make-lane (fn [actx lane-name lane-out-ch]
                     (let [lane-in-ch (achan-buf actx lane-buf-size)
-                          lane-state-ch (achan actx)
+                          lane-state-ch (start-state-loop actx :lane-state)
                           lane-state-cb (fn [is-req m lane-ext-state]
                                           (if is-req
                                             (if m
-                                              [(assoc m :lane-state-ch lane-state-ch)
+                                              [(assoc m :lane-state-ch lane-state-ch
+                                                      :server-state-ch server-state-ch)
                                                lane-ext-state]
                                               (do (act closer actx
                                                        (aclose closer lane-state-ch))
                                                   [m lane-ext-state]))
                                             [m lane-ext-state]))]
-                      (act-loop lane-state-loop actx [lane-state nil]
-                                (let [m (atake lane-state-loop lane-state-ch)]
-                                  (case (:op m)
-                                    :get-lane-state
-                                    (do (aput lane-state-loop (:res-ch m)
-                                              (assoc m :status :ok :value lane-state))
-                                        (recur lane-state))
-                                    :update-lane-state
-                                    (do (aput lane-state-loop (:res-ch m)
-                                              (assoc m :status :ok))
-                                        (recur ((:update-fn m) lane-state)))
-                                    :unknown-op)))
                       (cbfg.fence/make-fenced-pump actx lane-name
                                                    lane-in-ch lane-out-ch
                                                    lane-max-inflight false
@@ -61,14 +66,13 @@
                                                      close-server-recv-ch
                                                      :make-lane-fn make-lane))]
     (doseq [port ports]
-      (let [world (:world (prog-base-now))
-            done (atom false)]
-        (act server-init world
-             (when-let [listen-result-ch (achan server-init)]
-               (aput server-init (:net-listen-ch (prog-base-now))
+      (let [done (atom false)]
+        (act port-init world
+             (when-let [listen-result-ch (achan port-init)]
+               (aput port-init (:net-listen-ch (prog-base-now))
                      [server-addr port listen-result-ch])
                (when-let [[accept-ch close-accept-ch]
-                          (atake server-init listen-result-ch)]
+                          (atake port-init listen-result-ch)]
                  (cbfg.world.net/server-accept-loop world accept-ch close-accept-ch
                                                     :server-conn-loop conn-loop)))
              (reset! done true))
