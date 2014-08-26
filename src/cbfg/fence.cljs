@@ -56,7 +56,7 @@
           (= ch in-ch) (if (nil? v)
                          (recur name inflight-chs out-ch ; using out-ch as sentinel.
                                  nil ext-state)
-                         (let [new-inflight ((:rq v) fenced-pump)]
+                         (let [new-inflight ((:rq v) fenced-pump v)]
                            (recur name (conj inflight-chs new-inflight)
                                   (when (:fence v) new-inflight)
                                   nil ext-state)))

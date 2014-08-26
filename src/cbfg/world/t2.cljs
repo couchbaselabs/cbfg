@@ -8,33 +8,31 @@
             [cbfg.world.net]))
 
 (def initial-server-state
-  {:realms {"_system" {:users {"admin" {:pswd "password"}}}
-            "_lobby" {:users {"_anon" {:pswd ""}}}}})
+  {:realms {"_system" {:users {"admin" {:pswd "password"}}
+                       :datasets {}}
+            "_lobby" {:users {"_anon" {:pswd ""}}
+                      :datasets {}}}})
 
 (def initial-lane-state
   {:realm "_lobby" :user "_anon"})
 
+; --------------------------------------------
+
 (defn rq-authenticate [actx m]
   (act rq-authenticate actx
-       (let [{:keys [server-state-ch lane-state-ch realm user pswd]} m
-             r (dissoc m :pswd)]
-         (if (and realm user pswd)
-           (let [res-ch (achan rq-authenticate)]
-             (if (aput rq-authenticate server-state-ch {:op :get :res-ch res-ch})
-               (let [server-state (atake rq-authenticate res-ch)]
-                 (if (= pswd (get-in server-state
-                                     [:realms realm :users user :pswd]))
-                   (do (aput rq-authenticate lane-state-ch
-                             {:op :update
-                              :update-fn #(assoc % :cred {:realm realm
-                                                          :user user})})
-                       (assoc r :status :ok))
-                   (assoc r :status :failed
-                          :status-info [:authenticate-failed :mismatch])))
-               (assoc r :status :failed
-                      :status-info [:authenticate-failed :closed])))
-           (assoc r :status :invalid
-                  :status-info [:missing-args :authenticate])))))
+       (let [{:keys [server-state-ch lane-state-ch realm user]} m
+             res-ch (achan rq-authenticate)]
+         (if (aput rq-authenticate server-state-ch
+                   (assoc m :op :authenticate :res-ch res-ch))
+           (let [res (atake rq-authenticate res-ch)]
+             (when (= (:status res) :ok)
+               (aput rq-authenticate lane-state-ch
+                     {:op :update
+                      :update-fn #(assoc % :cred {:realm realm
+                                                  :user user})}))
+             res)
+           (assoc (dissoc m :pswd)
+             :status :failed :status-info [:authenticate :closed])))))
 
 ; --------------------------------------------
 
@@ -49,7 +47,7 @@
 
 ; --------------------------------------------
 
-(defn cmd-handler [c] (assoc c :rq #(rq-dispatch % c)))
+(defn cmd-handler [c] (assoc c :rq rq-dispatch))
 
 (def cmd-handlers (into {} (map (fn [k] [k cmd-handler]) (keys rq-handlers))))
 
@@ -57,6 +55,20 @@
     (cbfg.world.t1/world-vis-init-t "cbfg.world.t2"
                                     cmd-handlers el-prefix
                                     cbfg.world.t1/ev-msg init-event-delay))
+
+; --------------------------------------------
+
+(defn server-handler [server-state m]
+  (case (:op m)
+    :authenticate
+    (if-let [{:keys [realm user pswd]} m]
+      (if (and realm user pswd)
+        (if (= pswd (get-in server-state [:realms realm :users user :pswd]))
+          [server-state (assoc (dissoc m :pswd) :status :ok)]
+          [server-state (assoc (dissoc m :pswd) :status :mismatch)])
+        [server-state (assoc (dissoc m :pswd) :status :invalid)])
+      [server-state (assoc (dissoc m :pswd) :status :invalid)])
+    nil))
 
 ; --------------------------------------------
 
@@ -74,7 +86,7 @@
                               (recur name ((:update-fn m) state)))
                   (when unknown-fn
                     (when-let [[state2 res] (unknown-fn state m)]
-                      (when res
+                      (when (and res (:res-ch m))
                         (aput state-loop (:res-ch m) res))
                       (recur name state2))))))
     req-ch))
@@ -83,12 +95,15 @@
 
 (defn kv-server [server-addr & ports]
   (let [world (:world (prog-base-now))
-        server-state-ch (state-loop world :server-state initial-server-state)
+        server-state-ch (state-loop world
+                                    :server-state initial-server-state
+                                    :unknown-fn server-handler)
         lane-max-inflight 10
         lane-buf-size 20
         make-lane (fn [actx lane-name lane-out-ch]
                     (let [lane-in-ch (achan-buf actx lane-buf-size)
-                          lane-state-ch (state-loop actx :lane-state initial-lane-state)
+                          lane-state-ch (state-loop actx
+                                                    :lane-state initial-lane-state)
                           lane-state-cb (fn [is-req m lane-ext-state]
                                           (if is-req
                                             (if m
