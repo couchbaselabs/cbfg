@@ -1,6 +1,6 @@
 (ns cbfg.world.t2
   (:require-macros [cbfg.act :refer [act act-loop achan achan-buf
-                                     aclose aput atake]])
+                                     aclose aput aput-close atake]])
   (:require [cbfg.fence]
             [cbfg.world.t1 :refer [prog-base-now prog-curr-now prog-evt
                                    wait-done addr-override-xy]]
@@ -34,10 +34,21 @@
            (assoc (dissoc m :pswd)
              :status :failed :status-info [:authenticate :closed])))))
 
+(defn rq-dispatch-lane [actx m]
+  (act rq-dispatch-lane actx
+       (let [lane-state-ch (:lane-state-ch m)
+             res-ch (achan rq-dispatch-lane)]
+         (if (aput rq-dispatch-lane lane-state-ch
+                   (assoc m :res-ch res-ch))
+           (atake rq-dispatch-lane res-ch)
+           (assoc m :status :failed
+                  :status-info [(:op m) :closed :dispatch-lane])))))
+
 ; --------------------------------------------
 
 (def rq-handlers
   {"authenticate" rq-authenticate
+   "realms-list" rq-dispatch-lane
    "add" cbfg.world.base/example-add
    "sub" cbfg.world.base/example-add
    "count" cbfg.world.base/example-count
@@ -70,6 +81,13 @@
       [server-state (assoc (dissoc m :pswd) :status :invalid)])
     nil))
 
+(defn lane-handler [lane-state m]
+  (println :LH m)
+  (case (:op m)
+    "realms-list"
+    [lane-state (assoc m :status :invalid)]
+    nil))
+
 ; --------------------------------------------
 
 (defn state-loop [actx name initial-state & {:keys [unknown-fn]}]
@@ -77,17 +95,17 @@
     (act-loop state-loop actx [name name state initial-state]
               (when-let [m (atake state-loop req-ch)]
                 (case (:op m)
-                  :get (do (aput state-loop (:res-ch m)
-                                 (assoc m :status :ok :value state))
+                  :get (do (aput-close state-loop (:res-ch m)
+                                       (assoc m :status :ok :value state))
                            (recur name state))
                   :update (do (when (:res-ch m)
-                                (aput state-loop (:res-ch m)
-                                      (assoc m :status :ok)))
+                                (aput-close state-loop (:res-ch m)
+                                            (assoc m :status :ok)))
                               (recur name ((:update-fn m) state)))
                   (when unknown-fn
                     (when-let [[state2 res] (unknown-fn state m)]
                       (when (and res (:res-ch m))
-                        (aput state-loop (:res-ch m) res))
+                        (aput-close state-loop (:res-ch m) res))
                       (recur name state2))))))
     req-ch))
 
@@ -95,15 +113,16 @@
 
 (defn kv-server [server-addr & ports]
   (let [world (:world (prog-base-now))
-        server-state-ch (state-loop world
-                                    :server-state initial-server-state
+        server-state-ch (state-loop world :server-state
+                                    initial-server-state
                                     :unknown-fn server-handler)
         lane-max-inflight 10
         lane-buf-size 20
         make-lane (fn [actx lane-name lane-out-ch]
                     (let [lane-in-ch (achan-buf actx lane-buf-size)
-                          lane-state-ch (state-loop actx
-                                                    :lane-state initial-lane-state)
+                          lane-state-ch (state-loop actx :lane-state
+                                                    initial-lane-state
+                                                    :unknown-fn lane-handler)
                           lane-state-cb (fn [is-req m lane-ext-state]
                                           (if is-req
                                             (if m
