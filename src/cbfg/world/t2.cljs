@@ -82,7 +82,6 @@
     nil))
 
 (defn lane-handler [lane-state m]
-  (println :LH m)
   (case (:op m)
     "realms-list"
     [lane-state (assoc m :status :invalid)]
