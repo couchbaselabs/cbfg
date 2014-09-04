@@ -156,9 +156,9 @@
              (reset! done true))
         (wait-done done)
         (prog-evt world :kv-server {:server-addr server-addr :server-port port}
-                  #(update-in % [:servers server-addr] conj port))))
-    (addr-override-xy server-addr
-                      300 (+ 20 (* 120 (dec (count (:servers (prog-curr-now)))))))))
+                  #(update-in % [:servers server-addr] conj port)))))
+  (addr-override-xy server-addr
+                    300 (+ 20 (* 120 (dec (count (:servers (prog-curr-now))))))))
 
 (defn kv-client [client-addr server-addr server-port]
   (let [world (:world (prog-base-now))
