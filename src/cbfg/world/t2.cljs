@@ -18,6 +18,18 @@
 
 ; --------------------------------------------
 
+(defn server-handler [server-state m]
+  (case (:op m)
+    :authenticate
+    (if-let [{:keys [realm user pswd]} m]
+      (if (and realm user pswd)
+        (if (= pswd (get-in server-state [:realms realm :users user :pswd]))
+          [server-state (assoc (dissoc m :pswd) :status :ok)]
+          [server-state (assoc (dissoc m :pswd) :status :mismatch)])
+        [server-state (assoc (dissoc m :pswd) :status :invalid)])
+      [server-state (assoc (dissoc m :pswd) :status :invalid)])
+    nil))
+
 (defn rq-authenticate [actx m]
   (act rq-authenticate actx
        (let [{:keys [server-state-ch lane-state-ch realm user]} m
@@ -34,12 +46,19 @@
            (assoc (dissoc m :pswd)
              :status :failed :status-info [:authenticate :closed])))))
 
+; --------------------------------------------
+
+(defn lane-handler [lane-state m]
+  (case (:op m)
+    "realms-list"
+    [lane-state (assoc m :status :invalid)]
+    nil))
+
 (defn rq-handle-lane [actx m] ; Forward to lane-state-ch to handle the request.
   (act rq-handle-lane actx
        (let [lane-state-ch (:lane-state-ch m)
              res-ch (achan rq-handle-lane)]
-         (if (aput rq-handle-lane lane-state-ch
-                   (assoc m :res-ch res-ch))
+         (if (aput rq-handle-lane lane-state-ch (assoc m :res-ch res-ch))
            (atake rq-handle-lane res-ch)
            (assoc m :status :failed
                   :status-info [(:op m) :closed :dispatch-lane])))))
@@ -66,26 +85,6 @@
     (cbfg.world.t1/world-vis-init-t "cbfg.world.t2"
                                     cmd-handlers el-prefix
                                     cbfg.world.t1/ev-msg init-event-delay))
-
-; --------------------------------------------
-
-(defn server-handler [server-state m]
-  (case (:op m)
-    :authenticate
-    (if-let [{:keys [realm user pswd]} m]
-      (if (and realm user pswd)
-        (if (= pswd (get-in server-state [:realms realm :users user :pswd]))
-          [server-state (assoc (dissoc m :pswd) :status :ok)]
-          [server-state (assoc (dissoc m :pswd) :status :mismatch)])
-        [server-state (assoc (dissoc m :pswd) :status :invalid)])
-      [server-state (assoc (dissoc m :pswd) :status :invalid)])
-    nil))
-
-(defn lane-handler [lane-state m]
-  (case (:op m)
-    "realms-list"
-    [lane-state (assoc m :status :invalid)]
-    nil))
 
 ; --------------------------------------------
 
