@@ -54,11 +54,11 @@
    "count" cbfg.world.base/example-count
    "close-lane" cbfg.world.base/close-lane})
 
-(defn rq-handle [actx m] ((get rq-handlers (:op m)) actx m))
+(defn rq-handler [actx m] ((get rq-handlers (:op m)) actx m))
 
 ; --------------------------------------------
 
-(defn cmd-handler [c] (assoc c :rq rq-handle))
+(defn cmd-handler [c] (assoc c :rq rq-handler))
 
 (def cmd-handlers (into {} (map (fn [k] [k cmd-handler]) (keys rq-handlers))))
 
