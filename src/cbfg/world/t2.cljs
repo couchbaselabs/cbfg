@@ -34,13 +34,13 @@
            (assoc (dissoc m :pswd)
              :status :failed :status-info [:authenticate :closed])))))
 
-(defn rq-dispatch-lane [actx m]
-  (act rq-dispatch-lane actx
+(defn rq-handle-lane [actx m] ; Forward to lane-state-ch to handle the request.
+  (act rq-handle-lane actx
        (let [lane-state-ch (:lane-state-ch m)
-             res-ch (achan rq-dispatch-lane)]
-         (if (aput rq-dispatch-lane lane-state-ch
+             res-ch (achan rq-handle-lane)]
+         (if (aput rq-handle-lane lane-state-ch
                    (assoc m :res-ch res-ch))
-           (atake rq-dispatch-lane res-ch)
+           (atake rq-handle-lane res-ch)
            (assoc m :status :failed
                   :status-info [(:op m) :closed :dispatch-lane])))))
 
@@ -48,17 +48,17 @@
 
 (def rq-handlers
   {"authenticate" rq-authenticate
-   "realms-list" rq-dispatch-lane
+   "realms-list" rq-handle-lane
    "add" cbfg.world.base/example-add
    "sub" cbfg.world.base/example-add
    "count" cbfg.world.base/example-count
    "close-lane" cbfg.world.base/close-lane})
 
-(defn rq-dispatch [actx m] ((get rq-handlers (:op m)) actx m))
+(defn rq-handle [actx m] ((get rq-handlers (:op m)) actx m))
 
 ; --------------------------------------------
 
-(defn cmd-handler [c] (assoc c :rq rq-dispatch))
+(defn cmd-handler [c] (assoc c :rq rq-handle))
 
 (def cmd-handlers (into {} (map (fn [k] [k cmd-handler]) (keys rq-handlers))))
 
