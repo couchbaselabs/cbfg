@@ -51,7 +51,9 @@
 (defn lane-handler [lane-state m]
   (case (:op m)
     "realms-list"
-    [lane-state (assoc m :status :invalid)]
+    (if-let [cred (:cred lane-state)]
+      [lane-state (assoc m :status :invalid)]
+      [lane-state (assoc m :status :not-authenticated)])
     nil))
 
 (defn rq-handle-lane [actx m] ; Forward to lane-state-ch to handle the request.

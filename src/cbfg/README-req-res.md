@@ -68,6 +68,9 @@ no longer exists, perhaps due to a previous deletion.  In contrast to
 a :not-found status code, a :mismatch informs the caller that a
 resource is still there, but has a version or CAS mismatch.
 
+:not-authenticated
+:not-authorized
+
 ----------------------------------
 
 :redirect or :moved ? (covers not-my-vbucket / not-my-partition?)
