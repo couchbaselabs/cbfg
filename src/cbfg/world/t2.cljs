@@ -18,7 +18,7 @@
 
 ; --------------------------------------------
 
-(defn server-handler [server-state m]
+(defn server-handler [actx server-state m]
   (case (:op m)
     :authenticate
     (if-let [{:keys [realm user pswd]} m]
@@ -28,6 +28,8 @@
           [server-state (assoc (dissoc m :pswd) :status :mismatch)])
         [server-state (assoc (dissoc m :pswd) :status :invalid)])
       [server-state (assoc (dissoc m :pswd) :status :invalid)])
+    "realms-list"
+    [server-state (assoc m :result (keys (:realms server-state)))]
     nil))
 
 (defn rq-authenticate [actx m]
@@ -48,12 +50,14 @@
 
 ; --------------------------------------------
 
-(defn lane-handler [lane-state m]
+(defn lane-handler [actx lane-state m]
   (case (:op m)
     "realms-list"
-    (if-let [cred (:cred lane-state)]
-      [lane-state (assoc m :status :invalid)]
-      [lane-state (assoc m :status :not-authenticated)])
+    (let [server-state-ch (:server-state-ch m)]
+      (act fwd-realms-list actx
+           (aput fwd-realms-list server-state-ch
+                 (assoc m :cred (:cred lane-state))))
+      [lane-state nil])
     nil))
 
 (defn rq-handle-lane [actx m] ; Forward to lane-state-ch to handle the request.
@@ -103,7 +107,7 @@
                                             (assoc m :status :ok)))
                               (recur name ((:update-fn m) state)))
                   (when unknown-fn
-                    (when-let [[state2 res] (unknown-fn state m)]
+                    (when-let [[state2 res] (unknown-fn state-loop state m)]
                       (when (and res (:res-ch m))
                         (aput-close state-loop (:res-ch m) res))
                       (recur name state2))))))
