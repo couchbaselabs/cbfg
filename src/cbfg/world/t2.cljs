@@ -7,7 +7,7 @@
             [cbfg.world.base]
             [cbfg.world.net]))
 
-(def initial-server-state
+(defn make-initial-server-state [actx]
   {:realms {"_system" {:users {"admin" {:pswd "password"}}
                        :datasets {}}
             "_lobby" {:users {"_anon" {:pswd ""}}
@@ -120,7 +120,7 @@
 (defn kv-server [server-addr & ports]
   (let [world (:world (prog-base-now))
         server-state-ch (state-loop world :server-state
-                                    initial-server-state
+                                    (make-initial-server-state world)
                                     :unknown-fn server-handler)
         lane-max-inflight 10
         lane-buf-size 20
