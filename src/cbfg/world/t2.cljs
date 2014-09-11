@@ -7,6 +7,27 @@
             [cbfg.world.base]
             [cbfg.world.net]))
 
+(defn state-loop [actx name initial-state & {:keys [unknown-fn]}]
+  (let [req-ch (achan actx)]
+    (act-loop state-loop actx [name name state initial-state]
+              (when-let [m (atake state-loop req-ch)]
+                (case (:op m)
+                  :get (do (aput-close state-loop (:res-ch m)
+                                       (assoc m :status :ok :value state))
+                           (recur name state))
+                  :update (do (when (:res-ch m)
+                                (aput-close state-loop (:res-ch m)
+                                            (assoc m :status :ok)))
+                              (recur name ((:update-fn m) state)))
+                  (when unknown-fn
+                    (when-let [[state2 res] (unknown-fn state-loop state m)]
+                      (when (and res (:res-ch m))
+                        (aput-close state-loop (:res-ch m) res))
+                      (recur name state2))))))
+    req-ch))
+
+; --------------------------------------------
+
 (defn make-initial-server-state [actx]
   {:realms {"_system" {:users {"admin" {:pswd "password"}}
                        :datasets {}}
@@ -93,27 +114,6 @@
     (cbfg.world.t1/world-vis-init-t "cbfg.world.t2"
                                     cmd-handlers el-prefix
                                     cbfg.world.t1/ev-msg init-event-delay))
-
-; --------------------------------------------
-
-(defn state-loop [actx name initial-state & {:keys [unknown-fn]}]
-  (let [req-ch (achan actx)]
-    (act-loop state-loop actx [name name state initial-state]
-              (when-let [m (atake state-loop req-ch)]
-                (case (:op m)
-                  :get (do (aput-close state-loop (:res-ch m)
-                                       (assoc m :status :ok :value state))
-                           (recur name state))
-                  :update (do (when (:res-ch m)
-                                (aput-close state-loop (:res-ch m)
-                                            (assoc m :status :ok)))
-                              (recur name ((:update-fn m) state)))
-                  (when unknown-fn
-                    (when-let [[state2 res] (unknown-fn state-loop state m)]
-                      (when (and res (:res-ch m))
-                        (aput-close state-loop (:res-ch m) res))
-                      (recur name state2))))))
-    req-ch))
 
 ; --------------------------------------------
 
