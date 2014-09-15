@@ -7,23 +7,14 @@
             [cbfg.world.base]
             [cbfg.world.net]))
 
-(defn state-loop [actx name initial-state & {:keys [unknown-fn]}]
+(defn state-loop [actx name loop-fn initial-state]
   (let [req-ch (achan actx)]
     (act-loop state-loop actx [name name state initial-state]
               (when-let [m (atake state-loop req-ch)]
-                (case (:op m)
-                  :get (do (aput-close state-loop (:res-ch m)
-                                       (assoc m :status :ok :value state))
-                           (recur name state))
-                  :update (do (when (:res-ch m)
-                                (aput-close state-loop (:res-ch m)
-                                            (assoc m :status :ok)))
-                              (recur name ((:update-fn m) state)))
-                  (when unknown-fn
-                    (when-let [[state2 res] (unknown-fn state-loop state m)]
-                      (when (and res (:res-ch m))
-                        (aput-close state-loop (:res-ch m) res))
-                      (recur name state2))))))
+                (when-let [[state2 res] (loop-fn state-loop state m)]
+                  (when (and res (:res-ch m))
+                    (aput-close state-loop (:res-ch m) res))
+                  (recur name state2))))
     req-ch))
 
 ; --------------------------------------------
@@ -119,16 +110,14 @@
 
 (defn kv-server [server-addr & ports]
   (let [world (:world (prog-base-now))
-        server-state-ch (state-loop world :server-state
-                                    (make-initial-server-state world)
-                                    :unknown-fn server-handler)
+        server-state-ch (state-loop world :server-state server-handler
+                                    (make-initial-server-state world))
         lane-max-inflight 10
         lane-buf-size 20
         make-lane (fn [actx lane-name lane-out-ch]
                     (let [lane-in-ch (achan-buf actx lane-buf-size)
-                          lane-state-ch (state-loop actx :lane-state
-                                                    initial-lane-state
-                                                    :unknown-fn lane-handler)
+                          lane-state-ch (state-loop actx :lane-state lane-handler
+                                                    initial-lane-state)
                           lane-state-cb (fn [is-req m lane-ext-state]
                                           (if is-req
                                             (if m
