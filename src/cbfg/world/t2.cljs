@@ -11,10 +11,10 @@
   (let [req-ch (achan actx)]
     (act-loop state-loop actx [name name state initial-state]
               (when-let [m (atake state-loop req-ch)]
-                (when-let [[state2 res] (loop-fn state-loop state m)]
+                (when-let [[state-next res] (loop-fn state-loop state m)]
                   (when (and res (:res-ch m))
                     (aput-close state-loop (:res-ch m) res))
-                  (recur name state2))))
+                  (recur name state-next))))
     req-ch))
 
 ; --------------------------------------------
