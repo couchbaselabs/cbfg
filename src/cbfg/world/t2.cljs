@@ -54,10 +54,12 @@
                    (assoc m :op :authenticate :res-ch res-ch))
            (let [res (atake rq-authenticate res-ch)]
              (when (= (:status res) :ok)
-               (aput rq-authenticate lane-state-ch
-                     (assoc m :op :update
-                            :update-fn #(assoc % :cred
-                                               {:realm realm :user user}))))
+               (let [res-ch (achan rq-authenticate)]
+                 (aput rq-authenticate lane-state-ch
+                       (assoc m :op :update :res-ch res-ch
+                              :update-fn #(assoc % :cred
+                                                 {:realm realm :user user})))
+                 (atake rq-authenticate res-ch)))
              res)
            (assoc (dissoc m :pswd)
              :status :failed :status-info [:authenticate :closed])))))
