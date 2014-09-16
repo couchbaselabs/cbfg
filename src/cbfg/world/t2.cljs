@@ -34,10 +34,9 @@
   (case (:op m)
     :authenticate
     (if-let [{:keys [realm user pswd]} m]
-      (if (and realm user pswd)
-        (if (= pswd (get-in server-state [:realms realm :users user :pswd]))
-          [server-state (assoc (dissoc m :pswd) :status :ok)]
-          [server-state (assoc (dissoc m :pswd) :status :mismatch)])
+      (if (and realm user pswd
+               (= pswd (get-in server-state [:realms realm :users user :pswd])))
+        [server-state (assoc (dissoc m :pswd) :status :ok)]
         [server-state (assoc (dissoc m :pswd) :status :invalid)])
       [server-state (assoc (dissoc m :pswd) :status :invalid)])
     "realms-list"
