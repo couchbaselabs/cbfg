@@ -55,9 +55,8 @@
              (when (= (:status res) :ok)
                (let [res-ch (achan rq-authenticate)]
                  (aput rq-authenticate lane-state-ch
-                       (assoc m :op :update :res-ch res-ch
-                              :update-fn #(assoc % :cred
-                                                 {:realm realm :user user})))
+                       (assoc m :op :lane-authenticated :res-ch res-ch
+                              :cred {:realm realm :user user}))
                  (atake rq-authenticate res-ch)))
              res)
            (assoc (dissoc m :pswd)
@@ -67,8 +66,8 @@
 
 (defn lane-handler [actx lane-state m]
   (case (:op m)
-    :update
-    [((:update-fn m) lane-state) (assoc m :status :ok)]
+    :lane-authenticated
+    [(assoc lane-state :cred (:cred m)) (assoc m :status :ok)]
     "realms-list"
     (let [server-state-ch (:server-state-ch m)]
       (act fwd-realms-list actx
