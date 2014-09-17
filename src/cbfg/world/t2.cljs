@@ -20,18 +20,19 @@
 
 ; --------------------------------------------
 
-(defn fwd-put [actx ch-key m]
-  (act fwd-put actx
-       (aput fwd-put (ch-key m) m)))
+(defn msg-put [actx ch-key m]
+  (act msg-put actx
+       (aput msg-put (ch-key m) m)))
 
-(defn fwd-put-res [actx ch-key m]
+(defn msg-put-res [actx ch-key m]
   (let [res-ch (achan actx)]
-    (act fwd-put-res actx
-         (aput fwd-put-res (ch-key m) (assoc m :res-ch res-ch)))
+    (act msg-put-res actx
+         (aput msg-put-res (ch-key m) (assoc m :res-ch res-ch)))
     res-ch))
 
-(defn fwd-req [actx ch-key m]
-  (act fwd-req actx (areq fwd-req (ch-key m) m)))
+(defn msg-req [actx ch-key m]
+  (act msg-req actx
+       (areq msg-req (ch-key m) m)))
 
 ; --------------------------------------------
 
@@ -77,7 +78,7 @@
     "lane-state"
     [lane-state (assoc m :status :ok :value lane-state)]
     "realms-list"
-    (do (fwd-put actx :server-state-ch
+    (do (msg-put actx :server-state-ch
                  (assoc m :realm (:realm lane-state) :user (:user lane-state)))
         [lane-state nil])
     nil))
@@ -96,8 +97,8 @@
 
 (def rq-handlers
   {"authenticate" rq-authenticate
-   "lane-state" #(fwd-req %1 :lane-state-ch %2)
-   "realms-list" #(fwd-put-res %1 :lane-state-ch %2)
+   "lane-state" #(msg-req %1 :lane-state-ch %2)
+   "realms-list" #(msg-put-res %1 :lane-state-ch %2)
    "add" cbfg.world.base/example-add
    "sub" cbfg.world.base/example-add
    "count" cbfg.world.base/example-count
@@ -113,6 +114,8 @@
 
 (defn ev-msg [ev]
   (assoc (cbfg.world.t1/ev-msg ev)
+    :key (get-el-value "key")
+    :val (get-el-value "val")
     :realm (get-el-value "realm")
     :user (get-el-value "user")
     :pswd (get-el-value "pswd")))
