@@ -48,19 +48,12 @@
 (defn rq-authenticate [actx m]
   (act rq-authenticate actx
        (let [{:keys [server-state-ch lane-state-ch realm user]} m
-             res-ch (achan rq-authenticate)]
-         (if (aput rq-authenticate server-state-ch
-                   (assoc m :op :authenticate :res-ch res-ch))
-           (let [res (atake rq-authenticate res-ch)]
-             (when (= (:status res) :ok)
-               (let [res-ch (achan rq-authenticate)]
-                 (aput rq-authenticate lane-state-ch
-                       (assoc m :op :update-cred :res-ch res-ch
-                              :cred {:realm realm :user user}))
-                 (atake rq-authenticate res-ch)))
-             res)
-           (assoc (dissoc m :pswd)
-             :status :failed :status-info [:authenticate :closed])))))
+             res (areq rq-authenticate server-state-ch
+                       (assoc m :op :authenticate))]
+         (if (= (:status res) :ok)
+           (areq rq-authenticate lane-state-ch
+                 (assoc m :op :update-cred :cred {:realm realm :user user}))
+           res))))
 
 ; --------------------------------------------
 
