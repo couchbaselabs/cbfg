@@ -1,7 +1,8 @@
 (ns cbfg.world.t2
   (:require-macros [cbfg.act :refer [act act-loop achan achan-buf
                                      aclose aput aput-close atake areq]])
-  (:require [cbfg.fence]
+  (:require [cbfg.vis :refer [get-el-value]]
+            [cbfg.fence]
             [cbfg.world.t1 :refer [prog-base-now prog-curr-now prog-evt
                                    wait-done addr-override-xy]]
             [cbfg.world.base]
@@ -21,7 +22,6 @@
 
 (defn fwd [actx ch-key m]
   (act fwd actx
-       (println :fwd ch-key m)
        (areq fwd (ch-key m) m)))
 
 ; --------------------------------------------
@@ -58,6 +58,8 @@
   (case (:op m)
     :update-realm-user
     [(assoc lane-state :realm (:realm m) :user (:user m)) (assoc m :status :ok)]
+    "lane-state"
+    [lane-state (assoc m :status :ok :value lane-state)]
     "realms-list"
     (do (act fwd-realms-list actx
              (aput fwd-realms-list (:server-state-ch m)
@@ -79,6 +81,7 @@
 
 (def rq-handlers
   {"authenticate" rq-authenticate
+   "lane-state" #(fwd %1 :lane-state-ch %2)
    "realms-list" #(fwd %1 :lane-state-ch %2)
    "add" cbfg.world.base/example-add
    "sub" cbfg.world.base/example-add
@@ -93,10 +96,15 @@
 
 (def cmd-handlers (into {} (map (fn [k] [k cmd-handler]) (keys rq-handlers))))
 
+(defn ev-msg [ev]
+  (assoc (cbfg.world.t1/ev-msg ev)
+    :realm (get-el-value "realm")
+    :user (get-el-value "user")
+    :pswd (get-el-value "pswd")))
+
 (defn world-vis-init [el-prefix init-event-delay]
-    (cbfg.world.t1/world-vis-init-t "cbfg.world.t2"
-                                    cmd-handlers el-prefix
-                                    cbfg.world.t1/ev-msg init-event-delay))
+    (cbfg.world.t1/world-vis-init-t "cbfg.world.t2" cmd-handlers el-prefix
+                                    ev-msg init-event-delay))
 
 ; --------------------------------------------
 
