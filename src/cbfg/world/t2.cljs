@@ -19,6 +19,13 @@
 
 ; --------------------------------------------
 
+(defn fwd [actx ch-key m]
+  (act fwd actx
+       (println :fwd ch-key m)
+       (areq fwd (ch-key m) m)))
+
+; --------------------------------------------
+
 (defn make-initial-server-state [actx]
   {:realms {"_system" {:users {"admin" {:pswd "password"}}
                        :datasets {}}
@@ -45,6 +52,21 @@
       [server-state (assoc m :status :not-authenticated)])
     nil))
 
+; --------------------------------------------
+
+(defn lane-handler [actx lane-state m]
+  (case (:op m)
+    :update-realm-user
+    [(assoc lane-state :realm (:realm m) :user (:user m)) (assoc m :status :ok)]
+    "realms-list"
+    (do (act fwd-realms-list actx
+             (aput fwd-realms-list (:server-state-ch m)
+                   (assoc m :realm (:realm lane-state) :user (:user lane-state))))
+        [lane-state nil])
+    nil))
+
+; --------------------------------------------
+
 (defn rq-authenticate [actx m]
   (act rq-authenticate actx
        (let [{:keys [server-state-ch lane-state-ch realm user]} m
@@ -52,32 +74,12 @@
                        (assoc m :op :authenticate))]
          (if (= (:status res) :ok)
            (areq rq-authenticate lane-state-ch
-                 (assoc m :op :update-cred :cred {:realm realm :user user}))
+                 (assoc m :op :update-realm-user :realm realm :user user))
            res))))
-
-; --------------------------------------------
-
-(defn lane-handler [actx lane-state m]
-  (case (:op m)
-    :update-cred
-    [(assoc lane-state :cred (:cred m)) (assoc m :status :ok)]
-    "realms-list"
-    (let [server-state-ch (:server-state-ch m)]
-      (act fwd-realms-list actx
-           (aput fwd-realms-list server-state-ch
-                 (assoc m :cred (:cred lane-state))))
-      [lane-state nil])
-    nil))
-
-(defn rq-fwd-to-lane [actx m] ; Forward to lane-state-ch to handle the request.
-  (act rq-fwd-to-lane actx
-       (areq rq-fwd-to-lane (:lane-state-ch m) m)))
-
-; --------------------------------------------
 
 (def rq-handlers
   {"authenticate" rq-authenticate
-   "realms-list" rq-fwd-to-lane
+   "realms-list" #(fwd %1 :lane-state-ch %2)
    "add" cbfg.world.base/example-add
    "sub" cbfg.world.base/example-add
    "count" cbfg.world.base/example-count
