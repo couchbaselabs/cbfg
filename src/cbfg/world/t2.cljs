@@ -76,12 +76,12 @@
       [lane-state nil])
     nil))
 
-(defn rq-handle-lane [actx m] ; Forward to lane-state-ch to handle the request.
-  (act rq-handle-lane actx
+(defn rq-fwd-to-lane [actx m] ; Forward to lane-state-ch to handle the request.
+  (act rq-fwd-to-lane actx
        (let [lane-state-ch (:lane-state-ch m)
-             res-ch (achan rq-handle-lane)]
-         (if (aput rq-handle-lane lane-state-ch (assoc m :res-ch res-ch))
-           (atake rq-handle-lane res-ch)
+             res-ch (achan rq-fwd-to-lane)]
+         (if (aput rq-fwd-to-lane lane-state-ch (assoc m :res-ch res-ch))
+           (atake rq-fwd-to-lane res-ch)
            (assoc m :status :failed
                   :status-info [(:op m) :closed :dispatch-lane])))))
 
@@ -89,7 +89,7 @@
 
 (def rq-handlers
   {"authenticate" rq-authenticate
-   "realms-list" rq-handle-lane
+   "realms-list" rq-fwd-to-lane
    "add" cbfg.world.base/example-add
    "sub" cbfg.world.base/example-add
    "count" cbfg.world.base/example-count
