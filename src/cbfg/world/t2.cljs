@@ -27,7 +27,10 @@
 (defn msg-put-res [actx ch-key m]
   (let [res-ch (achan actx)]
     (act msg-put-res actx
-         (aput msg-put-res (ch-key m) (assoc m :res-ch res-ch)))
+         (when (not (aput msg-put-res (ch-key m) (assoc m :res-ch res-ch)))
+           (aput-close msg-put-res res-ch
+                       (assoc m :status :failed
+                              :status-info [(:op m) :closed :msg-put-res]))))
     res-ch))
 
 (defn msg-req [actx ch-key m]
