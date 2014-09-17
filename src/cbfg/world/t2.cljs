@@ -47,7 +47,7 @@
         [server-state (assoc (dissoc m :pswd) :status :invalid)])
       [server-state (assoc (dissoc m :pswd) :status :invalid)])
     "realms-list"
-    (if-let [cred (:cred m)]
+    (if-let [{:keys [realm user]} m]
       [server-state (assoc m :status :ok :result (keys (:realms server-state)))]
       [server-state (assoc m :status :not-authenticated)])
     nil))
