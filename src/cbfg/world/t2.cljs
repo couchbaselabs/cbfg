@@ -60,15 +60,19 @@
         [server-state (assoc (dissoc m :pswd) :status :invalid)])
       [server-state (assoc (dissoc m :pswd) :status :invalid)])
     "realms-list"
-    (if-let [{:keys [realm user]} m]
-      (do (act-loop realms-list actx [realm-keys (keys (:realms server-state))]
-                    (if-let [realm-key (first realm-keys)]
-                      (do (aput realms-list (:res-ch m)
-                                (assoc m :status :ok :more true :value realm-key))
-                          (recur (rest realm-keys)))
-                      (aput-close realms-list (:res-ch m)
-                                  (assoc m :status :ok))))
-          [server-state nil])
+    (if-let [{:keys [lane-realm lane-user]} m]
+      (let [realm-keys (if (and (= lane-realm "_system")
+                                (= lane-user "admin"))
+                         (keys (:realms server-state))
+                         [lane-realm])]
+        (act-loop realms-list actx [realm-keys realm-keys]
+                  (if-let [realm-key (first realm-keys)]
+                    (do (aput realms-list (:res-ch m)
+                              (assoc m :status :ok :more true :value realm-key))
+                        (recur (rest realm-keys)))
+                    (aput-close realms-list (:res-ch m)
+                                (assoc m :status :ok))))
+        [server-state nil])
       [server-state (assoc m :status :not-authenticated)])
     nil))
 
@@ -82,7 +86,8 @@
     [lane-state (assoc m :status :ok :value lane-state)]
     "realms-list"
     (do (msg-put actx :server-state-ch
-                 (assoc m :realm (:realm lane-state) :user (:user lane-state)))
+                 (assoc m :lane-realm (:realm lane-state)
+                        :lane-user (:user lane-state)))
         [lane-state nil])
     nil))
 
