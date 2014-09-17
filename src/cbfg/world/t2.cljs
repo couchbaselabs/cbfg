@@ -23,6 +23,11 @@
 (defn fwd-put [actx ch-key m]
   (act fwd-put actx (aput fwd-put (ch-key m) m)))
 
+(defn fwd-put-out [actx ch-key m]
+  (let [out (achan actx)]
+    (act fwd-put-out actx (aput fwd-put-out (ch-key m) (assoc m :res-ch out)))
+    out))
+
 (defn fwd-req [actx ch-key m]
   (act fwd-req actx (areq fwd-req (ch-key m) m)))
 
@@ -50,7 +55,14 @@
       [server-state (assoc (dissoc m :pswd) :status :invalid)])
     "realms-list"
     (if-let [{:keys [realm user]} m]
-      [server-state (assoc m :status :ok :result (keys (:realms server-state)))]
+      (do (act-loop realms-list actx [realm-keys (keys (:realms server-state))]
+                    (if-let [realm-key (first realm-keys)]
+                      (do (aput realms-list (:res-ch m)
+                                (assoc m :status :ok :more true :value realm-key))
+                          (recur (rest realm-keys)))
+                      (aput-close realms-list (:res-ch m)
+                                  (assoc m :status :ok))))
+          [server-state nil])
       [server-state (assoc m :status :not-authenticated)])
     nil))
 
@@ -83,7 +95,7 @@
 (def rq-handlers
   {"authenticate" rq-authenticate
    "lane-state" #(fwd-req %1 :lane-state-ch %2)
-   "realms-list" #(fwd-req %1 :lane-state-ch %2)
+   "realms-list" #(fwd-put-out %1 :lane-state-ch %2)
    "add" cbfg.world.base/example-add
    "sub" cbfg.world.base/example-add
    "count" cbfg.world.base/example-count
