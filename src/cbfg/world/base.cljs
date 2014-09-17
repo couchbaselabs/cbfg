@@ -51,7 +51,7 @@
                     "    <th>request</th><th>timeline</th></tr>"
                     (map (fn [[ts [request responses]]]
                            ["<tr class='hist-event"
-                            (when (some #(or (:result (second %))
+                            (when (some #(or (:value (second %))
                                              (:status (second %)))
                                         responses)
                               " complete") "'>"
@@ -127,13 +127,13 @@
   (act example-add actx
        (let [timeout-ch (atimeout example-add (:delay c))]
          (atake example-add timeout-ch)
-         (assoc c :result (+ (:x c) (:y c))))))
+         (assoc c :value (+ (:x c) (:y c))))))
 
 (defn example-sub [actx c]
   (act example-sub actx
        (let [timeout-ch (atimeout example-sub (:delay c))]
          (atake example-sub timeout-ch)
-         (assoc c :result (- (:x c) (:y c))))))
+         (assoc c :value (- (:x c) (:y c))))))
 
 (defn example-count [actx c]
   (let [out (achan actx)]
@@ -141,8 +141,8 @@
          (doseq [n (range (:x c) (:y c))]
            (let [timeout-ch (atimeout example-count (:delay c))]
              (atake example-count timeout-ch))
-           (aput example-count out (assoc c :partial n)))
+           (aput example-count out (assoc c :value n :more true)))
          (let [timeout-ch (atimeout example-count (:delay c))]
            (atake example-count timeout-ch))
-         (aput-close example-count out (assoc c :result (:y c))))
+         (aput-close example-count out (assoc c :value (:y c))))
     out))

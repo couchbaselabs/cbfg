@@ -69,7 +69,7 @@
           (flatten ["<table class='hist'>"
                     "<tr><th>lane</th><th>request and responses</th></tr>"
                     (map (fn [[ts [req resps]]]
-                           ["<tr class='" (when (some #(or (:result (second %))
+                           ["<tr class='" (when (some #(or (:value (second %))
                                                            (:status (second %)))
                                                       resps)
                                             "complete") "'>"

@@ -33,7 +33,7 @@ status message strings instead of HTTP status codes).  A :status-info
 value might also be perhaps an opaque string or JSON or EDN.
 
 Other standardized response keys/values should be used to convey
-program-readable data (like :result, :value, etc).
+program-readable data (like :value, etc).
 
 The :more boolean response key/value entry signifies a non-terminating
 response, when a stream of multiple responses is expected.  Some
@@ -47,7 +47,7 @@ The standard, common :status codes...
 :ok
 
 This means a successful request.  Additional response data may be
-available in other response keys/values like :result or :value.
+available in other response keys/values like :value.
 
 :invalid
 

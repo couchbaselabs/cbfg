@@ -104,7 +104,7 @@
 (defn render-msg [msg class-extra style-extra]
   ["<div class='msg " class-extra
    "' style='color:" (:color msg) "; " style-extra "'>&#9679;"
-   "<div class='result'>" (:result msg) "</div></div>"])
+   "<div class='result'>" (:value msg) "</div></div>"])
 
 (defn render-msgs [curr-msgs prev-msgs dist line-height geom]
   (let [msg-top-max (get geom :msg-top-max 40)
