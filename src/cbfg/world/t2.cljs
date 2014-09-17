@@ -20,9 +20,11 @@
 
 ; --------------------------------------------
 
-(defn fwd [actx ch-key m]
-  (act fwd actx
-       (areq fwd (ch-key m) m)))
+(defn fwd-put [actx ch-key m]
+  (act fwd-put actx (aput fwd-put (ch-key m) m)))
+
+(defn fwd-req [actx ch-key m]
+  (act fwd-req actx (areq fwd-req (ch-key m) m)))
 
 ; --------------------------------------------
 
@@ -61,9 +63,8 @@
     "lane-state"
     [lane-state (assoc m :status :ok :value lane-state)]
     "realms-list"
-    (do (act fwd-realms-list actx
-             (aput fwd-realms-list (:server-state-ch m)
-                   (assoc m :realm (:realm lane-state) :user (:user lane-state))))
+    (do (fwd-put actx :server-state-ch
+                 (assoc m :realm (:realm lane-state) :user (:user lane-state)))
         [lane-state nil])
     nil))
 
@@ -81,8 +82,8 @@
 
 (def rq-handlers
   {"authenticate" rq-authenticate
-   "lane-state" #(fwd %1 :lane-state-ch %2)
-   "realms-list" #(fwd %1 :lane-state-ch %2)
+   "lane-state" #(fwd-req %1 :lane-state-ch %2)
+   "realms-list" #(fwd-req %1 :lane-state-ch %2)
    "add" cbfg.world.base/example-add
    "sub" cbfg.world.base/example-add
    "count" cbfg.world.base/example-count
