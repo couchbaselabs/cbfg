@@ -87,3 +87,9 @@
   `(let [msg# ~msg]
      (aput ~actx ~ch msg#)
      (aclose ~actx ~ch)))
+
+(defmacro areq [actx ch msg]
+  `(let [res-ch# (achan ~actx)]
+     (if (aput ~actx ~ch (assoc ~msg :res-ch res-ch#))
+       (atake ~actx res-ch#)
+       (assoc ~msg :status :failed :status-info [(:op ~msg) :closed :areq]))))

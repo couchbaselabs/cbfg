@@ -1,6 +1,6 @@
 (ns cbfg.world.t2
   (:require-macros [cbfg.act :refer [act act-loop achan achan-buf
-                                     aclose aput aput-close atake]])
+                                     aclose aput aput-close atake areq]])
   (:require [cbfg.fence]
             [cbfg.world.t1 :refer [prog-base-now prog-curr-now prog-evt
                                    wait-done addr-override-xy]]
@@ -78,12 +78,7 @@
 
 (defn rq-fwd-to-lane [actx m] ; Forward to lane-state-ch to handle the request.
   (act rq-fwd-to-lane actx
-       (let [lane-state-ch (:lane-state-ch m)
-             res-ch (achan rq-fwd-to-lane)]
-         (if (aput rq-fwd-to-lane lane-state-ch (assoc m :res-ch res-ch))
-           (atake rq-fwd-to-lane res-ch)
-           (assoc m :status :failed
-                  :status-info [(:op m) :closed :dispatch-lane])))))
+       (areq rq-fwd-to-lane (:lane-state-ch m) m)))
 
 ; --------------------------------------------
 
