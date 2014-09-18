@@ -20,9 +20,11 @@
 
 ; --------------------------------------------
 
+(defn msg-req [actx ch-key m]
+  (act msg-req actx (areq msg-req (ch-key m) m)))
+
 (defn msg-put [actx ch-key m]
-  (act msg-put actx
-       (aput msg-put (ch-key m) m)))
+  (act msg-put actx (aput msg-put (ch-key m) m)))
 
 (defn msg-put-res [actx ch-key m]
   (let [res-ch (achan actx)]
@@ -33,17 +35,15 @@
                               :status-info [(:op m) :closed :msg-put-res]))))
     res-ch))
 
-(defn msg-req [actx ch-key m]
-  (act msg-req actx
-       (areq msg-req (ch-key m) m)))
-
 ; --------------------------------------------
+
+; TODO: Split between logical schema and physical runtime objects.
 
 (defn make-initial-server-state [actx]
   {:realms {"_system" {:users {"admin" {:pswd "password"}}
-                       :coll-sets {}}
+                       :collsets {}}
             "_lobby" {:users {"_anon" {:pswd ""}}
-                      :coll-sets {}}}})
+                      :collsets {}}}})
 
 (def initial-lane-state
   {:cur-realm "_lobby" :cur-user-realm "_lobby" :cur-user "_anon"})
