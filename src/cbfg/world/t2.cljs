@@ -41,21 +41,22 @@
 
 (defn make-initial-server-state [actx]
   {:realms {"_system" {:users {"admin" {:pswd "password"}}
-                       :datasets {}}
+                       :coll-sets {}}
             "_lobby" {:users {"_anon" {:pswd ""}}
-                      :datasets {}}}})
+                      :coll-sets {}}}})
 
 (def initial-lane-state
-  {:realm "_lobby" :user "_anon"})
+  {:cur-realm "_lobby" :cur-user-realm "_lobby" :cur-user "_anon"})
 
 ; --------------------------------------------
 
 (defn server-handler [actx server-state m]
   (case (:op m)
     :authenticate
-    (if-let [{:keys [realm user pswd]} m]
-      (if (and realm user pswd
-               (= pswd (get-in server-state [:realms realm :users user :pswd])))
+    (if-let [{:keys [user-realm user pswd]} m]
+      (if (and user-realm user pswd
+               (= pswd (get-in server-state
+                               [:realms user-realm :users user :pswd])))
         [server-state (assoc (dissoc m :pswd) :status :ok)]
         [server-state (assoc (dissoc m :pswd) :status :invalid)])
       [server-state (assoc (dissoc m :pswd) :status :invalid)])
@@ -80,14 +81,18 @@
 
 (defn lane-handler [actx lane-state m]
   (case (:op m)
-    :update-realm-user
-    [(assoc lane-state :realm (:realm m) :user (:user m)) (assoc m :status :ok)]
+    :update-user-realm
+    [(assoc lane-state
+       :cur-realm (:realm m)
+       :cur-user-realm (:user-realm m)
+       :cur-user (:user m))
+     (assoc m :status :ok)]
     "lane-state"
     [lane-state (assoc m :status :ok :value lane-state)]
     "realms-list"
     (do (msg-put actx :server-state-ch
-                 (assoc m :cur-user-realm (:realm lane-state)
-                        :cur-user (:user lane-state)))
+                 (assoc m :cur-user-realm (:cur-user-realm lane-state)
+                        :cur-user (:cur-user lane-state)))
         [lane-state nil])
     nil))
 
@@ -95,12 +100,12 @@
 
 (defn rq-authenticate [actx m]
   (act rq-authenticate actx
-       (let [{:keys [server-state-ch lane-state-ch realm user]} m
+       (let [{:keys [server-state-ch lane-state-ch user-realm user realm]} m
              res (areq rq-authenticate server-state-ch
                        (assoc m :op :authenticate))]
          (if (= (:status res) :ok)
            (areq rq-authenticate lane-state-ch
-                 (assoc m :op :update-realm-user :realm realm :user user))
+                 (assoc m :op :update-user-realm))
            res))))
 
 (def rq-handlers
@@ -124,8 +129,9 @@
   (assoc (cbfg.world.t1/ev-msg ev)
     :key (get-el-value "key")
     :val (get-el-value "val")
-    :realm (get-el-value "realm")
+    :user-realm (get-el-value "user-realm")
     :user (get-el-value "user")
+    :realm (get-el-value "realm")
     :pswd (get-el-value "pswd")))
 
 (defn world-vis-init [el-prefix init-event-delay]
