@@ -7,7 +7,7 @@
    make-lane-fn callback as needed to create a new per-lane worker
    channel, with params of [actx lane-name out-ch].  A request message
    is a map that looks like {:lane lane-name, :op OP, ...}.  A special
-   OP of :close-lane will have an out-ch response with a :status field
+   OP of :lane-close will have an out-ch response with a :status field
    of either :ok or :not-found, depending if the named lane is known.
    Although a client might close a lane, there still might be inflight
    responses on the out-ch than arrive 'after' the lane closing, so an
@@ -16,7 +16,7 @@
   [actx in-ch out-ch make-lane-fn]
   (act-loop lane-pump actx [lane-chs {} lane-chs-tot 0]
             (if-let [m (atake lane-pump in-ch)]
-              (if (= (:op m) :close-lane)
+              (if (= (:op m) :lane-close)
                 (if-let [lane-ch (get lane-chs (:lane m))]
                   (do (aclose lane-pump lane-ch)
                       (aput lane-pump out-ch (assoc m :status :ok))

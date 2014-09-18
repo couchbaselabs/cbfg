@@ -11,7 +11,7 @@
   {"add"   (fn [c] (assoc c :rq #(cbfg.world.base/example-add % c)))
    "sub"   (fn [c] (assoc c :rq #(cbfg.world.base/example-sub % c)))
    "count" (fn [c] (assoc c :rq #(cbfg.world.base/example-count % c)))
-   "close-lane" (fn [c] (assoc c :op :close-lane))
+   "lane-close" (fn [c] (assoc c :op :lane-close))
    "test"  (fn [c] (assoc c :rq #(cbfg.test.lane/test % (:opaque c))))})
 
 (def max-inflight (atom 10))

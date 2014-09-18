@@ -119,12 +119,12 @@
 
 (def rq-handlers
   {"authenticate" rq-authenticate
-   "lane-state" #(msg-req %1 :lane-state-ch %2)
    "realms-list" #(msg-put-res %1 :lane-state-ch %2)
    "add" cbfg.world.base/example-add
    "sub" cbfg.world.base/example-add
    "count" cbfg.world.base/example-count
-   "close-lane" cbfg.world.base/close-lane})
+   "lane-close" cbfg.world.base/lane-close ; TODO!
+   "lane-state" #(msg-req %1 :lane-state-ch %2)})
 
 (defn rq-handler [actx m] ((get rq-handlers (:op m)) actx m))
 

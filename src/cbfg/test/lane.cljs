@@ -50,20 +50,20 @@
                          (atake tlp out-ch)
                          [nil 1 {:x 30}]
                          nil))
-                  (do (aput tlp in-ch {:lane :x :op :close-lane})
+                  (do (aput tlp in-ch {:lane :x :op :lane-close})
                       (e n
                          (atake tlp out-ch)
-                         {:lane :x :op :close-lane :status :not-found}
+                         {:lane :x :op :lane-close :status :not-found}
                          nil))
                   (do (aput tlp in-ch {:lane :a :x 100})
                       (e n
                          (atake tlp out-ch)
                          [:a 2 {:lane :a :x 100}]
                          nil))
-                  (do (aput tlp in-ch {:lane :a :op :close-lane})
+                  (do (aput tlp in-ch {:lane :a :op :lane-close})
                       (e n
                          (atake tlp out-ch)
-                         {:lane :a :op :close-lane :status :ok}
+                         {:lane :a :op :lane-close :status :ok}
                          nil))
                   (e n
                      (atake tlp out-ch) ; For lane :a.
