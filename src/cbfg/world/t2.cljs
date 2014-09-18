@@ -46,7 +46,11 @@
                       :collsets {}}}})
 
 (def initial-lane-state
-  {:cur-realm "_lobby" :cur-user-realm "_lobby" :cur-user "_anon"})
+  {:cur-realm "_lobby"
+   :cur-realm-collset "default"
+   :cur-realm-collset-coll "default"
+   :cur-user-realm "_lobby"
+   :cur-user "_anon"})
 
 ; --------------------------------------------
 
@@ -60,6 +64,7 @@
         [server-state (assoc (dissoc m :pswd) :status :ok)]
         [server-state (assoc (dissoc m :pswd) :status :invalid)])
       [server-state (assoc (dissoc m :pswd) :status :invalid)])
+
     "realms-list"
     (if-let [{:keys [cur-user-realm cur-user]} m]
       (let [realm-keys (if (and (= cur-user-realm "_system")
@@ -75,6 +80,7 @@
                                 (assoc m :status :ok))))
         [server-state nil])
       [server-state (assoc m :status :not-authenticated)])
+
     nil))
 
 ; --------------------------------------------
@@ -84,16 +90,19 @@
     :update-user-realm
     [(assoc lane-state
        :cur-realm (:realm m)
+       :cur-realm-collset (:realm-collset m)
+       :cur-realm-collset-coll (:realm-collset-coll m)
        :cur-user-realm (:user-realm m)
        :cur-user (:user m))
      (assoc m :status :ok)]
+
     "lane-state"
     [lane-state (assoc m :status :ok :value lane-state)]
+
     "realms-list"
-    (do (msg-put actx :server-state-ch
-                 (assoc m :cur-user-realm (:cur-user-realm lane-state)
-                        :cur-user (:cur-user lane-state)))
+    (do (msg-put actx :server-state-ch (merge m lane-state))
         [lane-state nil])
+
     nil))
 
 ; --------------------------------------------
