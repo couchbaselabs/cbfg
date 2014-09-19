@@ -52,39 +52,41 @@ kv_client("client-2", "serverA", 8000)
             <label>
               <input type="radio" name="op"
                      id="authenticate" value="authenticate"
-                     class="arg-realm arg-user-realm arg-user arg-pswd"
+                     class="op arg-realm arg-user-realm arg-user arg-pswd"
                      checked/>
                 authenticate</label>
             <label>
               <input type="radio" name="op"
-                     id="realms-list" value="realms-list"/>
+                     id="realms-list" value="realms-list"
+                     class="op"/>
                 realms list</labelt>
             <label>
               <input type="radio" name="op"
                      id="add" value="add"
-                     class="arg-x arg-y"/>
+                     class="op arg-x arg-y"/>
                 add</label>
             <label>
               <input type="radio" name="op"
                      id="sub" value="sub"
-                     class="arg-x arg-y"/>
+                     class="op arg-x arg-y"/>
                 sub</label>
             <label>
               <input type="radio" name="op"
                      id="count" value="count"
-                     class="arg-x arg-y"/>
+                     class="op arg-x arg-y"/>
                 count</label>
             <label>
               <input type="radio" name="op"
                      id="lane-close" value="lane-close"
-                     class="arg-none"/>
+                     class="op"/>
                 lane close</label>
             <label><input type="radio" name="op"
                      id="lane-state" value="lane-state"
-                     class="arg-none"/>
+                     class="op"/>
                 lane state</label>
             <label>
-              <input type="radio" name="op" value="test"/>
+              <input type="radio" name="op" value="test"
+                     class="op"/>
                 test</label>
             <button id="go">go</button>
           </div>
@@ -107,18 +109,6 @@ kv_client("client-2", "serverA", 8000)
               </select>
             </div>
             <div class="field">
-              <label>x:</label>
-              <input id="x" type="text" value="1"></input>
-            </div>
-            <div class="field">
-              <label>y:</label>
-              <input id="y" type="text" value="20"></input>
-            </div>
-            <div class="field">
-              <label>delay: <span class="units">(millisecs)</span></label>
-              <input id="delay" type="text" value="1000"></input>
-            </div>
-            <div class="field">
               <label>lane:</label>
               <input id="lane" type="text" value="a"></input>
             </div>
@@ -130,32 +120,44 @@ kv_client("client-2", "serverA", 8000)
                 <option value="green">green</option>
                 <option value="orange" selected>orange</option>
                 <option value="purple">purple</option>
-                <option value="white"d>white</option>
+                <option value="white">white</option>
               </select>
             </div>
-            <div class="field">
+            <div class="field arg arg-x">
+              <label>x:</label>
+              <input id="x" type="text" value="1"></input>
+            </div>
+            <div class="field arg arg-y">
+              <label>y:</label>
+              <input id="y" type="text" value="20"></input>
+            </div>
+            <div class="field arg arg-key">
               <label>key:</label>
               <input id="key" type="text" value=""></input>
             </div>
-            <div class="field">
+            <div class="field arg arg-val">
               <label>val:</label>
               <input id="val" type="text" value=""></input>
             </div>
-            <div class="field">
+            <div class="field arg arg-realm">
               <label>realm:</label>
               <input id="realm" type="text" value=""></input>
             </div>
-            <div class="field">
+            <div class="field arg arg-user-realm">
               <label>user-realm:</label>
               <input id="user-realm" type="text" value=""></input>
             </div>
-            <div class="field">
+            <div class="field arg arg-user">
               <label>user:</label>
               <input id="user" type="text" value=""></input>
             </div>
-            <div class="field">
+            <div class="field arg arg-pswd">
               <label>pswd:</label>
               <input id="pswd" type="text" value=""></input>
+            </div>
+            <div class="field">
+              <label>delay: <span class="units">(millisecs)</span></label>
+              <input id="delay" type="text" value="1000"></input>
             </div>
             <br/><br/><br/><br/><br/>
           </div>
@@ -228,5 +230,24 @@ var world_t = "cbfg.world.t2";
 <script src="cbfg.js" type="text/javascript"></script>
 <script src="world-t1.js" type="text/javascript"></script>
 <script type="text/javascript">goog.require("cbfg.core");</script>
+
+<script>
+// Only show relevant arg fields based on selected op.
+for (var ops = document.getElementsByClassName("op"), i = 0; i < ops.length; i++) {
+  ops[i].onclick = function(ev) {
+    var args = document.getElementsByClassName("arg");
+    var c = ev.target.className.split(" ");
+    for (var k = 0; k < args.length; k++) {
+      args[k].style.display = "none";
+      for (var j = 0; j < c.length; j++) {
+        if (c[j].match(/^arg-/) &&
+            args[k].className.search(c[j]) >= 0) {
+          args[k].style.display = "";
+        }
+      }
+    }
+  }
+}
+</script>
 </body>
 </html>
