@@ -202,10 +202,10 @@
 
 ; ------------------------------------------------
 
-(defn world-vis-init-t [js-ns req-handlers el-prefix ev-msg init-event-delay]
+(defn world-vis-init-t [js-ns cmd-names cmd-handler el-prefix ev-msg init-event-delay]
   (init-roots)
-  (let [req-ch (map< ev-msg (merge (map #(listen-el (gdom/getElement %) "click")
-                                        (keys req-handlers))))
+  (let [cmd-ch (map< ev-msg (merge (map #(listen-el (gdom/getElement %) "click")
+                                        cmd-names)))
         event-delay (atom init-event-delay)
         step-ch (chan (dropping-buffer 1))
         prog-ch (listen-el (gdom/getElement "prog-go") "click")
@@ -254,17 +254,17 @@
               prog-js (str "with (" js-ns ") {" prog-in "}")
               prog-res (try (js/eval prog-js) (catch js/Object ex ex))]
           (go-loop [num-requests 0 num-responses 0]
-            (let [[v ch] (alts! [req-ch (:res-ch (prog-base-now))])
+            (let [[v ch] (alts! [cmd-ch (:res-ch (prog-base-now))])
                   ts (inc (:ts (prog-curr-now)))]
               (when v
-                (if (= ch req-ch)
+                (if (= ch cmd-ch)
                   (if (= (:op v) "replay")
                     (println "TODO-REPLAY-IMPL")
                     (let [req (assoc v :opaque ts)]
-                      (when-let [client-req-ch
-                                 (get-in (prog-curr-now) [:clients (:client req) :req-ch])]
+                      (when-let [client-req-ch (get-in (prog-curr-now)
+                                                       [:clients (:client req) :req-ch])]
                         (prog-evt world :req req #(assoc-in % [:reqs ts] [req nil]))
-                        (>! client-req-ch ((get req-handlers (:op v)) req))
+                        (>! client-req-ch (cmd-handler req))
                         (recur (inc num-requests) num-responses))))
                   (do (prog-evt world :res v #(update-in % [:reqs (:opaque v) 1]
                                                          conj [ts v]))
@@ -286,7 +286,8 @@
           (recur (inc num-worlds)))))))
 
 (defn world-vis-init [el-prefix init-event-delay]
-  (world-vis-init-t "cbfg.world.t1" cbfg.world.lane/cmd-handlers
+  (world-vis-init-t "cbfg.world.t1" (keys cbfg.world.lane/cmd-handlers)
+                    (fn [c] ((get cbfg.world.lane/cmd-handlers (:op c)) c))
                     el-prefix ev-msg-t1 init-event-delay))
 
 ; --------------------------------------------

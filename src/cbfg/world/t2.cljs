@@ -1,7 +1,7 @@
 (ns cbfg.world.t2
   (:require-macros [cbfg.act :refer [act act-loop achan achan-buf
                                      aclose aput aput-close atake areq]])
-  (:require [cbfg.vis :refer [get-el-value]]
+  (:require [cbfg.vis :refer [get-el-value get-el-checked]]
             [cbfg.fence]
             [cbfg.world.t1 :refer [prog-base-now prog-curr-now prog-evt
                                    wait-done addr-override-xy]]
@@ -130,13 +130,9 @@
 
 ; --------------------------------------------
 
-(defn cmd-handler [c] (assoc c :rq rq-handler))
-
-(def cmd-handlers (merge (into {} (map (fn [k] [k cmd-handler]) (keys rq-handlers)))
-                         {"lane-close" #(assoc % :op :lane-close)}))
-
 (defn ev-msg [ev]
   (assoc (cbfg.world.t1/ev-msg ev)
+    :op (first (filter get-el-checked (keys rq-handlers)))
     :key (get-el-value "key")
     :val (get-el-value "val")
     :user-realm (get-el-value "user-realm")
@@ -145,8 +141,9 @@
     :pswd (get-el-value "pswd")))
 
 (defn world-vis-init [el-prefix init-event-delay]
-    (cbfg.world.t1/world-vis-init-t "cbfg.world.t2" cmd-handlers el-prefix
-                                    ev-msg init-event-delay))
+    (cbfg.world.t1/world-vis-init-t "cbfg.world.t2" ["go"]
+                                    #(assoc % :rq rq-handler)
+                                    el-prefix ev-msg init-event-delay))
 
 ; --------------------------------------------
 

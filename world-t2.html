@@ -48,6 +48,46 @@ kv_client("client-2", "serverA", 8000)
           <button id="prog-eval-selection">eval selection</button>
         </div>
         <div class="inputs">
+          <div class="actions">
+            <label>
+              <input type="radio" name="op"
+                     id="authenticate" value="authenticate"
+                     class="arg-realm arg-user-realm arg-user arg-pswd"
+                     checked/>
+                authenticate</label>
+            <label>
+              <input type="radio" name="op"
+                     id="realms-list" value="realms-list"/>
+                realms list</labelt>
+            <label>
+              <input type="radio" name="op"
+                     id="add" value="add"
+                     class="arg-x arg-y"/>
+                add</label>
+            <label>
+              <input type="radio" name="op"
+                     id="sub" value="sub"
+                     class="arg-x arg-y"/>
+                sub</label>
+            <label>
+              <input type="radio" name="op"
+                     id="count" value="count"
+                     class="arg-x arg-y"/>
+                count</label>
+            <label>
+              <input type="radio" name="op"
+                     id="lane-close" value="lane-close"
+                     class="arg-none"/>
+                lane close</label>
+            <label><input type="radio" name="op"
+                     id="lane-state" value="lane-state"
+                     class="arg-none"/>
+                lane state</label>
+            <label>
+              <input type="radio" name="op" value="test"/>
+                test</label>
+            <button id="go">go</button>
+          </div>
           <div class="fields">
             <div class="field">
               <label>client:</label>
@@ -119,16 +159,6 @@ kv_client("client-2", "serverA", 8000)
             </div>
             <br/><br/><br/><br/><br/>
           </div>
-          <div class="actions">
-            <button id="authenticate">authenticate</button>
-            <button id="realms-list">realms list</button>
-            <button id="add">add</button>
-            <button id="sub">sub</button>
-            <button id="count">count</button>
-            <button id="lane-close">lane close</button>
-            <button id="lane-state">lane state</button>
-            <button id="test">test</button>
-          </div>
         </div>
       </div>
       <div class="splitter-ew"
@@ -174,6 +204,20 @@ kv_client("client-2", "serverA", 8000)
 </div>
 
 <style id="hover-style"></style>
+
+<style>
+.main .sides .llhs .inputs .actions {
+  padding-top: 10px;
+  padding-right: 20px;
+  float: left;
+}
+.main .sides .llhs .inputs .actions label {
+  display: block;
+}
+.main .sides .llhs .inputs .fields {
+  padding-right: 0px;
+}
+</style>
 
 <script>
 var world_t = "cbfg.world.t2";

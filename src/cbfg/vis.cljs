@@ -15,6 +15,7 @@
 (defn get-el-value [elId] (.-value (gdom/getElement elId)))
 (defn get-el-innerHTML [elId] (.-innerHTML (gdom/getElement elId)))
 (defn set-el-innerHTML [elId v] (set! (.-innerHTML (gdom/getElement elId)) v))
+(defn get-el-checked [elId] (.-checked (gdom/getElement elId)))
 
 (defn listen-el [el type]
   (let [out (chan)]
