@@ -133,7 +133,7 @@
 (defn cmd-handler [c] (assoc c :rq rq-handler))
 
 (def cmd-handlers (merge (into {} (map (fn [k] [k cmd-handler]) (keys rq-handlers)))
-                         {"lane-close" #(assoc % :rq rq-handler :op :lane-close)}))
+                         {"lane-close" #(assoc % :op :lane-close)}))
 
 (defn ev-msg [ev]
   (assoc (cbfg.world.t1/ev-msg ev)
