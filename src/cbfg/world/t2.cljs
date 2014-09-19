@@ -123,7 +123,7 @@
    "add" cbfg.world.base/example-add
    "sub" cbfg.world.base/example-add
    "count" cbfg.world.base/example-count
-   "lane-close" #(println "NEVER REACHED")
+   "lane-close" #(println "NEVER REACHED / :lane-close handled by lane pump")
    "lane-state" #(msg-req %1 :lane-state-ch %2)})
 
 (defn rq-handler [actx m] ((get rq-handlers (:op m)) actx m))
