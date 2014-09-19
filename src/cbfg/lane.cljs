@@ -30,7 +30,8 @@
                     (do (aput lane-pump lane-ch m)
                         (recur (assoc lane-chs (:lane m) lane-ch)
                                (inc lane-chs-tot)))
-                    (do (aput lane-pump out-ch (assoc m :status :error))
-                        (recur lane-chs lane-chs-tot))))) ; TODO: error code.
+                    (do (aput lane-pump out-ch
+                              (assoc m :status :failed :status-info :make-lane))
+                        (recur lane-chs lane-chs-tot)))))
               (doseq [[lane-name lane-ch] lane-chs] ; Close lane-chs & exit.
                 (aclose lane-pump lane-ch)))))

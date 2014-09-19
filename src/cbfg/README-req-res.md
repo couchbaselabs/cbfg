@@ -54,6 +54,11 @@ available in other response keys/values like :value.
 Caller made an ill-formed request (such as missing a parameter).
 More information may be available in the :status-info key/value.
 
+:failed
+
+Means some server-side failure, as opposed to invalid request inputs,
+similar to 5xx HTTP.
+
 :mismatch
 
 Caller made a correctly formed request, but which isn't currently
