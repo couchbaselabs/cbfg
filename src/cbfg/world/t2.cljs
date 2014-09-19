@@ -130,9 +130,12 @@
 
 ; --------------------------------------------
 
+(def op-map {"lane-close" :lane-close})
+
 (defn ev-msg [ev]
   (assoc (cbfg.world.t1/ev-msg ev)
-    :op (first (filter get-el-checked (keys rq-handlers)))
+    :op (let [op (first (filter get-el-checked (keys rq-handlers)))]
+          (get op-map op op))
     :key (get-el-value "key")
     :val (get-el-value "val")
     :user-realm (get-el-value "user-realm")
