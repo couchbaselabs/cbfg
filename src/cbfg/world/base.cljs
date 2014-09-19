@@ -51,8 +51,7 @@
                     "    <th>request</th><th>timeline</th></tr>"
                     (map (fn [[ts [request responses]]]
                            ["<tr class='hist-event"
-                            (when (some #(or (:value (second %))
-                                             (:status (second %)))
+                            (when (some #(not (:more (second %)))
                                         responses)
                               " complete") "'>"
                               " <td>" (:op request) "</td>"
