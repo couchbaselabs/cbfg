@@ -123,7 +123,7 @@
    "add" cbfg.world.base/example-add
    "sub" cbfg.world.base/example-add
    "count" cbfg.world.base/example-count
-   "lane-close" cbfg.world.base/lane-close ; TODO!
+   "lane-close" #(println "NEVER REACHED")
    "lane-state" #(msg-req %1 :lane-state-ch %2)})
 
 (defn rq-handler [actx m] ((get rq-handlers (:op m)) actx m))
@@ -132,7 +132,8 @@
 
 (defn cmd-handler [c] (assoc c :rq rq-handler))
 
-(def cmd-handlers (into {} (map (fn [k] [k cmd-handler]) (keys rq-handlers))))
+(def cmd-handlers (merge (into {} (map (fn [k] [k cmd-handler]) (keys rq-handlers)))
+                         {"lane-close" #(assoc % :rq rq-handler :op :lane-close)}))
 
 (defn ev-msg [ev]
   (assoc (cbfg.world.t1/ev-msg ev)
