@@ -120,19 +120,9 @@
     "lane-state"
     [lane-state (assoc m :status :ok :value lane-state)]
 
-    "realms-list"
+    ; ELSE
     (do (msg-put actx :server-state-ch (merge m lane-state))
-        [lane-state nil])
-
-    "collsets-list"
-    (do (msg-put actx :server-state-ch (merge m lane-state))
-        [lane-state nil])
-
-    "colls-list"
-    (do (msg-put actx :server-state-ch (merge m lane-state))
-        [lane-state nil])
-
-    nil))
+        [lane-state nil])))
 
 ; --------------------------------------------
 
