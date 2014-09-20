@@ -82,6 +82,28 @@
         [server-state nil])
       [server-state (assoc m :status :not-authenticated)])
 
+    "collsets-list"
+    (do (act collsets-list actx
+             (doseq [name (keys (get-in server-state
+                                        [:realms (:cur-realm m) :collsets]))]
+               (aput collsets-list (:res-ch m)
+                     (assoc m :status :ok :more true :value name)))
+             (aput-close collsets-list (:res-ch m)
+                         (assoc m :status :ok)))
+        [server-state nil])
+
+    "colls-list"
+    (do (act colls-list actx
+             (doseq [name (keys (get-in server-state
+                                        [:realms (:cur-realm m)
+                                         :collsets (:cur-realm-collset m)
+                                         :colls]))]
+               (aput colls-list (:res-ch m)
+                     (assoc m :status :ok :more true :value name)))
+             (aput-close colls-list (:res-ch m)
+                         (assoc m :status :ok)))
+        [server-state nil])
+
     nil))
 
 ; --------------------------------------------
@@ -104,6 +126,14 @@
     (do (msg-put actx :server-state-ch (merge m lane-state))
         [lane-state nil])
 
+    "collsets-list"
+    (do (msg-put actx :server-state-ch (merge m lane-state))
+        [lane-state nil])
+
+    "colls-list"
+    (do (msg-put actx :server-state-ch (merge m lane-state))
+        [lane-state nil])
+
     nil))
 
 ; --------------------------------------------
@@ -121,6 +151,8 @@
 (def rq-handlers
   {"authenticate" rq-authenticate
    "realms-list" #(msg-put-res %1 :lane-state-ch %2)
+   "collsets-list" #(msg-put-res %1 :lane-state-ch %2)
+   "colls-list" #(msg-put-res %1 :lane-state-ch %2)
    "add" cbfg.world.base/example-add
    "sub" cbfg.world.base/example-add
    "count" cbfg.world.base/example-count
