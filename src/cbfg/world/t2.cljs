@@ -67,20 +67,18 @@
       [server-state (assoc (dissoc m :pswd) :status :invalid)])
 
     "realms-list"
-    (if-let [{:keys [cur-user-realm cur-user]} m]
-      (let [realm-keys (if (and (= cur-user-realm "_system")
-                                (= cur-user "admin"))
-                         (keys (:realms server-state))
-                         [cur-user-realm])]
-        (act-loop realms-list actx [realm-keys realm-keys]
-                  (if-let [realm-key (first realm-keys)]
-                    (do (aput realms-list (:res-ch m)
-                              (assoc m :status :ok :more true :value realm-key))
-                        (recur (rest realm-keys)))
-                    (aput-close realms-list (:res-ch m)
-                                (assoc m :status :ok))))
-        [server-state nil])
-      [server-state (assoc m :status :not-authenticated)])
+    (let [{:keys [cur-user-realm cur-user]} m
+          realm-keys (if (and (= cur-user-realm "_system")
+                              (= cur-user "admin"))
+                       (keys (:realms server-state))
+                       [cur-user-realm])]
+      (act realms-list actx [realm-keys realm-keys]
+           (doseq [realm-key realm-keys]
+             (aput realms-list (:res-ch m)
+                   (assoc m :status :ok :more true :value realm-key)))
+           (aput-close realms-list (:res-ch m)
+                       (assoc m :status :ok)))
+      [server-state nil])
 
     "collsets-list"
     (do (act collsets-list actx
