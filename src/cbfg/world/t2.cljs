@@ -1,7 +1,8 @@
 (ns cbfg.world.t2
   (:require-macros [cbfg.act :refer [act act-loop achan achan-buf
                                      aclose aput aput-close atake areq]])
-  (:require [cbfg.vis :refer [get-el-value get-el-checked]]
+  (:require [clojure.string :as string]
+            [cbfg.vis :refer [get-el-value get-el-checked get-el-className get-els]]
             [cbfg.fence]
             [cbfg.world.t1 :refer [prog-base-now prog-curr-now prog-evt
                                    wait-done addr-override-xy]]
@@ -133,15 +134,16 @@
 (def op-map {"lane-close" :lane-close})
 
 (defn ev-msg [ev]
-  (assoc (cbfg.world.t1/ev-msg ev)
-    :op (let [op (first (filter get-el-checked (keys rq-handlers)))]
-          (get op-map op op))
-    :key (get-el-value "key")
-    :val (get-el-value "val")
-    :user-realm (get-el-value "user-realm")
-    :user (get-el-value "user")
-    :realm (get-el-value "realm")
-    :pswd (get-el-value "pswd")))
+  ; Populate msg only with args for the given op.
+  (let [op (first (filter get-el-checked (keys rq-handlers)))
+        msg (assoc (cbfg.world.t1/ev-msg ev) :op (get op-map op op))]
+    (reduce (fn [msg class-name]                 ; class-name looks like "arg-lane".
+              (let [arg-name (subs class-name 4) ; Strip "arg-", so "lane".
+                    key (keyword arg-name)]
+                (assoc msg key (get msg key (get-el-value arg-name)))))
+            msg
+            (filter #(.match % #"^arg-")
+                    (string/split (get-el-className op) #" ")))))
 
 (defn world-vis-init [el-prefix init-event-delay]
     (cbfg.world.t1/world-vis-init-t "cbfg.world.t2" ["go"]

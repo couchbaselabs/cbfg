@@ -16,6 +16,10 @@
 (defn get-el-innerHTML [elId] (.-innerHTML (gdom/getElement elId)))
 (defn set-el-innerHTML [elId v] (set! (.-innerHTML (gdom/getElement elId)) v))
 (defn get-el-checked [elId] (.-checked (gdom/getElement elId)))
+(defn get-el-className [elId] (.-className (gdom/getElement elId)))
+(defn get-els [classNames]
+  (let [nl (gdom/getElementsByClass classNames)]
+    (doall (map #(.item nl %) (range (.-length nl))))))
 
 (defn listen-el [el type]
   (let [out (chan)]
