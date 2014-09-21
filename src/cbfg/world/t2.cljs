@@ -44,7 +44,7 @@
   {:realms {"_system" {:users {"admin" {:pswd "password"}}
                        :collsets {}}
             "_lobby" {:users {"_anon" {:pswd ""}}
-                      :collsets {}}}})
+                      :collsets {"default" {:colls {"default" {}}}}}}})
 
 (def initial-lane-state
   {:cur-realm "_lobby"
