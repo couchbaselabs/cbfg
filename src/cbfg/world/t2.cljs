@@ -5,6 +5,7 @@
             [cbfg.act-misc :refer [state-loop msg-req msg-put msg-put-res]]
             [cbfg.vis :refer [get-el-value get-el-checked get-el-className get-els]]
             [cbfg.fence]
+            [cbfg.kvs]
             [cbfg.world.t1 :refer [prog-base-now prog-curr-now prog-evt
                                    wait-done addr-override-xy]]
             [cbfg.world.base]
@@ -13,17 +14,19 @@
 (defn coll-handler [actx coll-state m]
   [coll-state nil])
 
-(defn make-coll [actx rev name]
+(defn make-coll [actx rev name kvs-mgr-ch]
   (let [coll-ch (achan actx)]
     (state-loop actx [:coll name] coll-handler {})
     {:rev rev
      :name name
-     :coll-ch coll-ch}))
+     :coll-ch coll-ch
+     :kvs-mgr-ch kvs-mgr-ch}))
 
 ; --------------------------------------------
 
 (defn make-initial-server-state [actx]
-  (let [c (make-coll actx 0 "default")]
+  (let [kvs-mgr-ch (cbfg.kvs/make-kvs-mgr actx)
+        default-coll (make-coll actx 0 "default" kvs-mgr-ch)]
     {:rev 0
      :realms {"_system" {:rev 0
                          :users {"admin" {:rev 0 :pswd "password"}}
@@ -31,7 +34,8 @@
               "_lobby" {:rev 0
                         :users {"_anon" {:rev 0 :pswd ""}}
                         :collsets {"default" {:rev 0
-                                              :colls {"default" c}}}}}}))
+                                              :colls {"default" default-coll}}}}}
+     :kvs-mgr-ch kvs-mgr-ch}))
 
 (defn server-handler [actx server-state m]
   (case (:op m)
@@ -91,7 +95,7 @@
                                              :colls])]
           (if (not (get (:key m) colls))
             (let [nrev (inc (:rev server-state))
-                  coll (make-coll actx nrev (:key m))]
+                  coll (make-coll actx nrev (:key m) (:kvs-mgr-ch server-state))]
               ; TODO: audit log on success and failure.
               [(-> server-state
                    (assoc-in [:realms (:cur-realm m)
