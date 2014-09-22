@@ -58,7 +58,7 @@
 
 (defn make-scan-fn [scan-kind res-key get-entry]
   (fn [actx state-ch m]
-     (let [{:keys [kvs-ident kvs-snapshot kind from to include-deleted res-ch]} m
+     (let [{:keys [kvs-ident snapshot kind from to include-deleted res-ch]} m
            cb (fn [state kvs]
                 (act scan-work actx
                      (let [kc ((or kind :dirty) kvs)] ; Either :clean or :dirty.
@@ -73,7 +73,7 @@
                        (aput-close scan-work res-ch (assoc m :status :ok))))
                 nil)]
        (kvs-do actx state-ch res-ch
-               (fn [state] ((kvs-checker m cb) (or kvs-snapshot state)))))))
+               (fn [state] ((kvs-checker m cb) (or snapshot state)))))))
 
 (def default-op-handlers
   {:kvs-list
@@ -110,7 +110,7 @@
 
    :multi-get
    (fn [actx state-ch m]
-     (let [{:keys [kvs-ident kvs-snapshot kind keys include-deleted res-ch]} m
+     (let [{:keys [kvs-ident snapshot kind keys include-deleted res-ch]} m
            res-m (dissoc m :keys)
            cb (fn [state kvs]
                 (act multi-get actx
@@ -127,7 +127,7 @@
                        (aput-close multi-get res-ch (assoc res-m :status :ok))))
                 nil)]
        (kvs-do actx state-ch res-ch
-               (fn [state] ((kvs-checker m cb) (or kvs-snapshot state))))))
+               (fn [state] ((kvs-checker m cb) (or snapshot state))))))
 
    :multi-change
    (fn [actx state-ch m]
@@ -156,7 +156,7 @@
    :snapshot
    (fn [actx state-ch m]
      (kvs-do actx state-ch (:res-ch m)
-             (fn [state] [state (assoc m :status :ok :kvs-snapshot state)])))
+             (fn [state] [state (assoc m :status :ok :snapshot state)])))
 
    :sync
    (fn [actx state-ch m]
