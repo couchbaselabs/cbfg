@@ -33,8 +33,6 @@
                         :collsets {"default" {:rev 0
                                               :colls {"default" c}}}}}}))
 
-; --------------------------------------------
-
 (defn server-handler [actx server-state m]
   (case (:op m)
     :authenticate
