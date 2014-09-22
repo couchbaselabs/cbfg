@@ -9,8 +9,8 @@
             [cbfg.world.base]
             [cbfg.world.net]))
 
-(defn state-loop [actx name loop-fn initial-state]
-  (let [req-ch (achan actx)]
+(defn state-loop [actx name loop-fn initial-state & {:keys [req-ch]}]
+  (let [req-ch (or req-ch (achan actx))]
     (act-loop state-loop actx [name name state initial-state]
               (when-let [m (atake state-loop req-ch)]
                 (when-let [[state-next res] (loop-fn state-loop state m)]
@@ -60,13 +60,6 @@
                         :users {"_anon" {:rev 0 :pswd ""}}
                         :collsets {"default" {:rev 0
                                               :colls {"default" c}}}}}}))
-
-(def initial-lane-state
-  {:cur-realm "_lobby"
-   :cur-realm-collset "default"
-   :cur-realm-collset-coll "default"
-   :cur-user-realm "_lobby"
-   :cur-user "_anon"}) ; TODO: Need cur-coll, too.
 
 ; --------------------------------------------
 
@@ -146,7 +139,14 @@
         [server-state (assoc m :status :invalid :status-info :bad-key)])
       [server-state (assoc m :status :invalid :status-info :auth)])
 
-    nil))
+    :coll-get
+    [server-state (assoc m :status :ok
+                         :value (get-in server-state
+                                        [:realms (:cur-realm m)
+                                         :collsets (:cur-realm-collset m)
+                                         :colls (:cur-realm-collset-coll m)]))]
+
+    [server-state (assoc m :status :invalid :status-info :invalid-op)]))
 
 ; --------------------------------------------
 
@@ -173,6 +173,23 @@
     ; ELSE
     (do (msg-put actx :server-state-ch (merge m lane-state))
         [lane-state nil])))
+
+(def initial-lane-state
+  {:cur-realm "_lobby"
+   :cur-realm-collset "default"
+   :cur-realm-collset-coll "default"
+   :cur-user-realm "_lobby"
+   :cur-user "_anon"})
+
+(defn lane-state-loop [actx server-state-ch]
+  (let [req-ch (achan actx)]
+    (act lane-state-loop-init actx
+         (let [coll (areq lane-state-loop-init server-state-ch
+                          (assoc initial-lane-state :op :coll-get))]
+           (state-loop actx :lane-state lane-handler
+                       (assoc initial-lane-state :cur-coll (:value coll))
+                       :req-ch req-ch)))
+    req-ch))
 
 ; --------------------------------------------
 
@@ -231,8 +248,7 @@
         lane-buf-size 20
         make-lane (fn [actx lane-name lane-out-ch]
                     (let [lane-in-ch (achan-buf actx lane-buf-size)
-                          lane-state-ch (state-loop actx :lane-state lane-handler
-                                                    initial-lane-state)
+                          lane-state-ch (lane-state-loop actx server-state-ch)
                           lane-state-cb (fn [is-req m lane-ext-state]
                                           (if is-req
                                             (if m
