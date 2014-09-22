@@ -127,6 +127,7 @@
           (if (not (get (:key m) colls))
             (let [nrev (inc (:rev server-state))
                   coll (make-coll actx nrev (:key m))]
+              ; TODO: audit log on success and failure.
               [(-> server-state
                    (assoc-in [:realms (:cur-realm m)
                               :collsets (:cur-realm-collset m)
