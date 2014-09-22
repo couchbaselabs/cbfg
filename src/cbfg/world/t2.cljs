@@ -19,7 +19,8 @@
     (act coll-init actx
          (let [res (areq coll-init kvs-mgr-ch {:op :kvs-open :name [path rev]})]
            (if (= (:status res) :ok)
-             (state-loop actx [:coll path rev] coll-handler {})
+             (state-loop actx [:coll path rev] coll-handler
+                         {:kvs-ident (:kvs-ident res)})
              (do (println "make-coll kvs-open failed" res)
                  ; TODO: Should also consume any reqs that raced onto coll-ch.
                  (aclose coll-init coll-ch)))))
