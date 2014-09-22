@@ -76,7 +76,7 @@
                                [:realms user-realm :users user :pswd])))
         [server-state (assoc (dissoc m :pswd) :status :ok)]
         [server-state (assoc (dissoc m :pswd) :status :invalid)])
-      [server-state (assoc (dissoc m :pswd) :status :invalid)])
+      [server-state (assoc (dissoc m :pswd) :status :invalid :status-info :args)])
 
     "realms-list"
     (let [{:keys [cur-user-realm cur-user]} m
@@ -115,28 +115,30 @@
         [server-state nil])
 
     "coll-create"
-    ; TODO: Needs auth check.
-    (if (and (:key m) (re-matches #"^[a-zA-Z][a-zA-Z0-9_-]+" (:key m)))
-      (if-let [colls (get-in server-state [:realms (:cur-realm m)
-                                           :collsets (:cur-realm-collset m)
-                                           :colls])]
-        (if (not (get (:key m) colls))
-          (let [nrev (inc (:rev server-state))
-                coll (make-coll actx nrev m)]
-            [(-> server-state
-                 (assoc-in [:realms (:cur-realm m)
-                            :collsets (:cur-realm-collset m)
-                            :colls (:key m)] coll)
-                 (assoc-in [:realms (:cur-realm m)
-                            :collsets (:cur-realm-collset m)
-                            :rev] nrev)
-                 (assoc-in [:realms (:cur-realm m)
-                            :rev] nrev)
-                 (assoc :rev nrev))
-             (assoc m :status :ok :rev nrev)])
-          [server-state (assoc m :status :exists)])
-        [server-state (assoc m :status :not-found)])
-      [server-state (assoc m :status :invalid)])
+    (if (and (= (:cur-user-realm m) "_system")
+             (= (:cur-user m) "admin"))
+      (if (and (:key m) (re-matches #"^[a-zA-Z][a-zA-Z0-9_-]+" (:key m)))
+        (if-let [colls (get-in server-state [:realms (:cur-realm m)
+                                             :collsets (:cur-realm-collset m)
+                                             :colls])]
+          (if (not (get (:key m) colls))
+            (let [nrev (inc (:rev server-state))
+                  coll (make-coll actx nrev m)]
+              [(-> server-state
+                   (assoc-in [:realms (:cur-realm m)
+                              :collsets (:cur-realm-collset m)
+                              :colls (:key m)] coll)
+                   (assoc-in [:realms (:cur-realm m)
+                              :collsets (:cur-realm-collset m)
+                              :rev] nrev)
+                   (assoc-in [:realms (:cur-realm m)
+                              :rev] nrev)
+                   (assoc :rev nrev))
+               (assoc m :status :ok :rev nrev)])
+            [server-state (assoc m :status :exists)])
+          [server-state (assoc m :status :not-found)])
+        [server-state (assoc m :status :invalid :status-info :bad-key)])
+      [server-state (assoc m :status :invalid :status-info :auth)])
 
     nil))
 
