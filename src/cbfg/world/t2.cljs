@@ -40,23 +40,24 @@
 
 ; TODO: Split between logical schema and physical runtime objects.
 
-(defn make-coll [actx rev m]
+(defn make-coll [actx rev name]
+  ; TODO: Worker loop for coll-ch.
   {:rev rev
-   :name (:key m)})
+   :name name
+   :coll-ch (achan actx)})
 
 (defn make-initial-server-state [actx]
-  {:rev 0
-   :realms {"_system" {:rev 0
-                       :users {"admin" {:rev 0
-                                        :pswd "password"}}
-                       :collsets {}}
-            "_lobby" {:rev 0
-                      :users {"_anon" {:rev 0
-                                       :pswd ""}}
-                      :collsets {"default" {:rev 0
-                                            :colls {"default" {:rev 0
-                                                               :name "default"}
-                                                    }}}}}})
+  (let [c (make-coll actx 0 "default")]
+    {:rev 0
+     :realms {"_system" {:rev 0
+                         :users {"admin" {:rev 0
+                                          :pswd "password"}}
+                         :collsets {}}
+              "_lobby" {:rev 0
+                        :users {"_anon" {:rev 0
+                                         :pswd ""}}
+                        :collsets {"default" {:rev 0
+                                              :colls {"default" c}}}}}}))
 
 (def initial-lane-state
   {:cur-realm "_lobby"
@@ -121,7 +122,7 @@
                                              :colls])]
           (if (not (get (:key m) colls))
             (let [nrev (inc (:rev server-state))
-                  coll (make-coll actx nrev m)]
+                  coll (make-coll actx nrev (:key m))]
               [(-> server-state
                    (assoc-in [:realms (:cur-realm m)
                               :collsets (:cur-realm-collset m)
@@ -147,6 +148,7 @@
     :update-user-realm
     (if (or (= (:user-realm m) (:realm m))
             (= (:user-realm m) "_system"))
+      ; TODO: Don't let user switch to nonexistent coll.
       [(assoc lane-state
          :cur-realm (:realm m)
          :cur-realm-collset (:realm-collset m)
