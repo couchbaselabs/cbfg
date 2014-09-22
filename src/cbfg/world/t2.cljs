@@ -12,7 +12,11 @@
             [cbfg.world.net]))
 
 (defn coll-handler [actx coll-state m]
-  [coll-state nil])
+  (case (:op m)
+    "coll-state"
+    [coll-state (assoc m :status :ok :value coll-state)]
+
+    [coll-state (assoc m :status :invalid :status-info [:unknown-op m])]))
 
 (defn make-coll [actx rev path kvs-mgr-ch]
   (let [coll-ch (achan actx)]
@@ -20,7 +24,8 @@
          (let [res (areq coll-init kvs-mgr-ch {:op :kvs-open :name [path rev]})]
            (if (= (:status res) :ok)
              (state-loop actx [:coll path rev] coll-handler
-                         {:kvs-ident (:kvs-ident res)})
+                         {:kvs-ident (:kvs-ident res)}
+                         :req-ch coll-ch)
              (do (println "make-coll kvs-open failed" res)
                  ; TODO: Should also consume any reqs that raced onto coll-ch.
                  (aclose coll-init coll-ch)))))
@@ -147,6 +152,12 @@
     "lane-state"
     [lane-state (assoc m :status :ok :value lane-state)]
 
+    "coll-state"
+    (if-let [coll-ch (get-in lane-state [:cur-coll :coll-ch])]
+      (do (msg-put actx (fn [_] coll-ch) (merge m lane-state))
+          [lane-state nil])
+      [lane-state (assoc m :status :failed :status-info :missing-coll)])
+
     ; ELSE
     (do (msg-put actx :server-state-ch (merge m lane-state))
         [lane-state nil])))
@@ -193,6 +204,7 @@
    "realms-list" #(msg-put-res %1 :lane-state-ch %2)
    "collsets-list" #(msg-put-res %1 :lane-state-ch %2)
    "colls-list" #(msg-put-res %1 :lane-state-ch %2)
+   "coll-state" #(msg-put-res %1 :lane-state-ch %2)
    "coll-create" #(msg-put-res %1 :lane-state-ch %2)
    "add" cbfg.world.base/example-add
    "sub" cbfg.world.base/example-add
