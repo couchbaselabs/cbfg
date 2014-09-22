@@ -40,6 +40,10 @@
 
 ; TODO: Split between logical schema and physical runtime objects.
 
+(defn make-coll [actx rev m]
+  {:rev rev
+   :name (:key m)})
+
 (defn make-initial-server-state [actx]
   {:rev 0
    :realms {"_system" {:rev 0
@@ -50,7 +54,9 @@
                       :users {"_anon" {:rev 0
                                        :pswd ""}}
                       :collsets {"default" {:rev 0
-                                            :colls {"default" {:rev 0}}}}}}})
+                                            :colls {"default" {:rev 0
+                                                               :name "default"}
+                                                    }}}}}})
 
 (def initial-lane-state
   {:cur-realm "_lobby"
@@ -58,10 +64,6 @@
    :cur-realm-collset-coll "default"
    :cur-user-realm "_lobby"
    :cur-user "_anon"})
-
-(defn make-coll [actx rev m]
-  {:rev rev
-   :name (:key m)})
 
 ; --------------------------------------------
 
