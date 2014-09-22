@@ -64,7 +64,7 @@
    :cur-realm-collset "default"
    :cur-realm-collset-coll "default"
    :cur-user-realm "_lobby"
-   :cur-user "_anon"})
+   :cur-user "_anon"}) ; TODO: Need cur-coll, too.
 
 ; --------------------------------------------
 
@@ -118,8 +118,8 @@
         [server-state nil])
 
     "coll-create"
-    (if (and (= (:cur-user-realm m) "_system")
-             (= (:cur-user m) "admin"))
+    (if (or (= (:cur-user-realm m) (:cur-realm m))
+            (= (:cur-user-realm m) "_system"))
       (if (and (:key m) (re-matches #"^[a-zA-Z][a-zA-Z0-9_-]+" (:key m)))
         (if-let [colls (get-in server-state [:realms (:cur-realm m)
                                              :collsets (:cur-realm-collset m)
