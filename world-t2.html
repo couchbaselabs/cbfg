@@ -52,7 +52,7 @@ kv_client("client-2", "serverA", 8000)
             <label>
               <input type="radio" name="op"
                      id="authenticate" value="authenticate"
-                     class="op arg-realm arg-user-realm arg-user arg-pswd"
+                     class="op arg-realm arg-realm-collset arg-realm-collset-coll arg-user-realm arg-user arg-pswd"
                      checked/>
                 authenticate</label>
             <label>
@@ -157,6 +157,14 @@ kv_client("client-2", "serverA", 8000)
             <div class="field arg arg-realm">
               <label>realm:</label>
               <input id="realm" type="text" value=""></input>
+            </div>
+            <div class="field arg arg-realm-collset">
+              <label>realm-collset:</label>
+              <input id="realm-collset" type="text" value=""></input>
+            </div>
+            <div class="field arg arg-realm-collset-col">
+              <label>realm-collset-coll:</label>
+              <input id="realm-collset-coll" type="text" value=""></input>
             </div>
             <div class="field arg arg-user-realm">
               <label>user-realm:</label>
