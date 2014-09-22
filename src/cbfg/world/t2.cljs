@@ -21,6 +21,7 @@
            (if (= (:status res) :ok)
              (state-loop actx [:coll path rev] coll-handler {})
              (do (println "make-coll kvs-open failed" res)
+                 ; TODO: Should also consume any reqs that raced onto coll-ch.
                  (aclose coll-init coll-ch)))))
     {:rev rev
      :path path
