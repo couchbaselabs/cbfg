@@ -40,22 +40,24 @@
 
 ; TODO: Split between logical schema and physical runtime objects.
 
+(defn coll-handler [actx coll-state m]
+  [coll-state nil])
+
 (defn make-coll [actx rev name]
-  ; TODO: Worker loop for coll-ch.
-  {:rev rev
-   :name name
-   :coll-ch (achan actx)})
+  (let [coll-ch (achan actx)]
+    (state-loop actx [:coll name] coll-handler {})
+    {:rev rev
+     :name name
+     :coll-ch coll-ch}))
 
 (defn make-initial-server-state [actx]
   (let [c (make-coll actx 0 "default")]
     {:rev 0
      :realms {"_system" {:rev 0
-                         :users {"admin" {:rev 0
-                                          :pswd "password"}}
+                         :users {"admin" {:rev 0 :pswd "password"}}
                          :collsets {}}
               "_lobby" {:rev 0
-                        :users {"_anon" {:rev 0
-                                         :pswd ""}}
+                        :users {"_anon" {:rev 0 :pswd ""}}
                         :collsets {"default" {:rev 0
                                               :colls {"default" c}}}}}}))
 
