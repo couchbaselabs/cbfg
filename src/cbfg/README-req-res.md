@@ -66,6 +66,10 @@ matching server state (but perhaps the request might have been correct
 at a different time).  For example, this can be used for a CAS or UUID
 mismatch, and is useful for detecting A-B-A issues.
 
+:exists
+
+Caller tried to create a resource, but it already exists.
+
 :not-found
 
 Caller made a correctly formed request, but the server-side resource

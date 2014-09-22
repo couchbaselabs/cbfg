@@ -53,6 +53,10 @@
    :cur-user-realm "_lobby"
    :cur-user "_anon"})
 
+(defn make-coll [actx m]
+  {:name (:key m)
+   :rev 0})
+
 ; --------------------------------------------
 
 (defn server-handler [actx server-state m]
@@ -101,6 +105,21 @@
              (aput-close colls-list (:res-ch m)
                          (assoc m :status :ok)))
         [server-state nil])
+
+    "coll-create"
+    ; TODO: Needs auth check.
+    ; TODO: Incrementing rev counter.
+    (if-let [colls (get-in server-state [:realms (:cur-realm m)
+                                         :collsets (:cur-realm-collset m)
+                                         :colls])]
+      (if (not (get (:key m) colls))
+        (let [coll (make-coll actx m)]
+          [(assoc-in server-state [:realms (:cur-realm m)
+                                   :collsets (:cur-realm-collset m)
+                                   :colls (:key m)] coll)
+           (assoc m :status :ok :rev (:rev coll))])
+        [server-state (assoc m :status :exists)])
+      [server-state (assoc m :status :not-found)])
 
     nil))
 
