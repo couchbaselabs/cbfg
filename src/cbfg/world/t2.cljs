@@ -14,11 +14,11 @@
 (defn coll-handler [actx coll-state m]
   [coll-state nil])
 
-(defn make-coll [actx rev name kvs-mgr-ch]
+(defn make-coll [actx rev path kvs-mgr-ch]
   (let [coll-ch (achan actx)]
-    (state-loop actx [:coll name] coll-handler {})
+    (state-loop actx [:coll path rev] coll-handler {})
     {:rev rev
-     :name name
+     :path path
      :coll-ch coll-ch
      :kvs-mgr-ch kvs-mgr-ch}))
 
@@ -26,7 +26,8 @@
 
 (defn make-initial-server-state [actx]
   (let [kvs-mgr-ch (cbfg.kvs/make-kvs-mgr actx)
-        default-coll (make-coll actx 0 "default" kvs-mgr-ch)]
+        default-coll (make-coll actx 0 ["_lobby" "default" "default"]
+                                kvs-mgr-ch)]
     {:rev 0
      :realms {"_system" {:rev 0
                          :users {"admin" {:rev 0 :pswd "password"}}
@@ -95,7 +96,9 @@
                                              :colls])]
           (if (not (get (:key m) colls))
             (let [nrev (inc (:rev server-state))
-                  coll (make-coll actx nrev (:key m) (:kvs-mgr-ch server-state))]
+                  coll (make-coll actx nrev
+                                  [(:cur-realm m) (:cur-realm-collset m) (:key m)]
+                                  (:kvs-mgr-ch server-state))]
               ; TODO: audit log on success and failure.
               [(-> server-state
                    (assoc-in [:realms (:cur-realm m)
