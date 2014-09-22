@@ -41,10 +41,16 @@
 ; TODO: Split between logical schema and physical runtime objects.
 
 (defn make-initial-server-state [actx]
-  {:realms {"_system" {:users {"admin" {:pswd "password"}}
+  {:rev 0
+   :realms {"_system" {:rev 0
+                       :users {"admin" {:rev 0
+                                        :pswd "password"}}
                        :collsets {}}
-            "_lobby" {:users {"_anon" {:pswd ""}}
-                      :collsets {"default" {:colls {"default" {}}}}}}})
+            "_lobby" {:rev 0
+                      :users {"_anon" {:rev 0
+                                       :pswd ""}}
+                      :collsets {"default" {:rev 0
+                                            :colls {"default" {:rev 0}}}}}}})
 
 (def initial-lane-state
   {:cur-realm "_lobby"
@@ -53,9 +59,9 @@
    :cur-user-realm "_lobby"
    :cur-user "_anon"})
 
-(defn make-coll [actx m]
-  {:name (:key m)
-   :rev 0})
+(defn make-coll [actx rev m]
+  {:rev rev
+   :name (:key m)})
 
 ; --------------------------------------------
 
@@ -108,16 +114,23 @@
 
     "coll-create"
     ; TODO: Needs auth check.
-    ; TODO: Incrementing rev counter.
     (if-let [colls (get-in server-state [:realms (:cur-realm m)
                                          :collsets (:cur-realm-collset m)
                                          :colls])]
       (if (not (get (:key m) colls))
-        (let [coll (make-coll actx m)]
-          [(assoc-in server-state [:realms (:cur-realm m)
-                                   :collsets (:cur-realm-collset m)
-                                   :colls (:key m)] coll)
-           (assoc m :status :ok :rev (:rev coll))])
+        (let [nrev (inc (:rev server-state))
+              coll (make-coll actx nrev m)]
+          [(-> server-state
+               (assoc-in [:realms (:cur-realm m)
+                          :collsets (:cur-realm-collset m)
+                          :colls (:key m)] coll)
+               (assoc-in [:realms (:cur-realm m)
+                          :collsets (:cur-realm-collset m)
+                          :rev] nrev)
+               (assoc-in [:realms (:cur-realm m)
+                          :rev] nrev)
+               (assoc :rev nrev))
+           (assoc m :status :ok :rev nrev)])
         [server-state (assoc m :status :exists)])
       [server-state (assoc m :status :not-found)])
 
