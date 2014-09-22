@@ -114,26 +114,27 @@
 
     "coll-create"
     ; TODO: Needs auth check.
-    ; TODO: Missing/bad arg check.
-    (if-let [colls (get-in server-state [:realms (:cur-realm m)
-                                         :collsets (:cur-realm-collset m)
-                                         :colls])]
-      (if (not (get (:key m) colls))
-        (let [nrev (inc (:rev server-state))
-              coll (make-coll actx nrev m)]
-          [(-> server-state
-               (assoc-in [:realms (:cur-realm m)
-                          :collsets (:cur-realm-collset m)
-                          :colls (:key m)] coll)
-               (assoc-in [:realms (:cur-realm m)
-                          :collsets (:cur-realm-collset m)
-                          :rev] nrev)
-               (assoc-in [:realms (:cur-realm m)
-                          :rev] nrev)
-               (assoc :rev nrev))
-           (assoc m :status :ok :rev nrev)])
-        [server-state (assoc m :status :exists)])
-      [server-state (assoc m :status :not-found)])
+    (if (and (:key m) (re-matches #"^[a-zA-Z][a-zA-Z0-9_-]+" (:key m)))
+      (if-let [colls (get-in server-state [:realms (:cur-realm m)
+                                           :collsets (:cur-realm-collset m)
+                                           :colls])]
+        (if (not (get (:key m) colls))
+          (let [nrev (inc (:rev server-state))
+                coll (make-coll actx nrev m)]
+            [(-> server-state
+                 (assoc-in [:realms (:cur-realm m)
+                            :collsets (:cur-realm-collset m)
+                            :colls (:key m)] coll)
+                 (assoc-in [:realms (:cur-realm m)
+                            :collsets (:cur-realm-collset m)
+                            :rev] nrev)
+                 (assoc-in [:realms (:cur-realm m)
+                            :rev] nrev)
+                 (assoc :rev nrev))
+             (assoc m :status :ok :rev nrev)])
+          [server-state (assoc m :status :exists)])
+        [server-state (assoc m :status :not-found)])
+      [server-state (assoc m :status :invalid)])
 
     nil))
 
