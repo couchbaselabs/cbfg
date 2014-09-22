@@ -2,41 +2,13 @@
   (:require-macros [cbfg.act :refer [act act-loop achan achan-buf
                                      aclose aput aput-close atake areq]])
   (:require [clojure.string :as string]
+            [cbfg.act-misc :refer [state-loop msg-req msg-put msg-put-res]]
             [cbfg.vis :refer [get-el-value get-el-checked get-el-className get-els]]
             [cbfg.fence]
             [cbfg.world.t1 :refer [prog-base-now prog-curr-now prog-evt
                                    wait-done addr-override-xy]]
             [cbfg.world.base]
             [cbfg.world.net]))
-
-(defn state-loop [actx name loop-fn initial-state & {:keys [req-ch]}]
-  (let [req-ch (or req-ch (achan actx))]
-    (act-loop state-loop actx [name name state initial-state]
-              (when-let [m (atake state-loop req-ch)]
-                (when-let [[state-next res] (loop-fn state-loop state m)]
-                  (when (and res (:res-ch m))
-                    (aput-close state-loop (:res-ch m) res))
-                  (recur name state-next))))
-    req-ch))
-
-; --------------------------------------------
-
-(defn msg-req [actx ch-key m]
-  (act msg-req actx (areq msg-req (ch-key m) m)))
-
-(defn msg-put [actx ch-key m]
-  (act msg-put actx (aput msg-put (ch-key m) m)))
-
-(defn msg-put-res [actx ch-key m]
-  (let [res-ch (achan actx)]
-    (act msg-put-res actx
-         (when (not (aput msg-put-res (ch-key m) (assoc m :res-ch res-ch)))
-           (aput-close msg-put-res res-ch
-                       (assoc m :status :failed
-                              :status-info [(:op m) :closed :msg-put-res]))))
-    res-ch))
-
-; --------------------------------------------
 
 (defn coll-handler [actx coll-state m]
   [coll-state nil])
