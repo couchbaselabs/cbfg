@@ -16,7 +16,8 @@
   (act msg-req actx (areq msg-req (ch-key m) m)))
 
 (defn msg-put [actx ch-key m]
-  (act msg-put actx (aput msg-put (ch-key m) m)))
+  (act msg-put actx (when (not (aput msg-put (ch-key m) m))
+                      (println "failed msg-put" ch-key m))))
 
 (defn msg-put-res [actx ch-key m]
   (let [res-ch (achan actx)]
