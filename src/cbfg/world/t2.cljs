@@ -38,8 +38,6 @@
 
 ; --------------------------------------------
 
-; TODO: Split between logical schema and physical runtime objects.
-
 (defn coll-handler [actx coll-state m]
   [coll-state nil])
 
@@ -49,6 +47,8 @@
     {:rev rev
      :name name
      :coll-ch coll-ch}))
+
+; --------------------------------------------
 
 (defn make-initial-server-state [actx]
   (let [c (make-coll actx 0 "default")]
@@ -139,13 +139,6 @@
         [server-state (assoc m :status :invalid :status-info :bad-key)])
       [server-state (assoc m :status :invalid :status-info :auth)])
 
-    :coll-get
-    [server-state (assoc m :status :ok
-                         :value (get-in server-state
-                                        [:realms (:cur-realm m)
-                                         :collsets (:cur-realm-collset m)
-                                         :colls (:cur-realm-collset-coll m)]))]
-
     [server-state (assoc m :status :invalid :status-info :invalid-op)]))
 
 ; --------------------------------------------
@@ -178,16 +171,24 @@
   {:cur-realm "_lobby"
    :cur-realm-collset "default"
    :cur-realm-collset-coll "default"
+   :cur-coll nil ; Either nil or result of make-coll.
    :cur-user-realm "_lobby"
    :cur-user "_anon"})
 
 (defn lane-state-loop [actx server-state-ch]
   (let [req-ch (achan actx)]
     (act lane-state-loop-init actx
-         (let [coll (areq lane-state-loop-init server-state-ch
-                          (assoc initial-lane-state :op :coll-get))]
+         (let [ils initial-lane-state
+               res (areq lane-state-loop-init server-state-ch
+                         {:op :authenticate
+                          :user-realm (:cur-user-realm ils)
+                          :user (:cur-user ils)
+                          :pswd ""
+                          :realm (:cur-realm ils)
+                          :realm-collset (:cur-realm-collset ils)
+                          :realm-collset-coll (:cur-realm-collset-coll ils)})]
            (state-loop actx :lane-state lane-handler
-                       (assoc initial-lane-state :cur-coll (:value coll))
+                       (assoc initial-lane-state :cur-coll (:coll res))
                        :req-ch req-ch)))
     req-ch))
 
