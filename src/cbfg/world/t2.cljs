@@ -79,11 +79,9 @@
       [server-state (assoc (dissoc m :pswd) :status :invalid :status-info :args)])
 
     "realms-list"
-    (let [{:keys [cur-user-realm cur-user]} m
-          realm-keys (if (and (= cur-user-realm "_system")
-                              (= cur-user "admin"))
+    (let [realm-keys (if (= (:cur-user-realm m) "_system")
                        (keys (:realms server-state))
-                       [cur-user-realm])]
+                       [(:cur-user-realm m)])]
       (act realms-list actx [realm-keys realm-keys]
            (doseq [realm-key realm-keys]
              (aput realms-list (:res-ch m)
@@ -147,13 +145,16 @@
 (defn lane-handler [actx lane-state m]
   (case (:op m)
     :update-user-realm
-    [(assoc lane-state
-       :cur-realm (:realm m)
-       :cur-realm-collset (:realm-collset m)
-       :cur-realm-collset-coll (:realm-collset-coll m)
-       :cur-user-realm (:user-realm m)
-       :cur-user (:user m))
-     (assoc m :status :ok)]
+    (if (or (= (:user-realm m) (:realm m))
+            (= (:user-realm m) "_system"))
+      [(assoc lane-state
+         :cur-realm (:realm m)
+         :cur-realm-collset (:realm-collset m)
+         :cur-realm-collset-coll (:realm-collset-coll m)
+         :cur-user-realm (:user-realm m)
+         :cur-user (:user m))
+       (assoc m :status :ok)]
+      [lane-state (assoc m :status :invalid :status-info :wrong-realm)])
 
     "lane-state"
     [lane-state (assoc m :status :ok :value lane-state)]
