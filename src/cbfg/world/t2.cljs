@@ -75,7 +75,11 @@
       (if (and user-realm user pswd
                (= pswd (get-in server-state
                                [:realms user-realm :users user :pswd])))
-        [server-state (assoc (dissoc m :pswd) :status :ok)]
+        [server-state (assoc (dissoc m :pswd) :status :ok
+                             :coll (get-in server-state
+                                           [:realms (:realm m)
+                                            :collsets (:realm-collset m)
+                                            :colls (:realm-collset-coll m)]))]
         [server-state (assoc (dissoc m :pswd) :status :invalid)])
       [server-state (assoc (dissoc m :pswd) :status :invalid :status-info :args)])
 
@@ -148,14 +152,16 @@
     :update-user-realm
     (if (or (= (:user-realm m) (:realm m))
             (= (:user-realm m) "_system"))
-      ; TODO: Don't let user switch to nonexistent coll.
-      [(assoc lane-state
-         :cur-realm (:realm m)
-         :cur-realm-collset (:realm-collset m)
-         :cur-realm-collset-coll (:realm-collset-coll m)
-         :cur-user-realm (:user-realm m)
-         :cur-user (:user m))
-       (assoc m :status :ok)]
+      (if (:coll m)
+        [(assoc lane-state
+           :cur-realm (:realm m)
+           :cur-realm-collset (:realm-collset m)
+           :cur-realm-collset-coll (:realm-collset-coll m)
+           :cur-coll (:coll m)
+           :cur-user-realm (:user-realm m)
+           :cur-user (:user m))
+         (assoc m :status :ok)]
+        [lane-state (assoc m :status :invalid :status-info :unknown-coll)])
       [lane-state (assoc m :status :invalid :status-info :wrong-realm)])
 
     "lane-state"
@@ -174,7 +180,7 @@
                        (assoc m :op :authenticate))]
          (if (= (:status res) :ok)
            (areq rq-authenticate lane-state-ch
-                 (assoc m :op :update-user-realm))
+                 (assoc m :op :update-user-realm :coll (:coll res)))
            res))))
 
 (def rq-handlers
