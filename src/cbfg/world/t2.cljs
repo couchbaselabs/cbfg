@@ -16,7 +16,12 @@
 
 (defn make-coll [actx rev path kvs-mgr-ch]
   (let [coll-ch (achan actx)]
-    (state-loop actx [:coll path rev] coll-handler {})
+    (act coll-init actx
+         (let [res (areq coll-init kvs-mgr-ch {:op :kvs-open :name [path rev]})]
+           (if (= (:status res) :ok)
+             (state-loop actx [:coll path rev] coll-handler {})
+             (do (println "make-coll kvs-open failed" res)
+                 (aclose coll-init coll-ch)))))
     {:rev rev
      :path path
      :coll-ch coll-ch
