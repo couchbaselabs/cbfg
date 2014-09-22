@@ -114,6 +114,7 @@
 
     "coll-create"
     ; TODO: Needs auth check.
+    ; TODO: Missing/bad arg check.
     (if-let [colls (get-in server-state [:realms (:cur-realm m)
                                          :collsets (:cur-realm-collset m)
                                          :colls])]
@@ -173,6 +174,7 @@
    "realms-list" #(msg-put-res %1 :lane-state-ch %2)
    "collsets-list" #(msg-put-res %1 :lane-state-ch %2)
    "colls-list" #(msg-put-res %1 :lane-state-ch %2)
+   "coll-create" #(msg-put-res %1 :lane-state-ch %2)
    "add" cbfg.world.base/example-add
    "sub" cbfg.world.base/example-add
    "count" cbfg.world.base/example-count
