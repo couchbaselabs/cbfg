@@ -21,6 +21,7 @@
 (defn make-coll [actx rev path kvs-mgr-ch]
   (let [coll-ch (achan actx)]
     (act coll-init actx
+         ; TODO: Have a kvs per shard instead of per coll.
          (let [res (areq coll-init kvs-mgr-ch {:op :kvs-open :name [path rev]})]
            (if (= (:status res) :ok)
              (state-loop actx [:coll path rev] coll-handler
