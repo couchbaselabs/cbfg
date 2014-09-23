@@ -38,6 +38,8 @@
 
 (defn make-initial-server-state [actx]
   (let [kvs-mgr-ch (cbfg.kvs/make-kvs-mgr actx)
+        ; TODO: Put grouper in front of kvs-mgr-ch to batch up requests.
+        ; TODO: Have kvs-mgr instances per realm instead of per server.
         default-coll (make-coll actx 0 ["_lobby" "default" "default"]
                                 kvs-mgr-ch)]
     {:rev 0
