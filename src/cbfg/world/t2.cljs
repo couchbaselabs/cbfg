@@ -294,8 +294,8 @@
   (init-server :cm-server server-addr ports
                make-initial-server-state initial-lane-state))
 
-(defn dm-server [server-addr & ports] ; Data manager.
-  (init-server :dm-server server-addr ports
+(defn kv-server [server-addr & ports] ; Data manager.
+  (init-server :kv-server server-addr ports
                make-initial-server-state initial-lane-state))
 
 (defn kv-client [client-addr server-addr server-port]
