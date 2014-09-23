@@ -173,7 +173,7 @@
    :cur-user-realm "_lobby"
    :cur-user "_anon"})
 
-(defn lane-state-loop [actx server-state-ch]
+(defn lane-state-loop [actx server-state-ch initial-lane-state]
   (let [req-ch (achan actx)]
     (act lane-state-loop-init actx
          (let [ils initial-lane-state
@@ -240,15 +240,18 @@
 
 ; --------------------------------------------
 
-(defn cm-server [server-addr & ports] ; Cluster manager.
+(defn init-server [server-kind server-addr ports
+                   make-server-state initial-lane-state]
   (let [world (:world (prog-base-now))
-        server-state-ch (state-loop world :server-state server-handler
-                                    (make-initial-server-state world))
+        server-state-ch (state-loop world [server-kind server-addr ports]
+                                    server-handler
+                                    (make-server-state world))
         lane-max-inflight 10
         lane-buf-size 20
         make-lane (fn [actx lane-name lane-out-ch]
                     (let [lane-in-ch (achan-buf actx lane-buf-size)
-                          lane-state-ch (lane-state-loop actx server-state-ch)
+                          lane-state-ch (lane-state-loop actx server-state-ch
+                                                         initial-lane-state)
                           lane-state-cb (fn [is-req m lane-ext-state]
                                           (if is-req
                                             (if m
@@ -282,58 +285,18 @@
                                                     :server-conn-loop conn-loop)))
              (reset! done true))
         (wait-done done)
-        (prog-evt world :cm-server {:server-addr server-addr :server-port port}
+        (prog-evt world server-kind {:server-addr server-addr :server-port port}
                   #(update-in % [:servers server-addr] conj port)))))
   (addr-override-xy server-addr
                     300 (+ 20 (* 120 (dec (count (:servers (prog-curr-now))))))))
 
+(defn cm-server [server-addr & ports] ; Cluster manager.
+  (init-server :cm-server server-addr ports
+               make-initial-server-state initial-lane-state))
+
 (defn dm-server [server-addr & ports] ; Data manager.
-  (let [world (:world (prog-base-now))
-        server-state-ch (state-loop world [:kv-server-state server-addr ports]
-                                    server-handler
-                                    (make-initial-server-state world))
-        lane-max-inflight 10
-        lane-buf-size 20
-        make-lane (fn [actx lane-name lane-out-ch]
-                    (let [lane-in-ch (achan-buf actx lane-buf-size)
-                          lane-state-ch (lane-state-loop actx server-state-ch)
-                          lane-state-cb (fn [is-req m lane-ext-state]
-                                          (if is-req
-                                            (if m
-                                              [(assoc m :lane-state-ch lane-state-ch
-                                                      :server-state-ch server-state-ch)
-                                               lane-ext-state]
-                                              (do (act closer actx
-                                                       (aclose closer lane-state-ch))
-                                                  [m lane-ext-state]))
-                                            [m lane-ext-state]))]
-                      (cbfg.fence/make-fenced-pump actx lane-name
-                                                   lane-in-ch lane-out-ch
-                                                   lane-max-inflight false
-                                                   :ext-cb lane-state-cb)
-                      lane-in-ch))
-        conn-loop (fn [actx server-send-ch server-recv-ch close-server-recv-ch]
-                    (cbfg.world.net/server-conn-loop actx
-                                                     server-send-ch
-                                                     server-recv-ch
-                                                     close-server-recv-ch
-                                                     :make-lane-fn make-lane))]
-    (doseq [port ports]
-      (let [done (atom false)]
-        (act port-init world
-             (when-let [listen-result-ch (achan port-init)]
-               (aput port-init (:net-listen-ch (prog-base-now))
-                     [server-addr port listen-result-ch])
-               (when-let [[accept-ch close-accept-ch]
-                          (atake port-init listen-result-ch)]
-                 (cbfg.world.net/server-accept-loop world accept-ch close-accept-ch
-                                                    :server-conn-loop conn-loop)))
-             (reset! done true))
-        (wait-done done)
-        (prog-evt world :kv-server {:server-addr server-addr :server-port port}
-                  #(update-in % [:servers server-addr] conj port)))))
-  (addr-override-xy server-addr
-                    300 (+ 20 (* 120 (dec (count (:servers (prog-curr-now))))))))
+  (init-server :dm-server server-addr ports
+               make-initial-server-state initial-lane-state))
 
 (defn kv-client [client-addr server-addr server-port]
   (let [world (:world (prog-base-now))
