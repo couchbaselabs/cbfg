@@ -16,7 +16,7 @@
     "coll-state"
     [coll-state (assoc m :status :ok :value coll-state)]
 
-    [coll-state (assoc m :status :invalid :status-info [:unknown-op m])]))
+    [coll-state (assoc m :status :invalid :status-info :invalid-op)]))
 
 (defn make-coll [actx rev path kvs-mgr-ch]
   (let [coll-ch (achan actx)]
