@@ -30,6 +30,7 @@
              (do (println "make-coll kvs-open failed" res)
                  ; TODO: Should also consume any reqs that raced onto coll-ch.
                  (aclose coll-init coll-ch)))))
+    ; TODO: Add coll-meta cache to coll-state?
     {:rev rev
      :path path
      :coll-ch coll-ch
