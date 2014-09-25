@@ -141,4 +141,4 @@ stuff to look at / learn
 - TLA+
 -- http://research.microsoft.com/en-us/um/people/lamport/tla/amazon.html
 - ocaml combinators for declarative distributed systems, "opis"
-
+- https://github.com/pbailis/ramp-sigmod2014-code
