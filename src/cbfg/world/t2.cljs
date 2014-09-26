@@ -22,6 +22,9 @@
     "item-set"
     [coll-state (assoc m :status :not-implemented-yet)]
 
+    "item-del"
+    [coll-state (assoc m :status :not-implemented-yet)]
+
     [coll-state (assoc m :status :invalid :status-info :invalid-op)]))
 
 ; A coll can be used like a vbucket / partition.
@@ -164,7 +167,7 @@
     "lane-state"
     [lane-state (assoc m :status :ok :value lane-state)]
 
-    ["coll-state" "item-get" "item-set"]
+    ["coll-state" "item-get" "item-set" "item-del"]
     (if-let [coll-ch (get-in lane-state [:cur-coll :coll-ch])]
       (do (msg-put actx (fn [_] coll-ch) (merge m lane-state))
           [lane-state nil])
@@ -220,6 +223,7 @@
    "coll-create" #(msg-put-res %1 :lane-state-ch %2)
    "item-get" #(msg-put-res %1 :lane-state-ch %2)
    "item-set" #(msg-put-res %1 :lane-state-ch %2)
+   "item-del" #(msg-put-res %1 :lane-state-ch %2)
    "add" cbfg.world.base/example-add
    "sub" cbfg.world.base/example-add
    "count" cbfg.world.base/example-count
