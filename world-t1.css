@@ -12,6 +12,14 @@ body, div, button {
   vertical-align: top;
   white-space: nowrap;
 }
+
+::-webkit-scrollbar, ::-webkit-scrollbar-corner {
+  background-color: #2a2a2a;
+}
+::-webkit-scrollbar-thumb {
+  background-color: #4a4a4a;
+}
+
 .splitter-ns {
   display: block;
   width: 100%;
