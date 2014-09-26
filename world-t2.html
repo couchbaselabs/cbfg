@@ -83,6 +83,16 @@ kv_client("client-2", "serverA", 8000)</textarea>
                 coll create</label>
             <label>
               <input type="radio" name="op"
+                     id="item-get" value="item-get"
+                     class="op arg-key"/>
+                item get</label>
+            <label>
+              <input type="radio" name="op"
+                     id="item-set" value="item-set"
+                     class="op arg-key arg-val arg-rev"/>
+                item set</label>
+            <label>
+              <input type="radio" name="op"
                      id="add" value="add"
                      class="op arg-x arg-y"/>
                 add</label>
@@ -159,6 +169,10 @@ kv_client("client-2", "serverA", 8000)</textarea>
             <div class="field arg arg-val">
               <label>val:</label>
               <input id="val" type="text" value=""></input>
+            </div>
+            <div class="field arg arg-rev">
+              <label>rev:</label>
+              <input id="rev" type="text" value=""></input>
             </div>
             <div class="field arg arg-realm">
               <label>realm:</label>
