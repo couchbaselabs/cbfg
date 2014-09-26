@@ -18,10 +18,13 @@
 
     [coll-state (assoc m :status :invalid :status-info :invalid-op)]))
 
+; A coll can be used like a vbucket / partition.
+; Any coll-meta data is handled as just more entries in the coll,
+; somewhat like "dot files" in a filesystem.
+
 (defn make-coll [actx rev path kvs-mgr-ch]
   (let [coll-ch (achan actx)]
     (act coll-init actx
-         ; TODO: Have a kvs per shard instead of per coll.
          (let [res (areq coll-init kvs-mgr-ch {:op :kvs-open :name [path rev]})]
            (if (= (:status res) :ok)
              (state-loop actx [:coll path rev] coll-handler
@@ -30,7 +33,6 @@
              (do (println "make-coll kvs-open failed" res)
                  ; TODO: Should also consume any reqs that raced onto coll-ch.
                  (aclose coll-init coll-ch)))))
-    ; TODO: Add coll-meta cache to coll-state?
     {:rev rev
      :path path
      :coll-ch coll-ch
