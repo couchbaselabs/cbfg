@@ -11,6 +11,11 @@
             [cbfg.world.base]
             [cbfg.world.net]))
 
+(defn rev-to-sq [rev]
+  (if (= rev "")
+    nil
+    (js/parseInt rev)))
+
 (defn coll-handler [actx coll-state m]
   (case (:op m)
     "coll-state"
@@ -25,7 +30,15 @@
         [coll-state nil])
 
     "item-set"
-    [coll-state (assoc m :status :not-implemented-yet)]
+    (do (act item-set actx
+             (aput item-set (:kvs-mgr-ch coll-state)
+                   (assoc m :op :multi-change
+                          :kvs-ident (:kvs-ident coll-state)
+                          :changes [(cbfg.kvs/mutate-entry
+                                     {:key (:key m)
+                                      :val (:val m)
+                                      :sq (rev-to-sq (:rev m))})])))
+        [coll-state nil])
 
     "item-del"
     [coll-state (assoc m :status :not-implemented-yet)]
