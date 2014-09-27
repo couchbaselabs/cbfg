@@ -148,19 +148,30 @@
 
    :multi-change
    (fn [actx state-ch m]
-     (let [res-m (dissoc m :changes)
+     (let [res-m (dissoc m :change-reqs)
            res-ch (:res-ch m)
            cb (fn [state kvs]
                 (let [next-sq (:next-sq kvs)
-                      [next-kvs ress] (reduce (fn [[kvs1 ress] change]
-                                                (let [[kvs2 res] (change kvs1 next-sq)]
-                                                  [kvs2 (conj ress res)]))
-                                              [(assoc kvs :next-sq (inc next-sq)) []]
-                                              (:changes m))]
-                  (act multi-change actx
-                       (doseq [res ress]
-                         (aput multi-change res-ch (merge res-m res)))
-                       (aput-close multi-change res-ch (assoc res-m :status :ok)))
+                      [next-kvs ress]
+                      (reduce (fn [[kvs1 ress] change-req]
+                                (let [change-fn (:change-fn change-req)
+                                      change-res-ch (:res-ch change-req)
+                                      [kvs2 res] (change-fn kvs1 next-sq)]
+                                  [kvs2 (conj ress [(or change-res-ch res-ch)
+                                                    res])]))
+                              [(assoc kvs :next-sq (inc next-sq)) []]
+                              (:change-reqs m))]
+                  (act-loop multi-change actx
+                            [done-chs #{res-ch}
+                             ress ress]
+                            (if-let [[res-ch res] (first ress)]
+                              (do (aput multi-change res-ch (merge res-m res))
+                                  (recur (conj done-chs res-ch)
+                                         (rest ress)))
+                              (doseq [done-ch done-chs]
+                                (when done-ch
+                                  (aput-close multi-change done-ch
+                                              (assoc res-m :status :ok))))))
                   [(assoc-in state [:kvss (:name kvs)] next-kvs) nil]))]
        (kvs-do actx state-ch res-ch (kvs-checker m cb))))
 
