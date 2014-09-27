@@ -11,10 +11,10 @@
             [cbfg.world.base]
             [cbfg.world.net]))
 
-(defn rev-to-sq [rev] ; TODO: Unify req or sq concepts.
-  (if (= rev "")
+(defn parse-sq [s] ; TODO: Unify req or sq concepts.
+  (if (= s "")
     nil
-    (js/parseInt rev)))
+    (js/parseInt s)))
 
 (defn coll-handler [actx coll-state m]
   (case (:op m)
@@ -28,7 +28,7 @@
                           :kvs-ident (:kvs-ident coll-state)
                           :key-reqs [{:key (:key m)
                                       :res-ch (:res-ch m)
-                                      :sq (rev-to-sq (:rev m))}])))
+                                      :sq (parse-sq (:sq m))}])))
         [coll-state nil])
 
     "item-set"
@@ -39,7 +39,7 @@
                           :changes [(cbfg.kvs/mutate-entry
                                      {:key (:key m)
                                       :val (:val m)
-                                      :sq (rev-to-sq (:rev m))})])))
+                                      :sq (parse-sq (:sq m))})])))
         [coll-state nil])
 
     "item-del"
@@ -51,16 +51,16 @@
 ; Any coll-meta data is handled as just more entries in the coll,
 ; somewhat like "dot files" in a filesystem.
 
-(defn make-coll [actx rev path kvs-mgr-ch]
+(defn make-coll [actx sq path kvs-mgr-ch]
   (let [coll-ch (achan actx)
-        coll-res {:rev rev
+        coll-res {:sq sq
                   :path path
                   :coll-ch coll-ch
                   :kvs-mgr-ch kvs-mgr-ch}]
     (act coll-init actx
-         (let [res (areq coll-init kvs-mgr-ch {:op :kvs-open :name [path rev]})]
+         (let [res (areq coll-init kvs-mgr-ch {:op :kvs-open :name [path sq]})]
            (if (= (:status res) :ok)
-             (state-loop actx [:coll path rev] coll-handler
+             (state-loop actx [:coll path sq] coll-handler
                          (assoc coll-res :kvs-ident (:kvs-ident res))
                          :req-ch coll-ch)
              (do (println "make-coll kvs-open failed" res)
@@ -76,13 +76,13 @@
         ; TODO: Have kvs-mgr instances per realm instead of per server.
         default-coll (make-coll actx 0 ["_lobby" "default" "default"]
                                 kvs-mgr-ch)]
-    {:rev 0
-     :realms {"_system" {:rev 0
-                         :users {"admin" {:rev 0 :pswd "password"}}
+    {:sq 0
+     :realms {"_system" {:sq 0
+                         :users {"admin" {:sq 0 :pswd "password"}}
                          :collsets {}}
-              "_lobby" {:rev 0
-                        :users {"_anon" {:rev 0 :pswd ""}}
-                        :collsets {"default" {:rev 0
+              "_lobby" {:sq 0
+                        :users {"_anon" {:sq 0 :pswd ""}}
+                        :collsets {"default" {:sq 0
                                               :colls {"default" default-coll}}}}}
      :kvs-mgr-ch kvs-mgr-ch}))
 
@@ -143,8 +143,8 @@
                                              :collsets (:cur-realm-collset m)
                                              :colls])]
           (if (not (get (:key m) colls))
-            (let [nrev (inc (:rev server-state))
-                  coll (make-coll actx nrev
+            (let [nsq (inc (:sq server-state))
+                  coll (make-coll actx nsq
                                   [(:cur-realm m) (:cur-realm-collset m) (:key m)]
                                   (:kvs-mgr-ch server-state))]
               ; TODO: audit log on success and failure.
@@ -154,11 +154,11 @@
                               :colls (:key m)] coll)
                    (assoc-in [:realms (:cur-realm m)
                               :collsets (:cur-realm-collset m)
-                              :rev] nrev)
+                              :sq] nsq)
                    (assoc-in [:realms (:cur-realm m)
-                              :rev] nrev)
-                   (assoc :rev nrev))
-               (assoc m :status :ok :rev nrev)])
+                              :sq] nsq)
+                   (assoc :sq nsq))
+               (assoc m :status :ok :sq nsq)])
             [server-state (assoc m :status :exists)])
           [server-state (assoc m :status :not-found)])
         [server-state (assoc m :status :invalid :status-info :bad-key)])
