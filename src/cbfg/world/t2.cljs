@@ -17,7 +17,12 @@
     [coll-state (assoc m :status :ok :value coll-state)]
 
     "item-get"
-    [coll-state (assoc m :status :not-implemented-yet)]
+    (do (act item-get actx
+             (aput item-get (:kvs-mgr-ch coll-state)
+                   (assoc m :op :multi-get
+                          :kvs-ident (:kvs-ident coll-state)
+                          :keys [(:key m)])))
+        [coll-state nil])
 
     "item-set"
     [coll-state (assoc m :status :not-implemented-yet)]
@@ -32,20 +37,21 @@
 ; somewhat like "dot files" in a filesystem.
 
 (defn make-coll [actx rev path kvs-mgr-ch]
-  (let [coll-ch (achan actx)]
+  (let [coll-ch (achan actx)
+        coll-res {:rev rev
+                  :path path
+                  :coll-ch coll-ch
+                  :kvs-mgr-ch kvs-mgr-ch}]
     (act coll-init actx
          (let [res (areq coll-init kvs-mgr-ch {:op :kvs-open :name [path rev]})]
            (if (= (:status res) :ok)
              (state-loop actx [:coll path rev] coll-handler
-                         {:kvs-ident (:kvs-ident res)}
+                         (assoc coll-res :kvs-ident (:kvs-ident res))
                          :req-ch coll-ch)
              (do (println "make-coll kvs-open failed" res)
                  ; TODO: Should also consume any reqs that raced onto coll-ch.
                  (aclose coll-init coll-ch)))))
-    {:rev rev
-     :path path
-     :coll-ch coll-ch
-     :kvs-mgr-ch kvs-mgr-ch}))
+    coll-res))
 
 ; --------------------------------------------
 
@@ -167,7 +173,7 @@
     "lane-state"
     [lane-state (assoc m :status :ok :value lane-state)]
 
-    ["coll-state" "item-get" "item-set" "item-del"]
+    ("coll-state" "item-get" "item-set" "item-del")
     (if-let [coll-ch (get-in lane-state [:cur-coll :coll-ch])]
       (do (msg-put actx (fn [_] coll-ch) (merge m lane-state))
           [lane-state nil])
