@@ -110,21 +110,38 @@
 
    :multi-get
    (fn [actx state-ch m]
-     (let [{:keys [kvs-ident snapshot kind keys include-deleted res-ch]} m
-           res-m (dissoc m :keys)
+     (let [{:keys [kvs-ident snapshot kind key-reqs include-deleted res-ch]} m
+           res-m (dissoc m :key-reqs)
            cb (fn [state kvs]
-                (act multi-get actx
-                     (let [kc ((or kind :dirty) kvs)] ; Either :clean or :dirty.
-                       (doseq [key keys]
-                         (let [entry (kc-entry-by-key kc key)]
-                           (if (and entry (or include-deleted (not (:deleted entry))))
-                             (aput multi-get res-ch
-                                   (assoc res-m :more true :status :ok
-                                          :key key :entry entry))
-                             (aput multi-get res-ch
-                                   (assoc res-m :more true :status :not-found
-                                          :key key)))))
-                       (aput-close multi-get res-ch (assoc res-m :status :ok))))
+                (let [kc ((or kind :dirty) kvs)] ; Either :clean or :dirty.
+                  (act-loop multi-get actx
+                            [done-chs #{res-ch}
+                             key-reqs key-reqs]
+                            (if-let [key-req (first key-reqs)]
+                              (let [key (:key key-req)
+                                    entry (kc-entry-by-key kc key)
+                                    res-ch (or (:res-ch key-req) res-ch)]
+                                (if (and entry (or include-deleted
+                                                   (not (:deleted entry))))
+                                  (if (or (not (:sq key-req))
+                                          (= (:sq key-req) (:sq entry)))
+                                    (aput multi-get res-ch
+                                          (assoc res-m :more true :key key
+                                                 :status :ok :entry entry))
+                                    (aput multi-get res-ch
+                                          (assoc res-m :more true :key key
+                                                 :status :mismatch)))
+                                  (aput multi-get res-ch
+                                        (assoc res-m :more true :key key
+                                               :status :not-found)))
+                                (recur (if (:res-ch key-req)
+                                         (conj done-chs (:res-ch key-req))
+                                         done-chs)
+                                       (rest key-reqs)))
+                              (doseq [done-ch done-chs]
+                                (when done-ch
+                                  (aput-close multi-get done-ch
+                                              (assoc res-m :status :ok)))))))
                 nil)]
        (kvs-do actx state-ch res-ch
                (fn [state] ((kvs-checker m cb) (or snapshot state))))))

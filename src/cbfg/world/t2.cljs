@@ -11,7 +11,7 @@
             [cbfg.world.base]
             [cbfg.world.net]))
 
-(defn rev-to-sq [rev]
+(defn rev-to-sq [rev] ; TODO: Unify req or sq concepts.
   (if (= rev "")
     nil
     (js/parseInt rev)))
@@ -26,7 +26,9 @@
              (aput item-get (:kvs-mgr-ch coll-state)
                    (assoc m :op :multi-get
                           :kvs-ident (:kvs-ident coll-state)
-                          :keys [(:key m)])))
+                          :key-reqs [{:key (:key m)
+                                      :res-ch (:res-ch m)
+                                      :sq (rev-to-sq (:rev m))}])))
         [coll-state nil])
 
     "item-set"

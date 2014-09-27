@@ -13,6 +13,9 @@
 (defn noop-change [kvs new-sq]
   [kvs {:more true :status :ok}])
 
+; TODO: Test res-ch in key-reqs of multi-get.
+; TODO: Test mismatch of sq during multi-get.
+
 (defn test-kvs [actx]
   (act tkvs actx
        (let [n (atom 0)
@@ -158,12 +161,12 @@
                              :res-ch res-ch2
                              :op :multi-get
                              :kvs-ident (:kvs-ident open)
-                             :keys []}]
+                             :key-reqs []}]
                      (aput tkvs cmd-ch m2)
                      (let [res2 (atake tkvs res-ch2)]
                        (e n res2
                           (dissoc (merge m2 {:status :ok})
-                                  :keys)
+                                  :key-reqs)
                           (atake tkvs res-ch2))))
                    (let [res-ch3 (achan tkvs) ; Test multi-change with empty changes.
                          m3 {:opaque @n
@@ -244,7 +247,7 @@
                                   :res-ch res-ch7
                                   :op :multi-get
                                   :kvs-ident (:kvs-ident open)
-                                  :keys [:a]}]
+                                  :key-reqs [{:key :a}]}]
                           (aput tkvs cmd-ch m7)
                           (let [res7 (atake tkvs res-ch7)]
                             (and
@@ -254,18 +257,20 @@
                                                    :key :a
                                                    :entry {:key :a :val :A
                                                            :sq (:sq res6)}})
-                                        :keys)
+                                        :key-reqs)
                                 nil)
                              (e n (atake tkvs res-ch7)
                                 (dissoc (merge m7 {:status :ok})
-                                        :keys)
+                                        :key-reqs)
                                 (atake tkvs res-ch7)))))
                         (let [res-ch7 (achan tkvs) ; Test multi-get of several entries.
                               m7 {:opaque @n
                                   :res-ch res-ch7
                                   :op :multi-get
                                   :kvs-ident (:kvs-ident open)
-                                  :keys [:a :a :a]}]
+                                  :key-reqs [{:key :a}
+                                             {:key :a}
+                                             {:key :a}]}]
                           (aput tkvs cmd-ch m7)
                           (and
                            (e n (atake tkvs res-ch7)
@@ -273,25 +278,25 @@
                                                  :key :a
                                                  :entry {:key :a :val :A
                                                          :sq (:sq res6)}})
-                                      :keys)
+                                      :key-reqs)
                               nil)
                            (e n (atake tkvs res-ch7)
                               (dissoc (merge m7 {:more true :status :ok
                                                  :key :a
                                                  :entry {:key :a :val :A
                                                          :sq (:sq res6)}})
-                                      :keys)
+                                      :key-reqs)
                               nil)
                            (e n (atake tkvs res-ch7)
                               (dissoc (merge m7 {:more true :status :ok
                                                  :key :a
                                                  :entry {:key :a :val :A
                                                          :sq (:sq res6)}})
-                                      :keys)
+                                      :key-reqs)
                               nil)
                            (e n (atake tkvs res-ch7)
                               (dissoc (merge m7 {:status :ok})
-                                      :keys)
+                                      :key-reqs)
                               (atake tkvs res-ch7))))
                         (let [res-ch7bs (achan tkvs) ; Test change with bad sq.
                               m7bs {:opaque @n
@@ -348,7 +353,7 @@
                                         :res-ch res-ch7g
                                         :op :multi-get
                                         :kvs-ident (:kvs-ident open)
-                                        :keys [:a]}]
+                                        :key-reqs [{:key :a}]}]
                                (aput tkvs cmd-ch m7g)
                                (let [res7g (atake tkvs res-ch7g)]
                                  (and
@@ -358,11 +363,11 @@
                                                          :key :a
                                                          :entry {:key :a :val :AA
                                                                  :sq (:sq res7c)}})
-                                             :keys)
+                                             :key-reqs)
                                      nil)
                                   (e n (atake tkvs res-ch7g)
                                      (dissoc (merge m7g {:status :ok})
-                                             :keys)
+                                             :key-reqs)
                                      (atake tkvs res-ch7g)))))
                              )))
                         )))
@@ -371,24 +376,25 @@
                              :res-ch res-ch8
                              :op :multi-get
                              :kvs-ident (:kvs-ident open)
-                             :keys [:does-not-exist :not-there]}]
+                             :key-reqs [{:key :does-not-exist}
+                                        {:key :not-there}]}]
                      (aput tkvs cmd-ch m8)
                      (and
                       (e n (atake tkvs res-ch8)
                          (dissoc (merge m8 {:more true
                                             :status :not-found
                                             :key :does-not-exist})
-                                 :keys)
+                                 :key-reqs)
                          nil)
                       (e n (atake tkvs res-ch8)
                          (dissoc (merge m8 {:more true
                                             :status :not-found
                                             :key :not-there})
-                                 :keys)
+                                 :key-reqs)
                          nil)
                       (e n (atake tkvs res-ch8)
                          (dissoc (merge m8 {:status :ok})
-                                 :keys)
+                                 :key-reqs)
                          (atake tkvs res-ch8))))
                    (let [res-ch9 (achan tkvs) ; Test delete with wrong sq.
                          m9 {:opaque @n
@@ -437,7 +443,7 @@
                                        :res-ch res-ch9a
                                        :op :multi-get
                                        :kvs-ident (:kvs-ident open)
-                                       :keys [:a]}]
+                                       :key-reqs [{:key :a}]}]
                               (aput tkvs cmd-ch m9a)
                               (let [res9a (atake tkvs res-ch9a)]
                                 (and
@@ -445,11 +451,11 @@
                                     (dissoc (merge m9a {:more true
                                                         :status :not-found
                                                         :key :a})
-                                            :keys)
+                                            :key-reqs)
                                     nil)
                                  (e n (atake tkvs res-ch9a)
                                     (dissoc (merge m9a {:status :ok})
-                                            :keys)
+                                            :key-reqs)
                                     (atake tkvs res-ch9a))))))))
                    ))))
            "pass"
