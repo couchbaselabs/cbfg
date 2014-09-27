@@ -345,6 +345,43 @@
                               (dissoc (merge m7 {:status :ok})
                                       :key-reqs)
                               (atake tkvs res-ch7))))
+                        (let [res-ch7-1 (achan tkvs) ; Test multi-get of several entries.
+                              m7 {:opaque @n
+                                  :op :multi-get
+                                  :kvs-ident (:kvs-ident open)
+                                  :key-reqs [{:key :a
+                                              :res-ch res-ch7-1}
+                                             {:key :a
+                                              :res-ch res-ch7-1}
+                                             {:key :a
+                                              :res-ch res-ch7-1}]}]
+                          (aput tkvs cmd-ch m7)
+                          (and
+                           (e n (atake tkvs res-ch7-1)
+                              (dissoc (merge m7 {:more true :status :ok
+                                                 :key :a
+                                                 :entry {:key :a :val :A
+                                                         :sq (:sq res6)}})
+                                      :key-reqs)
+                              nil)
+                           (e n (atake tkvs res-ch7-1)
+                              (dissoc (merge m7 {:more true :status :ok
+                                                 :key :a
+                                                 :entry {:key :a :val :A
+                                                         :sq (:sq res6)}})
+                                      :key-reqs)
+                              nil)
+                           (e n (atake tkvs res-ch7-1)
+                              (dissoc (merge m7 {:more true :status :ok
+                                                 :key :a
+                                                 :entry {:key :a :val :A
+                                                         :sq (:sq res6)}})
+                                      :key-reqs)
+                              nil)
+                           (e n (atake tkvs res-ch7-1)
+                              (dissoc (merge m7 {:status :ok})
+                                      :key-reqs)
+                              (atake tkvs res-ch7-1))))
                         (let [res-ch7bs (achan tkvs) ; Test change with bad sq.
                               m7bs {:opaque @n
                                     :res-ch res-ch7bs
