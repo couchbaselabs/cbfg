@@ -371,6 +371,32 @@
                                 (dissoc (merge m7bs {:status :ok})
                                         :change-reqs)
                                 (atake tkvs res-ch7bs)))))
+                        (let [res-ch7bs-1 (achan tkvs) ; Test change with bad sq.
+                              m7bs {:opaque @n
+                                    :op :multi-change
+                                    :kvs-ident (:kvs-ident open)
+                                    :change-reqs [{:change-fn
+                                                   (cbfg.kvs/mutate-entry
+                                                    {:key :a
+                                                     :val :will-be-rejected
+                                                     :sq :some-wrong-sq})
+                                                   :res-ch res-ch7bs-1}]}]
+                          (aput tkvs cmd-ch m7bs)
+                          (let [res7bs (atake tkvs res-ch7bs-1)]
+                            (and
+                             (e n res7bs
+                                (dissoc (merge m7bs
+                                               {:more true
+                                                :status :mismatch
+                                                :status-info [:wrong-sq
+                                                               :some-wrong-sq]
+                                                :key :a})
+                                        :change-reqs)
+                                nil)
+                             (e n (atake tkvs res-ch7bs-1)
+                                (dissoc (merge m7bs {:status :ok})
+                                        :change-reqs)
+                                (atake tkvs res-ch7bs-1)))))
                         (let [res-ch7c (achan tkvs) ; Test change with right sq.
                               m7c {:opaque @n
                                    :res-ch res-ch7c
