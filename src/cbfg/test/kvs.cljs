@@ -196,6 +196,22 @@
                          (dissoc (merge m4 {:status :ok})
                                  :change-reqs)
                          (atake tkvs res-ch4))))
+                   (let [res-ch4-1 (achan tkvs) ; Test different res-ch.
+                         m4 {:opaque @n
+                             :op :multi-change
+                             :kvs-ident (:kvs-ident open)
+                             :change-reqs [{:change-fn noop-change
+                                            :res-ch res-ch4-1}]}]
+                     (aput tkvs cmd-ch m4)
+                     (and
+                      (e n (atake tkvs res-ch4-1)
+                         (dissoc (merge m4 {:more true :status :ok})
+                                 :change-reqs)
+                         nil)
+                      (e n (atake tkvs res-ch4-1)
+                         (dissoc (merge m4 {:status :ok})
+                                 :change-reqs)
+                         (atake tkvs res-ch4-1))))
                    (let [res-ch5 (achan tkvs) ; Test several noop-changes.
                          m5 {:opaque @n
                              :res-ch res-ch5
