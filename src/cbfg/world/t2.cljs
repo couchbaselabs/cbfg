@@ -22,41 +22,54 @@
     [coll-state (assoc m :status :ok :value coll-state)]
 
     "item-get"
-    (do (act item-get actx
-             (aput item-get (:kvs-mgr-ch coll-state)
-                   (assoc m :op :multi-get
-                          :kvs-ident (:kvs-ident coll-state)
-                          :key-reqs [{:res-ch (:res-ch m)
-                                      :key (:key m)
-                                      :sq (parse-sq (:sq m))}])))
-        [coll-state nil])
+    (let [res-ch (achan actx)]
+      (act item-get actx
+           (aput item-get (:kvs-mgr-ch coll-state)
+                 (assoc (dissoc m :res-ch)
+                   :op :multi-get
+                   :kvs-ident (:kvs-ident coll-state)
+                   :key-reqs [{:res-ch res-ch
+                               :key (:key m)
+                               :sq (parse-sq (:sq m))}]))
+           (aput item-get (:res-ch m)
+                 (dissoc (atake item-get res-ch) :more))
+           (while (atake item-get res-ch)))
+      [coll-state nil])
 
     "item-set"
-    (do (act item-set actx
-             (aput item-set (:kvs-mgr-ch coll-state)
-                   (assoc m :op :multi-change
-                          :kvs-ident (:kvs-ident coll-state)
-                          :change-reqs
-                          [{:res-ch (:res-ch m)
-                            :change-fn
-                            (cbfg.kvs/mutate-entry
-                             {:key (:key m)
-                              :val (:val m)
-                              :sq (parse-sq (:sq m))})}])))
+    (let [res-ch (achan actx)]
+      (act item-set actx
+           (aput item-set (:kvs-mgr-ch coll-state)
+                 (assoc (dissoc m :res-ch)
+                   :op :multi-change
+                   :kvs-ident (:kvs-ident coll-state)
+                   :change-reqs [{:res-ch res-ch
+                                  :change-fn
+                                  (cbfg.kvs/mutate-entry
+                                   {:key (:key m)
+                                    :val (:val m)
+                                    :sq (parse-sq (:sq m))})}]))
+           (aput item-set (:res-ch m)
+                 (dissoc (atake item-set res-ch) :more))
+           (while (atake item-set res-ch)))
         [coll-state nil])
 
     "item-del"
-    (do (act item-del actx
-             (aput item-del (:kvs-mgr-ch coll-state)
-                   (assoc m :op :multi-change
-                          :kvs-ident (:kvs-ident coll-state)
-                          :change-reqs
-                          [{:res-ch (:res-ch m)
-                            :change-fn
-                            (cbfg.kvs/mutate-entry
-                             {:deleted true
-                              :key (:key m)
-                              :sq (parse-sq (:sq m))})}])))
+    (let [res-ch (achan actx)]
+      (act item-del actx
+           (aput item-del (:kvs-mgr-ch coll-state)
+                 (assoc (dissoc m :res-ch)
+                   :op :multi-change
+                   :kvs-ident (:kvs-ident coll-state)
+                   :change-reqs [{:res-ch res-ch
+                                  :change-fn
+                                  (cbfg.kvs/mutate-entry
+                                   {:deleted true
+                                    :key (:key m)
+                                    :sq (parse-sq (:sq m))})}]))
+           (aput item-del (:res-ch m)
+                 (dissoc (atake item-del res-ch) :more))
+           (while (atake item-del res-ch)))
         [coll-state nil])
 
     [coll-state (assoc m :status :invalid :status-info :invalid-op)]))
