@@ -26,8 +26,8 @@
              (aput item-get (:kvs-mgr-ch coll-state)
                    (assoc m :op :multi-get
                           :kvs-ident (:kvs-ident coll-state)
-                          :key-reqs [{:key (:key m)
-                                      :res-ch (:res-ch m)
+                          :key-reqs [{:res-ch (:res-ch m)
+                                      :key (:key m)
                                       :sq (parse-sq (:sq m))}])))
         [coll-state nil])
 
@@ -36,14 +36,28 @@
              (aput item-set (:kvs-mgr-ch coll-state)
                    (assoc m :op :multi-change
                           :kvs-ident (:kvs-ident coll-state)
-                          :changes [(cbfg.kvs/mutate-entry
-                                     {:key (:key m)
-                                      :val (:val m)
-                                      :sq (parse-sq (:sq m))})])))
+                          :change-reqs
+                          [{:res-ch (:res-ch m)
+                            :change-fn
+                            (cbfg.kvs/mutate-entry
+                             {:key (:key m)
+                              :val (:val m)
+                              :sq (parse-sq (:sq m))})}])))
         [coll-state nil])
 
     "item-del"
-    [coll-state (assoc m :status :not-implemented-yet)]
+    (do (act item-del actx
+             (aput item-del (:kvs-mgr-ch coll-state)
+                   (assoc m :op :multi-change
+                          :kvs-ident (:kvs-ident coll-state)
+                          :change-reqs
+                          [{:res-ch (:res-ch m)
+                            :change-fn
+                            (cbfg.kvs/mutate-entry
+                             {:deleted true
+                              :key (:key m)
+                              :sq (parse-sq (:sq m))})}])))
+        [coll-state nil])
 
     [coll-state (assoc m :status :invalid :status-info :invalid-op)]))
 
