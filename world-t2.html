@@ -98,6 +98,16 @@ kv_client("client-2", "serverA", 8000)</textarea>
                 item del</label>
             <label>
               <input type="radio" name="op"
+                     id="item-scan-keys" value="item-scan-keys"
+                     class="op arg-from arg-to"/>
+                item scan keys</label>
+            <label>
+              <input type="radio" name="op"
+                     id="item-scan-changes" value="item-scan-changes"
+                     class="op arg-from arg-to"/>
+                item scan changes</label>
+            <label>
+              <input type="radio" name="op"
                      id="add" value="add"
                      class="op arg-x arg-y"/>
                 add</label>
@@ -178,6 +188,14 @@ kv_client("client-2", "serverA", 8000)</textarea>
             <div class="field arg arg-sq">
               <label>sq:</label>
               <input id="sq" type="text" value=""></input>
+            </div>
+            <div class="field arg arg-from">
+              <label>from:</label>
+              <input id="from" type="text" value=""></input>
+            </div>
+            <div class="field arg arg-to">
+              <label>to:</label>
+              <input id="to" type="text" value=""></input>
             </div>
             <div class="field arg arg-realm">
               <label>realm:</label>

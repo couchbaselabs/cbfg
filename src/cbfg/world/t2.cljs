@@ -61,6 +61,12 @@
                                             :key (:key m)
                                             :sq (parse-sq (:sq m))})}]))
 
+    "item-scan-keys"
+    [coll-state (assoc m :status :not-implemented)]
+
+    "item-scan-changes"
+    [coll-state (assoc m :status :not-implemented)]
+
     [coll-state (assoc m :status :invalid :status-info :invalid-op)]))
 
 ; A coll can be used like a vbucket / partition.
@@ -204,7 +210,9 @@
     "lane-state"
     [lane-state (assoc m :status :ok :value lane-state)]
 
-    ("coll-state" "item-get" "item-set" "item-del")
+    ("coll-state"
+     "item-get" "item-set" "item-del"
+     "item-scan-keys" "item-scan-changes")
     (if-let [coll-ch (get-in lane-state [:cur-coll :coll-ch])]
       (do (msg-put actx (fn [_] coll-ch) (merge m lane-state))
           [lane-state nil])
@@ -261,6 +269,8 @@
    "item-get" #(msg-put-res %1 :lane-state-ch %2)
    "item-set" #(msg-put-res %1 :lane-state-ch %2)
    "item-del" #(msg-put-res %1 :lane-state-ch %2)
+   "item-scan-keys" #(msg-put-res %1 :lane-state-ch %2)
+   "item-scan-changes" #(msg-put-res %1 :lane-state-ch %2)
    "add" cbfg.world.base/example-add
    "sub" cbfg.world.base/example-add
    "count" cbfg.world.base/example-count
