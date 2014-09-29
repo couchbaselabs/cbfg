@@ -11,6 +11,8 @@
             [cbfg.world.base]
             [cbfg.world.net]))
 
+(def max-int (.-MAX_SAFE_INTEGER js/Number))
+
 (defn parse-sq [s] ; TODO: Unify req or sq concepts.
   (if (= s "")
     nil
@@ -62,10 +64,20 @@
                                             :sq (parse-sq (:sq m))})}]))
 
     "item-scan-keys"
-    [coll-state (assoc m :status :not-implemented)]
+    (do (act item-scan-keys actx
+             (aput item-scan-keys (:kvs-mgr-ch coll-state)
+                   (assoc m :op :scan-keys
+                          :kvs-ident (:kvs-ident coll-state))))
+        [coll-state nil])
 
     "item-scan-changes"
-    [coll-state (assoc m :status :not-implemented)]
+    (do (act item-scan-changes actx
+             (aput item-scan-changes (:kvs-mgr-ch coll-state)
+                   (assoc m :op :scan-changes
+                          :kvs-ident (:kvs-ident coll-state)
+                          :from [(js/parseInt (or (parse-sq (:from m)) 0)) nil]
+                          :to [(js/parseInt (or (parse-sq (:to m)) max-int)) nil])))
+        [coll-state nil])
 
     [coll-state (assoc m :status :invalid :status-info :invalid-op)]))
 
