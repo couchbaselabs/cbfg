@@ -13,7 +13,7 @@
 
 (def max-int (.-MAX_SAFE_INTEGER js/Number))
 
-(defn parse-sq [s] ; TODO: Unify req or sq concepts.
+(defn parse-sq [s]
   (if (= s "")
     nil
     (js/parseInt s)))
