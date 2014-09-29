@@ -22,7 +22,9 @@
   (let [res-ch (achan actx)]
     (act item-op actx
          (aput item-op (:kvs-mgr-ch coll-state)
-               (dissoc (req-fn res-ch) :res-ch))
+               (dissoc (assoc (req-fn res-ch)
+                         :kvs-ident (:kvs-ident coll-state))
+                       :res-ch))
          (aput item-op (:res-ch m)
                (dissoc (atake item-op res-ch) :more))
          (while (atake item-op res-ch)))
@@ -36,7 +38,6 @@
     "item-get"
     (item-multi-op actx coll-state m
                    #(assoc m :op :multi-get
-                           :kvs-ident (:kvs-ident coll-state)
                            :key-reqs [{:res-ch %
                                        :key (:key m)
                                        :sq (parse-sq (:sq m))}]))
@@ -44,7 +45,6 @@
     "item-set"
     (item-multi-op actx coll-state m
                    #(assoc m :op :multi-change
-                           :kvs-ident (:kvs-ident coll-state)
                            :change-reqs [{:res-ch %
                                           :change-fn
                                           (cbfg.kvs/mutate-entry
@@ -55,7 +55,6 @@
     "item-del"
     (item-multi-op actx coll-state m
                    #(assoc m :op :multi-change
-                           :kvs-ident (:kvs-ident coll-state)
                            :change-reqs [{:res-ch %
                                           :change-fn
                                           (cbfg.kvs/mutate-entry
