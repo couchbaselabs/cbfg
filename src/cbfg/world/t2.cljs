@@ -75,8 +75,8 @@
              (aput item-scan-changes (:kvs-mgr-ch coll-state)
                    (assoc m :op :scan-changes
                           :kvs-ident (:kvs-ident coll-state)
-                          :from [(js/parseInt (or (parse-sq (:from m)) 0)) nil]
-                          :to [(js/parseInt (or (parse-sq (:to m)) max-int)) nil])))
+                          :from (js/parseInt (or (parse-sq (:from m)) 0))
+                          :to (js/parseInt (or (parse-sq (:to m)) max-int)))))
         [coll-state nil])
 
     [coll-state (assoc m :status :invalid :status-info :invalid-op)]))

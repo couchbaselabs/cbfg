@@ -56,24 +56,25 @@
   (act kvs-do actx
        (aput kvs-do state-ch [cb res-ch])))
 
-(defn make-scan-fn [scan-kind res-key get-entry]
+(defn make-scan-fn [scan-kind res-key get-entry & {:keys [req-filter-fn]}]
   (fn [actx state-ch m]
-     (let [{:keys [kvs-ident snapshot kind from to include-deleted res-ch]} m
-           cb (fn [state kvs]
-                (act scan-work actx
-                     (let [kc ((or kind :dirty) kvs)] ; Either :clean or :dirty.
-                       (doseq [[k v] (subseq (into (sorted-map)
-                                                   (scan-kind kc)) ; :keys or :changes.
-                                             >= from < to)]
-                         (when-let [entry (get-entry kc k v)]
-                           (when (or include-deleted (not (:deleted entry)))
-                             (aput scan-work res-ch
-                                   (assoc m :more true :status :ok
-                                          res-key key :entry entry)))))
-                       (aput-close scan-work res-ch (assoc m :status :ok))))
-                nil)]
-       (kvs-do actx state-ch res-ch
-               (fn [state] ((kvs-checker m cb) (or snapshot state)))))))
+    (let [m (if req-filter-fn (req-filter-fn m) m)
+          {:keys [kvs-ident snapshot kind from to include-deleted res-ch]} m
+          cb (fn [state kvs]
+               (act scan-work actx
+                    (let [kc ((or kind :dirty) kvs)] ; Either :clean or :dirty.
+                      (doseq [[k v] (subseq (into (sorted-map)
+                                                  (scan-kind kc)) ; :keys or :changes.
+                                            >= from < to)]
+                        (when-let [entry (get-entry kc k v)]
+                          (when (or include-deleted (not (:deleted entry)))
+                            (aput scan-work res-ch
+                                  (assoc m :more true :status :ok
+                                         res-key key :entry entry)))))
+                      (aput-close scan-work res-ch (assoc m :status :ok))))
+               nil)]
+      (kvs-do actx state-ch res-ch
+              (fn [state] ((kvs-checker m cb) (or snapshot state)))))))
 
 (def default-op-handlers
   {:kvs-list
@@ -179,7 +180,10 @@
    (make-scan-fn :keys :key kc-entry-by-key-sq)
 
    :scan-changes
-   (make-scan-fn :changes :sq (fn [kc sq-key entry] entry))
+   (make-scan-fn :changes :sq (fn [kc sq-key entry] entry)
+                 :req-filter-fn #(assoc %
+                                   :from [(:from %) nil]
+                                   :to [(:to %) nil]))
 
    :snapshot
    (fn [actx state-ch m]
