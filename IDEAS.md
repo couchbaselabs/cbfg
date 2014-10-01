@@ -142,3 +142,25 @@ stuff to look at / learn
 -- http://research.microsoft.com/en-us/um/people/lamport/tla/amazon.html
 - ocaml combinators for declarative distributed systems, "opis"
 - https://github.com/pbailis/ramp-sigmod2014-code
+
+---------------------------
+For stateful AUTH (digest/challenge instead of PLAIN)...
+
+...need to have a AUTH_NEEDED error code?
+
+Imagine proxy case where proxy is accessing multiple servers
+due to some large range scan, proxy needs to create conns
+and lanes on demand, and half-way through it needs to do
+digest/challenge AUTH.
+
+Ideas include needing super-user capability for proxy;
+but, that's not great for client-side tier of proxies.
+
+Or, AUTH_NEEDED negotiation in middle of request, where
+proxy & client redo AUTH on some other lane.  But, that's
+complicated.
+
+Or, proxy needs to grab all it's conns and lanes up-front;
+and, any AUTH_NEEDED negotiations need to happen up-front
+before the real work.
+
