@@ -143,13 +143,26 @@ stuff to look at / learn
 - ocaml combinators for declarative distributed systems, "opis"
 - https://github.com/pbailis/ramp-sigmod2014-code
 
-Aliaksey K. mentions...
+----------------------------------------
+Aliaksey K. mentions/feedback...
 - SCTP has approaches for higher efficiency?
 -- some ways to reduce syscalls?
 - SPDY / HTTP2 has flow control parts?
 - reducing conns/ports via multi-channels per conn (lanes)
   isn't a good idea; "don't bother"; consider instead
   user-space network/TCP stacks?
+-- with out-of-order responses, perhaps don't need multiple lanes?
+
+- quiet bit genericized (instead of FOO & FOOQ; BAR & BARQ)
+- flexible headers (a'la HTTP)
+-- use simple, regular encoding of extras...
+     small # of integer keys (like for TXID)
+     and size
+     and value
+- TCP_NODELAY
+-- today's STATS multiple response versus just encoding as one big value
+- cluster partition map change events might also be streamed,
+  via the "endless more" bit of true.
 
 ---------------------------
 For stateful AUTH (digest/challenge instead of PLAIN)...
