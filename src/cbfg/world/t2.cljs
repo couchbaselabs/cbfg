@@ -160,6 +160,7 @@
         [server-state nil])
 
     "partitions-list"
+    ; TODO: Support from & to parameters for partitions-list.
     (do (act partitions-list actx
              (doseq [name (keys (get-in server-state
                                         [:realms (:cur-realm m)
