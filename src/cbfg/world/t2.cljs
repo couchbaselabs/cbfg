@@ -18,32 +18,32 @@
     nil
     (js/parseInt s)))
 
-(defn item-multi-op [actx coll-state m req-fn]
+(defn item-multi-op [actx partition-state m req-fn]
   (let [res-ch (achan actx)]
     (act item-op actx
-         (aput item-op (:kvs-mgr-ch coll-state)
+         (aput item-op (:kvs-mgr-ch partition-state)
                (dissoc (assoc (req-fn res-ch)
-                         :kvs-ident (:kvs-ident coll-state))
+                         :kvs-ident (:kvs-ident partition-state))
                        :res-ch))
          (aput item-op (:res-ch m)
                (dissoc (atake item-op res-ch) :more))
          (while (atake item-op res-ch)))
-    [coll-state nil]))
+    [partition-state nil]))
 
-(defn coll-handler [actx coll-state m]
+(defn partition-handler [actx partition-state m]
   (case (:op m)
-    "coll-state"
-    [coll-state (assoc m :status :ok :value coll-state)]
+    "partition-state"
+    [partition-state (assoc m :status :ok :value partition-state)]
 
     "item-get"
-    (item-multi-op actx coll-state m
+    (item-multi-op actx partition-state m
                    #(assoc m :op :multi-get
                            :key-reqs [{:res-ch %
                                        :key (:key m)
                                        :sq (parse-sq (:sq m))}]))
 
     "item-set"
-    (item-multi-op actx coll-state m
+    (item-multi-op actx partition-state m
                    #(assoc m :op :multi-change
                            :change-reqs [{:res-ch %
                                           :change-fn
@@ -53,7 +53,7 @@
                                             :sq (parse-sq (:sq m))})}]))
 
     "item-del"
-    (item-multi-op actx coll-state m
+    (item-multi-op actx partition-state m
                    #(assoc m :op :multi-change
                            :change-reqs [{:res-ch %
                                           :change-fn
@@ -64,42 +64,42 @@
 
     "item-scan-keys"
     (do (act item-scan-keys actx
-             (aput item-scan-keys (:kvs-mgr-ch coll-state)
+             (aput item-scan-keys (:kvs-mgr-ch partition-state)
                    (assoc m :op :scan-keys
-                          :kvs-ident (:kvs-ident coll-state))))
-        [coll-state nil])
+                          :kvs-ident (:kvs-ident partition-state))))
+        [partition-state nil])
 
     "item-scan-changes"
     (do (act item-scan-changes actx
-             (aput item-scan-changes (:kvs-mgr-ch coll-state)
+             (aput item-scan-changes (:kvs-mgr-ch partition-state)
                    (assoc m :op :scan-changes
-                          :kvs-ident (:kvs-ident coll-state)
+                          :kvs-ident (:kvs-ident partition-state)
                           :from (js/parseInt (or (parse-sq (:from m)) 0))
                           :to (js/parseInt (or (parse-sq (:to m)) max-int)))))
-        [coll-state nil])
+        [partition-state nil])
 
-    [coll-state (assoc m :status :invalid :status-info :invalid-op)]))
+    [partition-state (assoc m :status :invalid :status-info :invalid-op)]))
 
-; A coll can be used like a vbucket / partition.
-; Any coll-meta data is handled as just more entries in the coll,
+; A partition can be used like a vbucket / partition.
+; Any partition-meta data is handled as just more entries in the partition,
 ; somewhat like "dot files" in a filesystem.
 
-(defn make-coll [actx sq path kvs-mgr-ch]
-  (let [coll-ch (achan actx)
-        coll-res {:sq sq
+(defn make-partition [actx sq path kvs-mgr-ch]
+  (let [partition-ch (achan actx)
+        partition-res {:sq sq
                   :path path
-                  :coll-ch coll-ch
+                  :partition-ch partition-ch
                   :kvs-mgr-ch kvs-mgr-ch}]
-    (act coll-init actx
-         (let [res (areq coll-init kvs-mgr-ch {:op :kvs-open :name [path sq]})]
+    (act partition-init actx
+         (let [res (areq partition-init kvs-mgr-ch {:op :kvs-open :name [path sq]})]
            (if (= (:status res) :ok)
-             (state-loop actx [:coll path sq] coll-handler
-                         (assoc coll-res :kvs-ident (:kvs-ident res))
-                         :req-ch coll-ch)
-             (do (println "make-coll kvs-open failed" res)
-                 ; TODO: Should also consume any reqs that raced onto coll-ch.
-                 (aclose coll-init coll-ch)))))
-    coll-res))
+             (state-loop actx [:partition path sq] partition-handler
+                         (assoc partition-res :kvs-ident (:kvs-ident res))
+                         :req-ch partition-ch)
+             (do (println "make-partition kvs-open failed" res)
+                 ; TODO: Should also consume any reqs that raced onto partition-ch.
+                 (aclose partition-init partition-ch)))))
+    partition-res))
 
 ; --------------------------------------------
 
@@ -107,16 +107,18 @@
   (let [kvs-mgr-ch (cbfg.kvs/make-kvs-mgr actx)
         ; TODO: Put grouper in front of kvs-mgr-ch to batch up requests.
         ; TODO: Have kvs-mgr instances per realm instead of per server.
-        default-coll (make-coll actx 0 ["_lobby" "default" "default"]
-                                kvs-mgr-ch)]
+        default-partition (make-partition actx 0 ["_lobby" "default" "default"]
+                                          kvs-mgr-ch)]
     {:sq 0
      :realms {"_system" {:sq 0
                          :users {"admin" {:sq 0 :pswd "password"}}
-                         :collsets {}}
+                         :partitionsets {}}
               "_lobby" {:sq 0
                         :users {"_anon" {:sq 0 :pswd ""}}
-                        :collsets {"default" {:sq 0
-                                              :colls {"default" default-coll}}}}}
+                        :partitionsets {"default"
+                                        {:sq 0
+                                         :partitions
+                                         {"default" default-partition}}}}}
      :kvs-mgr-ch kvs-mgr-ch}))
 
 (defn server-handler [actx server-state m]
@@ -127,10 +129,11 @@
                (= pswd (get-in server-state
                                [:realms user-realm :users user :pswd])))
         [server-state (assoc (dissoc m :pswd) :status :ok
-                             :coll (get-in server-state
-                                           [:realms (:realm m)
-                                            :collsets (:realm-collset m)
-                                            :colls (:realm-collset-coll m)]))]
+                             :partition
+                             (get-in server-state
+                                     [:realms (:realm m)
+                                      :partitionsets (:realm-partitionset m)
+                                      :partitions (:realm-partitionset-partition m)]))]
         [server-state (assoc (dissoc m :pswd) :status :invalid)])
       [server-state (assoc (dissoc m :pswd) :status :invalid :status-info :args)])
 
@@ -146,47 +149,49 @@
                        (assoc m :status :ok)))
       [server-state nil])
 
-    "collsets-list"
-    (do (act collsets-list actx
+    "partitionsets-list"
+    (do (act partitionsets-list actx
              (doseq [name (keys (get-in server-state
-                                        [:realms (:cur-realm m) :collsets]))]
-               (aput collsets-list (:res-ch m)
+                                        [:realms (:cur-realm m) :partitionsets]))]
+               (aput partitionsets-list (:res-ch m)
                      (assoc m :status :ok :more true :value name)))
-             (aput-close collsets-list (:res-ch m)
+             (aput-close partitionsets-list (:res-ch m)
                          (assoc m :status :ok)))
         [server-state nil])
 
-    "colls-list"
-    (do (act colls-list actx
+    "partitions-list"
+    (do (act partitions-list actx
              (doseq [name (keys (get-in server-state
                                         [:realms (:cur-realm m)
-                                         :collsets (:cur-realm-collset m)
-                                         :colls]))]
-               (aput colls-list (:res-ch m)
+                                         :partitionsets (:cur-realm-partitionset m)
+                                         :partitions]))]
+               (aput partitions-list (:res-ch m)
                      (assoc m :status :ok :more true :value name)))
-             (aput-close colls-list (:res-ch m)
+             (aput-close partitions-list (:res-ch m)
                          (assoc m :status :ok)))
         [server-state nil])
 
-    "coll-create"
+    "partition-create"
     (if (or (= (:cur-user-realm m) (:cur-realm m))
             (= (:cur-user-realm m) "_system"))
       (if (and (:key m) (re-matches #"^[a-zA-Z][a-zA-Z0-9_-]+" (:key m)))
-        (if-let [colls (get-in server-state [:realms (:cur-realm m)
-                                             :collsets (:cur-realm-collset m)
-                                             :colls])]
-          (if (not (get (:key m) colls))
+        (if-let [partitions
+                 (get-in server-state [:realms (:cur-realm m)
+                                       :partitionsets (:cur-realm-partitionset m)
+                                       :partitions])]
+          (if (not (get (:key m) partitions))
             (let [nsq (inc (:sq server-state))
-                  coll (make-coll actx nsq
-                                  [(:cur-realm m) (:cur-realm-collset m) (:key m)]
+                  partition
+                  (make-partition actx nsq
+                                  [(:cur-realm m) (:cur-realm-partitionset m) (:key m)]
                                   (:kvs-mgr-ch server-state))]
               ; TODO: audit log on success and failure.
               [(-> server-state
                    (assoc-in [:realms (:cur-realm m)
-                              :collsets (:cur-realm-collset m)
-                              :colls (:key m)] coll)
+                              :partitionsets (:cur-realm-partitionset m)
+                              :partitions (:key m)] partition)
                    (assoc-in [:realms (:cur-realm m)
-                              :collsets (:cur-realm-collset m)
+                              :partitionsets (:cur-realm-partitionset m)
                               :sq] nsq)
                    (assoc-in [:realms (:cur-realm m)
                               :sq] nsq)
@@ -206,28 +211,28 @@
     :update-user-realm
     (if (or (= (:user-realm m) (:realm m))
             (= (:user-realm m) "_system"))
-      (if (:coll m)
+      (if (:partition m)
         [(assoc lane-state
            :cur-realm (:realm m)
-           :cur-realm-collset (:realm-collset m)
-           :cur-realm-collset-coll (:realm-collset-coll m)
-           :cur-coll (:coll m)
+           :cur-realm-partitionset (:realm-partitionset m)
+           :cur-realm-partitionset-partition (:realm-partitionset-partition m)
+           :cur-partition (:partition m)
            :cur-user-realm (:user-realm m)
            :cur-user (:user m))
          (assoc m :status :ok)]
-        [lane-state (assoc m :status :invalid :status-info :unknown-coll)])
+        [lane-state (assoc m :status :invalid :status-info :unknown-partition)])
       [lane-state (assoc m :status :invalid :status-info :wrong-realm)])
 
     "lane-state"
     [lane-state (assoc m :status :ok :value lane-state)]
 
-    ("coll-state"
+    ("partition-state"
      "item-get" "item-set" "item-del"
      "item-scan-keys" "item-scan-changes")
-    (if-let [coll-ch (get-in lane-state [:cur-coll :coll-ch])]
-      (do (msg-put actx (fn [_] coll-ch) (merge m lane-state))
+    (if-let [partition-ch (get-in lane-state [:cur-partition :partition-ch])]
+      (do (msg-put actx (fn [_] partition-ch) (merge m lane-state))
           [lane-state nil])
-      [lane-state (assoc m :status :failed :status-info :missing-coll)])
+      [lane-state (assoc m :status :failed :status-info :missing-partition)])
 
     ; ELSE
     (do (msg-put actx :server-state-ch (merge m lane-state))
@@ -235,9 +240,9 @@
 
 (def initial-lane-state
   {:cur-realm "_lobby"
-   :cur-realm-collset "default"
-   :cur-realm-collset-coll "default"
-   :cur-coll nil ; Either nil or result of make-coll.
+   :cur-realm-partitionset "default"
+   :cur-realm-partitionset-partition "default"
+   :cur-partition nil ; Either nil or result of make-partition.
    :cur-user-realm "_lobby"
    :cur-user "_anon"})
 
@@ -251,10 +256,10 @@
                           :user (:cur-user ils)
                           :pswd ""
                           :realm (:cur-realm ils)
-                          :realm-collset (:cur-realm-collset ils)
-                          :realm-collset-coll (:cur-realm-collset-coll ils)})]
+                          :realm-partitionset (:cur-realm-partitionset ils)
+                          :realm-partitionset-partition (:cur-realm-partitionset-partition ils)})]
            (state-loop actx :lane-state lane-handler
-                       (assoc initial-lane-state :cur-coll (:coll res))
+                       (assoc initial-lane-state :cur-partition (:partition res))
                        :req-ch req-ch)))
     req-ch))
 
@@ -267,16 +272,16 @@
                        (assoc m :op :authenticate))]
          (if (= (:status res) :ok)
            (areq rq-authenticate lane-state-ch
-                 (assoc m :op :update-user-realm :coll (:coll res)))
+                 (assoc m :op :update-user-realm :partition (:partition res)))
            res))))
 
 (def rq-handlers
   {"authenticate" rq-authenticate
    "realms-list" #(msg-put-res %1 :lane-state-ch %2)
-   "collsets-list" #(msg-put-res %1 :lane-state-ch %2)
-   "colls-list" #(msg-put-res %1 :lane-state-ch %2)
-   "coll-state" #(msg-put-res %1 :lane-state-ch %2)
-   "coll-create" #(msg-put-res %1 :lane-state-ch %2)
+   "partitionsets-list" #(msg-put-res %1 :lane-state-ch %2)
+   "partitions-list" #(msg-put-res %1 :lane-state-ch %2)
+   "partition-state" #(msg-put-res %1 :lane-state-ch %2)
+   "partition-create" #(msg-put-res %1 :lane-state-ch %2)
    "item-get" #(msg-put-res %1 :lane-state-ch %2)
    "item-set" #(msg-put-res %1 :lane-state-ch %2)
    "item-del" #(msg-put-res %1 :lane-state-ch %2)

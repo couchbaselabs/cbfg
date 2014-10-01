@@ -53,7 +53,7 @@ kv_client("client-2", "serverA", 8000)</textarea>
             <label>
               <input type="radio" name="op"
                      id="authenticate" value="authenticate"
-                     class="op arg-realm arg-realm-collset arg-realm-collset-coll arg-user-realm arg-user arg-pswd"
+                     class="op arg-realm arg-realm-partitionset arg-realm-partitionset-partition arg-user-realm arg-user arg-pswd"
                      checked/>
                 authenticate</label>
             <label>
@@ -63,24 +63,24 @@ kv_client("client-2", "serverA", 8000)</textarea>
                 realms list</label>
             <label>
               <input type="radio" name="op"
-                     id="collsets-list" value="collsets-list"
+                     id="partitionsets-list" value="partitionsets-list"
                      class="op"/>
-                collsets list</label>
+                partitionsets list</label>
             <label>
               <input type="radio" name="op"
-                     id="colls-list" value="colls-list"
+                     id="partitions-list" value="partitions-list"
                      class="op"/>
-                colls list</label>
+                partitions list</label>
             <label>
               <input type="radio" name="op"
-                     id="coll-state" value="coll-state"
+                     id="partition-state" value="partition-state"
                      class="op"/>
-                coll state</label>
+                partition state</label>
             <label>
               <input type="radio" name="op"
-                     id="coll-create" value="coll-create"
+                     id="partition-create" value="partition-create"
                      class="op arg-key"/>
-                coll create</label>
+                partition create</label>
             <label>
               <input type="radio" name="op"
                      id="item-get" value="item-get"
@@ -201,13 +201,13 @@ kv_client("client-2", "serverA", 8000)</textarea>
               <label>realm:</label>
               <input id="realm" type="text" value=""></input>
             </div>
-            <div class="field arg arg-realm-collset">
-              <label>realm-collset:</label>
-              <input id="realm-collset" type="text" value=""></input>
+            <div class="field arg arg-realm-partitionset">
+              <label>realm-partitionset:</label>
+              <input id="realm-partitionset" type="text" value=""></input>
             </div>
-            <div class="field arg arg-realm-collset-col">
-              <label>realm-collset-coll:</label>
-              <input id="realm-collset-coll" type="text" value=""></input>
+            <div class="field arg arg-realm-partitionset-col">
+              <label>realm-partitionset-partition:</label>
+              <input id="realm-partitionset-partition" type="text" value=""></input>
             </div>
             <div class="field arg arg-user-realm">
               <label>user-realm:</label>
