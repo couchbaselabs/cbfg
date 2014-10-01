@@ -143,6 +143,14 @@ stuff to look at / learn
 - ocaml combinators for declarative distributed systems, "opis"
 - https://github.com/pbailis/ramp-sigmod2014-code
 
+Aliaksey K. mentions...
+- SCTP has approaches for higher efficiency?
+-- some ways to reduce syscalls?
+- SPDY / HTTP2 has flow control parts?
+- reducing conns/ports via multi-channels per conn (lanes)
+  isn't a good idea; "don't bother"; consider instead
+  user-space network/TCP stacks?
+
 ---------------------------
 For stateful AUTH (digest/challenge instead of PLAIN)...
 
@@ -158,7 +166,7 @@ but, that's not great for client-side tier of proxies.
 
 Or, AUTH_NEEDED negotiation in middle of request, where
 proxy & client redo AUTH on some other lane.  But, that's
-complicated.
+complicated and has head-of-line issues.
 
 Or, proxy needs to grab all it's conns and lanes up-front;
 and, any AUTH_NEEDED negotiations need to happen up-front
