@@ -112,13 +112,10 @@
     {:sq 0
      :realms {"_system" {:sq 0
                          :users {"admin" {:sq 0 :pswd "password"}}
-                         :partitionsets {}}
+                         :partitions {}}
               "_lobby" {:sq 0
                         :users {"_anon" {:sq 0 :pswd ""}}
-                        :partitionsets {"default"
-                                        {:sq 0
-                                         :partitions
-                                         {"default" default-partition}}}}}
+                        :partitions {"default" default-partition}}}
      :kvs-mgr-ch kvs-mgr-ch}))
 
 (defn server-handler [actx server-state m]
@@ -132,8 +129,7 @@
                              :partition
                              (get-in server-state
                                      [:realms (:realm m)
-                                      :partitionsets (:realm-partitionset m)
-                                      :partitions (:realm-partitionset-partition m)]))]
+                                      :partitions (:realm-partition m)]))]
         [server-state (assoc (dissoc m :pswd) :status :invalid)])
       [server-state (assoc (dissoc m :pswd) :status :invalid :status-info :args)])
 
@@ -149,22 +145,11 @@
                        (assoc m :status :ok)))
       [server-state nil])
 
-    "partitionsets-list"
-    (do (act partitionsets-list actx
-             (doseq [name (keys (get-in server-state
-                                        [:realms (:cur-realm m) :partitionsets]))]
-               (aput partitionsets-list (:res-ch m)
-                     (assoc m :status :ok :more true :value name)))
-             (aput-close partitionsets-list (:res-ch m)
-                         (assoc m :status :ok)))
-        [server-state nil])
-
     "partitions-list"
     ; TODO: Support from & to parameters for partitions-list.
     (do (act partitions-list actx
              (doseq [name (keys (get-in server-state
                                         [:realms (:cur-realm m)
-                                         :partitionsets (:cur-realm-partitionset m)
                                          :partitions]))]
                (aput partitions-list (:res-ch m)
                      (assoc m :status :ok :more true :value name)))
@@ -178,21 +163,18 @@
       (if (and (:key m) (re-matches #"^[a-zA-Z][a-zA-Z0-9_-]+" (:key m)))
         (if-let [partitions
                  (get-in server-state [:realms (:cur-realm m)
-                                       :partitionsets (:cur-realm-partitionset m)
                                        :partitions])]
           (if (not (get (:key m) partitions))
             (let [nsq (inc (:sq server-state))
                   partition
                   (make-partition actx nsq
-                                  [(:cur-realm m) (:cur-realm-partitionset m) (:key m)]
+                                  [(:cur-realm m) (:key m)]
                                   (:kvs-mgr-ch server-state))]
               ; TODO: audit log on success and failure.
               [(-> server-state
                    (assoc-in [:realms (:cur-realm m)
-                              :partitionsets (:cur-realm-partitionset m)
                               :partitions (:key m)] partition)
                    (assoc-in [:realms (:cur-realm m)
-                              :partitionsets (:cur-realm-partitionset m)
                               :sq] nsq)
                    (assoc-in [:realms (:cur-realm m)
                               :sq] nsq)
@@ -215,8 +197,7 @@
       (if (:partition m)
         [(assoc lane-state
            :cur-realm (:realm m)
-           :cur-realm-partitionset (:realm-partitionset m)
-           :cur-realm-partitionset-partition (:realm-partitionset-partition m)
+           :cur-realm-partition (:realm-partition m)
            :cur-partition (:partition m)
            :cur-user-realm (:user-realm m)
            :cur-user (:user m))
@@ -241,8 +222,7 @@
 
 (def initial-lane-state
   {:cur-realm "_lobby"
-   :cur-realm-partitionset "default"
-   :cur-realm-partitionset-partition "default"
+   :cur-realm-partition "default"
    :cur-partition nil ; Either nil or result of make-partition.
    :cur-user-realm "_lobby"
    :cur-user "_anon"})
@@ -257,8 +237,7 @@
                           :user (:cur-user ils)
                           :pswd ""
                           :realm (:cur-realm ils)
-                          :realm-partitionset (:cur-realm-partitionset ils)
-                          :realm-partitionset-partition (:cur-realm-partitionset-partition ils)})]
+                          :realm-partition (:cur-realm-partition ils)})]
            (state-loop actx :lane-state lane-handler
                        (assoc initial-lane-state :cur-partition (:partition res))
                        :req-ch req-ch)))
@@ -279,7 +258,6 @@
 (def rq-handlers
   {"authenticate" rq-authenticate
    "realms-list" #(msg-put-res %1 :lane-state-ch %2)
-   "partitionsets-list" #(msg-put-res %1 :lane-state-ch %2)
    "partitions-list" #(msg-put-res %1 :lane-state-ch %2)
    "partition-state" #(msg-put-res %1 :lane-state-ch %2)
    "partition-create" #(msg-put-res %1 :lane-state-ch %2)

@@ -53,7 +53,7 @@ kv_client("client-2", "serverA", 8000)</textarea>
             <label>
               <input type="radio" name="op"
                      id="authenticate" value="authenticate"
-                     class="op arg-realm arg-realm-partitionset arg-realm-partitionset-partition arg-user-realm arg-user arg-pswd"
+                     class="op arg-realm arg-realm-partition arg-user-realm arg-user arg-pswd"
                      checked/>
                 authenticate</label>
             <label>
@@ -61,11 +61,6 @@ kv_client("client-2", "serverA", 8000)</textarea>
                      id="realms-list" value="realms-list"
                      class="op"/>
                 realms list</label>
-            <label>
-              <input type="radio" name="op"
-                     id="partitionsets-list" value="partitionsets-list"
-                     class="op"/>
-                partitionsets list</label>
             <label>
               <input type="radio" name="op"
                      id="partitions-list" value="partitions-list"
@@ -201,13 +196,9 @@ kv_client("client-2", "serverA", 8000)</textarea>
               <label>realm:</label>
               <input id="realm" type="text" value=""></input>
             </div>
-            <div class="field arg arg-realm-partitionset">
-              <label>realm-partitionset:</label>
-              <input id="realm-partitionset" type="text" value=""></input>
-            </div>
-            <div class="field arg arg-realm-partitionset-col">
-              <label>realm-partitionset-partition:</label>
-              <input id="realm-partitionset-partition" type="text" value=""></input>
+            <div class="field arg arg-realm-partition">
+              <label>realm-partition:</label>
+              <input id="realm-partition" type="text" value=""></input>
             </div>
             <div class="field arg arg-user-realm">
               <label>user-realm:</label>
