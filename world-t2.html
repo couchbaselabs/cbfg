@@ -34,7 +34,7 @@
 
   <div class="main" id="main">
     <div class="sides">
-      <div class="llhs" id="llhs" style="width:30%;">
+      <div class="llhs" id="llhs" style="width:25%;">
         <div class="prog-in">
           <textarea id="prog-in">
 cm_server("serverX", 9000)
@@ -292,8 +292,15 @@ var world_t = "cbfg.world.t2";
 // Only show relevant arg fields based on selected op.
 for (var ops = document.getElementsByClassName("op"), i = 0; i < ops.length; i++) {
   ops[i].onclick = function(ev) {
+    focusArgs(ev.target.className);
+  }
+}
+
+focusArgs(document.getElementById("authenticate").className);
+
+function focusArgs(targetClassName) {
     var args = document.getElementsByClassName("arg");
-    var c = ev.target.className.split(" ");
+    var c = targetClassName.split(" ");
     for (var k = 0; k < args.length; k++) {
       args[k].style.display = "none";
       for (var j = 0; j < c.length; j++) {
@@ -304,7 +311,6 @@ for (var ops = document.getElementsByClassName("op"), i = 0; i < ops.length; i++
       }
     }
   }
-}
 </script>
 </body>
 </html>
