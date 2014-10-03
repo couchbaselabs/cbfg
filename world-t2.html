@@ -289,7 +289,7 @@ var world_t = "cbfg.world.t2";
 <script type="text/javascript">goog.require("cbfg.core");</script>
 
 <script>
-// Only show relevant arg fields based on selected op.
+// Show only relevant params based on selected op.
 for (var ops = document.getElementsByClassName("op"), i = 0; i < ops.length; i++) {
   ops[i].onclick = function(ev) {
     showParams(ev.target.className);
