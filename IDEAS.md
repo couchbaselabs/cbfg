@@ -143,6 +143,9 @@ stuff to look at / learn
 - ocaml combinators for declarative distributed systems, "opis"
 - https://github.com/pbailis/ramp-sigmod2014-code
 -- can NBTA be used to replicate transactions (across NPR) in RA fashion?
+- Michael N. mentions reactive streams spec.
+-- It has explicit asynchronous backpressure.
+-- https://github.com/reactive-streams/reactive-streams/blob/v0.3/README.md
 
 ----------------------------------------
 Aliaksey K. mentions/feedback...
