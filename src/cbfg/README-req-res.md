@@ -59,6 +59,11 @@ More information may be available in the :status-info key/value.
 Means some server-side failure, as opposed to invalid request inputs,
 similar to 5xx HTTP.
 
+:out-of-resource
+
+An type of failure where there may be some temporary lack
+of resource.
+
 :mismatch
 
 Caller made a correctly formed request, but which isn't currently
