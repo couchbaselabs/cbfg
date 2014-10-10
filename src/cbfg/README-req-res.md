@@ -59,10 +59,18 @@ More information may be available in the :status-info key/value.
 Means some server-side failure, as opposed to invalid request inputs,
 similar to 5xx HTTP.
 
-:out-of-resource
+:full
 
-An type of failure where there may be some temporary lack
-of resource.
+A more specific type of failure where some resource quota or limit is
+reached, and without some explicit action from user (such as deleting
+resources or configuring more capacity) the fullness will continue.
+
+:temp-full
+
+A type of failure where some resource limit was reached, but just by
+waiting, backing off, and retrying later, the same request might
+succeed at a later time.  For example, persistence and/or replication
+queues might be temporarily full and take time to drain.
 
 :mismatch
 
@@ -78,9 +86,9 @@ Caller tried to create a resource, but it already exists.
 :not-found
 
 Caller made a correctly formed request, but the server-side resource
-no longer exists, perhaps due to a previous deletion.  In contrast to
-a :not-found status code, a :mismatch informs the caller that a
-resource is still there, but has a version or CAS mismatch.
+no longer exists, perhaps due to a previous deletion.  In contrast, a
+:mismatch informs the caller that a named resource exists, but has a
+version, CAS or UUID mismatch.
 
 :not-authenticated
 :not-authorized
