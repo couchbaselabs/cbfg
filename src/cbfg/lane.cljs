@@ -13,7 +13,7 @@
    responses on the out-ch than arrive 'after' the lane closing, so an
    out-ch consumer should handle and/or drop those late responses.
    So, to avoid confusion, a client should avoid reusing lane-names."
-  [actx in-ch out-ch make-lane-fn]
+  [actx in-ch out-ch make-lane-fn & {:keys [max-lanes]}]
   (act-loop lane-pump actx [lane-chs {} lane-chs-tot 0]
             (if-let [m (atake lane-pump in-ch)]
               (if (= (:op m) :lane-close)
@@ -26,12 +26,16 @@
                 (if-let [lane-ch (get lane-chs (:lane m))]
                   (do (aput lane-pump lane-ch m)
                       (recur lane-chs lane-chs-tot))
-                  (if-let [lane-ch (make-lane-fn lane-pump (:lane m) out-ch)]
-                    (do (aput lane-pump lane-ch m)
-                        (recur (assoc lane-chs (:lane m) lane-ch)
-                               (inc lane-chs-tot)))
+                  (if (or (not max-lanes) (< (count lane-chs) max-lanes))
+                    (if-let [lane-ch (make-lane-fn lane-pump (:lane m) out-ch)]
+                      (do (aput lane-pump lane-ch m)
+                          (recur (assoc lane-chs (:lane m) lane-ch)
+                                 (inc lane-chs-tot)))
+                      (do (aput lane-pump out-ch
+                                (assoc m :status :failed :status-info :make-lane))
+                          (recur lane-chs lane-chs-tot)))
                     (do (aput lane-pump out-ch
-                              (assoc m :status :failed :status-info :make-lane))
+                              (assoc m :status :full :status-info :max-lanes))
                         (recur lane-chs lane-chs-tot)))))
               (doseq [[lane-name lane-ch] lane-chs] ; Close lane-chs & exit.
                 (aclose lane-pump lane-ch)))))
