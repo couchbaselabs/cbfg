@@ -87,9 +87,9 @@
 (defn make-partition [actx sq path kvs-mgr-ch]
   (let [partition-ch (achan actx)
         partition-res {:sq sq
-                  :path path
-                  :partition-ch partition-ch
-                  :kvs-mgr-ch kvs-mgr-ch}]
+                       :path path
+                       :partition-ch partition-ch
+                       :kvs-mgr-ch kvs-mgr-ch}]
     (act partition-init actx
          (let [res (areq partition-init kvs-mgr-ch {:op :kvs-open :name [path sq]})]
            (if (= (:status res) :ok)
@@ -350,6 +350,8 @@
 (defn kv-server [server-addr & ports] ; Data manager.
   (init-server :kv-server server-addr ports
                make-initial-server-state initial-lane-state))
+
+; --------------------------------------------
 
 (defn kv-client [client-addr server-addr server-port]
   (let [world (:world (prog-base-now))
