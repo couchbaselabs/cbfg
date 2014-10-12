@@ -297,7 +297,7 @@
 
 ; --------------------------------------------
 
-(defn init-server [server-kind server-addr ports
+(defn init-server [server-kind server-handler server-addr ports
                    make-server-state initial-lane-state]
   (let [world (:world (prog-base-now))
         server-state-ch (state-loop world [server-kind server-addr ports]
@@ -348,7 +348,7 @@
                     300 (+ 20 (* 120 (dec (count (:servers (prog-curr-now))))))))
 
 (defn kv-server [server-addr & ports] ; Data manager.
-  (init-server :kv-server server-addr ports
+  (init-server :kv-server server-handler server-addr ports
                make-initial-server-state initial-lane-state))
 
 ; --------------------------------------------
