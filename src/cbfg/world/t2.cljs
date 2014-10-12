@@ -347,10 +347,6 @@
   (addr-override-xy server-addr
                     300 (+ 20 (* 120 (dec (count (:servers (prog-curr-now))))))))
 
-(defn cm-server [server-addr & ports] ; Cluster manager.
-  (init-server :cm-server server-addr ports
-               make-initial-server-state initial-lane-state))
-
 (defn kv-server [server-addr & ports] ; Data manager.
   (init-server :kv-server server-addr ports
                make-initial-server-state initial-lane-state))
