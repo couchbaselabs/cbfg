@@ -239,7 +239,7 @@
                           :realm (:cur-realm ils)
                           :realm-partition (:cur-realm-partition ils)})]
            (state-loop actx :lane-state lane-handler
-                       (assoc initial-lane-state :cur-partition (:partition res))
+                       (assoc ils :cur-partition (:partition res))
                        :req-ch req-ch)))
     req-ch))
 
