@@ -50,6 +50,8 @@ Snapshot reads.
 
 Show rebalance, failover logs, rollbacks.
 
+Consistent indexes under rebalance.
+
 Watch what happens to concurrent mutation races,
 and "fork" the U/I to watch both outcomes of the race.
 
@@ -132,9 +134,11 @@ stuff to look at / learn
 - clojure slurp API
 - clojure.java.io
 -- io/resource API
+- om / react
 - engelberge/instaparse for clojure
 - total programing
 - idris
+- elm
 - brett victor
 - lighttable
 -- http://www.lighttable.com/2014/05/16/pain-we-forgot/
@@ -143,9 +147,15 @@ stuff to look at / learn
 - ocaml combinators for declarative distributed systems, "opis"
 - https://github.com/pbailis/ramp-sigmod2014-code
 -- can NBTA be used to replicate transactions (across NPR) in RA fashion?
+- write-snapshot-isolation model
+-- https://github.com/yahoo/omid/wiki
+-- proposes a central timestamp oracle, but brings serializability
+-- references percolator design
 - Michael N. mentions reactive streams spec.
 -- It has explicit asynchronous backpressure.
 -- https://github.com/reactive-streams/reactive-streams/blob/v0.3/README.md
+- transducers
+- programming with managed time - sean mcdirmid
 
 ----------------------------------------
 Aliaksey K. mentions/feedback...
@@ -156,6 +166,8 @@ Aliaksey K. mentions/feedback...
   isn't a good idea; "don't bother"; consider instead
   user-space network/TCP stacks?
 -- with out-of-order responses, perhaps don't need multiple lanes?
+
+Jens mentions BLIP protocol
 
 - quiet bit genericized (instead of FOO & FOOQ; BAR & BARQ)
 - flexible headers (a'la HTTP)
