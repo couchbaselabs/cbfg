@@ -44,8 +44,9 @@ Or, during development cycle, instead run...
 
 # browse...
 
-    http://localhost:8000/
+    http://localhost:8000
     http://localhost:8000/world-t1.html
+    http://localhost:8000/world-t2.html
 
 # for some codegen...
 
